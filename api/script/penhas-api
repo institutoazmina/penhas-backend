@@ -1,0 +1,14 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use FindBin;
+
+BEGIN {
+    $ENV{MOJO_MAX_MESSAGE_SIZE} = 1024 * 1024 * 1024; # 1 GB
+    unshift @INC, "$FindBin::Bin/../lib"
+}
+
+use Mojolicious::Commands;
+
+# Start command line interface for application
+Mojolicious::Commands->start_app('Penhas');
