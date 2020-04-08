@@ -13,11 +13,11 @@ use vars qw(@ISA @EXPORT);
 
 @ISA    = (qw(Exporter));
 @EXPORT = qw(
-    random_string
+  random_string
 
-    is_test
-    env
-    exec_tx_with_retry
+  is_test
+  env
+  exec_tx_with_retry
 );
 
 
@@ -34,20 +34,20 @@ sub exec_tx_with_retry {
     my ($some_tx, %opts) = @_;
     require Penhas::Logger;
 
-    my $tries = $opts{tries} || 15;
+    my $tries = $opts{tries} || 5;
     my $sleep = $opts{sleep} || 1;
 
   AGAIN:
     my $tx = $some_tx->();
 
     if ($tx->error) {
-        my $err = $tx->error;
+        my $err         = $tx->error;
         my $description = sprintf "Request %s %s code: %s response: %s", $tx->req->method,
           $tx->req->url->to_string, $err->{code}, $tx->res->body;
 
         if ($err->{code}) {
             Penhas::Logger::log_error($description);
-            $tries = 0 if $err->{code} >= 400 && $err->{code} <= 404;
+            $tries = 0 if $err->{code} == 422 || $err->{code} >= 400 && $err->{code} <= 404;
         }
         else {
             Penhas::Logger::log_error("Connection error: $description $err->{message}");
@@ -55,13 +55,18 @@ sub exec_tx_with_retry {
 
         if (--$tries > 0) {
             $sleep = ($sleep * 2) + rand($sleep / 2);
-            $sleep = 64 if $sleep > 64;
+            $sleep = 15 if $sleep > 15;
             Penhas::Logger::log_error("Sleeping for $sleep seconds and trying again");
             Time::HiRes::sleep($sleep);
             goto AGAIN;
         }
 
         if ($err->{code}) {
+
+            my $json = $tx->res->json;
+            if ($err->{code} == 422 && $json->{error}{code} && $json->{error}{code}==4){
+                die 'Invalid form: ' . $description . ' ' . $json->{error}{message};
+            }
             die 'Request failed too many times: ' . $description;
         }
         else {

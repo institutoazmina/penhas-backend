@@ -19,7 +19,7 @@ sub _build_redis {
     Redis->new(
         reconnect => 5,
         every     => 10_000,                                             # 10ms
-        server    => $ENV{REDIS_SERVER} || '172.17.0.1:6379'
+        server    => $ENV{REDIS_SERVER} || '127.0.0.1:6379'
     );
 }
 

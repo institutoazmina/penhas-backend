@@ -66,7 +66,6 @@ sub _reply_exception {
 
     if ($an_error) {
 
-        #if (ref $an_error eq 'HASH' && exists $an_error->{error} && exists $an_error->{message}) {
         if (ref $an_error eq 'HASH' && exists $an_error->{error}) {
             my $status = delete $an_error->{status} || 400;
             $c->app->log->info('error 400: ' . $c->app->dumper($an_error));
@@ -77,9 +76,8 @@ sub _reply_exception {
 
             $c->app->log->info('error 400: ' . $c->app->dumper($an_error));
 
-            #elsif ( ref $an_error eq 'REF' && ref $$an_error eq 'ARRAY') {
             return $c->render(
-                json   => {error => 'form_error', message => {$$an_error->[0] => $$an_error->[1]}},
+                json   => {error => 'form_error', field => $$an_error->[0], reason => $$an_error->[1]},
                 status => 400,
             );
         }
@@ -127,23 +125,28 @@ sub _reply_exception {
 sub validate_request_params {
     my ($c, %fields) = @_;
 
+    my $params = $c->req->params->to_hash;
     foreach my $key (keys %fields) {
         my $me   = $fields{$key};
         my $type = $me->{type};
 
-        my $val = $c->req->params->to_hash->{$key};
-        $val = '' if !defined $val && $me->{clean_undef};
+        my $val = $params->{$key};
+        $val = '' if !defined $val && $me->{empty_if_undef};
 
         if (defined($val) && (exists $me->{min_length} || exists $me->{max_length})) {
             my $len     = length $val;
             my $min_len = $me->{min_length};
             my $max_len = $me->{max_length};
-            die {error => 'form_error', message => {$key => 'invalid'}, status => 400}
-              if (defined($min_len) && $len < $min_len) || (defined($max_len) && $len > $max_len);
+
+            die {error => 'form_error', field => $key, reason => 'invalid_max_length', status => 400}
+              if (defined($max_len) && $len > $max_len);
+
+            die {error => 'form_error', field => $key, reason => 'invalid_min_length', status => 400}
+              if (defined($min_len) && $len < $min_len);
         }
 
         if (!defined $val && $me->{required} && !($me->{undef_is_valid} && !defined $val)) {
-            die {error => 'form_error', message => {$key => 'missing'}, status => 400,};
+            die {error => 'form_error', field => $key, reason => 'is_required', status => 400};
         }
 
         if (
@@ -156,8 +159,7 @@ sub validate_request_params {
                 || ref $type eq 'MooseX::Types::TypeDecorator')
           )
         {
-
-            die {error => 'form_error', message => {$key => 'empty_is_invalid'}, status => 400,};
+            die {error => 'form_error', field => $key, reason => 'empty_is_invalid'}, status => 400,;
         }
 
         next unless $val;
@@ -165,13 +167,14 @@ sub validate_request_params {
         my $cons = Moose::Util::TypeConstraints::find_or_parse_type_constraint($type);
 
         if (!defined $cons) {
-            die {error => 'form_error', message => "Unknown type constraint '$type'", status => 400,};
+            die {message => "Unknown type constraint '$type'", status => 500,};
         }
 
         if (!$cons->check($val)) {
-            die {error => 'form_error', message => {$key => 'invalid'}, status => 400,};
+            die {error => 'form_error', field => $key, reason => 'invalid_format', status => 400};
         }
     }
+
 }
 
 
