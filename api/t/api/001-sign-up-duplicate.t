@@ -17,6 +17,10 @@ goto AGAIN if cpf_already_exists($random_cpf);
 
 $ENV{MAX_CPF_ERRORS_IN_24H} = 10000;
 
+my @other_fields = (
+    raca    => 'pardo',
+    apelido => 'ca',
+);
 get_schema->resultset('CpfCache')->find_or_create(
     {
         cpf      => $random_cpf,
@@ -45,6 +49,7 @@ $t->post_ok(
         cep           => '12345678',
         genero        => 'Feminino',
         dt_nasc       => '1994-10-10',
+        @other_fields,
     },
 )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'cpf')->json_is('/reason', 'invalid');
 
@@ -59,7 +64,7 @@ $t->post_ok(
         cep           => '12345678',
         genero        => 'Feminino',
         dt_nasc       => '1944-10-10',
-
+        @other_fields,
 
     },
 )->status_is(400)->json_is('/error', 'cpf_not_match');
@@ -75,6 +80,7 @@ $t->post_ok(
         cep           => '12345678',
         genero        => 'Feminino',
         dt_nasc       => '1994-01-31',
+        @other_fields,
 
     },
 )->status_is(400)->json_is('/error', 'name_not_match');
@@ -90,6 +96,7 @@ my $res = $t->post_ok(
         cep           => '12345678',
         genero        => 'Feminino',
         dt_nasc       => '1994-01-31',
+        @other_fields,
 
     },
 )->status_is(200)->tx->res->json;

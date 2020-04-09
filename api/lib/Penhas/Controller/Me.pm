@@ -27,7 +27,7 @@ sub find {
     my $mastodon_session;
 
     my $feminino = $user->{genero} eq 'Feminino';
-    my $screen = 'timeline';
+    my $screen   = 'timeline';
 
 
     if ($screen eq 'timeline' && $feminino) {
@@ -38,8 +38,15 @@ sub find {
     return $c->render(
         json => {
             user_profile => {
-                (map { $_ => $user->{$_} } (qw/email cep dt_nasc nome_completo genero minibio raca/)),
+                (map { $_ => $user->{$_} } (qw/email cep dt_nasc nome_completo genero minibio raca cpf_prefix/)),
             },
+
+            modo_camuflado_ativo         => $user->{modo_camuflado_ativo}         ? 1 : 0,
+            modo_anonimo_ativo           => $user->{modo_anonimo_ativo}           ? 1 : 0,
+            ja_foi_vitima_de_violencia   => $user->{modo_anonimo_ativo}           ? 1 : 0,
+            esta_em_situcao_de_violencia => $user->{esta_em_situcao_de_violencia} ? 1 : 0,
+            mastodon_username            => $user->{mastodon_username},
+            senha_falsa_sha256           => $user->{senha_falsa_sha256},
 
             screen           => $screen,
             mastodon_session => $mastodon_session

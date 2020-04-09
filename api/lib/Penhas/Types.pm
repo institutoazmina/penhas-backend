@@ -2,7 +2,7 @@ package Penhas::Types;
 use strict;
 use warnings;
 
-use MooseX::Types -declare => [qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome)];
+use MooseX::Types -declare => [qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome Raca)];
 use MooseX::Types::Moose qw(ArrayRef HashRef CodeRef Str ScalarRef);
 use MooseX::Types::Common::String qw(NonEmptySimpleStr NonEmptyStr);
 use Business::BR::CEP qw(test_cep);
@@ -78,6 +78,18 @@ subtype Genero, as Str, where {
 coerce Genero, from Str, via {
     $_;
 };
+
+subtype Raca, as Str, where {
+    my $str = $_;
+
+    return $str =~ /^branco|pardo|preto|amarelo|indigena|nao_declarado$/ ? 1 : 0;
+}, message {"$_[0] is not a valid Genero"};
+
+coerce Raca, from Str, via {
+    $_;
+};
+
+
 
 
 subtype Nome, as Str, where {

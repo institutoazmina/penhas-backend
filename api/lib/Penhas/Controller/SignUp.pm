@@ -7,7 +7,7 @@ use Digest::SHA qw/sha256_hex/;
 use Penhas::Logger;
 use Penhas::Utils qw/random_string random_string_from/;
 
-use Penhas::Types qw/CEP CPF DateStr Genero Nome/;
+use Penhas::Types qw/CEP CPF DateStr Genero Nome Raca/;
 use MooseX::Types::Email qw/EmailAddress/;
 use Text::Unaccent::PurePerl qw(unac_string);
 
@@ -24,6 +24,8 @@ sub post {
         cpf     => {required   => 1,   type     => CPF},
         cep     => {required   => 1,   type     => CEP},
         genero  => {required   => 1,   type     => Genero},
+        raca    => {required   => 1,   type     => Raca},
+        apelido => {max_length => 40,  required => 1, type => 'Str', min_length => 2},
         senha   => {max_length => 200, required => 1, type => 'Str', min_length => 6},
     );
 
@@ -141,7 +143,7 @@ sub post {
 
             senha_sha256 => sha256_hex($params->{senha}),
 
-            (map { $_ => $params->{$_} } qw/genero/),
+            (map { $_ => $params->{$_} } qw/genero apelido raca/),
         }
     );
     my $directus_id = $row->{data}{id};
