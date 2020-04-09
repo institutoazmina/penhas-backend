@@ -30,8 +30,8 @@ services:
       DIRECTUS_DATABASE_USERNAME: "directus"
       DIRECTUS_DATABASE_PASSWORD: "hjdfyudfjkajk"
     volumes:
-        - ./data/config:/var/directus/config
-        - ./data/uploads:/var/directus/public/uploads
+        - ./directus/data/config:/var/directus/config
+        - ./directus/data/uploads:/var/directus/public/uploads
     links:
       - db:mysql
 

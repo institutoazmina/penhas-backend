@@ -33,7 +33,8 @@ sub post {
     # limite de requests por segundo no IP
     # no maximo 3 request por minuto
     my $remote_ip = $c->remote_addr();
-    $c->stash(apply_rps_on => $remote_ip);
+    # recortando o IPV6 para apenas o prefixo (18 chars)
+    $c->stash(apply_rps_on => substr($remote_ip, 0, 18));
     $c->apply_request_per_second_limit(3, 60);
 
     # email deve ser unico
@@ -88,7 +89,7 @@ sub post {
     # poderia verificar se o genero bate, mas nao tem isso no retorno por enquanto
 
     my $cpf_hash = sha256_hex($cpf);
-    my $row = $c->directus->create(
+    my $row      = $c->directus->create(
         table => 'clientes',
         form  => {
             email         => $email,
@@ -100,7 +101,7 @@ sub post {
 
             senha_sha256 => sha256_hex($params->{senha}),
 
-            (map {$_ => $params->{$_} } qw/genero /),
+            (map { $_ => $params->{$_} } qw/genero /),
 
         }
     );
