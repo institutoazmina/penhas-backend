@@ -183,6 +183,8 @@ sub post {
                     created_at           => \'now()',
                     updated_at           => \'now()',
                     email                => $email,
+                    # isso faz com que o mastodon de erro, mas eu acho melhor dar erro do que deixar uma fixa pra todos
+                    # ou deixar em branco que no momento ele da senha errada, mas poderia mudar pra começar a deixar passar o login
                     encrypted_password   => '$2a$4$NULL',
                     confirmed_at         => \'now()',
                     confirmation_sent_at => \'now()',
