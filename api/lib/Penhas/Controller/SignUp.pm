@@ -1,5 +1,6 @@
 package Penhas::Controller::SignUp;
 use Mojo::Base 'Penhas::Controller';
+use utf8;
 
 use DateTime;
 use Digest::SHA qw/sha256_hex/;
@@ -114,8 +115,21 @@ sub post {
     # TODO
     # poderia verificar se o genero bate, mas nao tem isso no retorno por enquanto
 
+    # cpf ja existe
     my $cpf_hash = sha256_hex($cpf);
-    my $row      = $c->directus->create(
+
+    $found = $c->directus->search_one(table => 'clientes', form => {'filter[cpf_hash][eq]' => $cpf_hash});
+    if ($found) {
+        die {
+            error => 'cpf_already_exists',
+            message =>
+              'Este CPF já possui uma conta. Entre em contato com o suporte caso não lembre do e-mail utilizado.',
+            field  => 'cpf',
+            reason => 'duplicate'
+        };
+    }
+
+    my $row = $c->directus->create(
         table => 'clientes',
         form  => {
             email         => $email,

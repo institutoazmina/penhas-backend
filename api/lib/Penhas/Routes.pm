@@ -5,9 +5,11 @@ sub register {
     my $r = shift;
 
     # PUBLIC ENDPOINTS
-    # /signup
-    my $signup = $r->route('/signup');
-    $signup->post()->to(controller => 'SignUp', action => 'post');
+    # POST /signup
+    $r->route('/signup')->post()->to(controller => 'SignUp', action => 'post');
+
+    # POST /login
+    $r->route('/login')->post()->to(controller => 'Login', action => 'post');
 
     # PRIVATE ENDPOINTS
     my $authenticated = $r->under()->to(controller => 'JWT', action => 'check_user_jwt');
@@ -18,7 +20,6 @@ sub register {
     # GET /me
     my $me = $authenticated->under('/me')->to(controller => 'Me', action => 'check_and_load');
     $me->get()->to(action => 'find');
-
 
 
 }

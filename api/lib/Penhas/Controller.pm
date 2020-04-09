@@ -1,5 +1,6 @@
 package Penhas::Controller;
 use Mojo::Base 'Mojolicious::Controller';
+use utf8;
 
 use Scalar::Util qw(blessed);
 
@@ -171,7 +172,7 @@ sub validate_request_params {
         }
 
         if (!$cons->check($val)) {
-            die {error => 'form_error', field => $key, reason => 'invalid_format', status => 400};
+            die {error => 'form_error', field => $key, reason => 'invalid', status => 400};
         }
     }
 

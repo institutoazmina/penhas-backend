@@ -26,10 +26,11 @@ sub find {
     my $user = $c->stash('user');
     my $mastodon_session;
 
+    my $feminino = $user->{genero} eq 'Feminino';
     my $screen = 'timeline';
 
 
-    if ($screen eq 'timeline' && $user->{genero} eq 'Feminino') {
+    if ($screen eq 'timeline' && $feminino) {
         $mastodon_session = $c->schema->resultset('OauthAccessToken')->find($c->stash('mastodon_oauth_id'));
         $mastodon_session = $mastodon_session->token if $mastodon_session;
     }

@@ -135,4 +135,23 @@ sub sum_cpf_errors {
     return $total;
 }
 
+sub sum_login_errors {
+    my ($self, %opts) = @_;
+
+    my $rows = $self->search(
+        table => 'login_erros',
+        form  => {
+            'filter[created_at][gt]'  => DateTime->now->add( minutes => -60 )->datetime(' '),
+            'filter[cliente_id][eq]'  => ($opts{cliente_id} or croak 'missing cliente_id'),
+        }
+    );
+
+    my $total = 0;
+    foreach my $row (@{ $rows->{data} }) {
+        $total += 1;
+    }
+
+    return $total;
+}
+
 1;

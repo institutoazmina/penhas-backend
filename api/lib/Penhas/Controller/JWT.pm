@@ -1,5 +1,6 @@
 package Penhas::Controller::JWT;
 use Mojo::Base 'Penhas::Controller';
+use utf8;
 
 use JSON;
 

@@ -8,11 +8,11 @@ my $t = test_instance;
 use Business::BR::CPF qw/random_cpf/;
 
 AGAIN:
-my $random_cpf     = random_cpf();
-my $bad_random_cpf = random_cpf(0);
+my $random_cpf           = random_cpf();
+my $bad_random_cpf       = random_cpf(0);
 my $valid_but_wrong_date = '89253398035';
 
-my $random_email   = 'email' . $random_cpf . '@something.com';
+my $random_email = 'email' . $random_cpf . '@something.com';
 goto AGAIN if cpf_already_exists($random_cpf);
 
 $ENV{MAX_CPF_ERRORS_IN_24H} = 10000;
@@ -46,7 +46,7 @@ $t->post_ok(
         genero        => 'Feminino',
         dt_nasc       => '1994-10-10',
     },
-)->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'cpf')->json_is('/reason', 'invalid_format');
+)->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'cpf')->json_is('/reason', 'invalid');
 
 
 $t->post_ok(
@@ -96,20 +96,43 @@ my $res = $t->post_ok(
 
 $t->get_ok(
     '/me',
-    { 'x-api-key' => $res->{session} }
+    {'x-api-key' => $res->{session}}
 )->status_is(200);
 
 $t->post_ok(
     '/logout',
-    { 'x-api-key' => $res->{session} }
+    {'x-api-key' => $res->{session}}
 )->status_is(204);
 
 $t->get_ok(
     '/me',
-    { 'x-api-key' => $res->{session} }
+    {'x-api-key' => $res->{session}}
 )->status_is(403);
 
-use DDP; p $res;
+$t->post_ok(
+    '/login',
+    form => {
+        email => $random_email,
+        senha => '1234567'
+    }
+)->status_is(400)->json_is('/error', 'wrongpassword');
+
+
+$res = $t->post_ok(
+    '/login',
+    form => {
+        email => $random_email,
+        senha => '123456'
+    }
+)->status_is(200)->json_has('/session')->json_is('/senha_falsa', 0)->tx->res->json;
+
+$t->get_ok(
+    '/me',
+    {'x-api-key' => $res->{session}}
+)->status_is(200);
+
+use DDP;
+p $res;
 
 done_testing();
 
