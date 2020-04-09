@@ -63,4 +63,19 @@ sub update {
 }
 
 
+sub inc_senha_falsa_counter {
+    my $c = shift;
+
+    my $user = $c->stash('user');
+    $c->directus->update(
+        table => 'clientes',
+        id    => $user->{id},
+        form  => {
+            qtde_login_senha_falsa => $user->{qtde_login_senha_falsa} + 1,
+        }
+    );
+
+    return $c->render(text => '', status => 204,);
+}
+
 1;

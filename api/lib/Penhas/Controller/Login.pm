@@ -18,8 +18,9 @@ sub post {
 
     my $params = $c->req->params->to_hash;
     $c->validate_request_params(
-        email => {max_length => 200, required => 1, type => EmailAddress},
-        senha => {max_length => 200, required => 1, type => 'Str', min_length => 6},
+        email       => {max_length => 200, required => 1, type => EmailAddress},
+        senha       => {max_length => 200, required => 1, type => 'Str', min_length => 6},
+        app_version => {max_length => 200, required => 1, type => 'Str', min_length => 1},
     );
     my $email = lc(delete $params->{email});
     my $senha = sha256_hex(delete $params->{senha});
@@ -171,6 +172,17 @@ sub post {
     );
     my $session_id = $session->{data}{id};
     die '$session_id not defined' unless $session_id;
+
+    $c->directus->create(
+        table => 'login_logs',
+        form  => {
+            remote_ip          => $remote_ip,
+            cliente_id         => $directus_id,
+            mastodon_oauth2_id => $oauth2token->id,
+            app_version        => $params->{app_version},
+            created_at         => DateTime->now->datetime(' '),
+        }
+    );
 
     $c->render(
         json => {

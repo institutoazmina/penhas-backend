@@ -21,6 +21,10 @@ sub register {
     my $me = $authenticated->under('/me')->to(controller => 'Me', action => 'check_and_load');
     $me->get()->to(action => 'find');
 
+    $me->under('/increment-fake-password-usage')->post()->to(action => 'inc_senha_falsa_counter');
+
+
+
 
 }
 

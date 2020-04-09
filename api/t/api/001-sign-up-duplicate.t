@@ -18,9 +18,11 @@ goto AGAIN if cpf_already_exists($random_cpf);
 $ENV{MAX_CPF_ERRORS_IN_24H} = 10000;
 
 my @other_fields = (
-    raca    => 'pardo',
-    apelido => 'ca',
+    raca        => 'pardo',
+    apelido     => 'ca',
+    app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App'
 );
+
 get_schema->resultset('CpfCache')->find_or_create(
     {
         cpf      => $random_cpf,
@@ -120,7 +122,8 @@ $t->post_ok(
     '/login',
     form => {
         email => $random_email,
-        senha => '1234567'
+        senha => '1234567',
+        app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
     }
 )->status_is(400)->json_is('/error', 'wrongpassword');
 
@@ -128,8 +131,9 @@ $t->post_ok(
 $res = $t->post_ok(
     '/login',
     form => {
-        email => $random_email,
-        senha => '123456'
+        email       => $random_email,
+        senha       => '123456',
+        app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
     }
 )->status_is(200)->json_has('/session')->json_is('/senha_falsa', 0)->tx->res->json;
 
@@ -137,6 +141,11 @@ $t->get_ok(
     '/me',
     {'x-api-key' => $res->{session}}
 )->status_is(200);
+
+$t->post_ok(
+    '/me/increment-fake-password-usage',
+    {'x-api-key' => $res->{session}}
+)->status_is(204);
 
 use DDP;
 p $res;

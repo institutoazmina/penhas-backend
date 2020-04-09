@@ -20,13 +20,14 @@ sub post {
     $c->validate_request_params(
         nome_completo => {max_length => 200, required => 1, type => Nome, min_length => 5},
         email         => {max_length => 200, required => 1, type => EmailAddress},
-        dt_nasc => {required   => 1,   type     => DateStr},
-        cpf     => {required   => 1,   type     => CPF},
-        cep     => {required   => 1,   type     => CEP},
-        genero  => {required   => 1,   type     => Genero},
-        raca    => {required   => 1,   type     => Raca},
-        apelido => {max_length => 40,  required => 1, type => 'Str', min_length => 2},
-        senha   => {max_length => 200, required => 1, type => 'Str', min_length => 6},
+        dt_nasc     => {required   => 1,   type     => DateStr},
+        cpf         => {required   => 1,   type     => CPF},
+        cep         => {required   => 1,   type     => CEP},
+        genero      => {required   => 1,   type     => Genero},
+        raca        => {required   => 1,   type     => Raca},
+        apelido     => {max_length => 40,  required => 1, type => 'Str', min_length => 2},
+        senha       => {max_length => 200, required => 1, type => 'Str', min_length => 6},
+        app_version => {max_length => 200,  required => 1, type => 'Str', min_length => 1},
     );
 
     $params->{cpf} =~ s/[^\d]//ga;
@@ -242,6 +243,17 @@ sub post {
     );
     my $session_id = $session->{data}{id};
     die '$session_id not defined' unless $session_id;
+
+    $c->directus->create(
+        table => 'login_logs',
+        form  => {
+            remote_ip          => $remote_ip,
+            cliente_id         => $directus_id,
+            mastodon_oauth2_id => $oauth2token->id,
+            app_version        => $params->{app_version},
+            created_at         => DateTime->now->datetime(' '),
+        }
+    );
 
     $c->render(
         json => {
