@@ -13,7 +13,6 @@ my $bad_random_cpf = random_cpf(0);
 my $valid_but_wrong_date = '89253398035';
 
 my $random_email   = 'email' . $random_cpf . '@something.com';
-
 goto AGAIN if cpf_already_exists($random_cpf);
 
 get_schema->resultset('CpfCache')->find_or_create(

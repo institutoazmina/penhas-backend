@@ -4,7 +4,7 @@ use warnings;
 use JSON;
 use v5.10;
 use Mojo::URL;
-use Crypt::PRNG qw(random_string);
+use Crypt::PRNG qw(random_string random_string_from);
 
 use Carp;
 use Time::HiRes qw//;
@@ -14,6 +14,7 @@ use vars qw(@ISA @EXPORT);
 @ISA    = (qw(Exporter));
 @EXPORT = qw(
   random_string
+  random_string_from
 
   is_test
   env
