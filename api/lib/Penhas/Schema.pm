@@ -18,41 +18,36 @@ __PACKAGE__->load_namespaces;
 
 use Penhas::Logger;
 my $_variables_loaded = 0;
+use Penhas::Utils qw/random_string/;
 
-use Crypt::OpenSSL::RSA;
-
-sub get_rsa_keys {
+sub get_jwt_key {
     my ($self) = @_;
 
-    my $pvt = delete $ENV{JWT_RSA_PVT_KEY};
-    my $pub = delete $ENV{JWT_RSA_PUB_KEY};
+    my $secret = delete $ENV{JWT_SECRET_KEY};
 
     die 'ENV variables not loaded' unless ++$_variables_loaded;
 
     # Se não estiverem configuradas, vamos iniciar uma.
-    if (!$pvt || !$pub) {
+    if (!$secret) {
 
-        my $rsa = Crypt::OpenSSL::RSA->generate_key(2048);
-
-        $pvt = $rsa->get_private_key_string;
-        $pub = $rsa->get_public_key_string;
+        my $secret = random_string(64);
 
         $self->txn_do(
             sub {
                 $self->storage->dbh->do(
                     <<'SQL_QUERY', undef,
-                    INSERT INTO penhas_config ("name", "value") VALUES (?, ?), (?, ?)
+                    INSERT INTO penhas_config ("name", "value") VALUES (?, ?)
                     ON CONFLICT (name)
                     WHERE valid_to = 'infinity'
                     DO UPDATE SET value = EXCLUDED.value;
 SQL_QUERY
-                    ('JWT_RSA_PUB_KEY', $pub, 'JWT_RSA_PVT_KEY', $pvt,)
+                    ('JWT_SECRET_KEY', $secret,)
                 );
             }
         );
     }
 
-    return (pub => $pub, pvt => $pvt);
+    return (secret => $secret);
 }
 
 use DateTime::Format::DateParse;

@@ -1,4 +1,4 @@
-package Mojolicious::Plugin::JWT_RSA;
+package Mojolicious::Plugin::JWT;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use Crypt::JWT qw(decode_jwt encode_jwt);
@@ -8,8 +8,7 @@ use Crypt::OpenSSL::RSA;
 sub register {
     my ($self, $app, $args) = @_;
 
-    my $rsa_pvt = Crypt::OpenSSL::RSA->new_private_key($args->{pvt} || die 'JWT: pvt must be defined');
-    my $rsa_pub = Crypt::OpenSSL::RSA->new_public_key($args->{pub}  || die 'JWT: pub must be defined');
+    my $secret = $args->{secret} || die 'JWT: pvt must be defined';
 
     my $encode_sub = sub {
         my $c                 = shift;
@@ -23,7 +22,7 @@ sub register {
 
         #die 'missing exp' unless exists $data->{exp};
 
-        my $jws_token = encode_jwt(payload => $data, alg => 'RS256', key => $rsa_pvt);
+        my $jws_token = encode_jwt(payload => $data, alg => 'HS384', key => $secret);
         return $jws_token;
     };
 
@@ -38,10 +37,10 @@ sub register {
             my $jws_token = shift;
             return decode_jwt(
                 token        => $jws_token,
-                key          => $rsa_pub,
+                key          => $secret,
                 verify_exp   => undef,
                 verify_nbf   => undef,
-                accepted_alg => 'RS256'
+                accepted_alg => 'HS384'
             );
         }
     );

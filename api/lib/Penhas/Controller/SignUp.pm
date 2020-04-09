@@ -180,11 +180,12 @@ sub post {
 
             my $user = $acc->users->create(
                 {
-                    created_at           => \'now()',
-                    updated_at           => \'now()',
-                    email                => $email,
-                    # isso faz com que o mastodon de erro, mas eu acho melhor dar erro do que deixar uma fixa pra todos
-                    # ou deixar em branco que no momento ele da senha errada, mas poderia mudar pra começar a deixar passar o login
+                    created_at => \'now()',
+                    updated_at => \'now()',
+                    email      => $email,
+
+        # isso faz com que o mastodon de erro, mas eu acho melhor dar erro do que deixar uma fixa pra todos
+        # ou deixar em branco que no momento ele da senha errada, mas poderia mudar pra começar a deixar passar o login
                     encrypted_password   => '$2a$4$NULL',
                     confirmed_at         => \'now()',
                     confirmation_sent_at => \'now()',
@@ -199,7 +200,7 @@ sub post {
                     created_at     => \'now()',
                     scopes         => 'read write follow',
                     token          => 'APP' . random_string(35),
-                    application_id => 1, # web
+                    application_id => 1,                           # web
                 }
             );
 
@@ -217,13 +218,27 @@ sub post {
         }
     );
 
+    my $session = $c->directus->create(
+        table => 'clientes_active_sessions',
+        form  => {
+            cliente_id => $directus_id,
+        }
+    );
+    my $session_id = $session->{data}{id};
+    die '$session_id not defined' unless $session_id;
 
-    use DDP;
-    p $row;
-    p $oauth2token;
-
-    my $res;
-    $c->render(json => {ok => 1}, status => 201,);
+    $c->render(
+        json => {
+            session => $c->encode_jwt(
+                {
+                    _oi => $oauth2token->id,
+                    ses => $session_id,
+                    typ => 'usr'
+                }
+            )
+        },
+        status => 200,
+    );
 }
 
 sub _inc_cpf_invalid_count {

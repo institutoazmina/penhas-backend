@@ -15,6 +15,8 @@ my $valid_but_wrong_date = '89253398035';
 my $random_email   = 'email' . $random_cpf . '@something.com';
 goto AGAIN if cpf_already_exists($random_cpf);
 
+$ENV{MAX_CPF_ERRORS_IN_24H} = 10000;
+
 get_schema->resultset('CpfCache')->find_or_create(
     {
         cpf      => $random_cpf,
@@ -90,8 +92,24 @@ my $res = $t->post_ok(
         dt_nasc       => '1994-01-31',
 
     },
-)->status_is(201)->tx->res->json;
+)->status_is(200)->tx->res->json;
 
+$t->get_ok(
+    '/me',
+    { 'x-api-key' => $res->{session} }
+)->status_is(200);
+
+$t->post_ok(
+    '/logout',
+    { 'x-api-key' => $res->{session} }
+)->status_is(204);
+
+$t->get_ok(
+    '/me',
+    { 'x-api-key' => $res->{session} }
+)->status_is(403);
+
+use DDP; p $res;
 
 done_testing();
 

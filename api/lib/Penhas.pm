@@ -24,13 +24,13 @@ sub startup {
 
     # RSA keys.
     my $schema = $self->schema;
-    my (%rsa) = $schema->get_rsa_keys;
+    my $secret = $schema->get_jwt_key;
 
     # Não precisa manter conexao no processo manager
     $self->schema->storage->dbh->disconnect if not $ENV{HARNESS_ACTIVE};
 
     # Plugins.
-    $self->plugin('JWT_RSA', pub => delete $rsa{pub}, pvt => delete $rsa{pvt});
+    $self->plugin('JWT', secret => $secret);
 
     # Helpers.
     $self->controller_class('Penhas::Controller');
