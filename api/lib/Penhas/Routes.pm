@@ -11,6 +11,9 @@ sub register {
     # POST /login
     $r->route('/login')->post()->to(controller => 'Login', action => 'post');
 
+    # POST /reset-password
+    $r->route('/reset-password/request-new')->post()->to(controller => 'ResetPassword', action => 'request_new');
+
     # PRIVATE ENDPOINTS
     my $authenticated = $r->under()->to(controller => 'JWT', action => 'check_user_jwt');
 
@@ -22,8 +25,6 @@ sub register {
     $me->get()->to(action => 'find');
 
     $me->under('/increment-fake-password-usage')->post()->to(action => 'inc_senha_falsa_counter');
-
-
 
 
 }

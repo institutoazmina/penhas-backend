@@ -32,6 +32,9 @@ sub startup {
     # Plugins.
     $self->plugin('JWT', secret => $secret);
 
+    # servir a /public (templates de email e arquivos static)
+    $self->plugin('RenderFile');
+
     # Helpers.
     $self->controller_class('Penhas::Controller');
 

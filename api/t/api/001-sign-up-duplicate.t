@@ -157,6 +157,15 @@ $t->post_ok(
     {'x-api-key' => $res->{session}}
 )->status_is(204);
 
+$t->post_ok(
+    '/reset-password/request-new',
+    form => {
+        email       => $random_email,
+        app_version => '...',
+    }
+)->status_is(200);
+
+
 #app->directus->sear use DDP;
 p $res;
 
