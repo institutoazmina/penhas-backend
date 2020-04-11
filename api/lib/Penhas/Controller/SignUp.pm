@@ -18,24 +18,33 @@ sub post {
 
     my $params = $c->req->params->to_hash;
     $c->validate_request_params(
-        nome_completo => {max_length => 200, required => 1, type => Nome, min_length => 5},
-        email         => {max_length => 200, required => 1, type => EmailAddress},
-        dt_nasc     => {required   => 1,   type     => DateStr},
-        cpf         => {required   => 1,   type     => CPF},
-        cep         => {required   => 1,   type     => CEP},
-        genero      => {required   => 1,   type     => Genero},
-        raca        => {required   => 1,   type     => Raca},
-        apelido     => {max_length => 40,  required => 1, type => 'Str', min_length => 2},
-        senha       => {max_length => 200, required => 1, type => 'Str', min_length => 6},
-        app_version => {max_length => 200,  required => 1, type => 'Str', min_length => 1},
+        dry => {required => 1, type => 'Int'},
     );
+    my $dry = $params->{dry};
+
+    $c->validate_request_params(
+        nome_completo => {max_length => 200, required => 1, type => Nome, min_length => 5},
+        dt_nasc       => {required   => 1,   type     => DateStr},
+        cpf           => {required   => 1,   type     => CPF},
+        cep           => {required   => 1,   type     => CEP},
+
+        app_version => {max_length => 200, required => 1, type => 'Str', min_length => 1},
+    );
+    if (!$dry) {
+        $c->validate_request_params(
+            email   => {max_length => 200, required => 1, type => EmailAddress},
+            genero  => {required   => 1,   type     => Genero},
+            apelido => {max_length => 40,  required => 1, type => 'Str', min_length => 2},
+            senha   => {max_length => 200, required => 1, type => 'Str', min_length => 6},
+        );
+    }
 
     $params->{cpf} =~ s/[^\d]//ga;
     $params->{cep} =~ s/[^\d]//ga;
 
     my $cep   = delete $params->{cep};
     my $cpf   = delete $params->{cpf};
-    my $email = lc(delete $params->{email});
+    my $email = $dry ? undef : lc(delete $params->{email});
 
     # limite de requests por segundo no IP
     # no maximo 3 request por minuto
@@ -47,7 +56,7 @@ sub post {
 
     # email deve ser unico
     my $schema = $c->schema;
-    my $found  = $c->directus->search_one(table => 'clientes', form => {'filter[email][eq]' => $email});
+    my $found = $email ? $c->directus->search_one(table => 'clientes', form => {'filter[email][eq]' => $email}) : undef;
     if ($found) {
         die {
             error => 'email_already_exists',
@@ -130,6 +139,13 @@ sub post {
             field  => 'cpf',
             reason => 'duplicate'
         };
+    }
+
+    if ($dry) {
+        return $c->render(
+            json   => {continue => 1},
+            status => 200,
+        );
     }
 
     my $row = $c->directus->create(

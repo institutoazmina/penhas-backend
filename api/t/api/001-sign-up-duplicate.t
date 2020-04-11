@@ -20,7 +20,8 @@ $ENV{MAX_CPF_ERRORS_IN_24H} = 10000;
 my @other_fields = (
     raca        => 'pardo',
     apelido     => 'ca',
-    app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App'
+    app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
+    dry         => 0,
 );
 
 get_schema->resultset('CpfCache')->find_or_create(
@@ -61,16 +62,25 @@ $t->post_ok(
     form => {
         nome_completo => 'aas asdas',
         cpf           => $valid_but_wrong_date,
-        email         => $random_email,
-        senha         => '123456',
         cep           => '12345678',
-        genero        => 'Feminino',
         dt_nasc       => '1944-10-10',
         @other_fields,
-
+        dry => 1,
     },
 )->status_is(400)->json_is('/error', 'cpf_not_match');
 
+$t->post_ok(
+    '/signup',
+    form => {
+        nome_completo => 'test name',
+        cpf           => $random_cpf,
+        cep           => '12345678',
+        dt_nasc       => '1994-01-31',
+        @other_fields,
+        dry => 1,
+
+    },
+)->status_is(200)->json_is('/continue', '1');
 
 $t->post_ok(
     '/signup',
@@ -121,8 +131,8 @@ $t->get_ok(
 $t->post_ok(
     '/login',
     form => {
-        email => $random_email,
-        senha => '1234567',
+        email       => $random_email,
+        senha       => '1234567',
         app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
     }
 )->status_is(400)->json_is('/error', 'wrongpassword');
@@ -147,7 +157,7 @@ $t->post_ok(
     {'x-api-key' => $res->{session}}
 )->status_is(204);
 
-use DDP;
+#app->directus->sear use DDP;
 p $res;
 
 done_testing();
