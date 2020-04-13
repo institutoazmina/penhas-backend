@@ -43,20 +43,33 @@ sub request_new {
     }
     my $directus_id = $found->{id};
 
+    my $digits = 6;
+
+    # valido por 1 hora
+    my $ttl_seconds = 60 * 60;
+
     # contar se ja existe um envio recente para o mesmo email
+    # se restar pelo menos 6% do tempo restante, nao envia outro email
     my $item = $c->directus->search_one(
         table => 'clientes_reset_password',
         form  => {
-            'filter[created_at][gt]' => DateTime->now->add(minutes => -50)->datetime(' '),
+            'filter[created_at][gt]' => DateTime->now->add(seconds => $ttl_seconds * -0.94)->datetime(' '),
             'filter[cliente_id][eq]' => $directus_id,
         }
     );
     if ($item) {
-        die {
-            error => 'email_already_sent',
-            message =>
-              'Já enviamos um código para este e-mail recentemente. Aguarde pelo email e configura a caixa de spam.',
-        };
+        my $valid_until = DateTime::Format::Pg->parse_datetime($item->{valid_until})->epoch;
+
+        return $c->render(
+            json => {
+                    message => 'Aguardando código com '
+                  . $digits
+                  . ' números, que enviamos o para o seu e-mail recentemente',
+                ttl    => $valid_until - time(),
+                digits => $digits
+            },
+            status => 200,
+        );
     }
 
     $item = $c->directus->create(
@@ -65,8 +78,8 @@ sub request_new {
             created_at             => DateTime->now->datetime(' '),
             requested_by_remote_ip => $remote_ip,
             cliente_id             => $directus_id,
-            token                  => random_string_from('012345678', 8),
-            valid_until            => DateTime->now->add(minutes => 60)->datetime(' '),
+            token                  => random_string_from('012345678', $digits),
+            valid_until            => DateTime->now->add(seconds => $ttl_seconds)->datetime(' '),
         }
     );
     die 'clientes_reset_password id missing' unless $item->{data}{id};
@@ -89,13 +102,12 @@ sub request_new {
             ),
         }
     );
-    use DDP;
-    p $email;
 
     $c->render(
         json => {
-            message => 'Já enviamos um código com 8 números para este e-mail, digite-o na tela seguinte.',
-            ok      => 1,
+            message => 'Enviamos um código com ' . $digits . ' números para o seu e-mail',
+            ttl     => $ttl_seconds,
+            digits  => $digits,
         },
         status => 200,
     );
