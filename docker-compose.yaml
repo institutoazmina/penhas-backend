@@ -20,6 +20,7 @@ services:
     restart: always
     networks:
         - internal_network
+        - external_network
     depends_on:
         - db
     ports:
