@@ -64,6 +64,6 @@ networks:
     external_network:
     custom_network:
       external:
-        name: mastodon_external_network
+        name: mastodon_internal_network
 
 # ALTER USER 'directus'@'172.19.0.4' IDENTIFIED WITH mysql_native_password;

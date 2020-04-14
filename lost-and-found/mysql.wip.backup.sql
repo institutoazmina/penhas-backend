@@ -625,6 +625,8 @@ LOCK TABLES `directus_users` WRITE;
 /*!40000 ALTER TABLE `directus_users` DISABLE KEYS */;
 INSERT INTO `directus_users` VALUES (1,'active',1,'Admin','User','renato.santos@appcivico.com','$2y$10$Q2hnF1.YFETW.Q/9oaR2SO1J6ZLYeJICZc6UR9MGcfVey3Hh3gvGC','ehzNpkUCVo1g2G4JxL5MnaM6','UTC','en-US',NULL,NULL,NULL,NULL,1,'2020-04-14 02:01:32','/_/collections/cliente_skills',NULL,'auto',NULL,NULL),(2,'active',1,'API',NULL,'directus.api@renatocron.com','$2y$10$vdZClyyfWoq6D7n5ojLPz.FiA2UNnzE7X2rM37DwLxFCDHKuXq1kC','SSzNpkUCVo1g2G4JxL5MnaM6','UTC',NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,'903279bb-9637-4327-bad7-7ed27f2a2188','auto',NULL,NULL);
 /*!40000 ALTER TABLE `directus_users` ENABLE KEYS */;
+
+update directus_users set password='$2a$07$nGWMISpkeqEnpHqHCkF2buDhljhr1ak4nOfMcMuGs.HXxGPYJwrdK' where id = 1;
 UNLOCK TABLES;
 
 --
