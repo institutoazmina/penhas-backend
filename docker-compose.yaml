@@ -8,10 +8,10 @@ services:
     networks:
         - internal_network
     environment:
-      MYSQL_DATABASE: "directus"
-      MYSQL_USER: "directus"
-      MYSQL_PASSWORD: "directus"
-      MYSQL_ROOT_PASSWORD: "hjdfyudfjkajk"
+      MYSQL_DATABASE: "${DIRECTUS_DATABASE_NAME}"
+      MYSQL_USER: "${DIRECTUS_DATABASE_USERNAME}"
+      MYSQL_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
     ports:
       - "${MYSQL_LISTEN}:3306"
 
@@ -29,7 +29,7 @@ services:
       DIRECTUS_APP_ENV: "production"
       DIRECTUS_AUTH_PUBLICKEY: "${DIRECTUS_AUTH_PUBLICKEY}"
       DIRECTUS_AUTH_SECRETKEY: "${DIRECTUS_AUTH_SECRETKEY}"
-      DIRECTUS_DATABASE_HOST: "${DIRECTUS_DATABASE_HOST}"
+      DIRECTUS_DATABASE_HOST: "db"
       DIRECTUS_DATABASE_PORT: "${DIRECTUS_DATABASE_PORT}"
       DIRECTUS_DATABASE_NAME: "${DIRECTUS_DATABASE_NAME}"
       DIRECTUS_DATABASE_USERNAME: "${DIRECTUS_DATABASE_USERNAME}"
@@ -37,8 +37,6 @@ services:
     volumes:
         - ./directus/data/config:/var/directus/config
         - ./directus/data/uploads:/var/directus/public/uploads
-    links:
-      - db:mysql
 
   penhas_api:
     image: azminas/penhas_api
@@ -55,10 +53,10 @@ services:
         - ./api/:/src/
     networks:
         - external_network
+        - internal_network
         - custom_network
-    links:
-      - directus:directus
-
+    depends_on:
+        - directus
 
 volumes:
     db_data: {}
@@ -71,7 +69,6 @@ networks:
         name: mastodon_internal_network
     internal_network:
         internal: true
-
 
 
 # ALTER USER 'directus'@'172.19.0.4' IDENTIFIED WITH mysql_native_password;
