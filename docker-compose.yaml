@@ -6,7 +6,7 @@ services:
     volumes:
         - db_data:/var/lib/mysql/data
     networks:
-        - external_network
+        - internal_network
     environment:
       MYSQL_DATABASE: "directus"
       MYSQL_USER: "directus"
@@ -19,7 +19,7 @@ services:
     image: directus/directus:v8-apache
     restart: always
     networks:
-        - external_network
+        - internal_network
     depends_on:
         - db
     ports:
@@ -43,7 +43,7 @@ services:
     image: azminas/penhas_api
     restart: always
     ports:
-      - "${PENHAS_API_LISTEN}:80"
+      - "${PENHAS_API_LISTEN}:8080"
     environment:
       REDIS_SERVER: "${REDIS_SERVER}"
       DIRECUTS_API_TOKEN: "${DIRECUTS_API_TOKEN}"
@@ -68,6 +68,8 @@ networks:
     custom_network:
       external:
         name: mastodon_internal_network
+    internal_network:
+        internal: true
 
 
 
