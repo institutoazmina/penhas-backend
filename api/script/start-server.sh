@@ -17,6 +17,6 @@ export SQITCH_DEPLOY=${SQITCH_DEPLOY:=docker}
 cpanm -nv . --installdeps
 sqitch deploy -t $SQITCH_DEPLOY
 
-LIBEV_FLAGS=4 APP_NAME=API LIBEV_FLAGS=4 MOJO_IOLOOP_DEBUG=1 hypnotoad script/touchbase-api
+LIBEV_FLAGS=4 APP_NAME=API LIBEV_FLAGS=4 MOJO_IOLOOP_DEBUG=1 hypnotoad script/penhas-api
 
 sleep infinity
