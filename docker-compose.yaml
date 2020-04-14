@@ -6,20 +6,17 @@ services:
     volumes:
         - db_data:/var/lib/mysql/data
     networks:
-        - internal_network
+        - external_network
     environment:
-      MYSQL_DATABASE: "${DIRECTUS_DATABASE_NAME}"
-      MYSQL_USER: "${DIRECTUS_DATABASE_USERNAME}"
-      MYSQL_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
-      MYSQL_ROOT_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
-    ports:
-      - "${MYSQL_LISTEN}:3306"
+        MYSQL_DATABASE: "directus"
+        MYSQL_USER: "directus"
+        MYSQL_PASSWORD: "directus"
+        MYSQL_ROOT_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
 
   directus:
     image: directus/directus:v8-apache
     restart: always
     networks:
-        - internal_network
         - external_network
     depends_on:
         - db
@@ -29,14 +26,16 @@ services:
       DIRECTUS_APP_ENV: "production"
       DIRECTUS_AUTH_PUBLICKEY: "${DIRECTUS_AUTH_PUBLICKEY}"
       DIRECTUS_AUTH_SECRETKEY: "${DIRECTUS_AUTH_SECRETKEY}"
-      DIRECTUS_DATABASE_HOST: "db"
-      DIRECTUS_DATABASE_PORT: "${DIRECTUS_DATABASE_PORT}"
-      DIRECTUS_DATABASE_NAME: "${DIRECTUS_DATABASE_NAME}"
-      DIRECTUS_DATABASE_USERNAME: "${DIRECTUS_DATABASE_USERNAME}"
+      DIRECTUS_DATABASE_HOST: "mysql"
+      DIRECTUS_DATABASE_PORT: "3306"
+      DIRECTUS_DATABASE_NAME: "directus"
+      DIRECTUS_DATABASE_USERNAME: "directus"
       DIRECTUS_DATABASE_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
     volumes:
         - ./directus/data/config:/var/directus/config
         - ./directus/data/uploads:/var/directus/public/uploads
+    links:
+        - db:mysql
 
   penhas_api:
     image: azminas/penhas_api
@@ -53,7 +52,6 @@ services:
         - ./api/:/src/
     networks:
         - external_network
-        - internal_network
         - custom_network
     depends_on:
         - directus
@@ -66,9 +64,6 @@ networks:
     external_network:
     custom_network:
       external:
-        name: mastodon_internal_network
-    internal_network:
-        internal: true
-
+        name: mastodon_external_network
 
 # ALTER USER 'directus'@'172.19.0.4' IDENTIFIED WITH mysql_native_password;
