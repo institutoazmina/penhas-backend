@@ -2,7 +2,8 @@ version: "3"
 services:
   db:
     image: mariadb:10.5.1-bionic
-    env_file: .env.production
+    env_file:
+        - .env.production
     restart: always
     volumes:
         - db_data:/var/lib/mysql/data
@@ -16,7 +17,8 @@ services:
 
   directus:
     image: directus/directus:v8-apache
-    env_file: .env.production
+    env_file:
+        - .env.production
     restart: always
     depends_on:
         - db
@@ -40,7 +42,8 @@ services:
   penhas_api:
     image: azminas/penhas_api
     restart: always
-    env_file: .env.production
+    env_file:
+      - .env.production
     ports:
       - "${PENHAS_API_LISTEN}:80"
     environment:
