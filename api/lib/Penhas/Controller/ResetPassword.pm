@@ -10,6 +10,7 @@ use JSON;
 use MooseX::Types::Email qw/EmailAddress/;
 
 my $max_errors_in_24h = $ENV{MAX_CPF_ERRORS_IN_24H} || 20;
+my $digits            = 6;
 
 sub request_new {
     my $c = shift;
@@ -42,8 +43,6 @@ sub request_new {
         };
     }
     my $directus_id = $found->{id};
-
-    my $digits = 6;
 
     # valido por 1 hora
     my $ttl_seconds = 60 * 60;
@@ -84,7 +83,7 @@ sub request_new {
     );
     die 'clientes_reset_password id missing' unless $item->{data}{id};
 
-    my $email = $c->schema->resultset('EmaildbQueue')->create(
+    my $email_db = $c->schema->resultset('EmaildbQueue')->create(
         {
             config_id => 1,
             template  => 'forgot_password.html',
@@ -102,6 +101,7 @@ sub request_new {
             ),
         }
     );
+    die 'missing id' unless $email_db;
 
     $c->render(
         json => {
@@ -111,6 +111,94 @@ sub request_new {
         },
         status => 200,
     );
+}
+
+sub write_new {
+    my $c = shift;
+
+    my $params = $c->req->params->to_hash;
+
+    my $params = $c->req->params->to_hash;
+    $c->validate_request_params(
+        email => {max_length => 200, required => 1, type => EmailAddress},
+        token => {max_length => 100, required => 1, type => 'Str', min_length => $digits},
+        dry => {required => 1, type => 'Int'},
+    );
+    my $token = delete $params->{token};
+    my $dry   = delete $params->{dry};
+    if (!$dry) {
+        $c->validate_request_params(
+            senha => {max_length => 200, required => 1, type => 'Str', min_length => 6},
+        );
+    }
+    my $email = lc(delete $params->{email});
+
+    # limite de requests por segundo no IP
+    my $remote_ip = $c->remote_addr();
+
+    # recortando o IPV6 para apenas o prefixo (18 chars)
+    $c->stash(apply_rps_on => substr($remote_ip, 0, 18));
+
+    # no maximo 30 testes por hora
+    $c->apply_request_per_second_limit(30, 60 * 60);
+
+    # procura o cliente pelo email
+    my $schema = $c->schema;
+    my $found  = $c->directus->search_one(table => 'clientes', form => {'filter[email][eq]' => $email});
+    if (!$found) {
+        goto INVALID_TOKEN;
+    }
+    my $directus_id = $found->{id};
+
+    my $item = $c->directus->search_one(
+        table => 'clientes_reset_password',
+        form  => {
+            'filter[valid_until][gt]' => DateTime->now->datetime(' '),
+            'filter[cliente_id][eq]'  => $directus_id,
+            'filter[token][eq]'       => $token,
+            'filter[used_at][empty]'  => 1,
+        }
+    );
+
+    if ($item && $dry) {
+
+        return $c->render(
+            json   => {continue => 1},
+            status => 200,
+        );
+    }
+    elsif ($item) {
+
+        $c->directus->update(
+            table => 'clientes_reset_password',
+            id    => $item->{id},
+            form  => {
+                'used_at'           => DateTime->now->datetime(' '),
+                'used_by_remote_ip' => $remote_ip,
+            }
+        );
+
+        $c->directus->update(
+            table => 'clientes',
+            id    => $directus_id,
+            form  => {
+                senha_sha256 => sha256_hex($params->{senha}),
+            }
+        );
+
+        return $c->render(
+            json   => {success => 1},
+            status => 200,
+        );
+    }
+
+  INVALID_TOKEN:
+    die {
+        error   => 'invalid_token',
+        message => 'Número não confere.',
+        field   => 'cpf',
+        reason  => 'duplicate'
+    };
 }
 
 

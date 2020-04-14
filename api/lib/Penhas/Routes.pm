@@ -13,6 +13,7 @@ sub register {
 
     # POST /reset-password
     $r->route('/reset-password/request-new')->post()->to(controller => 'ResetPassword', action => 'request_new');
+    $r->route('/reset-password/write-new')->post()->to(controller => 'ResetPassword', action => 'write_new');
 
     # PRIVATE ENDPOINTS
     my $authenticated = $r->under()->to(controller => 'JWT', action => 'check_user_jwt');
