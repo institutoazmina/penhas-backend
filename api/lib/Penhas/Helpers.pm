@@ -98,7 +98,7 @@ sub setup {
                 return $self->schema->resultset('CpfCache')->create(
                     {
                         cpf      => $cpf,
-                        dt_nasc  => '9999-01-01',
+                        dt_nasc  => $dt_nasc,
                         nome     => '404',
                         situacao => '404',
                         genero   => undef,

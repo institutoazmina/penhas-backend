@@ -118,7 +118,6 @@ sub write_new {
 
     my $params = $c->req->params->to_hash;
 
-    my $params = $c->req->params->to_hash;
     $c->validate_request_params(
         email => {max_length => 200, required => 1, type => EmailAddress},
         token => {max_length => 100, required => 1, type => 'Str', min_length => $digits},

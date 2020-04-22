@@ -35,7 +35,7 @@ get_schema->resultset('CpfCache')->find_or_create(
 get_schema->resultset('CpfCache')->find_or_create(
     {
         cpf      => $valid_but_wrong_date,
-        dt_nasc  => '9999-01-01',
+        dt_nasc  => '1944-10-10',
         nome     => '404',
         situacao => '404',
     }
