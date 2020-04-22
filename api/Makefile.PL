@@ -162,7 +162,8 @@ my %FallbackPrereqs = (
   "strict" => 0,
   "utf8" => 0,
   "vars" => 0,
-  "warnings" => 0
+  "warnings" => 0,
+  "IO::Socket::SSL" => 0
 );
 
 
