@@ -72,7 +72,7 @@ coerce CEP, from Str, via {
 subtype Genero, as Str, where {
     my $str = $_;
 
-    return $str =~ /^Feminino|Masculino$/ ? 1 : 0;
+    return $str =~ /^Feminino|Masculino|MulherTrans|HomemTrans|Outro$/ ? 1 : 0;
 }, message {"$_[0] is not a valid Genero"};
 
 coerce Genero, from Str, via {
@@ -83,7 +83,7 @@ subtype Raca, as Str, where {
     my $str = $_;
 
     return $str =~ /^branco|pardo|preto|amarelo|indigena|nao_declarado$/ ? 1 : 0;
-}, message {"$_[0] is not a valid Genero"};
+}, message {"$_[0] is not a valid Raca"};
 
 coerce Raca, from Str, via {
     $_;

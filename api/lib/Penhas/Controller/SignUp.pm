@@ -32,11 +32,20 @@ sub post {
     );
     if (!$dry) {
         $c->validate_request_params(
-            email   => {max_length => 200, required => 1, type => EmailAddress},
-            genero  => {required   => 1,   type     => Genero},
-            apelido => {max_length => 40,  required => 1, type => 'Str', min_length => 2},
-            senha   => {max_length => 200, required => 1, type => 'Str', min_length => 6},
+            email       => {max_length => 200, required => 1, type => EmailAddress},
+            genero      => {required   => 1,   type     => Genero},
+            nome_social => {required   => 0,   type     => Nome},
+            raca        => {required   => 1,   type     => Raca},
+            apelido     => {max_length => 40,  required => 1, type => 'Str', min_length => 2},
+            senha       => {max_length => 200, required => 1, type => 'Str', min_length => 6},
         );
+
+        # nome_social quando o genero é trans ou Outro
+        if ($params->{genero} =~ /trans|outro/i) {
+            $c->validate_request_params(
+                nome_social => {required => 1, type => 'Str'},
+            );
+        }
     }
 
     $params->{cpf} =~ s/[^\d]//ga;
@@ -160,7 +169,7 @@ sub post {
 
             senha_sha256 => sha256_hex($params->{senha}),
 
-            (map { $_ => $params->{$_} } qw/genero apelido raca/),
+            (map { $_ => $params->{$_} || '' } qw/genero apelido raca nome_social/),
         }
     );
     my $directus_id = $row->{data}{id};

@@ -96,6 +96,21 @@ subtest_buffered 'Erro na criação de conta' => sub {
 
         },
     )->status_is(400)->json_is('/error', 'name_not_match');
+
+    $t->post_ok(
+        '/signup',
+        form => {
+            nome_completo => 'test name',
+            cpf           => $random_cpf,
+            email         => $random_email,
+            senha         => '123456',
+            cep           => '12345678',
+            dt_nasc       => '1994-01-31',
+            @other_fields,
+            genero => 'FemininoTrans',
+        },
+    )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'nome_social')
+      ->json_is('/reason', 'is_required');
 };
 
 subtest_buffered 'Cadastro com sucesso' => sub {
@@ -107,17 +122,22 @@ subtest_buffered 'Cadastro com sucesso' => sub {
             email         => $random_email,
             senha         => '123456',
             cep           => '12345678',
-            genero        => 'Feminino',
             dt_nasc       => '1994-01-31',
+            nome_social   => 'foobar lorem',
             @other_fields,
+            genero        => 'FemininoTrans',
 
         },
     )->status_is(200)->tx->res->json;
 
-    $t->get_ok(
+    my $cadastro = $t->get_ok(
         '/me',
         {'x-api-key' => $res->{session}}
-    )->status_is(200);
+    )->status_is(200)->tx->res->json;
+
+    is $cadastro->{user_profile}{nome_completo}, 'test name';
+    is $cadastro->{user_profile}{nome_social}, 'foobar lorem';
+
 
     $t->post_ok(
         '/logout',

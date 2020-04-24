@@ -26,7 +26,7 @@ sub find {
     my $user = $c->stash('user');
     my $mastodon_session;
 
-    my $feminino = $user->{genero} eq 'Feminino';
+    my $feminino = $user->{genero} eq 'Feminino' || $user->{genero} eq 'MulherTrans';
     my $screen   = 'timeline';
 
 
@@ -38,7 +38,7 @@ sub find {
     return $c->render(
         json => {
             user_profile => {
-                (map { $_ => $user->{$_} } (qw/email cep dt_nasc nome_completo genero minibio raca cpf_prefix/)),
+                (map { $_ => $user->{$_} } (qw/email cep dt_nasc nome_completo genero minibio raca cpf_prefix nome_social/)),
             },
 
             modo_camuflado_ativo         => $user->{modo_camuflado_ativo}         ? 1 : 0,
