@@ -45,6 +45,8 @@ sub post {
             $c->validate_request_params(
                 nome_social => {required => 1, type => 'Str'},
             );
+        }else{
+            $params->{nome_social} = '';
         }
     }
 
@@ -127,7 +129,7 @@ sub post {
 
         die {
             error   => 'name_not_match',
-            message => 'O nome não confere com o titular do CPF. Preencha exatamente como está no documento.',
+            message => sprintf('O nome informado (%s) não confere com o titular do CPF. Preencha exatamente como está no documento.', $nome_titular),
             field   => 'nome_completo',
             reason  => 'invalid',
         };
