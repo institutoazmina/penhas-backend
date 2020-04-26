@@ -47,12 +47,14 @@ sub request_new {
     # valido por 1 hora
     my $ttl_seconds = 60 * 60;
 
+    my $min_ttl_retry = int($ttl_seconds * -0.94);
+
     # contar se ja existe um envio recente para o mesmo email
     # se restar pelo menos 6% do tempo restante, nao envia outro email
     my $item = $c->directus->search_one(
         table => 'clientes_reset_password',
         form  => {
-            'filter[created_at][gt]' => DateTime->now->add(seconds => $ttl_seconds * -0.94)->datetime(' '),
+            'filter[created_at][gt]' => DateTime->now->add(seconds => $min_ttl_retry)->datetime(' '),
             'filter[cliente_id][eq]' => $directus_id,
         }
     );
@@ -64,8 +66,9 @@ sub request_new {
                     message => 'Aguardando código com '
                   . $digits
                   . ' números, que enviamos o para o seu e-mail recentemente',
-                ttl    => $valid_until - time(),
-                digits => $digits
+                ttl           => $valid_until - time(),
+                min_ttl_retry => $min_ttl_retry + $ttl_seconds,
+                digits        => $digits
             },
             status => 200,
         );
@@ -105,9 +108,10 @@ sub request_new {
 
     $c->render(
         json => {
-            message => 'Enviamos um código com ' . $digits . ' números para o seu e-mail',
-            ttl     => $ttl_seconds,
-            digits  => $digits,
+            message       => 'Enviamos um código com ' . $digits . ' números para o seu e-mail',
+            ttl           => $ttl_seconds,
+            digits        => $digits,
+            min_ttl_retry => $min_ttl_retry + $ttl_seconds,
         },
         status => 200,
     );
@@ -195,8 +199,8 @@ sub write_new {
     die {
         error   => 'invalid_token',
         message => 'Número não confere.',
-        field   => 'cpf',
-        reason  => 'duplicate'
+        field   => 'token',
+        reason  => 'invalid'
     };
 }
 

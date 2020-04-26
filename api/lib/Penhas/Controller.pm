@@ -160,7 +160,7 @@ sub validate_request_params {
                 || ref $type eq 'MooseX::Types::TypeDecorator')
           )
         {
-            die {error => 'form_error', field => $key, reason => 'empty_is_invalid'}, status => 400,;
+            die {error => 'form_error', field => $key, reason => 'is_required'}, status => 400,;
         }
 
         next unless $val;
