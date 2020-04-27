@@ -23,26 +23,43 @@ sub check_and_load {
 sub find {
     my $c = shift;
 
+    my %extra;
     my $user = $c->stash('user');
     my $mastodon_session;
 
+    my @modules;
     my $feminino = $user->{genero} eq 'Feminino' || $user->{genero} eq 'MulherTrans';
-    my $screen   = 'timeline';
 
-
-    if ($screen eq 'timeline' && $feminino) {
+    if ($feminino) {
         $mastodon_session = $c->schema->resultset('OauthAccessToken')->find($c->stash('mastodon_oauth_id'));
         $mastodon_session = $mastodon_session->token if $mastodon_session;
+
+        push @modules, qw/timeline chat_privado chat_suporte noticias modo_camuflado modo_anonimo pontos_de_apoio/;
+    }
+    else {
+        push @modules, qw/chat_suporte noticias/;
     }
 
-    $c->user_get_quiz(
-        user => $user
-    );
+    my $quiz_session = $c->user_get_quiz_session(user => $user);
+
+    if ($quiz_session) {
+
+        # remove acesso a tudo, o usuario deve completar o quiz
+        @modules = qw/quiz/;
+
+        $c->load_quiz_session(session => $quiz_session, user => $user);
+
+        $extra{quiz_session} = $c->stash('quiz_session');
+
+    }
 
     return $c->render(
         json => {
             user_profile => {
-                (map { $_ => $user->{$_} } (qw/email cep dt_nasc nome_completo genero minibio raca cpf_prefix nome_social/)),
+                (
+                    map { $_ => $user->{$_} }
+                      (qw/email cep dt_nasc nome_completo genero minibio raca cpf_prefix nome_social/)
+                ),
             },
 
             modo_camuflado_ativo         => $user->{modo_camuflado_ativo}         ? 1 : 0,
@@ -52,8 +69,11 @@ sub find {
             mastodon_username            => $user->{mastodon_username},
             senha_falsa_sha256           => $user->{senha_falsa_sha256},
 
-            screen           => $screen,
-            mastodon_session => $mastodon_session
+
+            mastodon_session => $mastodon_session,
+
+            modules => \@modules,
+            %extra
         },
         status => 200,
     );

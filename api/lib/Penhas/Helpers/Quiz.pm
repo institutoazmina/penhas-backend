@@ -3,7 +3,7 @@ use common::sense;
 use Penhas::Directus;
 use Carp qw/croak/;
 use Digest::MD5 qw/md5_hex/;
-use Penhas::Utils qw/tt_test_condition/;
+use Penhas::Utils qw/tt_test_condition tt_render/;
 use JSON;
 
 # a chave do cache é composta por horarios de modificações do quiz_config e questionnaires
@@ -71,15 +71,16 @@ sub setup {
         }
     );
 
+
     $self->helper(
-        'user_get_quiz' => sub {
+        'user_get_quiz_session' => sub {
             my ($c, %opts) = @_;
             my $user = $opts{user} or croak 'missing user';
 
             $c->ensure_questionnaires_loaded();
 
             my @available_quiz;
-            my $vars = {cliente => $user};
+            my $vars = &_quiz_get_vars($user);
 
             foreach my $q ($c->stash('questionnaires')->@*) {
                 if (tt_test_condition($q->{condition}, $vars)) {
@@ -122,7 +123,6 @@ sub setup {
                     }
                 );
                 if (!$session) {
-
                     my $stash = eval { &_init_questionnaire_stash($q, $c) };
                     if ($@) {
                         $stash = &_get_error_questionnaire_stash($@, $c);
@@ -134,25 +134,161 @@ sub setup {
                             cliente_id       => $user->{id},
                             questionnaire_id => $q->{id},
                             stash            => $stash,
-                            responses        => []
+                            responses        => {start_time => time()}
                         }
-                    );
+                    )->{data};
 
                 }
 
-                use DDP;
-                p $session;
-
-                last;
+                return $session;
             }
 
-            use DDP;
-            p @available_quiz;
-
+            # todos os quiz estao finished
+            return;
         }
     );
 
 
+    $self->helper('load_quiz_session' => sub { &load_quiz_session(@_) });
+
+
+}
+
+sub _quiz_get_vars {
+    my ($user, $responses) = @_;
+    use DDP;
+    p [$user, $responses];
+    return {cliente => $user, %{$responses || {}}};
+}
+
+sub load_quiz_session {
+    my ($c, %opts) = @_;
+
+    my $user    = $opts{user}    or croak 'missing user';
+    my $session = $opts{session} or croak 'missing session';
+    my $responses = $session->{responses};
+    my $stash     = $session->{stash};
+
+    my $vars = &_quiz_get_vars($user, $responses);
+
+    my $current_msgs = $stash->{current} || [];
+
+    my $is_finished        = $stash->{is_finished};
+    my $add_more_questions = &any_has_relevance($vars, $current_msgs) == 0;
+
+    # se chegar em 0, estamos em loop...
+    my $loop_detection = 10;
+  ADD_QUESTIONS:
+
+    if (--$loop_detection < 0) {
+        $c->stash(
+            quiz_session => [
+                type    => 'displaytext',
+                content => 'Loop no quiz detectado, entre em contato com o suporte'
+            ]
+        );
+        return;
+    }
+
+    # nao tem nenhuma relevante pro usuario, pegar todas as pending ate um input
+    if ($add_more_questions) {
+
+        my $last = 0;
+        do {
+            my $item = shift $stash->{pending}->@*;
+
+            # pegamos um item que eh input, entao vamos sair do loop nesta vez
+            $last = 1 if $item->{type} ne 'displaytext';
+
+            # joga item pra lista de msg correntes
+            push $current_msgs->@*, $item;
+        } while !$last;
+
+        # chegamos no final do chat
+        if ($stash->{pending}->@* == 0) {
+            $stash->{is_finished} = 1;
+        }
+    }
+
+    my @frontend_msg;
+
+    foreach my $q ($current_msgs->@*) {
+        my $has = &has_relevance($vars, $q);
+        push @frontend_msg, &_render_question($q, $vars) if $has;
+    }
+
+    # nao teve nenhuma relevante, adiciona mais questoes,
+    # mesmo se tiver um botao agora que nao esta visivel
+    # isso faz com que seja possível desenhar um fluxo onde uma pergunta no futuro
+    # muda reativa a visibilidade de uma pergunta do passado
+    # embora isso possa ser uma bad-pratice, pois isso pode fazer com que
+    # a pergunta atual do 'nada' fique com dois inputs, caso mal feita a logica
+    # ja que essa situacao nao esta testada no app.
+    if (!@frontend_msg) {
+        if (!$stash->{is_finished}) {
+            $add_more_questions = 1;
+            goto ADD_QUESTIONS;
+        }
+
+        # else: acabou, esperar pelo POST para avançar de tela e finalizar o chat.
+    }
+
+    $c->stash('quiz_session' => @frontend_msg);
+
+}
+
+sub _render_question {
+    my ($q, $vars) = @_;
+
+    my $public = {};
+    while (my ($k, $v) = each $q->%*) {
+
+        # ignora as chaves privatas
+        next if $k =~ /^_/;
+
+        if ($k eq 'options' && ref $v eq 'ARRAY') {
+
+            my @new_options;
+
+            # tomar cuidado pra nunca sobreescrever o valor na referencia original
+            foreach my $option ($v->@*) {
+                push @new_options, {
+                    %$option,
+                    display => tt_render($option->{display}, $vars),
+                };
+            }
+
+            $public->{$k} = @new_options;
+
+        }
+        else {
+
+            $public->{$k} = $k =~ /content/ ? tt_render($v, $vars) : $v;
+
+        }
+
+    }
+
+    return $public;
+}
+
+sub has_relevance {
+    my ($vars, $msg) = @_;
+
+    return 1 if $msg->{_relevance} eq '1';
+    return 1 if tt_test_condition($msg->{_relevance}, $vars);
+    return 0;
+}
+
+sub any_has_relevance {
+    my ($vars, $msgs) = @_;
+
+    foreach my $q ($msgs->@*) {
+        return 1 if $q->{_relevance} eq '1';
+        return 1 if has_relevance($vars, $q);
+    }
+
+    return 0;
 }
 
 sub _init_questionnaire_stash {

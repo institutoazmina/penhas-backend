@@ -12,6 +12,11 @@ use Text::Xslate;
 
 use vars qw(@ISA @EXPORT);
 
+state $text_xslate = Text::Xslate->new(
+    syntax => 'TTerse',
+    module => ['Text::Xslate::Bridge::TT2Like'],
+);
+
 @ISA    = (qw(Exporter));
 @EXPORT = qw(
   random_string
@@ -22,6 +27,7 @@ use vars qw(@ISA @EXPORT);
   exec_tx_with_retry
 
   tt_test_condition
+  tt_render
 );
 
 
@@ -83,18 +89,27 @@ sub exec_tx_with_retry {
 
 sub tt_test_condition {
     my ($template, $vars) = @_;
-    state $tx = Text::Xslate->new(
-        syntax => 'TTerse',
-        module => ['Text::Xslate::Bridge::TT2Like'],
-    );
+
+    croak '$template is undef' unless defined $template;
 
     $template = "[% $template %]";
-    my $ret = $tx->render_string($template, $vars);
+    my $ret = $text_xslate->render_string($template, $vars);
     $ret =~ /^\s+/;
     $ret =~ /\s+$/;
 
     #use DDP; p [$template, $vars, $ret];
     return $ret ? 1 : 0;
+}
+
+sub tt_render {
+    my ($template, $vars) = @_;
+
+    my $ret = $text_xslate->render_string($template, $vars);
+    $ret =~ /^\s+/;
+    $ret =~ /\s+$/;
+
+    #use DDP; p [$template, $vars, $ret];
+    return $ret;
 }
 
 1;
