@@ -290,7 +290,8 @@ sub post {
                     ses => $session_id,
                     typ => 'usr'
                 }
-            )
+            ),
+            (is_test() ? (_test_only_id => $directus_id) : ()),
         },
         status => 200,
     );

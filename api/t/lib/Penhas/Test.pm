@@ -176,6 +176,7 @@ sub get_user_session {
     );
 
     my $session;
+    my $user_id;
     if (!cpf_already_exists($random_cpf)) {
         subtest_buffered 'Cadastro com sucesso' => sub {
             my $res = $t->post_ok(
@@ -193,6 +194,7 @@ sub get_user_session {
                 },
             )->status_is(200)->tx->res->json;
             $session = $res->{session};
+            $user_id = $res->{_test_only_id};
         };
     }
     else {
@@ -205,10 +207,11 @@ sub get_user_session {
             }
         )->status_is(200)->tx->res->json;
         $session = $res->{session};
+        $user_id = $res->{_test_only_id};
     }
     die 'missing session' unless $session;
 
-
+    return ($session, $user_id)
 }
 
 1;

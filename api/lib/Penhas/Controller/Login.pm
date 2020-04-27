@@ -5,7 +5,7 @@ use utf8;
 use DateTime;
 use Digest::SHA qw/sha256_hex/;
 use Penhas::Logger;
-use Penhas::Utils qw/random_string/;
+use Penhas::Utils qw/random_string is_test/;
 use MooseX::Types::Email qw/EmailAddress/;
 
 use DateTime::Format::Pg;
@@ -194,6 +194,7 @@ sub post {
                 }
             ),
             senha_falsa => $senha_falsa ? 1 : 0,
+            (is_test() ? (_test_only_id => $directus_id) : ()),
         },
         status => 200,
     );

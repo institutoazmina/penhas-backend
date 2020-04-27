@@ -92,6 +92,8 @@ sub tt_test_condition {
     my $ret = $tx->render_string($template, $vars);
     $ret =~ /^\s+/;
     $ret =~ /\s+$/;
+
+    #use DDP; p [$template, $vars, $ret];
     return $ret ? 1 : 0;
 }
 
