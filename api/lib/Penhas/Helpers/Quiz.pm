@@ -233,7 +233,7 @@ sub load_quiz_session {
         # else: acabou, esperar pelo POST para avançar de tela e finalizar o chat.
     }
 
-    $c->stash('quiz_session' => @frontend_msg);
+    $c->stash('quiz_session' => \@frontend_msg);
 
 }
 
