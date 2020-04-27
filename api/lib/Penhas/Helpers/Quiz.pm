@@ -2,10 +2,11 @@ package Penhas::Helpers::Quiz;
 use common::sense;
 use Penhas::Directus;
 use Carp qw/croak/;
+use Digest::MD5 qw/md5_hex/;
 use Penhas::Utils qw/tt_test_condition/;
 use JSON;
 
-# TODO cache no redis, receber callback para limpar do redis toda vez que mudar
+# a chave do cache é composta por horarios de modificações do quiz_config e questionnaires
 use Penhas::KeyValueStorage;
 
 sub setup {
@@ -20,15 +21,22 @@ sub setup {
             my $questionnaires = $c->directus->search(
                 table => 'questionnaires',
                 form  => {
-                    $ENV{FILTER_QUESTIONNAIRE_IDS}
-                    ? ('filter[id][in]' => $ENV{FILTER_QUESTIONNAIRE_IDS})
-                    : ('filter[active][eq]' => '1')
+                    (
+                        $ENV{FILTER_QUESTIONNAIRE_IDS}
+                        ? ('filter[id][in]' => $ENV{FILTER_QUESTIONNAIRE_IDS})
+                        : ('filter[active][eq]' => '1')
+                    ),
+
+                    fields => '*,quiz_configs.modified_on'
                 }
             );
 
+
             foreach my $q (@{$questionnaires->{data}}) {
+                my $md5 = md5_hex($q->{modified_on} . join ',', map { $_->{modified_on} } $q->{quiz_configs}->@*);
+
                 $q->{quiz_config}
-                  = $c->load_quiz_config(questionnaire_id => $q->{id}, modified_on => $q->{modified_on});
+                  = $c->load_quiz_config(questionnaire_id => $q->{id}, modified_hash => $md5);
             }
 
             $c->stash(questionnaires => $questionnaires->{data});
@@ -40,14 +48,14 @@ sub setup {
         'load_quiz_config' => sub {
             my ($c, %opts) = @_;
 
-            my $id      = $opts{questionnaire_id};
-            my $lastmod = $opts{modified_on};
-            my $kv      = Penhas::KeyValueStorage->instance;
+            my $id        = $opts{questionnaire_id};
+            my $cachehash = $opts{modified_hash};
+            my $kv        = Penhas::KeyValueStorage->instance;
 
-            my $cachekey = "QuizConfig:$id:$lastmod";
+            my $cachekey = "QuizConfig:$id:$cachehash";
             my $config   = $kv->redis_get_cached_or_execute(
                 $cachekey,
-                3600,
+                86400 * 7,    # 7 days
                 sub {
                     return $c->directus->search(
                         table => 'quiz_config',
