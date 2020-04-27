@@ -8,6 +8,7 @@ use Crypt::PRNG qw(random_string random_string_from);
 
 use Carp;
 use Time::HiRes qw//;
+use Text::Xslate;
 
 use vars qw(@ISA @EXPORT);
 
@@ -19,6 +20,8 @@ use vars qw(@ISA @EXPORT);
   is_test
   env
   exec_tx_with_retry
+
+  tt_test_condition
 );
 
 
@@ -65,7 +68,7 @@ sub exec_tx_with_retry {
         if ($err->{code}) {
 
             my $json = $tx->res->json;
-            if ($err->{code} == 422 && $json->{error}{code} && $json->{error}{code}==4){
+            if ($err->{code} == 422 && $json->{error}{code} && $json->{error}{code} == 4) {
                 die 'Invalid form: ' . $description . ' ' . $json->{error}{message};
             }
             die 'Request failed too many times: ' . $description;
@@ -78,5 +81,18 @@ sub exec_tx_with_retry {
     return $tx;
 }
 
+sub tt_test_condition {
+    my ($template, $vars) = @_;
+    state $tx = Text::Xslate->new(
+        syntax => 'TTerse',
+        module => ['Text::Xslate::Bridge::TT2Like'],
+    );
+
+    $template = "[% $template %]";
+    my $ret = $tx->render_string($template, $vars);
+    $ret =~ /^\s+/;
+    $ret =~ /\s+$/;
+    return $ret ? 1 : 0;
+}
 
 1;

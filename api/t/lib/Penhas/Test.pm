@@ -28,7 +28,7 @@ use Test2::Tools::Subtest qw(subtest_buffered subtest_streamed);
 use Test2::Mock;
 use Test::Mojo;
 use Penhas::Logger;
-
+use Digest::SHA qw/sha256_hex/;
 my $redis_ns;
 
 sub END {
@@ -113,9 +113,102 @@ sub db_transaction (&) {
 sub cpf_already_exists {
     my ($cpf) = @_;
 
-    # por enquanto, precisa ir buscar lá no banco do MYSQL
-    return 0;
+    my $cpf_hash = sha256_hex($cpf);
+
+    my $res = app->directus->search_one(
+        table => 'clientes',
+        form  => {'filter[cpf_hash][eq]' => $cpf_hash,}
+    );
+    use DDP;
+    p $res;
+
+    return $res;
 }
 
+sub get_cliente_by_email {
+
+    my $res = app->directus->search_one(
+        table => 'clientes',
+        form  => {
+
+            'filter[email][eq]' => shift,
+
+
+        }
+    );
+
+    return $res;
+}
+
+sub get_forget_password_row {
+
+    my $res = app->directus->search_one(
+        table => 'clientes_reset_password',
+        form  => {
+
+            'filter[cliente_id][eq]' => shift,
+
+
+        }
+    );
+
+    return $res;
+}
+
+sub get_user_session {
+    my $random_cpf   = shift;
+    my $random_email = 'email' . $random_cpf . '@something.com';
+
+    my @other_fields = (
+        raca        => 'pardo',
+        apelido     => 'ca',
+        app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
+        dry         => 0,
+    );
+
+    get_schema->resultset('CpfCache')->find_or_create(
+        {
+            cpf      => '30085070343',
+            dt_nasc  => '1994-01-31',
+            nome     => 'Quiz User Name',
+            situacao => '',
+        }
+    );
+
+    my $session;
+    if (!cpf_already_exists($random_cpf)) {
+        subtest_buffered 'Cadastro com sucesso' => sub {
+            my $res = $t->post_ok(
+                '/signup',
+                form => {
+                    nome_completo => 'Quiz User Name',
+                    cpf           => $random_cpf,
+                    email         => $random_email,
+                    senha         => '123456',
+                    cep           => '12345678',
+                    dt_nasc       => '1994-01-31',
+                    nome_social   => 'foobar lorem',
+                    @other_fields,
+                    genero => 'FemininoTrans',
+                },
+            )->status_is(200)->tx->res->json;
+            $session = $res->{session};
+        };
+    }
+    else {
+        my $res = $t->post_ok(
+            '/login',
+            form => {
+                email       => $random_email,
+                senha       => '123456',
+                app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
+            }
+        )->status_is(200)->tx->res->json;
+        $session = $res->{session};
+    }
+    die 'missing session' unless $session;
+
+
+}
 
 1;

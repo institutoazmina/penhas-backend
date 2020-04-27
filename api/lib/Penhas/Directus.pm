@@ -1,6 +1,7 @@
 package Penhas::Directus;
 use common::sense;
 use MooseX::Singleton;
+use JSON;
 use Penhas::Logger;
 use Penhas::Utils qw/exec_tx_with_retry/;
 use Carp qw/croak/;
@@ -38,8 +39,8 @@ sub create {
         sub {
             $self->ua->post(
                 $self->url_for("items/$collection_name"),
-                $self->default_headers(),
-                form => $opts{form}
+                {%{$self->default_headers()}, 'content-type' => 'application/json'},
+                json => $opts{form}
             );
         }
     );
@@ -88,7 +89,6 @@ sub delete {
 }
 
 
-
 sub search {
     my ($self, %opts) = @_;
 
@@ -128,7 +128,7 @@ sub sum_cpf_errors {
     );
 
     my $total = 0;
-    foreach my $row (@{ $rows->{data} }) {
+    foreach my $row (@{$rows->{data}}) {
         $total += $row->{count};
     }
 
@@ -141,13 +141,13 @@ sub sum_login_errors {
     my $rows = $self->search(
         table => 'login_erros',
         form  => {
-            'filter[created_at][gt]'  => DateTime->now->add( minutes => -60 )->datetime(' '),
-            'filter[cliente_id][eq]'  => ($opts{cliente_id} or croak 'missing cliente_id'),
+            'filter[created_at][gt]' => DateTime->now->add(minutes => -60)->datetime(' '),
+            'filter[cliente_id][eq]' => ($opts{cliente_id} or croak 'missing cliente_id'),
         }
     );
 
     my $total = 0;
-    foreach my $row (@{ $rows->{data} }) {
+    foreach my $row (@{$rows->{data}}) {
         $total += 1;
     }
 

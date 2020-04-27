@@ -132,7 +132,6 @@ sub redis_get_cached_or_execute {
     my $cache_key = $ENV{REDIS_NS} . $key;
 
     my $result = $redis->get($cache_key);
-
     if ($result) {
         return sereal_decode_with_object($sereal_dec, $result);
     }

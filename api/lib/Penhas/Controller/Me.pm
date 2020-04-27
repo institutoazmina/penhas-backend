@@ -35,6 +35,10 @@ sub find {
         $mastodon_session = $mastodon_session->token if $mastodon_session;
     }
 
+    $c->user_get_quiz(
+        user => $user
+    );
+
     return $c->render(
         json => {
             user_profile => {

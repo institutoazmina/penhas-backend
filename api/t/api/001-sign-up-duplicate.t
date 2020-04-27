@@ -277,33 +277,3 @@ subtest_buffered 'Reset de senha' => sub {
 done_testing();
 
 exit;
-
-sub get_cliente_by_email {
-
-    my $res = app->directus->search_one(
-        table => 'clientes',
-        form  => {
-
-            'filter[email][eq]' => shift,
-
-
-        }
-    );
-
-    return $res;
-}
-
-sub get_forget_password_row {
-
-    my $res = app->directus->search_one(
-        table => 'clientes_reset_password',
-        form  => {
-
-            'filter[cliente_id][eq]' => shift,
-
-
-        }
-    );
-
-    return $res;
-}
