@@ -4,7 +4,7 @@ services:
     image: mariadb:10.5.1-bionic
     restart: always
     volumes:
-        - db_data:/var/lib/mysql/data
+        - db_data:/var/lib/mysql
     networks:
         - external_network
     environment:
