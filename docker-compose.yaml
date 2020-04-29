@@ -12,6 +12,7 @@ services:
         MYSQL_USER: "directus"
         MYSQL_PASSWORD: "directus"
         MYSQL_ROOT_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
+    command: mysqld --innodb-buffer-pool-size=256M
 
   directus:
     image: directus/directus:v8-apache
