@@ -5,7 +5,7 @@ use utf8;
 use DateTime;
 use Digest::SHA qw/sha256_hex/;
 use Penhas::Logger;
-use Penhas::Utils qw/random_string random_string_from/;
+use Penhas::Utils qw/random_string random_string_from is_test/;
 
 use Penhas::Types qw/CEP CPF DateStr Genero Nome Raca/;
 use MooseX::Types::Email qw/EmailAddress/;

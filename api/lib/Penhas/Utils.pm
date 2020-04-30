@@ -104,6 +104,8 @@ sub tt_test_condition {
 sub tt_render {
     my ($template, $vars) = @_;
 
+    return '' unless $template;
+
     my $ret = $text_xslate->render_string($template, $vars);
     $ret =~ /^\s+/;
     $ret =~ /\s+$/;

@@ -3,8 +3,9 @@ use common::sense;
 use Penhas::Directus;
 use Carp qw/croak/;
 use Digest::MD5 qw/md5_hex/;
-use Penhas::Utils qw/tt_test_condition tt_render/;
+use Penhas::Utils qw/tt_test_condition tt_render is_test/;
 use JSON;
+use Readonly;
 
 # a chave do cache é composta por horarios de modificações do quiz_config e questionnaires
 use Penhas::KeyValueStorage;
@@ -53,21 +54,25 @@ sub setup {
             my $kv        = Penhas::KeyValueStorage->instance;
 
             my $cachekey = "QuizConfig:$id:$cachehash";
-            my $config   = $kv->redis_get_cached_or_execute(
-                $cachekey,
-                86400 * 7,    # 7 days
-                sub {
-                    return $c->directus->search(
-                        table => 'quiz_config',
-                        form  => {
-                            'status'                       => 'published',
-                            'filter[questionnaire_id][eq]' => $id,
-                            'sort'                         => 'sort,id'
-                        }
-                    )->{data};
-                }
-            );
-            return $config;
+            Readonly::Array my @config => @{
+                $kv->redis_get_cached_or_execute(
+                    $cachekey,
+                    86400 * 7,    # 7 days
+                    sub {
+                        return $c->directus->search(
+                            table => 'quiz_config',
+                            form  => {
+                                'status'                       => 'published',
+                                'filter[questionnaire_id][eq]' => $id,
+                                'sort'                         => 'sort,id'
+                            }
+                        )->{data};
+                    }
+                )
+            };
+            use DDP;
+            p \@config;
+            return \@config;
         }
     );
 
@@ -125,7 +130,11 @@ sub setup {
                 if (!$session) {
                     my $stash = eval { &_init_questionnaire_stash($q, $c) };
                     if ($@) {
-                        $stash = &_get_error_questionnaire_stash($@, $c);
+                        my $err = $@;
+                        die $@ if is_test();
+
+                        #use DDP; p $@;
+                        $stash = &_get_error_questionnaire_stash($err, $c);
                     }
 
                     $session = $c->directus->create(
@@ -301,13 +310,14 @@ sub _init_questionnaire_stash {
     foreach my $qc ($questionnaire->{quiz_config}->@*) {
 
         my $relevance = $qc->{relevance};
-
-        foreach my $intro ($qc->{intro}->@*) {
-            push @questions, {
-                type       => 'displaytext',
-                content    => $intro->{text},
-                _relevance => $relevance,
-            };
+        if (exists $qc->{intro} && $qc->{intro}) {
+            foreach my $intro ($qc->{intro}->@*) {
+                push @questions, {
+                    type       => 'displaytext',
+                    content    => $intro->{text},
+                    _relevance => $relevance,
+                };
+            }
         }
 
         if ($qc->{type} eq 'yesno') {
@@ -479,10 +489,11 @@ sub _get_error_questionnaire_stash {
                 _relevance => '1'
             },
             {
-                type    => 'multiplechoices',
-                content => 'Tente novamente mais tarde, e entre em contato caso o erro persista.',
-                ref     => 'MC_RESET',
-                options => [
+                type       => 'multiplechoices',
+                _relevance => '1',
+                content    => 'Tente novamente mais tarde, e entre em contato caso o erro persista.',
+                ref        => 'MC_RESET',
+                options    => [
                     display => 'Tentar novamente',
                     index   => 0
                 ]
