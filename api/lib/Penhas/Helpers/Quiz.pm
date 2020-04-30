@@ -6,6 +6,8 @@ use Digest::MD5 qw/md5_hex/;
 use Penhas::Utils qw/tt_test_condition tt_render is_test/;
 use JSON;
 use Readonly;
+use Penhas::Logger;
+use Scope::OnExit;
 
 # a chave do cache é composta por horarios de modificações do quiz_config e questionnaires
 use Penhas::KeyValueStorage;
@@ -70,8 +72,9 @@ sub setup {
                     }
                 )
             };
-            use DDP;
-            p \@config;
+
+            #use DDP;
+            #p \@config;
             return \@config;
         }
     );
@@ -82,6 +85,9 @@ sub setup {
             my ($c, %opts) = @_;
             my $user = $opts{user} or croak 'missing user';
 
+            Log::Log4perl::NDC->push('user_get_quiz_session user_id:' . $user->{id});
+            on_scope_exit { Log::Log4perl::NDC->pop };
+
             $c->ensure_questionnaires_loaded();
 
             my @available_quiz;
@@ -90,13 +96,16 @@ sub setup {
             foreach my $q ($c->stash('questionnaires')->@*) {
                 if (tt_test_condition($q->{condition}, $vars)) {
                     push @available_quiz, $q;
+                    slog_info('questionnaires_id:%s criteria matched "%s"', $q->{id}, $q->{condition});
+                }
+                else {
+                    slog_info('questionnaires_id:%s criteria NOT matched "%s"', $q->{id}, $q->{condition});
                 }
             }
 
-            return if !@available_quiz;
+            log_info('user has no quiz available'), return if !@available_quiz;
 
             # tem algum quiz true, entao vamos remover os que o usuario ja completou
-
 
             my %is_finished = map { $_->{questionnaire_id} => 1 } $c->directus->search(
                 table => 'clientes_quiz_session',
@@ -116,8 +125,11 @@ sub setup {
             # e deixar apenas um ativo questionario por vez
             foreach my $q (sort { $a->{name} cmp $b->{name} } @available_quiz) {
 
+                Log::Log4perl::NDC->push('questionnaires_id:' . $q->{id});
+                on_scope_exit { Log::Log4perl::NDC->pop };
+
                 # pula se ja respondeu tudo
-                next if $is_finished{$q->{id}};
+                log_info('is already finished'), next if $is_finished{$q->{id}};
 
                 # procura pela session deste quiz, se nao existir precisamos criar uma
                 my $session = $c->directus->search_one(
@@ -128,14 +140,18 @@ sub setup {
                     }
                 );
                 if (!$session) {
+                    log_info('Running _init_questionnaire_stash');
                     my $stash = eval { &_init_questionnaire_stash($q, $c) };
                     if ($@) {
                         my $err = $@;
+                        slog_error('Running _init_questionnaire_stash FAILED: %s', $err);
                         die $@ if is_test();
 
                         #use DDP; p $@;
                         $stash = &_get_error_questionnaire_stash($err, $c);
                     }
+
+                    slog_info('Create new session with stash=%s', to_json($stash));
 
                     $session = $c->directus->create(
                         table => 'clientes_quiz_session',
@@ -146,7 +162,15 @@ sub setup {
                             responses        => {start_time => time()}
                         }
                     )->{data};
-
+                    log_trace('clientes_quiz_session:created');
+                    slog_info('Created session clientes_quiz_session.id:%s', $session->{id});
+                }
+                else {
+                    log_trace('clientes_quiz_session:loaded');
+                    slog_info(
+                        'Loaded session clientes_quiz_session.id:%s with stash=%s', $session->{id},
+                        to_json($session->{stash})
+                    );
                 }
 
                 return $session;
@@ -165,8 +189,9 @@ sub setup {
 
 sub _quiz_get_vars {
     my ($user, $responses) = @_;
-    use DDP;
-    p [$user, $responses];
+
+    #use DDP;
+    #p [$user, $responses];
     return {cliente => $user, %{$responses || {}}};
 }
 
@@ -187,6 +212,7 @@ sub load_quiz_session {
 
     # se chegar em 0, estamos em loop...
     my $loop_detection = 10;
+    my $update_db      = 0;
   ADD_QUESTIONS:
 
     if (--$loop_detection < 0) {
@@ -211,11 +237,13 @@ sub load_quiz_session {
 
             # joga item pra lista de msg correntes
             push $current_msgs->@*, $item;
+            $update_db++;
         } while !$last;
 
         # chegamos no final do chat
         if ($stash->{pending}->@* == 0) {
             $stash->{is_finished} = 1;
+            $update_db++;
         }
     }
 
@@ -240,6 +268,22 @@ sub load_quiz_session {
         }
 
         # else: acabou, esperar pelo POST para avançar de tela e finalizar o chat.
+    }
+
+    # se teve modificações, entamos vamos escrever a stash de volta no banco
+    # isso eh necessario pois o metodo que o metodo que receba as respostas nao precise "renderizar" o chat
+    # [chamar propria rotina]
+    # e tambem para evitar que ele avance o chat ou receber uma resposta sem sentido mas avançar o chat
+    if ($update_db) {
+
+        #use DDP; p $stash;
+        $c->directus->update(
+            table => 'clientes_quiz_session',
+            id    => $session->{id},
+            form  => {
+                stash => $stash,
+            }
+        )->{data};
     }
 
     $c->stash('quiz_session' => \@frontend_msg);

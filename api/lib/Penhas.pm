@@ -41,6 +41,14 @@ sub startup {
     # Routes.
     Penhas::Routes::register($self->routes);
 
+    $self->hook(
+        around_dispatch => sub {
+            my ($next, $c) = @_;
+            Log::Log4perl::NDC->remove;
+            $next->();
+        }
+    );
+
 
 }
 

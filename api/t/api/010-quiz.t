@@ -28,6 +28,14 @@ my $cadastro = $t->get_ok(
     {'x-api-key' => $session}
 )->status_is(200)->tx->res->json;
 
+is trace_popall(), 'clientes_quiz_session:created', 'clientes_quiz_session was created';
+
+my $cadastro = $t->get_ok(
+    '/me',
+    {'x-api-key' => $session}
+)->status_is(200)->tx->res->json;
+is trace_popall(), 'clientes_quiz_session:loaded', 'clientes_quiz_session was just loaded';
+
 use DDP;
 p $session;
 

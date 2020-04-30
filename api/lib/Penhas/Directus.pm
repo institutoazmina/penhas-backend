@@ -59,8 +59,8 @@ sub update {
         sub {
             $self->ua->patch(
                 $self->url_for("items/$collection_name/$item_id"),
-                $self->default_headers(),
-                form => $opts{form}
+                {%{$self->default_headers()}, 'content-type' => 'application/json'},
+                json => $opts{form}
             );
         }
     );
