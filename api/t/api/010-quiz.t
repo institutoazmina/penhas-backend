@@ -4,6 +4,7 @@ use lib "$RealBin/../lib";
 
 use Penhas::Test;
 my $t = test_instance;
+my $json;
 
 my ($session, $user_id) = get_user_session('30085070343');
 
@@ -30,14 +31,126 @@ my $cadastro = $t->get_ok(
 
 is trace_popall(), 'clientes_quiz_session:created', 'clientes_quiz_session was created';
 
-my $cadastro = $t->get_ok(
+$t->get_ok(
     '/me',
     {'x-api-key' => $session}
-)->status_is(200)->tx->res->json;
+)->status_is(200)->json_has('/quiz_session/session_id')->json_is('/modules/0', 'quiz');
 is trace_popall(), 'clientes_quiz_session:loaded', 'clientes_quiz_session was just loaded';
 
-use DDP;
-p $session;
+
+subtest_buffered 'Testar envio de campo boolean com valor invalido + interpolation de variaveis no intro' => sub {
+    my $field_ref = $cadastro->{quiz_session}{current_msgs}[-1]{ref};
+    $json = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {
+            session_id => $cadastro->{quiz_session}{session_id},
+            $field_ref => 'X',
+        }
+    )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+    my $first_msg  = $json->{quiz_session}{current_msgs}[0];
+    my $second_msg = $json->{quiz_session}{current_msgs}[1];
+    my $third_msg  = $json->{quiz_session}{current_msgs}[2];
+    my $input_msg  = $json->{quiz_session}{current_msgs}[-1];
+    like $first_msg->{content}, qr/$field_ref.+deve ser Y ou N/, "$field_ref nao pode ser X";
+    is $first_msg->{style},     'error',                         'type is error';
+
+
+    is $second_msg->{content}, 'intro1',          'question intro is working';
+    is $third_msg->{content},  'HELLOtest name!', 'question intro interpolation is working';
+    is $input_msg->{content},  'yesno question',  'yesno question question is present';
+};
+
+subtest_buffered 'Seguindo fluxo ate o final usando caminho Y' => sub {
+    my $field_ref = $cadastro->{quiz_session}{current_msgs}[-1]{ref};
+    $json = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {
+            session_id => $cadastro->{quiz_session}{session_id},
+            $field_ref => 'Y',
+        }
+    )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+
+    my $input_msg = $json->{quiz_session}{current_msgs}[-1];
+
+    is $input_msg->{content}, 'question for YES', 'flow is working!';
+    is $input_msg->{type},    'text',             'flow is working!';
+
+    my $rand = rand;
+    $json = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {
+            session_id        => $cadastro->{quiz_session}{session_id},
+            $input_msg->{ref} => $rand,
+        }
+    )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+    my $db_session = app->directus->search_one(
+        table => 'clientes_quiz_session',
+        form  => {
+            'filter[id][eq]' => $cadastro->{quiz_session}{session_id},
+
+        }
+    );
+
+    is $db_session->{responses}{freetext}, $rand, 'responses is updated with random text';
+};
+
+subtest_buffered 'group de questoes boolean' => sub {
+
+    $json = $t->get_ok(
+        '/me',
+        {'x-api-key' => $session}
+    )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+    my $first_msg = $json->{quiz_session}{current_msgs}[0];
+    my $input_msg = $json->{quiz_session}{current_msgs}[-1];
+
+    is $first_msg->{content}, 'a group of yes no questions will start now', 'group question intro text';
+
+    is $input_msg->{type},    'yesno',      'yesno type';
+    is $input_msg->{content}, 'Question A', 'yesno type';
+
+    my $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
+    $json = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {
+            session_id => $cadastro->{quiz_session}{session_id},
+            $field_ref => 'N',
+        }
+    )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+    $first_msg = $json->{quiz_session}{current_msgs}[0];
+    $input_msg = $json->{quiz_session}{current_msgs}[-1];
+    is $first_msg, $input_msg, 'just the new message, no intro';
+
+    is $input_msg->{type},    'yesno',      'yesno type';
+    is $input_msg->{content}, 'Question B', 'yesno type';
+
+    # respondendo a segunda (e ultima) boolean do grupo
+    $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
+    $json = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {
+            session_id => $cadastro->{quiz_session}{session_id},
+            $field_ref => 'Y',
+        }
+    )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+    $first_msg = $json->{quiz_session}{current_msgs}[0];
+    $input_msg = $json->{quiz_session}{current_msgs}[-1];
+
+    is $first_msg, $input_msg, 'just the new message, no intro';
+
+
+};
+
 
 done_testing();
 

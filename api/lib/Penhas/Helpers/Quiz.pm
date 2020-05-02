@@ -12,6 +12,15 @@ use Scope::OnExit;
 # a chave do cache é composta por horarios de modificações do quiz_config e questionnaires
 use Penhas::KeyValueStorage;
 
+sub _new_displaytext {
+    {
+        type       => 'displaytext',
+        content    => $_[0],
+        style      => 'error',
+        _relevance => '1',
+    }
+}
+
 sub setup {
     my $self = shift;
 
@@ -182,7 +191,8 @@ sub setup {
     );
 
 
-    $self->helper('load_quiz_session' => sub { &load_quiz_session(@_) });
+    $self->helper('load_quiz_session'    => sub { &load_quiz_session(@_) });
+    $self->helper('process_quiz_session' => sub { &process_quiz_session(@_) });
 
 
 }
@@ -200,27 +210,30 @@ sub load_quiz_session {
 
     my $user    = $opts{user}    or croak 'missing user';
     my $session = $opts{session} or croak 'missing session';
-    my $responses = $session->{responses};
-    my $stash     = $session->{stash};
+
+    my $update_db    = $opts{update_db} || 0;
+    my @preprend_msg = $opts{preprend_msg} ? @{$opts{preprend_msg}} : ();
+    my $responses    = $session->{responses};
+    my $stash        = $session->{stash};
 
     my $vars = &_quiz_get_vars($user, $responses);
 
-    my $current_msgs = $stash->{current} || [];
+    my $current_msgs = $stash->{current_msgs} || [];
 
     my $is_finished        = $stash->{is_finished};
     my $add_more_questions = &any_has_relevance($vars, $current_msgs) == 0;
 
     # se chegar em 0, estamos em loop...
     my $loop_detection = 10;
-    my $update_db      = 0;
   ADD_QUESTIONS:
 
     if (--$loop_detection < 0) {
         $c->stash(
-            quiz_session => [
-                type    => 'displaytext',
-                content => 'Loop no quiz detectado, entre em contato com o suporte'
-            ]
+            quiz_session => {
+                session_id   => $session->{id},
+                current_msgs => [&_new_displaytext('Loop no quiz detectado, entre em contato com o suporte')],
+                prev_msgs    => $stash->{prev_msgs}
+            }
         );
         return;
     }
@@ -231,6 +244,7 @@ sub load_quiz_session {
         my $last = 0;
         do {
             my $item = shift $stash->{pending}->@*;
+            last if !$item;
 
             # pegamos um item que eh input, entao vamos sair do loop nesta vez
             $last = 1 if $item->{type} ne 'displaytext';
@@ -251,6 +265,7 @@ sub load_quiz_session {
 
     foreach my $q ($current_msgs->@*) {
         my $has = &has_relevance($vars, $q);
+        $q->{_currently_has_relevance} = $has;
         push @frontend_msg, &_render_question($q, $vars) if $has;
     }
 
@@ -266,9 +281,23 @@ sub load_quiz_session {
             $add_more_questions = 1;
             goto ADD_QUESTIONS;
         }
+        else {
+            # acabou sem um input [pois isso aqui eh chamado no GET],
+            # vou colocar um input padrao de finalizar
+            $current_msgs = [
+                {
+                    type       => 'button',
+                    content    => 'Fim!',
+                    _relevance => '1',
+                    action     => 'reload',
+                    label      => 'Continuar',
+                }
+            ];
+        }
 
-        # else: acabou, esperar pelo POST para avançar de tela e finalizar o chat.
     }
+
+    $stash->{current_msgs} = $current_msgs;
 
     # se teve modificações, entamos vamos escrever a stash de volta no banco
     # isso eh necessario pois o metodo que o metodo que receba as respostas nao precise "renderizar" o chat
@@ -276,17 +305,27 @@ sub load_quiz_session {
     # e tambem para evitar que ele avance o chat ou receber uma resposta sem sentido mas avançar o chat
     if ($update_db) {
 
+        slog_info("updating stash to %s",     to_json($stash));
+        slog_info("updating responses to %s", to_json($responses));
+
         #use DDP; p $stash;
         $c->directus->update(
             table => 'clientes_quiz_session',
             id    => $session->{id},
             form  => {
-                stash => $stash,
+                stash     => $stash,
+                responses => $responses,
             }
         )->{data};
     }
 
-    $c->stash('quiz_session' => \@frontend_msg);
+    $c->stash(
+        'quiz_session' => {
+            current_msgs => [@preprend_msg, @frontend_msg],
+            session_id   => $session->{id},
+            prev_msgs    => $opts{caller_is_process} ? undef : $stash->{prev_msgs}
+        }
+    );
 
 }
 
@@ -311,7 +350,7 @@ sub _render_question {
                 };
             }
 
-            $public->{$k} = @new_options;
+            $public->{$k} = \@new_options;
 
         }
         else {
@@ -323,6 +362,125 @@ sub _render_question {
     }
 
     return $public;
+}
+
+
+sub process_quiz_session {
+    my ($c, %opts) = @_;
+
+    my $user    = $opts{user}          or croak 'missing user';
+    my $session = $opts{session}       or croak 'missing session';
+    my $params  = delete $opts{params} or croak 'missing params';
+
+    my $stash        = $session->{stash};
+    my $current_msgs = $stash->{current_msgs} || [];
+    my $responses    = $session->{responses};
+
+    my @preprend_msg;
+
+    my $have_new_responses;
+  QUESTIONS:
+    foreach my $msg (reverse $current_msgs->@*) {
+
+        # se ela nao tava na tela, nao podemos processar as respostas
+        next unless $msg->{_currently_has_relevance};
+
+        my $ref = $msg->{ref};
+        next unless $ref;
+
+        if (exists $params->{$ref}) {
+            my $val  = $params->{$ref} || '';
+            my $code = $msg->{_code};
+            die sprintf "missing `_code` on message %s", to_json($msg) unless $code;
+
+            if ($msg->{type} eq 'yesno') {
+
+                if ($val =~ /^(Y|N)$/) {
+                    if (exists $msg->{_sub}) {
+                        $responses->{$msg->{_sub}{ref}} = $val;
+
+                        if (exists $responses->{$code}) {
+                            if ($responses->{$code} !~ /^\d+/) {
+                                push @preprend_msg,
+                                  &_new_displaytext(
+                                    sprintf(
+                                        'Erro na configuração do quiz! code `%s` já tem um valor não númerico, logo não pode-se somar uma resposta de power2',
+                                        $code
+                                    )
+                                  );
+                                last QUESTIONS;
+                            }
+
+                            $responses->{$code} += $msg->{_sub}{p2a} if $val eq 'Y';
+                        }
+                        else {
+                            $responses->{$code} = $msg->{_sub}{p2a} if $val eq 'Y';
+                        }
+
+
+                        $code = $msg->{_sub}{code} . '_' . $msg->{_sub}{p2a};
+                    }
+
+                    $responses->{$code} = $val;
+                    $msg->{display_response} = $val eq 'Y' ? 'Sim' : 'Não';
+                    $have_new_responses++;
+                }
+                else {
+                    push @preprend_msg, &_new_displaytext(sprintf('Campo %s deve ser Y ou N', $ref));
+                }
+            }
+            elsif ($msg->{type} eq 'text') {
+
+                $responses->{$code} = $val;
+                $msg->{display_response} = $val;
+                $have_new_responses++;
+
+            }
+            elsif ($msg->{type} eq 'multiplechoices') {
+
+            }
+
+        }
+        else {
+            push @preprend_msg, &_new_displaytext(sprintf('Campo %s nao foi enviado', $ref));
+        }
+
+        # vai embora, pois so devemos ter 1 resposta por vez
+        # pelo menos eh assim que eu imagino o uso por enquanto
+        last QUESTIONS if $have_new_responses;
+    }
+
+    # teve respostas, na teoria seria mover as atuais para o "prev_msgs",
+    # mas só devemos movimentar o que estava relevante momento anteriores as respostas
+    if ($have_new_responses) {
+
+        my @keeped;
+
+        for my $msg ($current_msgs->@*) {
+            if (!$msg->{_currently_has_relevance}) {
+                push @keeped, $msg;
+                next;
+            }
+            else {
+                push $stash->{prev_msgs}->@*, $msg;
+            }
+        }
+
+        $stash->{current_msgs} = $current_msgs = \@keeped;
+        $session->{responses}  = $responses;
+
+        # salva as respostas (vai ser chamado no load_quiz_session)
+        $opts{update_db} = 1;
+
+    }
+
+    $c->load_quiz_session(
+        %opts,
+        preprend_msg      => \@preprend_msg,
+        caller_is_process => 1,
+    );
+
+
 }
 
 sub has_relevance {
@@ -358,6 +516,7 @@ sub _init_questionnaire_stash {
             foreach my $intro ($qc->{intro}->@*) {
                 push @questions, {
                     type       => 'displaytext',
+                    style      => 'normal',
                     content    => $intro->{text},
                     _relevance => $relevance,
                 };
@@ -373,9 +532,9 @@ sub _init_questionnaire_stash {
                 _code      => $qc->{code},
             };
         }
-        elsif ($qc->{type} eq 'freetext') {
+        elsif ($qc->{type} eq 'text') {
             push @questions, {
-                type       => 'textinput',
+                type       => 'text',
                 content    => $qc->{question},
                 ref        => 'FT' . $qc->{id},
                 _relevance => $relevance,
@@ -386,6 +545,7 @@ sub _init_questionnaire_stash {
 
             push @questions, {
                 type       => 'displaytext',
+                style      => 'normal',
                 content    => $qc->{question},
                 _relevance => $relevance,
             };
@@ -399,8 +559,13 @@ sub _init_questionnaire_stash {
                     type       => 'yesno',
                     content    => $subq->{question},
                     ref        => 'YN' . $qc->{id} . '_' . $counter,
+                    _code      => $qc->{code},
                     _relevance => $relevance,
-                    _sub       => {ref => $subq->{referencia}, power2 => $subq->{power2answer}, code => $qc->{code}},
+                    _sub       => {
+                        ref  => $qc->{code} . '_' . $subq->{referencia},
+                        p2a  => $subq->{power2answer},
+                        code => $qc->{code}
+                    },
 
                 };
 
@@ -420,13 +585,15 @@ sub _init_questionnaire_stash {
                 type       => 'multiplechoices',
                 content    => $qc->{question},
                 ref        => 'MC' . $qc->{id},
+                _code      => $qc->{code},
                 _relevance => $relevance,
+                options => [],
             };
 
             my $counter = 0;
             foreach my $skill ($skills->{data}->@*) {
-                $ref->{_mc}{$counter} = $skill->{id};
-                push $ref->{options}->@*, {
+                $ref->{_skills}{$counter} = $skill->{id};
+                push @{$ref->{options}}, {
                     display => $skill->{skill},
                     index   => $counter,
                 };
@@ -440,6 +607,7 @@ sub _init_questionnaire_stash {
 
             push @questions, {
                 type          => 'displaytext',
+                style         => 'normal',
                 content       => $qc->{question},
                 _autocontinue => 1,
                 _relevance    => $relevance,
@@ -457,12 +625,16 @@ sub _init_questionnaire_stash {
                 content    => $qc->{question},
                 _relevance => $relevance,
                 action     => $qc->{type},
-                label      => $button_title,
+                label      => $button_title->{$qc->{type}} || 'Ver',
+                _code      => $qc->{code},
             };
 
         }
 
     }
+
+    use DDP;
+    p \@questions;
 
     # verificando se o banco nao tem nada muito inconsistente
     my $dup_by_code = {};
@@ -500,19 +672,22 @@ sub _init_questionnaire_stash {
                 die sprintf "question %s has duplicate reference '%s'\n", to_json($qq), $qq->{_sub}{ref};
             }
 
-            if ($qq->{_sub}{power2} < 1 || !is_power_of_two($qq->{_sub}{power2})) {
+            if ($qq->{_sub}{p2a} < 1 || !is_power_of_two($qq->{_sub}{p2a})) {
                 die sprintf "question %s has invalid power of two (%s is not a valid value)\n", to_json($qq),
-                  $qq->{_sub}{power2};
+                  $qq->{_sub}{p2a};
             }
 
-            if ($dup->{$qq->{_sub}{power2}}++ > 0) {
-                die sprintf "question %s has duplicate power of two(%s)\n", to_json($qq), $qq->{_sub}{power2};
+            if ($dup->{$qq->{_sub}{p2a}}++ > 0) {
+                die sprintf "question %s has duplicate power of two(%s)\n", to_json($qq), $qq->{_sub}{p2a};
             }
         }
 
     }
 
-    my $stash = {pending => \@questions};
+    my $stash = {
+        pending   => \@questions,
+        prev_msgs => []
+    };
 
     return $stash;
 }
@@ -521,26 +696,16 @@ sub _get_error_questionnaire_stash {
     my ($err, $c) = @_;
 
     my $stash = {
-        pending => [
+        prev_msgs => [],
+        pending   => [
+            &_new_displaytext('Encontramos um problema para montar o questionário!'),
+            &_new_displaytext($err . ''),
             {
-                type       => 'displaytext',
-                content    => 'Encontramos um problema para montar o questionário!',
-                _relevance => '1'
-            },
-            {
-                type       => 'displaytext',
-                content    => $err . '',
-                _relevance => '1'
-            },
-            {
-                type       => 'multiplechoices',
-                _relevance => '1',
+                type       => 'button',
                 content    => 'Tente novamente mais tarde, e entre em contato caso o erro persista.',
-                ref        => 'MC_RESET',
-                options    => [
-                    display => 'Tentar novamente',
-                    index   => 0
-                ]
+                _relevance => '1',
+                action     => 'BTN_RESET',
+                label      => 'Tentar agora',
             }
         ]
     };

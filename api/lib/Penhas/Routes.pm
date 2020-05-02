@@ -27,6 +27,10 @@ sub register {
 
     $me->under('/increment-fake-password-usage')->post()->to(action => 'inc_senha_falsa_counter');
 
+    # /me/quiz
+    my $quiz = $me->under('/quiz')->to(controller => 'Me_Quiz', action => 'ensure_user_loaded');
+    $quiz->post()->to(action => 'process');
+
 
 }
 
