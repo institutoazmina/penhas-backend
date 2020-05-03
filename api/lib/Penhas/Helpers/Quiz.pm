@@ -6,6 +6,7 @@ use Digest::MD5 qw/md5_hex/;
 use Penhas::Utils qw/tt_test_condition tt_render is_test/;
 use JSON;
 use Readonly;
+use DateTime;
 use Penhas::Logger;
 use Scope::OnExit;
 
@@ -208,6 +209,7 @@ sub _quiz_get_vars {
 sub load_quiz_session {
     my ($c, %opts) = @_;
 
+
     my $user    = $opts{user}    or croak 'missing user';
     my $session = $opts{session} or croak 'missing session';
 
@@ -226,7 +228,6 @@ sub load_quiz_session {
     # se chegar em 0, estamos em loop...
     my $loop_detection = 10;
   ADD_QUESTIONS:
-
     if (--$loop_detection < 0) {
         $c->stash(
             quiz_session => {
@@ -241,22 +242,27 @@ sub load_quiz_session {
     # nao tem nenhuma relevante pro usuario, pegar todas as pending ate um input
     if ($add_more_questions) {
 
-        my $last = 0;
+        my $is_last_item = 0;
         do {
             my $item = shift $stash->{pending}->@*;
-            last if !$item;
+            if ($item) {
 
-            # pegamos um item que eh input, entao vamos sair do loop nesta vez
-            $last = 1 if $item->{type} ne 'displaytext';
+                # pegamos um item que eh input, entao vamos sair do loop nesta vez
+                $is_last_item = 1 if $item->{type} ne 'displaytext';
 
-            # joga item pra lista de msg correntes
-            push $current_msgs->@*, $item;
+                # joga item pra lista de msg correntes
+                push $current_msgs->@*, $item;
+            }
+            else {
+                $is_last_item = 1;
+            }
+
             $update_db++;
-        } while !$last;
+        } while !$is_last_item;
 
         # chegamos no final do chat
         if ($stash->{pending}->@* == 0) {
-            $stash->{is_finished} = 1;
+            $stash->{is_eof} = 1;
             $update_db++;
         }
     }
@@ -277,22 +283,26 @@ sub load_quiz_session {
     # a pergunta atual do 'nada' fique com dois inputs, caso mal feita a logica
     # ja que essa situacao nao esta testada no app.
     if (!@frontend_msg) {
-        if (!$stash->{is_finished}) {
+        if (!$stash->{is_eof}) {
             $add_more_questions = 1;
             goto ADD_QUESTIONS;
         }
         else {
-            # acabou sem um input [pois isso aqui eh chamado no GET],
-            # vou colocar um input padrao de finalizar
-            $current_msgs = [
-                {
-                    type       => 'button',
-                    content    => 'Fim!',
-                    _relevance => '1',
-                    action     => 'reload',
-                    label      => 'Continuar',
-                }
-            ];
+            if (!$opts{caller_is_process}) {
+
+                # acabou sem um input [pois isso aqui eh chamado no GET],
+                # vou colocar um input padrao de finalizar
+                $current_msgs = [
+                    {
+                        type       => 'button',
+                        content    => 'Fim!',
+                        _relevance => '1',
+                        ref        => 'btn',
+                        action     => 'reload',
+                        label      => 'Continuar',
+                    }
+                ];
+            }
         }
 
     }
@@ -315,17 +325,33 @@ sub load_quiz_session {
             form  => {
                 stash     => $stash,
                 responses => $responses,
+                (
+                    $stash->{is_finished}
+                    ? (finished_at => DateTime->now->datetime(' '))
+                    : ()
+                )
             }
         )->{data};
     }
 
-    $c->stash(
-        'quiz_session' => {
-            current_msgs => [@preprend_msg, @frontend_msg],
-            session_id   => $session->{id},
-            prev_msgs    => $opts{caller_is_process} ? undef : $stash->{prev_msgs}
-        }
-    );
+    if (exists $stash->{is_finished} && $stash->{is_finished}) {
+        $c->stash(
+            'quiz_session' => {
+                finished => 1,
+            }
+        );
+    }
+    else {
+        $c->stash(
+            'quiz_session' => {
+                current_msgs => [@preprend_msg, @frontend_msg],
+                session_id   => $session->{id},
+                prev_msgs    => $opts{caller_is_process}
+                ? undef
+                : [map { &_render_question($_, $vars) } $stash->{prev_msgs}->@*],
+            }
+        );
+    }
 
 }
 
@@ -378,6 +404,7 @@ sub process_quiz_session {
 
     my @preprend_msg;
 
+    my $update_user_skills;
     my $have_new_responses;
   QUESTIONS:
     foreach my $msg (reverse $current_msgs->@*) {
@@ -396,6 +423,9 @@ sub process_quiz_session {
             if ($msg->{type} eq 'yesno') {
 
                 if ($val =~ /^(Y|N)$/) {
+
+                    # processa a questao que o cadastro (code) eh unico
+                    # mas esta espalhada em varias mensagens
                     if (exists $msg->{_sub}) {
                         $responses->{$msg->{_sub}{ref}} = $val;
 
@@ -417,7 +447,6 @@ sub process_quiz_session {
                             $responses->{$code} = $msg->{_sub}{p2a} if $val eq 'Y';
                         }
 
-
                         $code = $msg->{_sub}{code} . '_' . $msg->{_sub}{p2a};
                     }
 
@@ -438,6 +467,66 @@ sub process_quiz_session {
             }
             elsif ($msg->{type} eq 'multiplechoices') {
 
+                # lista de ate 999 numeros
+                if (defined $val && length $val <= 6000 && $val =~ /^(\d{1,4},){0,999}\d{1,4}$/a) {
+
+                    my $reverse_index = {map { $_->{index} => $_->{display} } $msg->{options}->@*};
+
+                    my $output       = '';
+                    my $output_human = '';
+                    foreach my $index (split /,/, $val) {
+
+                        # pula caso venha opcoes invalidas
+                        next unless defined $reverse_index->{$index};
+
+                        $output_human .= $reverse_index->{$index} . ', ';
+                        $output       .= $index . ',';
+
+                        if (exists $msg->{_skills}) {
+                            $update_user_skills = {} unless defined $update_user_skills;
+                            $update_user_skills->{set}{$msg->{_skills}[$index]} = 1;
+                        }
+                    }
+                    chop($output_human);    # rm espaco
+                    chop($output_human);    # rm virgula
+                    chop($output);          # rm virgula
+
+                    $responses->{$code} = $output;
+                    $msg->{display_response} = $output_human;
+                    $have_new_responses++;
+
+                }
+                else {
+                    push @preprend_msg, &_new_displaytext(sprintf('Campo %s deve uma lista de números', $ref));
+                }
+
+            }
+            elsif ($msg->{type} eq 'button') {
+
+                # reiniciar o fluxo
+                if ($msg->{_reset}) {
+                    $c->ensure_questionnaires_loaded();
+                    foreach my $q ($c->stash('questionnaires')->@*) {
+                        next unless $q->{id} == $session->{questionnaire_id};
+                        $stash     = &_init_questionnaire_stash($q, $c);
+                        $responses = {start_time => time()};
+                        $have_new_responses++;
+                        last;
+                    }
+                }
+                else {
+                    $responses->{$code} = $msg->{action};
+                    $msg->{display_response} = $msg->{label};
+                    $have_new_responses++;
+
+                    if ($stash->{is_eof}) {
+                        $stash->{is_finished} = 1;
+                    }
+                }
+
+            }
+            else {
+                push @preprend_msg, &_new_displaytext(sprintf('typo %s não foi programado!', $msg->{type}));
             }
 
         }
@@ -472,6 +561,11 @@ sub process_quiz_session {
         # salva as respostas (vai ser chamado no load_quiz_session)
         $opts{update_db} = 1;
 
+        # chegou ate aqui, sem dar crash, vamos atualizar os skills do usuario
+        if (defined $update_user_skills->{set}) {
+            $c->cliente_set_skill(user => $user, skills => [keys $update_user_skills->{set}->%*]);
+        }
+
     }
 
     $c->load_quiz_session(
@@ -479,7 +573,6 @@ sub process_quiz_session {
         preprend_msg      => \@preprend_msg,
         caller_is_process => 1,
     );
-
 
 }
 
@@ -587,7 +680,7 @@ sub _init_questionnaire_stash {
                 ref        => 'MC' . $qc->{id},
                 _code      => $qc->{code},
                 _relevance => $relevance,
-                options => [],
+                options    => [],
             };
 
             my $counter = 0;
@@ -625,6 +718,7 @@ sub _init_questionnaire_stash {
                 content    => $qc->{question},
                 _relevance => $relevance,
                 action     => $qc->{type},
+                ref        => 'BT' . $qc->{id},
                 label      => $button_title->{$qc->{type}} || 'Ver',
                 _code      => $qc->{code},
             };
@@ -645,7 +739,7 @@ sub _init_questionnaire_stash {
         die "%s is missing _relevance", to_json($qq) if !$qq->{_relevance};
 
         if ($qq->{type} eq 'button') {
-            for my $missing (qw/content action label/) {
+            for my $missing (qw/content action label ref/) {
                 die sprintf "question %s is missing $missing\n", to_json($qq), $missing if !$qq->{$missing};
             }
         }
@@ -704,7 +798,9 @@ sub _get_error_questionnaire_stash {
                 type       => 'button',
                 content    => 'Tente novamente mais tarde, e entre em contato caso o erro persista.',
                 _relevance => '1',
-                action     => 'BTN_RESET',
+                _reset     => 1,
+                ref        => 'btn',
+                action     => 'reload',
                 label      => 'Tentar agora',
             }
         ]

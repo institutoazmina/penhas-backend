@@ -5,6 +5,7 @@ use Penhas::Directus;
 use Penhas::Controller;
 use Penhas::Helpers::CPF;
 use Penhas::Helpers::Quiz;
+use Penhas::Helpers::ClienteSetSkill;
 
 use Carp qw/croak/;
 
@@ -13,6 +14,7 @@ sub setup {
 
     Penhas::Helpers::Quiz::setup($self);
     Penhas::Helpers::CPF::setup($self);
+    Penhas::Helpers::ClienteSetSkill::setup($self);
 
     $self->helper(schema => sub { state $schema = Penhas::SchemaConnected->get_schema(@_) });
 

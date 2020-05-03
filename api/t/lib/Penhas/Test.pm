@@ -1,6 +1,7 @@
 package Mojo::Transaction::Role::PrettyDebug {
     use Mojo::Base -role;
     use Mojo::Util 'term_escape';
+    use DDP;
 
     use constant PRETTY => $ENV{TRACE} || $ENV{MOJO_CLIENT_PRETTY_DEBUG} || 0;
 
@@ -8,7 +9,20 @@ package Mojo::Transaction::Role::PrettyDebug {
         my ($self, $chunk) = @_;
         my $url = $self->req->url->to_abs;
         my $err = $chunk =~ /1\.1\s[45]0/ ? '31' : '32';
-        warn "\x{1b}[${err}m" . term_escape("-- Client <<< Server ($url)\n$chunk") . "\x{1b}[0m\n" if PRETTY;
+
+        if (PRETTY) {
+            my $tmp
+              = $self->res->json && !$ENV{TRACE_JSON}
+              ? $self->res->code . ' '
+              . $self->res->message . "\n"
+              . $self->res->headers->to_string() . "\n"
+              . np($self->res->json, caller_info => 0)
+              : term_escape($chunk);
+
+            warn "\x{1b}[${err}m" . term_escape("-- Server response for $url\n") . $tmp . "\x{1b}[0m\n";
+
+
+        }
     };
 
     around client_write => sub {
@@ -16,7 +30,7 @@ package Mojo::Transaction::Role::PrettyDebug {
         my $self  = shift;
         my $chunk = $self->$orig(@_);
         my $url   = $self->req->url->to_abs;
-        warn "\x{1b}[32m" . term_escape("-- Client >>> Server ($url)\n$chunk") . "\x{1b}[0m\n" if PRETTY;
+        warn "\x{1b}[32m" . term_escape("-- Client requesting $url...\n$chunk") . "\x{1b}[0m\n" if PRETTY;
         return $chunk;
     };
 };
@@ -211,7 +225,7 @@ sub get_user_session {
     }
     die 'missing session' unless $session;
 
-    return ($session, $user_id)
+    return ($session, $user_id);
 }
 
 1;

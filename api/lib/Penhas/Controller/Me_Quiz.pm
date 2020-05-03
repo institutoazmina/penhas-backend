@@ -37,7 +37,6 @@ sub process {
         }
 
         $c->process_quiz_session(user => $user, session => $quiz_session, params => $params);
-
         $extra{quiz_session} = $c->stash('quiz_session');
 
     }
@@ -50,6 +49,8 @@ sub process {
             status => 400,
         );
     }
+
+use DDP; p "here";
 
     return $c->render(
         json   => {%extra},
