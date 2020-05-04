@@ -62,6 +62,7 @@ subtest_buffered 'Testar envio de campo boolean com valor invalido + interpolati
     is $input_msg->{content},  'yesno question',  'yesno question question is present';
 };
 
+my $choose_rand = rand;
 subtest_buffered 'Seguindo fluxo ate o final usando caminho Y' => sub {
     my $field_ref = $cadastro->{quiz_session}{current_msgs}[-1]{ref};
     $json = $t->post_ok(
@@ -79,13 +80,12 @@ subtest_buffered 'Seguindo fluxo ate o final usando caminho Y' => sub {
     is $input_msg->{content}, 'question for YES', 'flow is working!';
     is $input_msg->{type},    'text',             'flow is working!';
 
-    my $rand = rand;
     $json = $t->post_ok(
         '/me/quiz',
         {'x-api-key' => $session},
         form => {
             session_id        => $cadastro->{quiz_session}{session_id},
-            $input_msg->{ref} => $rand,
+            $input_msg->{ref} => $choose_rand,
         }
     )->status_is(200)->json_has('/quiz_session')->tx->res->json;
 
@@ -97,7 +97,7 @@ subtest_buffered 'Seguindo fluxo ate o final usando caminho Y' => sub {
         }
     );
 
-    is $db_session->{responses}{freetext}, $rand, 'responses is updated with random text';
+    is $db_session->{responses}{freetext}, $choose_rand, 'responses is updated with random text';
 };
 
 subtest_buffered 'group de questoes boolean' => sub {
@@ -209,7 +209,8 @@ subtest_buffered 'group de questoes boolean' => sub {
             session_id => $cadastro->{quiz_session}{session_id},
             $field_ref => 1,
         }
-    )->status_is(200)->json_is('/quiz_session/finished', 1)->tx->res->json;
+    )->status_is(200)->json_is('/quiz_session/finished', 1)
+      ->json_is('/quiz_session/end_screen', "freetext=$choose_rand")->tx->res->json;
 
 };
 
@@ -222,5 +223,3 @@ use DDP;
 p $cadastro;
 
 done_testing();
-
-exit;

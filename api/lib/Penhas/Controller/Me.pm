@@ -28,7 +28,7 @@ sub find {
     my $mastodon_session;
 
     my @modules;
-    my $feminino = $user->{genero} eq 'Feminino' || $user->{genero} eq 'MulherTrans';
+    my $feminino = $user->{genero} eq 'Feminino' || $user->{genero} eq 'FemininoTrans';
 
     if ($feminino) {
         $mastodon_session = $c->schema->resultset('OauthAccessToken')->find($c->stash('mastodon_oauth_id'));

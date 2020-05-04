@@ -335,9 +335,19 @@ sub load_quiz_session {
     }
 
     if (exists $stash->{is_finished} && $stash->{is_finished}) {
+
+        my $end_screen = '';
+        $c->ensure_questionnaires_loaded();
+        foreach my $q ($c->stash('questionnaires')->@*) {
+            next unless $q->{id} == $session->{questionnaire_id};
+            $end_screen = $q->{end_screen};
+            last;
+        }
+
         $c->stash(
             'quiz_session' => {
-                finished => 1,
+                finished   => 1,
+                end_screen => tt_render($end_screen, $vars),
             }
         );
     }
