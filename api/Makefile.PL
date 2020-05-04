@@ -165,7 +165,8 @@ my %FallbackPrereqs = (
   "warnings" => 0,
   "IO::Socket::SSL" => 0,
   "Text::Xslate::Bridge::TT2Like" => "0.00010",
-  Readonly => "2.05"
+  Readonly => "2.05",
+  "Text::Xslate" => 0
 );
 
 
