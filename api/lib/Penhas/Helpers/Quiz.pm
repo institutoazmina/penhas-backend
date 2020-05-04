@@ -737,9 +737,6 @@ sub _init_questionnaire_stash {
 
     }
 
-    use DDP;
-    p \@questions;
-
     # verificando se o banco nao tem nada muito inconsistente
     my $dup_by_code = {};
     foreach my $qq (@questions) {
