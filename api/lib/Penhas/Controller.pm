@@ -7,6 +7,8 @@ use Scalar::Util qw(blessed);
 use Penhas::KeyValueStorage;
 my $kv = Penhas::KeyValueStorage->instance;
 
+my $campos_nao_foram_preenchidos = 'Campos não foram preenchidos corretamente';
+
 sub apply_request_per_second_limit {
     my $c       = shift;
     my $limit   = shift || 3;
@@ -71,6 +73,7 @@ sub _reply_exception {
             my $status = delete $an_error->{status} || 400;
             $c->app->log->info('error 400: ' . $c->app->dumper($an_error));
 
+            $an_error->{message} = $campos_nao_foram_preenchidos unless exists $an_error->{message};
             return $c->render(json => $an_error, status => $status,);
         }
         elsif (ref $an_error eq 'REF' && ref $$an_error eq 'ARRAY' && @$$an_error == 2) {
@@ -78,7 +81,10 @@ sub _reply_exception {
             $c->app->log->info('error 400: ' . $c->app->dumper($an_error));
 
             return $c->render(
-                json   => {error => 'form_error', field => $$an_error->[0], reason => $$an_error->[1]},
+                json => {
+                    error   => 'form_error', field => $$an_error->[0], reason => $$an_error->[1],
+                    message => $campos_nao_foram_preenchidos
+                },
                 status => 400,
             );
         }
@@ -120,7 +126,7 @@ sub _reply_exception {
               && UNIVERSAL::can($an_error, 'message') ? $an_error->message : $c->app->dumper($an_error));
     }
 
-    return $c->render(json => {error => "Internal server error"}, status => 500,);
+    return $c->render(json => {error => "Internal server error", message => 'Erro interno'}, status => 500,);
 }
 
 sub validate_request_params {
@@ -134,20 +140,21 @@ sub validate_request_params {
         my $val = $params->{$key};
         $val = '' if !defined $val && $me->{empty_if_undef};
 
+        my %def_message = (message => $campos_nao_foram_preenchidos);
         if (defined($val) && (exists $me->{min_length} || exists $me->{max_length})) {
             my $len     = length $val;
             my $min_len = $me->{min_length};
             my $max_len = $me->{max_length};
 
-            die {error => 'form_error', field => $key, reason => 'invalid_max_length', status => 400}
+            die {error => 'form_error', field => $key, reason => 'invalid_max_length', %def_message, status => 400}
               if (defined($max_len) && $len > $max_len);
 
-            die {error => 'form_error', field => $key, reason => 'invalid_min_length', status => 400}
+            die {error => 'form_error', field => $key, reason => 'invalid_min_length', %def_message, status => 400}
               if (defined($min_len) && $len < $min_len);
         }
 
         if (!defined $val && $me->{required} && !($me->{undef_is_valid} && !defined $val)) {
-            die {error => 'form_error', field => $key, reason => 'is_required', status => 400};
+            die {error => 'form_error', field => $key, reason => 'is_required', %def_message, status => 400};
         }
 
         if (
@@ -160,7 +167,7 @@ sub validate_request_params {
                 || ref $type eq 'MooseX::Types::TypeDecorator')
           )
         {
-            die {error => 'form_error', field => $key, reason => 'is_required'}, status => 400,;
+            die {error => 'form_error', field => $key, reason => 'is_required', %def_message}, status => 400,;
         }
 
         next unless $val;
@@ -172,7 +179,7 @@ sub validate_request_params {
         }
 
         if (!$cons->check($val)) {
-            die {error => 'form_error', field => $key, reason => 'invalid', status => 400};
+            die {error => 'form_error', field => $key, reason => 'invalid', %def_message, status => 400};
         }
     }
 
