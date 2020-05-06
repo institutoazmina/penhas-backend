@@ -127,6 +127,8 @@ sub post {
     if ($nome_cpf ne $nome_titular) {
         &_inc_cpf_invalid_count($c, $cpf_info->cpf, $remote_ip);
 
+        slog_error("nome fornecido != nome_cpf %s vs %s" , $nome_titular, $nome_cpf);
+
         die {
             error   => 'name_not_match',
             message => sprintf('O nome informado (%s) não confere com o titular do CPF. Preencha exatamente como está no documento.', $nome_titular),

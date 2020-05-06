@@ -6,7 +6,7 @@ use Penhas::Test;
 my $t = test_instance;
 my $json;
 
-my ($session, $user_id) = get_user_session('30085070343');
+my ($session, $user_id) = get_user_session('24115775670');
 
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '4,5';
 
@@ -58,7 +58,7 @@ subtest_buffered 'Testar envio de campo boolean com valor invalido + interpolati
 
 
     is $second_msg->{content}, 'intro1',          'question intro is working';
-    is $third_msg->{content},  'HELLOtest name!', 'question intro interpolation is working';
+    is $third_msg->{content},  'HELLOQuiz User Name!', 'question intro interpolation is working';
     is $input_msg->{content},  'yesno question',  'yesno question question is present';
 };
 
