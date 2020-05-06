@@ -228,4 +228,46 @@ sub get_user_session {
     return ($session, $user_id);
 }
 
+sub user_cleanup {
+    my (%opts) = @_;
+
+    my $user_id = $opts{user_id};
+    log_info("Apagando cliente $user_id");
+
+    foreach my $table (
+        qw/
+        clientes_active_sessions
+        clientes_quiz_session
+        clientes_reset_password
+        login_erros
+        login_logs
+        cliente_skills
+        tweets
+        tweets_likes
+        /
+      )
+    {
+        my $res = app->directus->search(
+            table => $table,
+            form  => {
+                'filter[cliente_id][eq]' => $user_id,
+                'fields'                 => 'id'
+            }
+        );
+        my $ids = join ',', map { $_->{id} } $res->{data}->@*;
+        if ($ids) {
+            log_info("delete from $table where ids in $ids...");
+            app->directus->delete(
+                table => $table,
+                id    => $ids
+            );
+        }
+    }
+
+    app->directus->delete(
+        table => 'clientes',
+        id    => $user_id
+    );
+}
+
 1;

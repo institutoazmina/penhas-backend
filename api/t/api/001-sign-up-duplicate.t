@@ -113,6 +113,7 @@ subtest_buffered 'Erro na criação de conta' => sub {
       ->json_is('/reason', 'is_required');
 };
 
+my $cliente_id;
 subtest_buffered 'Cadastro com sucesso' => sub {
     my $res = $t->post_ok(
         '/signup',
@@ -130,6 +131,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
         },
     )->status_is(200)->tx->res->json;
 
+    $cliente_id = $res->{_test_only_id};
     my $cadastro = $t->get_ok(
         '/me',
         {'x-api-key' => $res->{session}}
@@ -273,6 +275,9 @@ subtest_buffered 'Reset de senha' => sub {
     )->status_is(200)->json_has('/session')->json_is('/senha_falsa', 0)->tx->res->json;
 
 };
+
+
+user_cleanup(user_id => $cliente_id);
 
 done_testing();
 
