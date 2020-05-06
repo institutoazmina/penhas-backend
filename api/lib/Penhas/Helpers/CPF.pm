@@ -3,6 +3,7 @@ use common::sense;
 use Penhas::Directus;
 use Carp qw/croak/;
 use Penhas::Utils qw/exec_tx_with_retry/;
+use Penhas::Logger;
 
 sub setup {
     my $self = shift;
@@ -14,7 +15,7 @@ sub setup {
             my $cpf     = $opts{cpf}     || croak 'missing cpf';
             my $dt_nasc = $opts{dt_nasc} || croak 'missing dt_nasc';
 
-            my $found = $self->schema->resultset('CpfCache')->search({cpf => $cpf})->next;
+            my $found = $self->schema->resultset('CpfCache')->search({cpf => $cpf, dt_nasc => $dt_nasc})->next;
 
             return $found if $found;
 
@@ -24,6 +25,7 @@ sub setup {
 
             $dt_nasc =~ /(\d{4})-(\d{2})-(\d{2})/;
             my $dataNascimento = "$3/$2/$1";
+            log_info("Buscando $dataNascimento $cpf...");
 
             my $tx = &exec_tx_with_retry(
                 sub {
