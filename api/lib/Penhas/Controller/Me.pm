@@ -25,15 +25,11 @@ sub find {
 
     my %extra;
     my $user = $c->stash('user');
-    my $mastodon_session;
 
     my @modules;
     my $feminino = $user->{genero} eq 'Feminino' || $user->{genero} eq 'MulherTrans';
 
     if ($feminino) {
-        $mastodon_session = $c->schema->resultset('OauthAccessToken')->find($c->stash('mastodon_oauth_id'));
-        $mastodon_session = $mastodon_session->token if $mastodon_session;
-
         push @modules, qw/timeline chat_privado chat_suporte noticias modo_camuflado modo_anonimo pontos_de_apoio/;
     }
     else {
@@ -68,9 +64,6 @@ sub find {
             esta_em_situcao_de_violencia => $user->{esta_em_situcao_de_violencia} ? 1 : 0,
             mastodon_username            => $user->{mastodon_username},
             senha_falsa_sha256           => $user->{senha_falsa_sha256},
-
-
-            mastodon_session => $mastodon_session,
 
             modules => \@modules,
             %extra
