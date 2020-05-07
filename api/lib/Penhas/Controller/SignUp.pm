@@ -77,26 +77,7 @@ use DDP; p $params->{genero};
               'E-mail já possui uma conta. Por favor, faça o o login, ou utilize a função "Esqueci minha senha".',
             field  => 'email',
             reason => 'duplicate'
-        } if $found->{status} ne 'setup';
-
-        my $directus_id = $found->{id};
-
-        log_info("Email $email [directus id $directus_id] ja tem uma conta com status=setup...");
-        my $exists = $schema->resultset('User')->search({'me.email' => $email})->next();
-
-        # se encontrou no banco, e tambem ja tem no mastodon
-        # mas o status == setup entao tivemos um problema, precisa resolver manualmente
-        die {
-            error   => 'email_already_exists',
-            message => 'Conta com problema de sincronização. Entre em contato com o suporte.',
-            field   => 'email',
-            reason  => 'duplicate'
-        } if $exists;
-
-        log_info("Email $email nao tem existe no mastodon... apagando registro no Directus e continuando");
-
-        # se nao existe, entao podemos apagar e criar uma nova
-        $c->directus->delete(table => 'clientes', id => $directus_id);
+        };
     }
 
     # banir temporariamente quem tentar varias vezes com cpf invalido
@@ -179,95 +160,11 @@ use DDP; p $params->{genero};
             senha_sha256 => sha256_hex($params->{senha}),
 
             (map { $_ => $params->{$_} || '' } qw/genero apelido raca nome_social/),
+            status              => 'active'
         }
     );
     my $directus_id = $row->{data}{id};
     die '$directus_id not defined' unless $directus_id;
-
-    my $exists = $schema->resultset('User')->search({'me.email' => $email})->next();
-    die {
-        error   => 'email_already_exists',
-        message => 'Conta com problema de sincronização. E-mail já existe no mastodon.',
-        field   => 'email',
-        reason  => 'duplicate'
-    } if $exists;
-
-    my $oauth2token;
-    $schema->txn_do(
-        sub {
-            my $loop_times = 0;
-            my @parts      = grep { length > 2 } split / /, $params->{nome_completo};
-            my $handle     = substr($parts[0], 0, 2) . substr($parts[-1], 0, 2);
-
-          AGAIN:
-            my $free_username = $handle . random_string_from('1234567890', ++$loop_times > 10 ? 5 : 3);
-            goto AGAIN if $schema->resultset('Account')->search({'me.username' => $free_username})->count();
-
-            my $acc = $schema->resultset('Account')->create(
-                {
-                    'username'     => $free_username,
-                    'discoverable' => '0',                             # nao aparecer na busca
-                    'actor_type'   => 'Person',
-                    'locked'       => '1',                             # precisa aprovar pra seguir
-                    private_key    => '',
-                    public_key     => '',
-                    created_at     => \'now()',
-                    updated_at     => \'now()',
-                    note           => 'directus-id:' . $directus_id,
-                    (
-                        ($params->{genero} eq 'Feminimo')
-                        ? (
-                            display_name => '(aguardando quiz)',
-                            suspended_at => undef
-                          )
-                        : (
-                            display_name => $params->{nome_completo},
-                            suspended_at => \'now()'
-                        )
-                    ),
-
-                }
-            );
-
-            my $user = $acc->users->create(
-                {
-                    created_at => \'now()',
-                    updated_at => \'now()',
-                    email      => $email,
-
-        # isso faz com que o mastodon de erro, mas eu acho melhor dar erro do que deixar uma fixa pra todos
-        # ou deixar em branco que no momento ele da senha errada, mas poderia mudar pra começar a deixar passar o login
-                    encrypted_password   => '$2a$4$NULL',
-                    confirmed_at         => \'now()',
-                    confirmation_sent_at => \'now()',
-                    confirmation_token   => undef,
-                    approved             => 'true',
-                    locale               => 'pt-BR',
-                }
-            );
-
-            $oauth2token = $user->oauth_access_tokens->create(
-                {
-                    created_at     => \'now()',
-                    scopes         => 'read write follow',
-                    token          => 'APP' . random_string(35),
-                    application_id => 1,                           # web
-                }
-            );
-
-            $c->directus->update(
-                table => 'clientes',
-                id    => $directus_id,
-                form  => {
-                    mastodon_user_id    => $user->id,
-                    mastodon_account_id => $acc->id,
-                    mastodon_username   => $free_username,
-                    status              => 'active'
-                }
-            );
-
-        }
-    );
 
     my $session = $c->directus->create(
         table => 'clientes_active_sessions',
@@ -283,7 +180,6 @@ use DDP; p $params->{genero};
         form  => {
             remote_ip          => $remote_ip,
             cliente_id         => $directus_id,
-            mastodon_oauth2_id => $oauth2token->id,
             app_version        => $params->{app_version},
             created_at         => DateTime->now->datetime(' '),
         }
@@ -293,7 +189,6 @@ use DDP; p $params->{genero};
         json => {
             session => $c->encode_jwt(
                 {
-                    _oi => $oauth2token->id,
                     ses => $session_id,
                     typ => 'usr'
                 }

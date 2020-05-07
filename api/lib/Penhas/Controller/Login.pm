@@ -78,7 +78,7 @@ sub post {
         }
         else {
 
-            # a conta pode ter uma  senha falsa, que pode fazer login, mas sem acesso ao mastodon (apenas dt_nasc)
+            # a conta pode ter uma  senha falsa, que pode fazer login
             if ($found->{senha_falsa_sha256}) {
 
                 if (lc($senha) eq lc($found->{senha_falsa_sha256})) {
@@ -151,20 +151,7 @@ sub post {
         }
     );
 
-
-    my $user = $schema->resultset('User')->find($found->{mastodon_user_id})
-      or die sprintf 'mastodon user %s not found', $found->{mastodon_user_id};
-
-    my $oauth2token = $user->oauth_access_tokens->create(
-        {
-            created_at     => \'now()',
-            scopes         => 'read write follow',
-            token          => 'APP' . random_string(35),
-            application_id => 1,                           # web
-        }
-    );
-
-    my $session = $c->directus->create(
+     my $session = $c->directus->create(
         table => 'clientes_active_sessions',
         form  => {
             cliente_id => $directus_id,
@@ -178,7 +165,6 @@ sub post {
         form  => {
             remote_ip          => $remote_ip,
             cliente_id         => $directus_id,
-            mastodon_oauth2_id => $oauth2token->id,
             app_version        => $params->{app_version},
             created_at         => DateTime->now->datetime(' '),
         }
@@ -188,7 +174,6 @@ sub post {
         json => {
             session => $c->encode_jwt(
                 {
-                    _oi => $oauth2token->id,
                     ses => $session_id,
                     typ => 'usr'
                 }

@@ -41,7 +41,6 @@ sub check_user_jwt {
             $c->stash(
                 apply_rps_on      => 'D' . $user_id,
                 user_id           => $user_id,
-                mastodon_oauth_id => $claims->{_oi},
                 jwt_session_id    => $claims->{ses}
             );
 
