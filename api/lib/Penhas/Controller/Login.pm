@@ -37,7 +37,8 @@ sub post {
 
     # procura pelo email
     my $schema = $c->schema;
-    my $found  = $c->directus->search_one(table => 'clientes', form => {'filter[email][eq]' => $email});
+    my $found  = $c->directus->search_one(table => 'clientes',
+        form => {'filter[email][eq]' => $email, 'filter[status][eq]' => 'active'});
     if ($found) {
         my $directus_id = $found->{id};
         if ($found->{login_status} eq 'NOK' && $found->{login_status_last_blocked_at}) {
@@ -151,7 +152,7 @@ sub post {
         }
     );
 
-     my $session = $c->directus->create(
+    my $session = $c->directus->create(
         table => 'clientes_active_sessions',
         form  => {
             cliente_id => $directus_id,
@@ -163,10 +164,10 @@ sub post {
     $c->directus->create(
         table => 'login_logs',
         form  => {
-            remote_ip          => $remote_ip,
-            cliente_id         => $directus_id,
-            app_version        => $params->{app_version},
-            created_at         => DateTime->now->datetime(' '),
+            remote_ip   => $remote_ip,
+            cliente_id  => $directus_id,
+            app_version => $params->{app_version},
+            created_at  => DateTime->now->datetime(' '),
         }
     );
 

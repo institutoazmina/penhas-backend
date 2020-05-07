@@ -12,6 +12,7 @@ sub check_and_load {
         form  => {
             'filter[id][eq]'     => $c->stash('user_id'),
             'filter[status][eq]' => 'active',
+            'filter[login_status][eq]' => 'OK',
         }
     );
 
