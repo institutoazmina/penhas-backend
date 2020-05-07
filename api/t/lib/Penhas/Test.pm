@@ -204,7 +204,7 @@ sub get_user_session {
                     dt_nasc       => '1994-01-31',
                     nome_social   => 'foobar lorem',
                     @other_fields,
-                    genero => 'FemininoTrans',
+                    genero => 'MulherTrans',
                 },
             )->status_is(200)->tx->res->json;
             $session = $res->{session};

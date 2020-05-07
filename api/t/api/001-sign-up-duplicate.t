@@ -107,7 +107,7 @@ subtest_buffered 'Erro na criação de conta' => sub {
             cep           => '12345678',
             dt_nasc       => '1994-01-31',
             @other_fields,
-            genero => 'FemininoTrans',
+            genero => 'MulherTrans',
         },
     )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'nome_social')
       ->json_is('/reason', 'is_required');
@@ -126,7 +126,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
             dt_nasc       => '1994-01-31',
             nome_social   => 'foobar lorem',
             @other_fields,
-            genero        => 'FemininoTrans',
+            genero        => 'MulherTrans',
 
         },
     )->status_is(200)->tx->res->json;
