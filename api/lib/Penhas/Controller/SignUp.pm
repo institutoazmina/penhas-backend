@@ -45,7 +45,8 @@ sub post {
             $c->validate_request_params(
                 nome_social => {required => 1, type => 'Str'},
             );
-        }else{
+        }
+        else {
             $params->{nome_social} = '';
         }
     }
@@ -110,7 +111,7 @@ sub post {
     my $cpf_info = $c->cpf_lookup(cpf => $cpf, dt_nasc => $params->{dt_nasc});
 
     # a data nao confere...
-    if ($cpf_info->dt_nasc->ymd() ne $params->{dt_nasc}) {
+    if ($cpf_info->nome eq '404' || $cpf_info->dt_nasc->ymd() ne $params->{dt_nasc}) {
         &_inc_cpf_invalid_count($c, $cpf_info->cpf, $remote_ip);
 
         die {
@@ -127,13 +128,16 @@ sub post {
     if ($nome_cpf ne $nome_titular) {
         &_inc_cpf_invalid_count($c, $cpf_info->cpf, $remote_ip);
 
-        slog_error("nome fornecido != nome_cpf %s vs %s" , $nome_titular, $nome_cpf);
+        slog_error("nome fornecido != nome_cpf %s vs %s", $nome_titular, $nome_cpf);
 
         die {
             error   => 'name_not_match',
-            message => sprintf('O nome informado (%s) não confere com o titular do CPF. Preencha exatamente como está no documento.', $nome_titular),
-            field   => 'nome_completo',
-            reason  => 'invalid',
+            message => sprintf(
+                'O nome informado (%s) não confere com o titular do CPF. Preencha exatamente como está no documento.',
+                $nome_titular
+            ),
+            field  => 'nome_completo',
+            reason => 'invalid',
         };
     }
 
