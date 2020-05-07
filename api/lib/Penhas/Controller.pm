@@ -18,11 +18,19 @@ sub apply_request_per_second_limit {
     return 1 unless $key;
     return 1 if $ENV{DISABLE_RPS_LIMITER};
 
-    if ($kv->local_get_count_and_inc(key => $key, expires => $expires) > $limit) {
+    $limit *= 10 if $ENV{IS_DEV};
+
+    my $reqcount = $kv->local_get_count_and_inc(key => $key, expires => $expires);
+    if ($reqcount > $limit) {
         die {
             error   => 'too_many_requests',
-            message => 'Você fez muitos acessos recentemente. Aguarde um minuto e tente novamente.',
-            status  => 429,
+            message => 'Você fez muitos acessos recentemente. Aguarde um minuto e tente novamente.'
+              . (
+                $ENV{IS_DEV}
+                ? ('DEV ONLY: ' . $reqcount . '/' . $limit)
+                : ''
+              ),
+            status => 429,
         };
     }
 }
