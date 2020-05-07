@@ -40,6 +40,7 @@ sub post {
             senha       => {max_length => 200, required => 1, type => 'Str', min_length => 6},
         );
 
+use DDP; p $params->{genero};
         # nome_social quando o genero é trans ou Outro
         if ($params->{genero} =~ /trans|outro/i) {
             $c->validate_request_params(
