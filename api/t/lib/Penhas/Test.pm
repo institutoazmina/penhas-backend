@@ -182,10 +182,10 @@ sub get_user_session {
 
     get_schema->resultset('CpfCache')->find_or_create(
         {
-            cpf      => $random_cpf,
-            dt_nasc  => '1994-01-31',
-            nome     => 'Quiz User Name',
-            situacao => '',
+            cpf_hashed  => cpf_hash_with_salt($random_cpf),
+            dt_nasc     => '1994-01-31',
+            nome_hashed => cpf_hash_with_salt(uc 'Quiz User Name'),
+            situacao    => '',
         }
     );
 

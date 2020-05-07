@@ -5,6 +5,8 @@ use JSON;
 use v5.10;
 use Mojo::URL;
 use Crypt::PRNG qw(random_string random_string_from);
+use Encode qw/encode_utf8/;
+use Digest::SHA qw/sha256_hex/;
 
 use Carp;
 use Time::HiRes qw//;
@@ -28,6 +30,8 @@ state $text_xslate = Text::Xslate->new(
 
   tt_test_condition
   tt_render
+
+  cpf_hash_with_salt
 );
 
 
@@ -113,5 +117,12 @@ sub tt_render {
     #use DDP; p [$template, $vars, $ret];
     return $ret;
 }
+
+sub cpf_hash_with_salt {
+    my ($str) = shift;
+    my $cpf_salt = $ENV{CPF_CACHE_HASH_SALT} or die 'CPF_CACHE_HASH_SALT is not defined';
+    return sha256_hex($cpf_salt . encode_utf8($str));
+}
+
 
 1;

@@ -5,7 +5,7 @@ use utf8;
 use DateTime;
 use Digest::SHA qw/sha256_hex/;
 use Penhas::Logger;
-use Penhas::Utils qw/random_string random_string_from is_test/;
+use Penhas::Utils qw/random_string random_string_from is_test cpf_hash_with_salt/;
 
 use Penhas::Types qw/CEP CPF DateStr Genero Nome Raca/;
 use MooseX::Types::Email qw/EmailAddress/;
@@ -40,7 +40,9 @@ sub post {
             senha       => {max_length => 200, required => 1, type => 'Str', min_length => 6},
         );
 
-use DDP; p $params->{genero};
+        use DDP;
+        p $params->{genero};
+
         # nome_social quando o genero é trans ou Outro
         if ($params->{genero} =~ /trans|outro/i) {
             $c->validate_request_params(
@@ -93,8 +95,8 @@ use DDP; p $params->{genero};
     my $cpf_info = $c->cpf_lookup(cpf => $cpf, dt_nasc => $params->{dt_nasc});
 
     # a data nao confere...
-    if ($cpf_info->nome eq '404' || $cpf_info->dt_nasc->ymd() ne $params->{dt_nasc}) {
-        &_inc_cpf_invalid_count($c, $cpf_info->cpf, $remote_ip);
+    if ($cpf_info->nome_hashed eq '404' || $cpf_info->dt_nasc->ymd() ne $params->{dt_nasc}) {
+        &_inc_cpf_invalid_count($c, $cpf, $remote_ip);
 
         die {
             error   => 'cpf_not_match',
@@ -104,13 +106,14 @@ use DDP; p $params->{genero};
         };
     }
 
-    my $nome_cpf     = uc(unac_string($cpf_info->nome));
-    my $nome_titular = uc(unac_string($params->{nome_completo}));
+    my $nome_titular        = uc(unac_string($params->{nome_completo}));
+    my $nome_titular_hashed = cpf_hash_with_salt($nome_titular);
 
-    if ($nome_cpf ne $nome_titular) {
-        &_inc_cpf_invalid_count($c, $cpf_info->cpf, $remote_ip);
+    if ($cpf_info->nome_hashed ne $nome_titular_hashed) {
+        &_inc_cpf_invalid_count($c, $cpf, $remote_ip);
 
-        slog_error("nome fornecido != nome_cpf %s vs %s", $nome_titular, $nome_cpf);
+        slog_error("nome fornecido != nome_cpf %s %s vs %s", $nome_titular, $nome_titular_hashed,
+            $cpf_info->nome_hashed);
 
         die {
             error   => 'name_not_match',
@@ -160,7 +163,7 @@ use DDP; p $params->{genero};
             senha_sha256 => sha256_hex($params->{senha}),
 
             (map { $_ => $params->{$_} || '' } qw/genero apelido raca nome_social/),
-            status              => 'active'
+            status => 'active'
         }
     );
     my $directus_id = $row->{data}{id};
@@ -178,10 +181,10 @@ use DDP; p $params->{genero};
     $c->directus->create(
         table => 'login_logs',
         form  => {
-            remote_ip          => $remote_ip,
-            cliente_id         => $directus_id,
-            app_version        => $params->{app_version},
-            created_at         => DateTime->now->datetime(' '),
+            remote_ip   => $remote_ip,
+            cliente_id  => $directus_id,
+            app_version => $params->{app_version},
+            created_at  => DateTime->now->datetime(' '),
         }
     );
 

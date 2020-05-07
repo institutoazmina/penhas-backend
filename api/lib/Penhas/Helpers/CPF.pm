@@ -2,7 +2,8 @@ package Penhas::Helpers::CPF;
 use common::sense;
 use Penhas::Directus;
 use Carp qw/croak/;
-use Penhas::Utils qw/exec_tx_with_retry/;
+use Penhas::Utils qw/exec_tx_with_retry cpf_hash_with_salt/;
+use Text::Unaccent::PurePerl qw(unac_string);
 use Penhas::Logger;
 
 sub setup {
@@ -15,7 +16,10 @@ sub setup {
             my $cpf     = $opts{cpf}     || croak 'missing cpf';
             my $dt_nasc = $opts{dt_nasc} || croak 'missing dt_nasc';
 
-            my $found = $self->schema->resultset('CpfCache')->search({cpf => $cpf, dt_nasc => $dt_nasc})->next;
+            my $cpf_hashed = cpf_hash_with_salt($cpf);
+
+            my $found
+              = $self->schema->resultset('CpfCache')->search({cpf_hashed => $cpf_hashed, dt_nasc => $dt_nasc})->next;
 
             return $found if $found;
 
@@ -46,14 +50,15 @@ sub setup {
             # dados encontrados e da match na data de nascimento
             if ($json->{RetornoCpf}{msg}{Resultado} == 1) {
 
+                my $nome = uc(unac_string($json->{RetornoCpf}{DadosTitular}{Titular}));
+
                 return $self->schema->resultset('CpfCache')->create(
                     {
-                        cpf      => $cpf,
-                        dt_nasc  => $dt_nasc,
-                        nome     => $json->{RetornoCpf}{DadosTitular}{Titular},
-                        situacao => $json->{RetornoCpf}{DadosTitular}{Situacao},
-                        genero   => $json->{RetornoCpf}{DadosTitular}{Genero},
-                        nome_mae => $json->{RetornoCpf}{DadosTitular}{NomeMae},
+                        cpf_hashed  => cpf_hash_with_salt($cpf),
+                        dt_nasc     => $dt_nasc,
+                        nome_hashed => cpf_hash_with_salt($nome),
+                        situacao    => $json->{RetornoCpf}{DadosTitular}{Situacao},
+                        genero      => $json->{RetornoCpf}{DadosTitular}{Genero},
                     }
                 );
             }
@@ -62,12 +67,11 @@ sub setup {
                 # nao ta certo, entao vamos salvar no banco pra nao precisar ir la novamente
                 return $self->schema->resultset('CpfCache')->create(
                     {
-                        cpf      => $cpf,
-                        dt_nasc  => $dt_nasc,
-                        nome     => '404',
-                        situacao => '404',
-                        genero   => undef,
-                        nome_mae => undef,
+                        cpf_hashed  => $cpf_hashed,
+                        dt_nasc     => $dt_nasc,
+                        nome_hashed => '404',
+                        situacao    => '404',
+                        genero      => undef,
                     }
                 );
 

@@ -85,5 +85,8 @@ rm lib/Penhas/Schema/Result/Backup.pm
 rm lib/Penhas/Schema/Result/PreviewCardsStatus.pm
 rm lib/Penhas/Schema/Result/PollVote.pm
 rm lib/Penhas/Schema/Result/StatusesTag.pm
+rm lib/Penhas/Schema/Result/Account.pm
+rm lib/Penhas/Schema/Result/User.pm
+rm lib/Penhas/Schema/Result/OauthAccessToken.pm
 
 cd $CWD

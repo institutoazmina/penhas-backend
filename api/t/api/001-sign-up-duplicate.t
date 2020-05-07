@@ -7,6 +7,7 @@ use Penhas::Test;
 my $t = test_instance;
 use Business::BR::CPF qw/random_cpf/;
 
+
 AGAIN:
 my $random_cpf           = random_cpf();
 my $bad_random_cpf       = random_cpf(0);
@@ -26,18 +27,18 @@ my @other_fields = (
 
 get_schema->resultset('CpfCache')->find_or_create(
     {
-        cpf      => $random_cpf,
-        dt_nasc  => '1994-01-31',
-        nome     => 'test name',
-        situacao => '',
+        cpf_hashed  => cpf_hash_with_salt($random_cpf),
+        dt_nasc     => '1994-01-31',
+        nome_hashed => cpf_hash_with_salt(uc 'test name'),
+        situacao    => '',
     }
 );
 get_schema->resultset('CpfCache')->find_or_create(
     {
-        cpf      => $valid_but_wrong_date,
-        dt_nasc  => '1944-10-10',
-        nome     => '404',
-        situacao => '404',
+        cpf_hashed  => cpf_hash_with_salt($valid_but_wrong_date),
+        dt_nasc     => '1944-10-10',
+        nome_hashed => '404',
+        situacao    => '404',
     }
 );
 
@@ -126,7 +127,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
             dt_nasc       => '1994-01-31',
             nome_social   => 'foobar lorem',
             @other_fields,
-            genero        => 'MulherTrans',
+            genero => 'MulherTrans',
 
         },
     )->status_is(200)->tx->res->json;
@@ -138,7 +139,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
     )->status_is(200)->tx->res->json;
 
     is $cadastro->{user_profile}{nome_completo}, 'test name';
-    is $cadastro->{user_profile}{nome_social}, 'foobar lorem';
+    is $cadastro->{user_profile}{nome_social},   'foobar lorem';
 
 
     $t->post_ok(
