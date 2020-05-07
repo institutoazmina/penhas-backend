@@ -72,9 +72,7 @@ coerce CEP, from Str, via {
 subtype Genero, as Str, where {
     my $str = $_;
 
-my $ret = $str =~ /^(Feminino|Masculino|MulherTrans|HomemTrans|Outro)$/ ? 1 : 0;
-use DDP; p [$str, $ret];
-    return $ret;
+    return $str =~ /^(Feminino|Masculino|MulherTrans|HomemTrans|Outro)$/ ? 1 : 0;
 }, message {"$_[0] is not a valid Genero"};
 
 coerce Genero, from Str, via {
