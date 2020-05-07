@@ -8,6 +8,7 @@ use Penhas::Logger;
 use Penhas::Utils qw/random_string random_string_from/;
 use JSON;
 use MooseX::Types::Email qw/EmailAddress/;
+use DateTime::Format::Pg;
 
 my $max_errors_in_24h = $ENV{MAX_CPF_ERRORS_IN_24H} || 20;
 my $digits            = 6;
