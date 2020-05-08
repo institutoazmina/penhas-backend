@@ -2,10 +2,13 @@ package Penhas::Helpers::Timeline;
 use common::sense;
 use Carp qw/croak/;
 use utf8;
+use Penhas::KeyValueStorage;
 
 use JSON;
 use Penhas::Logger;
 use Penhas::Utils;
+
+sub kv { Penhas::KeyValueStorage->instance }
 
 sub setup {
     my $self = shift;
@@ -83,8 +86,24 @@ sub add_tweet {
         $content,
     );
 
-    my $now = DateTime->now;
-    my $id  = substr($now->ymd(''), 2) . substr($now->hms(''), 0, 4) . random_string(6);
+    # captura o horario atual, e depois, fazemos um contador unico (controlado pelo redis),
+    # o redis lembra por 60 segundos de "cada segundo tweetado", just in case
+    # tenha algum retry lentidao na rede e varios tweets tentando processar.
+  AGAIN:
+    my $now     = DateTime->now;
+    my $base    = substr($now->ymd(''), 2) . 'T' . $now->hms('');
+    my $cur_seq = kv->local_inc_then_expire(
+        key     => $base,
+        expires => 60
+    );
+
+    # permite até 9999 tweets em 1 segundo, acho que ta ok pra este app!
+    # se tiver tudo isso de tweet em um segundo, aguarda o proximo segundo!
+    if ($cur_seq == 9999) {
+        sleep 1;
+        goto AGAIN;
+    }
+    my $id = $base . sprintf('%04d', $cur_seq);
 
     my $tweet = $c->directus->create(
         table => 'tweets',

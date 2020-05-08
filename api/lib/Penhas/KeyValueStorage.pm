@@ -63,6 +63,15 @@ if not curval then redis.call('expire', key, ttl) end
 
 return curval
         ~,
+        IncThenExpire => q~
+local current
+current = redis.call("incr", KEYS[1])
+if tonumber(current) == 1 then
+    redis.call("expire",KEYS[1],KEYS[2])
+end
+
+return current
+        ~,
         lockSet => q~
 local key     = KEYS[1]
 local ttl     = KEYS[2]
@@ -144,6 +153,17 @@ sub redis_get_cached_or_execute {
         return $ret;
 
     }
+}
+
+sub local_inc_then_expire {
+    my ($self, %conf) = @_;
+
+    my $ret = eval { ($self->exec_function('IncThenExpire', 2, $ENV{REDIS_NS} . $conf{key}, $conf{expires}))[0] || 0 };
+    if ($@) {
+        log_error("Redis error: $@");
+        return -1;
+    }
+    $ret;
 }
 
 1;

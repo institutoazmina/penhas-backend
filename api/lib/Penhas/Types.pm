@@ -92,7 +92,7 @@ coerce Raca, from Str, via {
 subtype TweetID, as Str, where {
     my $str = $_;
 
-    return $str =~ /^[0-9]{10}[a-zA-Z0-9]{6}$/ ? 1 : 0;
+    return $str =~ /^[0-9]{6}T[0-9]{10}$/ ? 1 : 0;
 }, message {"$_[0] is not a valid TweetID"};
 
 coerce TweetID, from Str, via {

@@ -13,7 +13,7 @@ sub check_user_jwt {
     if ($jwt_key) {
         my $claims = eval { $c->decode_jwt($jwt_key) };
         if ($@) {
-            $c->render(json => {error => "Bad request - Invalid JWT"}, status => 400);
+            $c->render(json => {error => 'expired_jwt', nessage => "Bad request - Invalid JWT"}, status => 400);
             $c->app->log->error("JWT Error: $@");
             return undef;
         }
@@ -29,7 +29,9 @@ sub check_user_jwt {
                 }
             );
             if (!$item) {
-                $c->render(json => {error => "This session was logout"}, status => 403);
+                $c->render(
+                    json => {error => 'jwt_logout', message => "Está sessão não está mais válida (Usuário saiu)"},
+                    status => 403);
                 return undef;
             }
 
@@ -39,9 +41,9 @@ sub check_user_jwt {
             Log::Log4perl::NDC->push('user-id:' . $user_id);
 
             $c->stash(
-                apply_rps_on      => 'D' . $user_id,
-                user_id           => $user_id,
-                jwt_session_id    => $claims->{ses}
+                apply_rps_on   => 'D' . $user_id,
+                user_id        => $user_id,
+                jwt_session_id => $claims->{ses}
             );
 
             $c->res->headers->header('x-extra' => 'user-id:' . $user_id);
@@ -54,7 +56,7 @@ sub check_user_jwt {
         }
     }
 
-    die {status => 401, error => "Not Authenticated"};
+    die {status => 401, error => 'missing_jwt', message => "Not Authenticated"};
 }
 
 1;
