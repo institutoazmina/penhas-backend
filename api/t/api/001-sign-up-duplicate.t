@@ -16,6 +16,8 @@ my $valid_but_wrong_date = '89253398035';
 my $random_email = 'email' . $random_cpf . '@something.com';
 goto AGAIN if cpf_already_exists($random_cpf);
 
+$ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
+
 $ENV{MAX_CPF_ERRORS_IN_24H} = 10000;
 
 my @other_fields = (
@@ -153,6 +155,8 @@ subtest_buffered 'Cadastro com sucesso' => sub {
     )->status_is(403);
 };
 
+on_scope_exit { user_cleanup(user_id => $cliente_id); };
+
 my $session;
 subtest_buffered 'Login' => sub {
     $t->post_ok(
@@ -276,9 +280,6 @@ subtest_buffered 'Reset de senha' => sub {
     )->status_is(200)->json_has('/session')->json_is('/senha_falsa', 0)->tx->res->json;
 
 };
-
-
-user_cleanup(user_id => $cliente_id);
 
 done_testing();
 
