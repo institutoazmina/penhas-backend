@@ -55,7 +55,8 @@ sub get_schema {
     my $dbh = $schema->storage->dbh;
 
     my $confs
-      = $dbh->selectall_arrayref('select "name", "value" from penhas_config where valid_to = \'infinity\'', {Slice => {}});
+      = $dbh->selectall_arrayref('select "name", "value" from penhas_config where valid_to = \'infinity\'',
+        {Slice => {}});
 
     foreach my $kv (@$confs) {
         my ($k, $v) = ($kv->{name}, $kv->{value});
@@ -65,6 +66,10 @@ sub get_schema {
     print STDERR "Loaded " . scalar @$confs . " envs\n";
 
     $ENV{REDIS_NS} ||= '';
+
+    if (!$ENV{CPF_CACHE_HASH_SALT}) {
+        die 'Missing CPF_CACHE_HASH_SALT';
+    }
 
     undef $Penhas::Logger::instance;
 
