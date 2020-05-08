@@ -2,6 +2,7 @@ package Penhas::Controller::Me_Tweets;
 use Mojo::Base 'Penhas::Controller';
 
 use DateTime;
+use Penhas::Types qw/TweetID/;
 
 sub ensure_user_loaded {
     my $c = shift;
@@ -17,15 +18,14 @@ sub process {
     $c->validate_request_params(
         content => {required => 1, type => 'Str', max_length => 500},
     );
-    my $session_id = delete $params->{session_id};
-
     my $user = $c->stash('user');
 
     my $tweet = $c->add_tweet(
         user    => $user,
         content => $params->{content}
     );
-    use DDP; p $tweet;
+    use DDP;
+    p $tweet;
 
     return $c->render(
         json => {
@@ -33,6 +33,27 @@ sub process {
             created_at => $tweet->{created_at}
         },
         status => 200,
+    );
+}
+
+sub delete {
+    my $c = shift;
+
+    my $params = $c->req->params->to_hash;
+    $c->validate_request_params(
+        id => {required => 1, type => TweetID},
+    );
+
+    my $user = $c->stash('user');
+
+    $c->delete_tweet(
+        user => $user,
+        id   => $params->{id}
+    );
+
+    return $c->render(
+        text   => '',
+        status => 204,
     );
 }
 

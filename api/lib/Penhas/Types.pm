@@ -2,7 +2,7 @@ package Penhas::Types;
 use strict;
 use warnings;
 
-use MooseX::Types -declare => [qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome Raca)];
+use MooseX::Types -declare => [qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome Raca TweetID)];
 use MooseX::Types::Moose qw(ArrayRef HashRef CodeRef Str ScalarRef);
 use MooseX::Types::Common::String qw(NonEmptySimpleStr NonEmptyStr);
 use Business::BR::CEP qw(test_cep);
@@ -89,8 +89,15 @@ coerce Raca, from Str, via {
     $_;
 };
 
+subtype TweetID, as Str, where {
+    my $str = $_;
 
+    return $str =~ /^[0-9]{10}[a-zA-Z0-9]{6}$/ ? 1 : 0;
+}, message {"$_[0] is not a valid TweetID"};
 
+coerce TweetID, from Str, via {
+    $_;
+};
 
 subtype Nome, as Str, where {
     my $str = $_;

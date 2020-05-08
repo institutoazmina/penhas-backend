@@ -68,13 +68,22 @@ subtest_buffered 'Tweet' => sub {
 
     ok grep {/timeline/} $cadastro->{modules}->@*, 1, 'modulo timeline presente';
 
-    $t->post_ok(
+    my $res = $t->post_ok(
         '/me/tweets',
         {'x-api-key' => $session},
         form => {
             content => 'ijime dame zettai',
         }
-    );
+    )->status_is(200)->tx->res->json;
+    my $tweet_id = $res->{id};
+
+    $t->delete_ok(
+        '/me/tweets',
+        {'x-api-key' => $session},
+        form => {
+            id => $tweet_id,
+        }
+    )->status_is(204);
 
 };
 

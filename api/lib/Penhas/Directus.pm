@@ -64,6 +64,8 @@ sub update {
             );
         }
     );
+
+    return 1 if $tx->res->code == 204;
     my $res = $tx->res->json or die sprintf 'Response Body is not a json: %s', $tx->res->body;
 
     return $res;

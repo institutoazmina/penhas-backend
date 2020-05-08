@@ -10,9 +10,47 @@ use Penhas::Utils;
 sub setup {
     my $self = shift;
 
-    $self->helper('add_tweet' => sub { &add_tweet(@_) });
+    $self->helper('add_tweet'    => sub { &add_tweet(@_) });
+    $self->helper('delete_tweet' => sub { &delete_tweet(@_) });
 }
 
+sub delete_tweet {
+    my ($c, %opts) = @_;
+
+    my $user = $opts{user} or croak 'missing user';
+    my $id   = $opts{id}   or croak 'missing id';
+
+    slog_info(
+        "del_tweet '%s'",
+        $id,
+    );
+
+    my $item = $c->directus->search_one(
+        table => 'tweets',
+        form  => {
+            form => {
+                'filter[id][eq]'         => $id,
+                'filter[cliente_id][eq]' => $user->{id},
+            }
+        }
+    );
+    die {
+        message => 'Não foi possível encontrar a postagem.',
+        error   => 'tweet_not_found'
+    } if !$item;
+
+    if ($item->{status} eq 'published') {
+        $c->directus->update(
+            table => 'tweets',
+            id    => $item->{id},
+            form  => {
+                status => 'deleted',
+            }
+        );
+    }
+
+    return 1;
+}
 
 sub add_tweet {
     my ($c, %opts) = @_;
@@ -47,9 +85,6 @@ sub add_tweet {
 
     my $now = DateTime->now;
     my $id  = substr($now->ymd(''), 2) . substr($now->hms(''), 0, 4) . random_string(6);
-
-    use DDP;
-    p $id;
 
     my $tweet = $c->directus->create(
         table => 'tweets',
