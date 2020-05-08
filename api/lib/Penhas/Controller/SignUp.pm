@@ -48,7 +48,12 @@ sub post {
             $c->validate_request_params(
                 nome_social => {required => 1, type => 'Str'},
             );
+
+            $c->validate_request_params(
+                genero_outro => {required => 1, type => 'Str', max_length => 200},
+            ) if $params->{genero} eq 'Outro';
         }
+
         else {
             $params->{nome_social} = '';
         }
