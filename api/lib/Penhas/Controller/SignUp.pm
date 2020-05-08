@@ -167,7 +167,7 @@ sub post {
 
             senha_sha256 => sha256_hex($params->{senha}),
 
-            (map { $_ => $params->{$_} || '' } qw/genero apelido raca nome_social/),
+            (map { $_ => $params->{$_} || '' } qw/genero apelido raca nome_social genero_outro/),
             status => 'active'
         }
     );
