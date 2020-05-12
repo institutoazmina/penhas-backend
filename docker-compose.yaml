@@ -61,6 +61,8 @@ services:
         - custom_network
     depends_on:
         - directus
+    links:
+        - db:mysql
 
 volumes:
     db_data: {}
