@@ -19,11 +19,15 @@ sub cliente_set_skill {
     my $user   = $opts{user}   or croak 'missing user';
     my $skills = $opts{skills} or croak 'missing skills';
 
+    my $rs             = $c->schema2->resultset('ClienteSkill');
     my $current_skills = {
-        map { $_->{skill_id} => $_->{id} } $c->directus->search(
-            table => 'cliente_skills',
-            form  => {'filter[cliente_id][eq]' => $user->{id}}
-        )->{data}->@*
+        map { $_->{skill_id} => $_->{id} } $rs->search(
+            {cliente_id => $user->{id}},
+            {
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                columns      => [qw/skill_id id/]
+            }
+        )->all
     };
 
     slog_info(
@@ -38,10 +42,7 @@ sub cliente_set_skill {
         # nao existe, precisa inserir
         if (!$current_skills->{$skill}) {
             slog_info("Adding new skill %s", $skill);
-            $c->directus->create(
-                table => 'cliente_skills',
-                form  => {'cliente_id' => $user->{id}, skill_id => $skill}
-            );
+            $rs->create({cliente_id => $user->{id}, skill_id => $skill});
         }
 
         # remove da lista de "atuais"
@@ -49,13 +50,8 @@ sub cliente_set_skill {
     }
 
     # remove o que sobrou dos "atuais"
-    while (my ($skill, $cliente_skill_id) = each $current_skills->%*) {
-        slog_info("Deleting old skill %s", $skill);
-        $c->directus->delete(
-            table => 'cliente_skills',
-            id    => $cliente_skill_id
-        );
-    }
+    my @ids = values $current_skills->%*;
+    $rs->search({id => {in => \@ids}})->delete() if @ids;
 
     return;
 }

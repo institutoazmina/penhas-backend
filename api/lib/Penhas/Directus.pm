@@ -71,26 +71,6 @@ sub update {
     return $res;
 }
 
-sub delete {
-    my ($self, %opts) = @_;
-
-    my $collection_name = $opts{table} or croak 'missing table';
-    my $item_id         = $opts{id}    or croak 'missing id';
-
-    my $tx = &exec_tx_with_retry(
-        sub {
-            $self->ua->delete(
-                $self->url_for("items/$collection_name/$item_id"),
-                $self->default_headers()
-            );
-        }
-    );
-
-    $tx->res->code == 204 or die sprintf 'Response Body is not a json: %s', $tx->res->body;
-    return 1;
-}
-
-
 sub search {
     my ($self, %opts) = @_;
 

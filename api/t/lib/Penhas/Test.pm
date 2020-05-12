@@ -252,10 +252,7 @@ sub user_cleanup {
         $rs->search({cliente_id => $user_id})->delete;
     }
 
-    app->directus->delete(
-        table => 'clientes',
-        id    => $user_id
-    );
+    app->schema2->resultset('Cliente')->search({id => $user_id})->delete;
 }
 
 1;

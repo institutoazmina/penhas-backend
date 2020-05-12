@@ -18,10 +18,11 @@ my $quiz_sessions = app->directus->search(
 );
 
 foreach ($quiz_sessions->{data}->@*) {
-    app->directus->delete(
-        table => 'clientes_quiz_session',
-        id    => $_->{id}
-    );
+    app->schema2->resultset('ClientesQuizSession')->search(
+        {
+            id => $_->{id}
+        }
+    )->delete;
 }
 
 my $cadastro = $t->get_ok(
@@ -57,9 +58,9 @@ subtest_buffered 'Testar envio de campo boolean com valor invalido + interpolati
     is $first_msg->{style},     'error',                         'type is error';
 
 
-    is $second_msg->{content}, 'intro1',          'question intro is working';
+    is $second_msg->{content}, 'intro1',               'question intro is working';
     is $third_msg->{content},  'HELLOQuiz User Name!', 'question intro interpolation is working';
-    is $input_msg->{content},  'yesno question',  'yesno question question is present';
+    is $input_msg->{content},  'yesno question',       'yesno question question is present';
 };
 
 my $choose_rand = rand;

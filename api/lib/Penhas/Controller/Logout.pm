@@ -4,7 +4,7 @@ use Mojo::Base 'Penhas::Controller';
 sub post {
     my $c = shift;
 
-    $c->directus->delete(table => 'clientes_active_sessions', id => $c->stash('jwt_session_id'));
+    $c->schema2->resultset('ClientesActiveSession')->search({id => $c->stash('jwt_session_id')})->delete;
 
     return $c->render(
         text   => '',
