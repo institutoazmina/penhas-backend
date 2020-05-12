@@ -77,12 +77,22 @@ subtest_buffered 'Tweet' => sub {
     )->status_is(200)->tx->res->json;
     my $tweet_id = $res->{id};
 
-    my $like_res = $t->post_ok(
+    $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'like'),
         {'x-api-key' => $session},
-    )->status_is(200)->tx->res->json;
+    )->status_is(200)->json_is('/qtde_likes', 1);
 
-use DDP; p $like_res;
+    $t->post_ok(
+        (join '/', '/timeline', $tweet_id, 'comment'),
+        {'x-api-key' => $session},
+        form => {content => 'mata itsuka'}
+    )->status_is(200);
+
+    $t->post_ok(
+        (join '/', '/timeline', $tweet_id, 'report'),
+        {'x-api-key' => $session},
+        form => {reason => 'this offends me'}
+    )->status_is(200);
 
     $t->delete_ok(
         '/me/tweets',

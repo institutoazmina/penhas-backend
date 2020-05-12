@@ -11,7 +11,7 @@ sub ensure_user_loaded {
     return 1;
 }
 
-sub process {
+sub add {
     my $c = shift;
 
     my $params = $c->req->params->to_hash;
@@ -21,8 +21,9 @@ sub process {
     my $user = $c->stash('user');
 
     my $tweet = $c->add_tweet(
-        user    => $user,
-        content => $params->{content}
+        user     => $user,
+        content  => $params->{content},
+        reply_to => $c->stash('reply_to'),
     );
     use DDP;
     p $tweet;

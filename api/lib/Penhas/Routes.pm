@@ -33,7 +33,7 @@ sub register {
 
     # /me/tweets
     my $me_tweets = $me->under('/tweets')->to(controller => 'Me_Tweets', action => 'ensure_user_loaded');
-    $me_tweets->post()->to(action => 'process');
+    $me_tweets->post()->to(action => 'add');
     $me_tweets->delete()->to(action => 'delete');
 
     # /timeline/
@@ -44,6 +44,7 @@ sub register {
     my $timeline_object = $timeline->under(':tweet_id')->to(controller => 'Timeline', action => 'load_object');
     $timeline_object->under('comment')->post()->to(action => 'add_comment');
     $timeline_object->under('like')->post()->to(action => 'add_like');
+    $timeline_object->under('report')->post()->to(action => 'add_report');
 
     $timeline_object->get()->to(action => 'detail');
 

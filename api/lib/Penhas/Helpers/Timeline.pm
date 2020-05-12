@@ -17,6 +17,8 @@ sub setup {
     $self->helper('add_tweet'    => sub { &add_tweet(@_) });
     $self->helper('delete_tweet' => sub { &delete_tweet(@_) });
     $self->helper('like_tweet'   => sub { &like_tweet(@_) });
+    $self->helper('report_tweet' => sub { &report_tweet(@_) });
+
 }
 
 sub like_tweet {
@@ -26,7 +28,7 @@ sub like_tweet {
     my $id   = $opts{id}   or croak 'missing id';
 
     slog_info(
-        "like_tweet '%s', user %s",
+        'like_tweet %s, user %s',
         $id,
         $user->{id}
     );
@@ -92,7 +94,7 @@ sub delete_tweet {
     my $id   = $opts{id}   or croak 'missing id';
 
     slog_info(
-        "del_tweet '%s'",
+        'del_tweet %s',
         $id,
     );
 
@@ -132,25 +134,8 @@ sub add_tweet {
 
     # die {message => 'O conteúdo precisa ser menor que 500 caracteres', error => 'tweet_too_long'}
     #   if length $content > 500; Validado no controller
-
-    if ($reply_to) {
-        my $item = $c->directus->search_one(
-            table => 'tweets',
-            form  => {
-                form => {
-                    'filter[id][eq]'     => $reply_to,
-                    'filter[status][eq]' => 'published',
-                }
-            }
-        );
-        die {
-            message => 'Não foi possível comentar, postagem foi removida ou não existe mais.',
-            error   => 'reply_to_not_found'
-        } if !$item;
-    }
-
     slog_info(
-        "add_tweet '%s'",
+        'add_tweet %s',
         $content,
     );
 
@@ -173,6 +158,10 @@ sub add_tweet {
     }
     my $id = $base . sprintf('%04d', $cur_seq);
 
+    my $lock = "tweet_id:$reply_to";
+    kv->lock_and_wait($lock)            if $reply_to;
+    on_scope_exit { kv->unlock($lock) } if $reply_to;
+
     my $tweet = $c->directus->create(
         table => 'tweets',
         form  => {
@@ -186,7 +175,70 @@ sub add_tweet {
         }
     );
     die 'tweet_id missing' unless $tweet->{data}{id};
+
+    if ($reply_to) {
+        my $current = $c->directus->search_one(
+            table => 'tweets',
+            form  => {
+                form => {
+                    'filter[id][eq]' => $id,
+                }
+            }
+        );
+        $c->directus->update(
+            table => 'tweets',
+            id    => $current->{id},
+            form  => {qtde_comentarios => $current->{qtde_comentarios} + 1}
+        ) if $current;
+
+    }
+
     return $tweet->{data};
 }
+
+sub report_tweet {
+    my ($c, %opts) = @_;
+
+    my $user        = $opts{user}   or croak 'missing user';
+    my $reason      = $opts{reason} or croak 'missing reason';
+    my $reported_id = $opts{id}     or croak 'missing id';
+
+    slog_info(
+        'report_tweet %s, %s',
+        $reported_id, $reason,
+    );
+
+    my $lock = "tweet_id:$reported_id";
+    kv->lock_and_wait($lock);
+    on_scope_exit { kv->unlock($lock) };
+
+    my $report = $c->directus->create(
+        table => 'tweets_reports',
+        form  => {
+            reason      => $reason,
+            cliente_id  => $user->{id},
+            reported_id => $reported_id,
+            created_at  => DateTime->now->datetime(' '),
+        }
+    );
+    die 'id missing' unless $report->{data}{id};
+
+    my $current = $c->directus->search_one(
+        table => 'tweets',
+        form  => {
+            form => {
+                'filter[id][eq]' => $reported_id,
+            }
+        }
+    );
+    $c->directus->update(
+        table => 'tweets',
+        id    => $current->{id},
+        form  => {qtde_reportado => $current->{qtde_reportado} + 1}
+    ) if $current;
+
+    return $report->{data};
+}
+
 
 1;

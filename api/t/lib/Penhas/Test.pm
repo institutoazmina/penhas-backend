@@ -244,6 +244,7 @@ sub user_cleanup {
         cliente_skills
         tweets
         tweets_likes
+        tweets_reports
         /
       )
     {
