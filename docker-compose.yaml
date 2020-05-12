@@ -48,6 +48,11 @@ services:
       DIRECUTS_API_TOKEN: "${DIRECUTS_API_TOKEN}"
       REDIS_NS: "${REDIS_NS}"
       DIRECUTS_ENDPOINT: "${DIRECUTS_ENDPOINT}"
+      MYSQL_HOST: "mysql"
+      MYSQL_PORT: "3306"
+      MYSQL_DBNAME: "directus"
+      MYSQL_USER: "directus"
+      MYSQL_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
     volumes:
         - penhas_api_data:/data/
         - ./api/:/src/
