@@ -3,6 +3,7 @@ use common::sense;
 use Carp qw/croak/;
 use utf8;
 use Penhas::KeyValueStorage;
+use Scope::OnExit;
 
 use JSON;
 use Penhas::Logger;
@@ -15,6 +16,73 @@ sub setup {
 
     $self->helper('add_tweet'    => sub { &add_tweet(@_) });
     $self->helper('delete_tweet' => sub { &delete_tweet(@_) });
+    $self->helper('like_tweet'   => sub { &like_tweet(@_) });
+}
+
+sub like_tweet {
+    my ($c, %opts) = @_;
+
+    my $user = $opts{user} or croak 'missing user';
+    my $id   = $opts{id}   or croak 'missing id';
+
+    slog_info(
+        "like_tweet '%s', user %s",
+        $id,
+        $user->{id}
+    );
+
+    my $lock = "tweet_id:$id";
+    kv->lock_and_wait($lock);
+    on_scope_exit { kv->unlock($lock) };
+
+    my $already_liked = $c->directus->search_one(
+        table => 'tweets_likes',
+        form  => {
+            form => {
+                'filter[tweet_id][eq]'   => $id,
+                'filter[cliente_id][eq]' => $user->{id},
+            }
+        }
+    );
+
+    my $likes;
+    if (!$already_liked) {
+        $c->directus->create(
+            table => 'tweets_likes',
+            form  => {
+                tweet_id   => $id,
+                cliente_id => $user->{id}
+            }
+        );
+
+        my $current_likes = $c->directus->search_one(
+            table => 'tweets',
+            form  => {
+                form => {
+                    'filter[id][eq]' => $id,
+                }
+            }
+        );
+        $likes = $current_likes->{qtde_likes} + 1;
+        $c->directus->update(
+            table => 'tweets',
+            id    => $id,
+            form  => {qtde_likes => $likes}
+        );
+    }
+    else {
+        my $current_likes = $c->directus->search_one(
+            table => 'tweets',
+            form  => {
+                form => {
+                    'filter[id][eq]' => $id,
+                }
+            }
+        );
+        $likes = $current_likes->{qtde_likes};
+    }
+
+    return {qtde_likes => $likes};
 }
 
 sub delete_tweet {

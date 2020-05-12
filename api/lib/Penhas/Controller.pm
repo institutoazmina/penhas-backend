@@ -41,6 +41,12 @@ sub reply_not_found {
     die {error => 'Page not found', status => 404,};
 }
 
+sub reply_item_not_found {
+    my $c = shift;
+
+    die {error => 'Item not found', status => 404,};
+}
+
 sub reply_forbidden {
     my $c = shift;
 

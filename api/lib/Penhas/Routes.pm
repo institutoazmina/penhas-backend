@@ -36,16 +36,16 @@ sub register {
     $me_tweets->post()->to(action => 'process');
     $me_tweets->delete()->to(action => 'delete');
 
-    # /tweets/
-    my $tweets = $authenticated->under('/tweets')->to(controller => 'Tweets', action => 'ensure_user_loaded');
-    $tweets->get()->to(action => 'list');
+    # /timeline/
+    my $timeline = $authenticated->under('/timeline')->to(controller => 'Timeline', action => 'ensure_user_loaded');
+    $timeline->get()->to(action => 'list');
 
-    # /tweets/:id
-    my $tweets_object = $tweets->under(':id')->to(controller => 'Tweets', action => 'load_object');
-    $tweets_object->under('comment')->post()->to(action => 'add_comment');
-    $tweets_object->under('like')->post()->to(action => 'add_like');
+    # /timeline/:id
+    my $timeline_object = $timeline->under(':tweet_id')->to(controller => 'Timeline', action => 'load_object');
+    $timeline_object->under('comment')->post()->to(action => 'add_comment');
+    $timeline_object->under('like')->post()->to(action => 'add_like');
 
-    $tweets_object->get()->to(action => 'detail');
+    $timeline_object->get()->to(action => 'detail');
 
 
 }

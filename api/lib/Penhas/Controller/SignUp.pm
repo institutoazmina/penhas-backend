@@ -6,12 +6,15 @@ use DateTime;
 use Digest::SHA qw/sha256_hex/;
 use Penhas::Logger;
 use Penhas::Utils qw/random_string random_string_from is_test cpf_hash_with_salt/;
+use Penhas::KeyValueStorage;
+use Scope::OnExit;
 
 use Penhas::Types qw/CEP CPF DateStr Genero Nome Raca/;
 use MooseX::Types::Email qw/EmailAddress/;
 use Text::Unaccent::PurePerl qw(unac_string);
 
 my $max_errors_in_24h = $ENV{MAX_CPF_ERRORS_IN_24H} || 20;
+sub kv { Penhas::KeyValueStorage->instance }
 
 sub post {
     my $c = shift;
@@ -74,6 +77,10 @@ sub post {
     $c->stash(apply_rps_on => substr($remote_ip, 0, 18));
     $c->apply_request_per_second_limit(3, 60);
 
+    my $lock = "email:$email";
+    kv->lock_and_wait($lock);
+    on_scope_exit { kv->unlock($lock) };
+
     # email deve ser unico
     my $schema = $c->schema;
     my $found = $email ? $c->directus->search_one(table => 'clientes', form => {'filter[email][eq]' => $email}) : undef;
@@ -117,8 +124,10 @@ sub post {
     if ($cpf_info->nome_hashed ne $nome_titular_hashed) {
         &_inc_cpf_invalid_count($c, $cpf, $remote_ip);
 
-        slog_error("nome fornecido != nome_cpf %s %s vs %s", $nome_titular, $nome_titular_hashed,
-            $cpf_info->nome_hashed);
+        slog_error(
+            "nome fornecido != nome_cpf %s %s vs %s", $nome_titular, $nome_titular_hashed,
+            $cpf_info->nome_hashed
+        );
 
         die {
             error   => 'name_not_match',
@@ -133,6 +142,10 @@ sub post {
 
     # TODO
     # poderia verificar se o genero bate, mas nao tem isso no retorno por enquanto
+
+    my $lock2 = "cpf:$cpf";
+    kv->lock_and_wait($lock2);
+    on_scope_exit { kv->unlock($lock2) };
 
     # cpf ja existe
     my $cpf_hash = sha256_hex($cpf);
