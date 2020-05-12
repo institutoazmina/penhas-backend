@@ -10,7 +10,7 @@ use MooseX::Types::Email qw/EmailAddress/;
 
 use DateTime::Format::Pg;
 
-my $max_email_errors_before_lock   = $ENV{MAX_EMAIL_ERRORS_BEFORE_LOCK}   || 3;
+my $max_email_errors_before_lock   = $ENV{MAX_EMAIL_ERRORS_BEFORE_LOCK}   || 15;
 my $wait_seconds_to_account_unlock = $ENV{WAIT_SECONDS_TO_ACCOUNT_UNLOCK} || 86400;
 
 sub post {
@@ -37,8 +37,10 @@ sub post {
 
     # procura pelo email
     my $schema = $c->schema;
-    my $found  = $c->directus->search_one(table => 'clientes',
-        form => {'filter[email][eq]' => $email, 'filter[status][eq]' => 'active'});
+    my $found  = $c->schema2->resultset('Cliente')->search(
+        {email        => $email, status => 'active'},
+        {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
+    )->next;
     if ($found) {
         my $directus_id = $found->{id};
         if ($found->{login_status} eq 'NOK' && $found->{login_status_last_blocked_at}) {
@@ -152,18 +154,13 @@ sub post {
         }
     );
 
-    my $session = $c->directus->create(
-        table => 'clientes_active_sessions',
-        form  => {
-            cliente_id => $directus_id,
-        }
+    my $session = $c->schema2->resultset('ClientesActiveSession')->create(
+        {cliente_id => $directus_id},
     );
-    my $session_id = $session->{data}{id};
-    die '$session_id not defined' unless $session_id;
+    my $session_id = $session->id;
 
-    $c->directus->create(
-        table => 'login_logs',
-        form  => {
+    $c->schema2->resultset('LoginLog')->create(
+        {
             remote_ip   => $remote_ip,
             cliente_id  => $directus_id,
             app_version => $params->{app_version},
