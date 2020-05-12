@@ -18,7 +18,9 @@ sub setup {
     Penhas::Helpers::Timeline::setup($self);
     Penhas::Helpers::ClienteSetSkill::setup($self);
 
-    $self->helper(schema => sub { state $schema = Penhas::SchemaConnected->get_schema(@_) });
+    $self->helper(schema  => sub { state $schema  = Penhas::SchemaConnected->get_schema(@_) });
+    $self->helper(schema2 => sub { state $schema2 = Penhas::SchemaConnected->get_schema2(@_) });
+    $self->helper(sum_cpf_errors => sub { &sum_cpf_errors(@_) });
 
     $self->helper(
         remote_addr => sub {
@@ -53,6 +55,19 @@ sub setup {
 
     $self->helper(directus => sub { Penhas::Directus->instance });
 
+}
+
+sub sum_cpf_errors {
+    my ($self, %opts) = @_;
+
+    # contar quantas vezes o IP ja errou no ultimo dia
+    my $total = $self->schema2->resultset('CpfErro')->search(
+        {
+            'reset_at'  => {'>' => DateTime->now->datetime(' ')},
+            'remote_ip' => ($opts{remote_ip} or croak 'missing remote_ip'),
+        }
+    )->get_column('count')->sum();
+    return $total;
 }
 
 

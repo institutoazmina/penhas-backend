@@ -1,6 +1,5 @@
 package Penhas::Helpers::CPF;
 use common::sense;
-use Penhas::Directus;
 use Carp qw/croak/;
 use Penhas::Utils qw/exec_tx_with_retry cpf_hash_with_salt/;
 use Text::Unaccent::PurePerl qw(unac_string);

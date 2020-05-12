@@ -26,6 +26,11 @@ USER app
 ADD install-cpan-modules.sh /tmp/install-cpan-modules.sh
 RUN /tmp/install-cpan-modules.sh
 
+USER root
+RUN apt-get update && apt-get install -y \
+    libmariadbclient-dev \
+&& rm -rf /var/lib/apt/lists/* && apt-get clean
+
 USER app
 
 ADD Makefile_local.PL /tmp/Makefile.PL

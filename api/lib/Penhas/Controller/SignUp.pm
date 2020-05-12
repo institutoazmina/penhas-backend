@@ -83,7 +83,7 @@ sub post {
 
     # email deve ser unico
     my $schema = $c->schema;
-    my $found = $email ? $c->directus->search_one(table => 'clientes', form => {'filter[email][eq]' => $email}) : undef;
+    my $found  = $email ? $c->schema2->resultset('Cliente')->search({email => $email})->next : undef;
     if ($found) {
         die {
             error => 'email_already_exists',
@@ -95,7 +95,7 @@ sub post {
     }
 
     # banir temporariamente quem tentar varias vezes com cpf invalido
-    if ($c->directus->sum_cpf_errors(remote_ip => $remote_ip) > $max_errors_in_24h) {
+    if ($c->sum_cpf_errors(remote_ip => $remote_ip) > $max_errors_in_24h) {
         die {
             error   => 'too_many_requests',
             message => 'Você fez muitos acessos recentemente. Aguarde e tente novamente.',
@@ -149,8 +149,7 @@ sub post {
 
     # cpf ja existe
     my $cpf_hash = sha256_hex($cpf);
-
-    $found = $c->directus->search_one(table => 'clientes', form => {'filter[cpf_hash][eq]' => $cpf_hash});
+    $found = $c->schema2->resultset('Cliente')->search({cpf_hash => $cpf_hash})->next;
     if ($found) {
         die {
             error => 'cpf_already_exists',
@@ -187,18 +186,13 @@ sub post {
     my $directus_id = $row->{data}{id};
     die '$directus_id not defined' unless $directus_id;
 
-    my $session = $c->directus->create(
-        table => 'clientes_active_sessions',
-        form  => {
-            cliente_id => $directus_id,
-        }
+    my $session = $c->schema2->resultset('ClientesActiveSession')->create(
+        {cliente_id => $directus_id},
     );
-    my $session_id = $session->{data}{id};
-    die '$session_id not defined' unless $session_id;
+    my $session_id = $session->id;
 
-    $c->directus->create(
-        table => 'login_logs',
-        form  => {
+    $c->schema2->resultset('LoginLog')->create(
+        {
             remote_ip   => $remote_ip,
             cliente_id  => $directus_id,
             app_version => $params->{app_version},

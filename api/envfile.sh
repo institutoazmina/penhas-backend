@@ -9,3 +9,8 @@ export SQITCH_DEPLOY="docker"
 export API_PORT="8080"
 export API_WORKERS="1"
 
+export MYSQL_HOST="localhost"
+export MYSQL_PORT="3306"
+export MYSQL_DBNAME="directus"
+export MYSQL_USER="username"
+export MYSQL_PASSWORD="password"

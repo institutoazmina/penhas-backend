@@ -6,10 +6,12 @@ use Config::General;
 require Exporter;
 
 our @ISA    = qw(Exporter);
-our @EXPORT = qw(get_schema get_connect_info);
+our @EXPORT = qw(get_schema get_connect_info get_schema2);
 my $schema_instance;
+my $schema2_instance;
 
 use Penhas::Schema;
+use Penhas::Schema2;
 use Penhas::Logger;
 
 sub get_connect_info {
@@ -54,9 +56,10 @@ sub get_schema {
 
     my $dbh = $schema->storage->dbh;
 
-    my $confs
-      = $dbh->selectall_arrayref('select "name", "value" from penhas_config where valid_to = \'infinity\'',
-        {Slice => {}});
+    my $confs = $dbh->selectall_arrayref(
+        'select "name", "value" from penhas_config where valid_to = \'infinity\'',
+        {Slice => {}}
+    );
 
     foreach my $kv (@$confs) {
         my ($k, $v) = ($kv->{name}, $kv->{value});
@@ -76,5 +79,37 @@ sub get_schema {
     $schema_instance = $schema;
     return $schema_instance;
 }
+
+
+sub get_connect_info2 {
+    my $host     = $ENV{MYSQL_HOST}     || '127.0.0.1';
+    my $port     = $ENV{MYSQL_PORT}     || 3306;
+    my $user     = $ENV{MYSQL_USER}     || 'root';
+    my $password = $ENV{MYSQL_PASSWORD} || 'pass';
+    my $dbname   = $ENV{MYSQL_DBNAME}   || 'directus';
+
+    return {
+        dsn                  => "dbi:mysql:dbname=$dbname;host=$host;port=$port",
+        user                 => $user,
+        password             => $password,
+        AutoCommit           => 1,
+        RaiseError           => 1,
+        mysql_enable_utf8    => 1,
+        mysql_auto_reconnect => 1,
+
+    };
+}
+
+sub get_schema2 {
+    return $schema2_instance if $schema2_instance;
+
+    my $schema = Penhas::Schema2->connect(get_connect_info2());
+
+    my $dbh = $schema->storage->dbh;
+
+    $schema2_instance = $schema;
+    return $schema2_instance;
+}
+
 
 1;

@@ -15,11 +15,10 @@ dbicdump -o dump_directory=./lib \
              -o 'overwrite_modifications'=1 \
              -o 'generate_pod'=0 \
              -o result_base_class='Penhas::Schema::Base' \
-             -o db_schema=public \
-             -o constraint='qr/^(?:Penhas|Emaildb|Cpf)/i' \
+             -o exclude='qr/directus/i' \
              -o filter_generated_code='sub {my ( $type, $class, $text ) = @_; return "#<<<\n$text#>>>"; }' \
-             Penhas::Schema \
-             "dbi:Pg:dbname=${POSTGRESQL_DBNAME};host=${POSTGRESQL_HOST};port=${POSTGRESQL_PORT}" $POSTGRESQL_USER $POSTGRESQL_PASSWORD
+             Penhas::Schema2 \
+             "dbi:mysql:dbname=${MYSQL_DBNAME};host=${MYSQL_HOST};port=${MYSQL_PORT}" $MYSQL_USER $MYSQL_PASSWORD
 
 
 

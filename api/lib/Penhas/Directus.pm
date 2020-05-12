@@ -117,26 +117,6 @@ sub search_one {
     return $res->{data}[0];
 }
 
-sub sum_cpf_errors {
-    my ($self, %opts) = @_;
-
-    # contar quantas vezes o IP ja errou no ultimo dia
-    my $rows = $self->search(
-        table => 'cpf_erros',
-        form  => {
-            'filter[reset_at][gt]'  => DateTime->now->datetime(' '),
-            'filter[remote_ip][eq]' => ($opts{remote_ip} or croak 'missing remote_ip'),
-        }
-    );
-
-    my $total = 0;
-    foreach my $row (@{$rows->{data}}) {
-        $total += $row->{count};
-    }
-
-    return $total;
-}
-
 sub sum_login_errors {
     my ($self, %opts) = @_;
 

@@ -236,33 +236,20 @@ sub user_cleanup {
 
     foreach my $table (
         qw/
-        clientes_active_sessions
-        clientes_quiz_session
-        clientes_reset_password
-        login_erros
-        login_logs
-        cliente_skills
-        tweets
-        tweets_likes
-        tweets_reports
+        ClientesQuizSession
+        ClientesActiveSession
+        ClienteSkill
+        ClientesResetPassword
+        LoginErro
+        Tweet
+        TweetLikes
+        TweetsReport
         /
       )
     {
-        my $res = app->directus->search(
-            table => $table,
-            form  => {
-                'filter[cliente_id][eq]' => $user_id,
-                'fields'                 => 'id'
-            }
-        );
-        my $ids = join ',', map { $_->{id} } $res->{data}->@*;
-        if ($ids) {
-            log_info("delete from $table where ids in $ids...");
-            app->directus->delete(
-                table => $table,
-                id    => $ids
-            );
-        }
+        my $rs = app->schema2->resultset($table);
+        log_info("delete from $table where cliente_id = $user_id ");
+        $rs->search({cliente_id => $user_id})->delete;
     }
 
     app->directus->delete(
