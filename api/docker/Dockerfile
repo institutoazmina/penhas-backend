@@ -28,7 +28,7 @@ RUN /tmp/install-cpan-modules.sh
 
 USER root
 RUN apt-get update && apt-get install -y \
-    libmariadbclient-dev \
+    libmysqlclient-dev \
 && rm -rf /var/lib/apt/lists/* && apt-get clean
 
 USER app
