@@ -7,14 +7,15 @@ sub check_and_load {
     my $c = shift;
 
     die 'missing user_id' unless $c->stash('user_id');
-    my $user = $c->directus->search_one(
-        table => 'clientes',
-        form  => {
-            'filter[id][eq]'     => $c->stash('user_id'),
-            'filter[status][eq]' => 'active',
-            'filter[login_status][eq]' => 'OK',
-        }
-    );
+
+    my $user = $c->schema2->resultset('Cliente')->search(
+        {
+            'id'           => $c->stash('user_id'),
+            'status'       => 'active',
+            'login_status' => 'OK',
+        },
+        {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
+    )->next;
 
     $c->reply_not_found() unless $user;
     $c->stash('user' => $user);

@@ -1,6 +1,5 @@
 package Penhas::Helpers::Quiz;
 use common::sense;
-use Penhas::Directus;
 use Carp qw/croak/;
 use Digest::MD5 qw/md5_hex/;
 use Penhas::Utils qw/tt_test_condition tt_render is_test/;
@@ -117,19 +116,19 @@ sub setup {
 
             # tem algum quiz true, entao vamos remover os que o usuario ja completou
 
-            my %is_finished = map { $_->{questionnaire_id} => 1 } $c->directus->search(
-                table => 'clientes_quiz_session',
-                form  => {
-
-                    # finished_at IS NOT NULL
-                    'filter[finished_at][nnull]'   => 1,
-                    'filter[cliente_id][eq]'       => $user->{id},
-                    'filter[questionnaire_id][in]' => (join ',', map { $_->{id} } @available_quiz),
-
+            my $rs          = $c->schema2->resultset('ClientesQuizSession');
+            my %is_finished = map { $_->{questionnaire_id} => 1 } $rs->search(
+                {
+                    'finished_at'      => {'!=' => undef},
+                    'cliente_id'       => $user->{id},
+                    'questionnaire_id' => {'in' => [map { $_->{id} } @available_quiz]},
+                },
+                {
                     # só precisamos deste campo
-                    'fields' => 'questionnaire_id'
+                    'columns'    => ['questionnaire_id'],
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator'
                 }
-            )->{data}->@*;
+            )->all;
 
             # esta muito simples por enquanto, vou ordenar pelo nome
             # e deixar apenas um ativo questionario por vez
@@ -142,13 +141,13 @@ sub setup {
                 log_info('is already finished'), next if $is_finished{$q->{id}};
 
                 # procura pela session deste quiz, se nao existir precisamos criar uma
-                my $session = $c->directus->search_one(
-                    table => 'clientes_quiz_session',
-                    form  => {
-                        'filter[cliente_id][eq]'       => $user->{id},
-                        'filter[questionnaire_id][eq]' => $q->{id},
-                    }
-                );
+                my $session = $rs->search(
+                    {
+                        'cliente_id'       => $user->{id},
+                        'questionnaire_id' => $q->{id},
+                    },
+                    {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
+                )->next;
                 if (!$session) {
                     log_info('Running _init_questionnaire_stash');
                     my $stash = eval { &_init_questionnaire_stash($q, $c) };
@@ -163,15 +162,16 @@ sub setup {
 
                     slog_info('Create new session with stash=%s', to_json($stash));
 
-                    $session = $c->directus->create(
-                        table => 'clientes_quiz_session',
-                        form  => {
+                    $session = $rs->create(
+                        {
                             cliente_id       => $user->{id},
                             questionnaire_id => $q->{id},
-                            stash            => $stash,
-                            responses        => {start_time => time()}
+                            stash            => to_json($stash),
+                            responses        => to_json({start_time => time()}),
+                            created_at       => DateTime->now->datetime(' '),
                         }
-                    )->{data};
+                    );
+                    $session = {$session->get_columns};
                     log_trace('clientes_quiz_session:created');
                     slog_info('Created session clientes_quiz_session.id:%s', $session->{id});
                 }
@@ -179,9 +179,12 @@ sub setup {
                     log_trace('clientes_quiz_session:loaded');
                     slog_info(
                         'Loaded session clientes_quiz_session.id:%s with stash=%s', $session->{id},
-                        to_json($session->{stash})
+                        $session->{stash}
                     );
                 }
+
+                $session->{stash}     = from_json($session->{stash});
+                $session->{responses} = from_json($session->{responses});
 
                 return $session;
             }
@@ -318,20 +321,18 @@ sub load_quiz_session {
         slog_info("updating stash to %s",     to_json($stash));
         slog_info("updating responses to %s", to_json($responses));
 
-        #use DDP; p $stash;
-        $c->directus->update(
-            table => 'clientes_quiz_session',
-            id    => $session->{id},
-            form  => {
-                stash     => $stash,
-                responses => $responses,
+        my $rs = $c->schema2->resultset('ClientesQuizSession');
+        $rs->search({id => $session->{id}})->update(
+            {
+                stash     => to_json($stash),
+                responses => to_json($responses),
                 (
                     $stash->{is_finished}
                     ? (finished_at => DateTime->now->datetime(' '))
                     : ()
                 )
             }
-        )->{data};
+        );
     }
 
     if (exists $stash->{is_finished} && $stash->{is_finished}) {
@@ -481,7 +482,6 @@ sub process_quiz_session {
                 if (defined $val && length $val <= 6000 && $val =~ /^(\d{1,4},){0,999}\d{1,4}$/a) {
 
                     my $reverse_index = {map { $_->{index} => $_->{display} } $msg->{options}->@*};
-
                     my $output       = '';
                     my $output_human = '';
                     foreach my $index (split /,/, $val) {
@@ -494,7 +494,7 @@ sub process_quiz_session {
 
                         if (exists $msg->{_skills}) {
                             $update_user_skills = {} unless defined $update_user_skills;
-                            $update_user_skills->{set}{$msg->{_skills}[$index]} = 1;
+                            $update_user_skills->{set}{$msg->{_skills}{$index}} = 1;
                         }
                     }
                     chop($output_human);    # rm espaco
