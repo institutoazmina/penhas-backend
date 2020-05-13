@@ -18,6 +18,7 @@ sub setup {
     $self->helper('delete_tweet' => sub { &delete_tweet(@_) });
     $self->helper('like_tweet'   => sub { &like_tweet(@_) });
     $self->helper('report_tweet' => sub { &report_tweet(@_) });
+    $self->helper('list_tweets'  => sub { &list_tweets(@_) });
 
 }
 
@@ -28,9 +29,8 @@ sub like_tweet {
     my $id   = $opts{id}   or croak 'missing id';
 
     slog_info(
-        'like_tweet %s, user %s',
-        $id,
-        $user->{id}
+        'like_tweet %s',
+        $id
     );
 
     my $lock = "tweet_id:$id";
@@ -40,10 +40,8 @@ sub like_tweet {
     my $already_liked = $c->directus->search_one(
         table => 'tweets_likes',
         form  => {
-            form => {
-                'filter[tweet_id][eq]'   => $id,
-                'filter[cliente_id][eq]' => $user->{id},
-            }
+            'filter[tweet_id][eq]'   => $id,
+            'filter[cliente_id][eq]' => $user->{id},
         }
     );
 
@@ -135,8 +133,9 @@ sub add_tweet {
     # die {message => 'O conteúdo precisa ser menor que 500 caracteres', error => 'tweet_too_long'}
     #   if length $content > 500; Validado no controller
     slog_info(
-        'add_tweet %s',
+        'add_tweet content=%s reply_to=%s',
         $content,
+        $reply_to || ''
     );
 
     # captura o horario atual, e depois, fazemos um contador unico (controlado pelo redis),
@@ -204,7 +203,7 @@ sub report_tweet {
     my $reported_id = $opts{id}     or croak 'missing id';
 
     slog_info(
-        'report_tweet %s, %s',
+        'report_tweet reported_id=%s, reason=%s',
         $reported_id, $reason,
     );
 
@@ -238,6 +237,62 @@ sub report_tweet {
     ) if $current;
 
     return $report->{data};
+}
+
+sub list_tweets {
+    my ($c, %opts) = @_;
+
+    my $rows = $opts{rows} || 10;
+    $rows = 10 if $rows > 100 || $rows < 1;
+
+    my $user = $opts{user} or croak 'missing user';
+
+    slog_info(
+        'list_tweets after=%s before=%s parent_id=%s rows=%s',
+        $opts{after}     || '',
+        $opts{before}    || '',
+        $opts{parent_id} || '',
+        $rows,
+    );
+
+    my $cond = {
+        'cliente.status' => 'active',
+        'me.escondido' => 'false',
+        'me.status'      => 'published',
+
+        '-and' => [
+            ($opts{after}  ? ({'me.id' => {'>' => $opts{after}}})  : ()),
+            ($opts{before} ? ({'me.id' => {'<' => $opts{before}}}) : ()),
+            (
+                $opts{parent_id}
+                ? ({parent_id => $opts{parent_id}})
+                : ({parent_id => undef})              # nao eh pra montar comentarios na timeline principal
+            ),
+        ],
+    };
+    delete $cond->{'-and'} if scalar $cond->{'-and'}->@* == 0;
+
+    my @rows = $c->schema2->resultset('Tweet')->search(
+        $cond,
+        {
+            join       => 'cliente',
+            order_by   => [{'-desc' => 'me.id'}],
+            rows       => $rows + 1,
+            '+columns' => [
+                {apelido => 'cliente.apelido'},
+            ],
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+        }
+    )->all;
+    my $has_more = scalar @rows > $rows ? 1 : 0;
+    pop @rows if $has_more;
+
+    my @tweets = @rows;
+
+    return {
+        tweets => \@tweets,
+        has_more => $has_more,
+    };
 }
 
 

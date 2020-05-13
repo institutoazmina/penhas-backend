@@ -46,9 +46,6 @@ sub register {
     $timeline_object->under('like')->post()->to(action => 'add_like');
     $timeline_object->under('report')->post()->to(action => 'add_report');
 
-    $timeline_object->get()->to(action => 'detail');
-
-
 }
 
 1;

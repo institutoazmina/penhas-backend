@@ -17,7 +17,7 @@ $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
 
 my @other_fields = (
     raca        => 'pardo',
-    apelido     => 'ca',
+    apelido     => 'oshiete yo',
     app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
     dry         => 0,
 );
@@ -82,17 +82,61 @@ subtest_buffered 'Tweet' => sub {
         {'x-api-key' => $session},
     )->status_is(200)->json_is('/qtde_likes', 1);
 
-    $t->post_ok(
+    my $comment1 = $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'comment'),
         {'x-api-key' => $session},
         form => {content => 'mata itsuka'}
-    )->status_is(200);
+    )->status_is(200)->tx->res->json;
+
+    # busca timeline principal
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session}
+    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'ijime dame zettai')
+      ->json_is('/tweets/0/id', $tweet_id);
+
+    # busca comentarios
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session},
+        form => {parent_id => $tweet_id}
+    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'mata itsuka')
+      ->json_is('/tweets/0/id', $comment1->{id});
+
+    for (1 .. 2) {
+        $t->post_ok(
+            '/me/tweets',
+            {'x-api-key' => $session},
+            form => {
+                content => 'Kazoeru ' . $_,
+            }
+        )->status_is(200);
+    }
+    my $page1=$t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session},
+        form => {
+            rows => 2,
+        }
+    )->status_is(200)->json_is('/has_more', '1')->json_is('/tweets/0/content', 'Kazoeru 2')
+      ->json_is('/tweets/1/content', 'Kazoeru 1')->tx->res->json;
+
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session},
+        form => {
+            rows => 2,
+            before => $page1->{tweets}[-1]->{id}
+        }
+    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'ijime dame zettai')
+      ->json_is('/tweets/1/content', undef);
 
     $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'report'),
         {'x-api-key' => $session},
         form => {reason => 'this offends me'}
     )->status_is(200);
+
 
     $t->delete_ok(
         '/me/tweets',

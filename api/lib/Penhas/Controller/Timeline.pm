@@ -71,9 +71,22 @@ sub add_report {
 sub list {
     my $c = shift;
 
+    my $params = $c->req->params->to_hash;
+    $c->validate_request_params(
+        rows      => {required => 0, type => 'Int'},
+        since     => {required => 0, type => TweetID},
+        before    => {required => 0, type => TweetID},
+        parent_id => {required => 0, type => TweetID},
+
+    );
+
+    my $tweets = $c->list_tweets(
+        %$params,
+        user => $c->stash('user'),
+    );
 
     return $c->render(
-        json   => {},
+        json   => $tweets,
         status => 200,
     );
 }

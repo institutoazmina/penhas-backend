@@ -22,8 +22,6 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 0, size => 200 },
   "cliente_id",
   { data_type => "integer", is_nullable => 1 },
-  "mastodon_oauth2_id",
-  { data_type => "integer", is_nullable => 1 },
   "app_version",
   { data_type => "varchar", is_nullable => 1, size => 200 },
   "created_at",
@@ -36,8 +34,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-12 05:30:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+oYkfrartrULiWobUE4pNA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-13 06:09:16
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NuQeFMt8tOaViWF8YOhYUw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

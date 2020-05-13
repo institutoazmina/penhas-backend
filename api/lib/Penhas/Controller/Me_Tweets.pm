@@ -25,8 +25,6 @@ sub add {
         content  => $params->{content},
         reply_to => $c->stash('reply_to'),
     );
-    use DDP;
-    p $tweet;
 
     return $c->render(
         json => {
