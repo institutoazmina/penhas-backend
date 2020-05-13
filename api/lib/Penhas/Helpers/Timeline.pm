@@ -257,7 +257,7 @@ sub list_tweets {
 
     my $cond = {
         'cliente.status' => 'active',
-        'me.escondido' => 'false',
+        'me.escondido'   => 'false',
         'me.status'      => 'published',
 
         '-and' => [
@@ -279,7 +279,10 @@ sub list_tweets {
             order_by   => [{'-desc' => 'me.id'}],
             rows       => $rows + 1,
             '+columns' => [
-                {apelido => 'cliente.apelido'},
+                {cliente_apelido            => 'cliente.apelido'},
+                {cliente_modo_anonimo_ativo => 'cliente.modo_anonimo_ativo'},
+                {cliente_avatar_url         => 'cliente.avatar_url'}
+
             ],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
@@ -287,10 +290,49 @@ sub list_tweets {
     my $has_more = scalar @rows > $rows ? 1 : 0;
     pop @rows if $has_more;
 
-    my @tweets = @rows;
+    my $avatar_anonimo = $ENV{AVATAR_ANONIMO_URL};
+    my $avatar_default = $ENV{AVATAR_PADRAO_URL};
+
+    my @tweets;
+    my @unique_ids;
+    foreach my $tweet (@rows) {
+
+        push @unique_ids, $tweet->{id};
+
+        my $anonimo = $tweet->{anonimo} || $tweet->{cliente_modo_anonimo_ativo};
+
+        push @tweets, {
+            meta => {
+                owner => $user->{id} == $tweet->{cliente_id} ? 1 : 0,
+            },
+            id               => $tweet->{id},
+            content          => $tweet->{content},
+            anonimo          => $anonimo ? 1 : 0,
+            qtde_likes       => $tweet->{qtde_likes},
+            qtde_comentarios => $tweet->{qtde_comentarios},
+            media            => [],
+            icon             => $anonimo ? $avatar_anonimo : $tweet->{cliente_avatar_url} || $avatar_default,
+            name             => $anonimo ? 'Anônimo' : $tweet->{cliente_apelido},
+            created_at       => $tweet->{created_at},
+            ($anonimo ? () : (cliente_id => $tweet->{cliente_id})),
+
+        };
+
+    }
+
+    my %already_liked = map { $_->{tweet_id} => 1 } $c->schema2->resultset('TweetLikes')->search(
+        {cliente_id => $user->{id}, tweet_id => {'in' => \@unique_ids}},
+        {
+            columns      => ['tweet_id'],
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+        }
+    )->all;
+    foreach my $tweet (@tweets) {
+        $tweet->{meta}{liked} = $already_liked{$tweet->{id}} || 0;
+    }
 
     return {
-        tweets => \@tweets,
+        tweets   => \@tweets,
         has_more => $has_more,
     };
 }
