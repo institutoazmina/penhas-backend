@@ -80,7 +80,7 @@ subtest_buffered 'Tweet' => sub {
     $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'like'),
         {'x-api-key' => $session},
-    )->status_is(200)->json_is('/qtde_likes', 1);
+    )->status_is(200)->json_is('/tweet/qtde_likes', 1);
 
     my $comment1 = $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'comment'),
@@ -102,7 +102,6 @@ subtest_buffered 'Tweet' => sub {
         form => {parent_id => $tweet_id}
     )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'mata itsuka')
       ->json_is('/tweets/0/id', $comment1->{id});
-
     for (1 .. 2) {
         $t->post_ok(
             '/me/tweets',

@@ -54,12 +54,14 @@ __PACKAGE__->add_columns(
   },
   "cliente_id",
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  "ultimo_comentario_id",
+  { data_type => "varchar", is_nullable => 1, size => 20 },
 );
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-12 05:30:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LyV4liO5nfiKH4MupdlneQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-13 18:26:26
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Gg1MpKo4PULgZenGC6EQJg
 
 
 __PACKAGE__->belongs_to(

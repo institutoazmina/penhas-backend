@@ -35,7 +35,7 @@ sub add_like {
     my $tweet = $c->like_tweet(id => $c->stash('tweet')->{id}, user => $c->stash('user'));
 
     return $c->render(
-        json   => {qtde_likes => $tweet->{qtde_likes}},
+        json   => $tweet,
         status => 200,
     );
 }

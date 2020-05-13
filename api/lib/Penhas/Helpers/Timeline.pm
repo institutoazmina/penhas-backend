@@ -33,56 +33,55 @@ sub like_tweet {
         $id
     );
 
-    my $lock = "tweet_id:$id";
+    my $lock = "likes:user:" . $user->{id};
     kv->lock_and_wait($lock);
     on_scope_exit { kv->unlock($lock) };
 
-    my $already_liked = $c->directus->search_one(
-        table => 'tweets_likes',
-        form  => {
-            'filter[tweet_id][eq]'   => $id,
-            'filter[cliente_id][eq]' => $user->{id},
-        }
-    );
+    my $rs = $c->schema2->resultset('Tweet');
 
-    my $likes;
+    my $likes_rs = $c->schema2->resultset('TweetLikes');
+
+    my $already_liked = $likes_rs->search(
+        {
+            'tweet_id'   => $id,
+            'cliente_id' => $user->{id},
+        }
+    )->count;
+
     if (!$already_liked) {
-        $c->directus->create(
-            table => 'tweets_likes',
-            form  => {
+        $likes_rs->create(
+            {
                 tweet_id   => $id,
                 cliente_id => $user->{id}
             }
         );
 
-        my $current_likes = $c->directus->search_one(
-            table => 'tweets',
-            form  => {
-                form => {
-                    'filter[id][eq]' => $id,
-                }
+        $rs->search({id => $id})->update(
+            {
+                qtde_likes => \'qtde_likes+1',
             }
         );
-        $likes = $current_likes->{qtde_likes} + 1;
-        $c->directus->update(
-            table => 'tweets',
-            id    => $id,
-            form  => {qtde_likes => $likes}
-        );
-    }
-    else {
-        my $current_likes = $c->directus->search_one(
-            table => 'tweets',
-            form  => {
-                form => {
-                    'filter[id][eq]' => $id,
-                }
-            }
-        );
-        $likes = $current_likes->{qtde_likes};
+
     }
 
-    return {qtde_likes => $likes};
+    my $reference = $rs->search(
+        {
+            'me.id' => $id,
+        },
+        {
+            join       => 'cliente',
+            '+columns' => [
+                {cliente_apelido            => 'cliente.apelido'},
+                {cliente_modo_anonimo_ativo => 'cliente.modo_anonimo_ativo'},
+                {cliente_avatar_url         => 'cliente.avatar_url'}
+
+            ],
+        }
+    )->next;
+
+    $reference = {$reference->get_columns()};
+
+    return {tweet => &_fomart_tweet($user, $reference)};
 }
 
 sub delete_tweet {
@@ -95,30 +94,23 @@ sub delete_tweet {
         'del_tweet %s',
         $id,
     );
+    my $rs = $c->schema2->resultset('Tweet');
 
-    my $item = $c->directus->search_one(
-        table => 'tweets',
-        form  => {
-            form => {
-                'filter[id][eq]'         => $id,
-                'filter[cliente_id][eq]' => $user->{id},
-            }
+    my $item = $rs->search(
+        {
+            id         => $id,
+            cliente_id => $user->{id},
+            status     => 'published',
+        }
+    )->update(
+        {
+            status => 'deleted',
         }
     );
     die {
         message => 'Não foi possível encontrar a postagem.',
         error   => 'tweet_not_found'
     } if !$item;
-
-    if ($item->{status} eq 'published') {
-        $c->directus->update(
-            table => 'tweets',
-            id    => $item->{id},
-            form  => {
-                status => 'deleted',
-            }
-        );
-    }
 
     return 1;
 }
@@ -156,14 +148,10 @@ sub add_tweet {
         goto AGAIN;
     }
     my $id = $base . sprintf('%04d', $cur_seq);
+    my $rs = $c->schema2->resultset('Tweet');
 
-    my $lock = "tweet_id:$reply_to";
-    kv->lock_and_wait($lock)            if $reply_to;
-    on_scope_exit { kv->unlock($lock) } if $reply_to;
-
-    my $tweet = $c->directus->create(
-        table => 'tweets',
-        form  => {
+    my $tweet = $rs->create(
+        {
             status       => 'published',
             id           => $id,
             content      => $content,
@@ -173,26 +161,21 @@ sub add_tweet {
             created_at   => $now->datetime(' '),
         }
     );
-    die 'tweet_id missing' unless $tweet->{data}{id};
+    $tweet = {$tweet->get_columns};
 
     if ($reply_to) {
-        my $current = $c->directus->search_one(
-            table => 'tweets',
-            form  => {
-                form => {
-                    'filter[id][eq]' => $id,
-                }
+        $rs->search({id => $id})->update(
+            {
+                qtde_comentarios     => \'qtde_comentarios + 1',
+                ultimo_comentario_id => \[
+                    '(case when ultimo_comentario_id is null OR ultimo_comentario_id < ? then ? else ultimo_comentario_id end)',
+                    $tweet->{id}, $tweet->{id}
+                ],
             }
         );
-        $c->directus->update(
-            table => 'tweets',
-            id    => $current->{id},
-            form  => {qtde_comentarios => $current->{qtde_comentarios} + 1}
-        ) if $current;
-
     }
 
-    return $tweet->{data};
+    return $tweet;
 }
 
 sub report_tweet {
@@ -290,34 +273,22 @@ sub list_tweets {
     my $has_more = scalar @rows > $rows ? 1 : 0;
     pop @rows if $has_more;
 
-    my $avatar_anonimo = $ENV{AVATAR_ANONIMO_URL};
-    my $avatar_default = $ENV{AVATAR_PADRAO_URL};
 
     my @tweets;
     my @unique_ids;
+    my @comments;
     foreach my $tweet (@rows) {
 
         push @unique_ids, $tweet->{id};
+        push @unique_ids, $tweet->{ultimo_comentario_id}
+          and push @comments, $tweet->{ultimo_comentario_id}
+          if $tweet->{ultimo_comentario_id};
 
-        my $anonimo = $tweet->{anonimo} || $tweet->{cliente_modo_anonimo_ativo};
+        my $item = &_fomart_tweet($user, $tweet);
 
-        push @tweets, {
-            meta => {
-                owner => $user->{id} == $tweet->{cliente_id} ? 1 : 0,
-            },
-            id               => $tweet->{id},
-            content          => $tweet->{content},
-            anonimo          => $anonimo ? 1 : 0,
-            qtde_likes       => $tweet->{qtde_likes},
-            qtde_comentarios => $tweet->{qtde_comentarios},
-            media            => [],
-            icon             => $anonimo ? $avatar_anonimo : $tweet->{cliente_avatar_url} || $avatar_default,
-            name             => $anonimo ? 'Anônimo' : $tweet->{cliente_apelido},
-            created_at       => $tweet->{created_at},
-            ($anonimo ? () : (cliente_id => $tweet->{cliente_id})),
-
-        };
-
+        use DDP;
+        p $tweet;
+        push @tweets, $item;
     }
 
     my %already_liked = map { $_->{tweet_id} => 1 } $c->schema2->resultset('TweetLikes')->search(
@@ -337,5 +308,29 @@ sub list_tweets {
     };
 }
 
+sub _fomart_tweet {
+    my ($user, $me) = @_;
+    my $avatar_anonimo = $ENV{AVATAR_ANONIMO_URL};
+    my $avatar_default = $ENV{AVATAR_PADRAO_URL};
+
+    my $anonimo = $me->{anonimo} || $me->{cliente_modo_anonimo_ativo};
+
+    return {
+        meta => {
+            owner => $user->{id} == $me->{cliente_id} ? 1 : 0,
+        },
+        id               => $me->{id},
+        content          => $me->{content},
+        anonimo          => $anonimo ? 1 : 0,
+        qtde_likes       => $me->{qtde_likes},
+        qtde_comentarios => $me->{qtde_comentarios},
+        media            => [],
+        icon             => $anonimo ? $avatar_anonimo : $me->{cliente_avatar_url} || $avatar_default,
+        name             => $anonimo ? 'Anônimo' : $me->{cliente_apelido},
+        created_at       => $me->{created_at},
+        ($anonimo ? () : (cliente_id => $me->{cliente_id})),
+
+    };
+}
 
 1;
