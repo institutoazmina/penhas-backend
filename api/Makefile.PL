@@ -27,6 +27,7 @@ my %WriteMakefileArgs = (
     "Crypt::OpenSSL::RSA" => 0,
     "Crypt::PRNG" => 0,
     "DBD::Pg" => 0,
+    "DBD::mysql" => 0,
     "DBIx::Class::Core" => 0,
     "DBIx::Class::InflateColumn::Serializer" => 0,
     "DBIx::Class::PassphraseColumn" => 0,
@@ -95,7 +96,7 @@ my %WriteMakefileArgs = (
     "constant" => 0,
     "lib" => 0
   },
-  "VERSION" => 20200512,
+  "VERSION" => 20200514,
   "test" => {
     "TESTS" => "t/*.t t/api/*.t"
   }
@@ -113,6 +114,7 @@ my %FallbackPrereqs = (
   "Crypt::OpenSSL::RSA" => 0,
   "Crypt::PRNG" => 0,
   "DBD::Pg" => 0,
+  "DBD::mysql" => 0,
   "DBIx::Class::Core" => 0,
   "DBIx::Class::InflateColumn::Serializer" => 0,
   "DBIx::Class::PassphraseColumn" => 0,
