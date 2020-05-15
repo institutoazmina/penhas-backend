@@ -50,8 +50,6 @@ sub process {
         );
     }
 
-use DDP; p "here";
-
     return $c->render(
         json   => {%extra},
         status => 200,
