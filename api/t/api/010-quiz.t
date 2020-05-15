@@ -60,7 +60,7 @@ subtest_buffered 'Testar envio de campo boolean com valor invalido + interpolati
 
     is $second_msg->{content}, 'intro1',               'question intro is working';
     is $third_msg->{content},  'HELLOQuiz User Name!', 'question intro interpolation is working';
-    is $input_msg->{content},  'yesno question',       'yesno question question is present';
+    is $input_msg->{content},  'yesno question☺️⚠️👍👭🤗🤳',       'yesno question question is present';
 };
 
 my $choose_rand = rand;

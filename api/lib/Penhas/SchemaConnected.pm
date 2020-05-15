@@ -94,9 +94,8 @@ sub get_connect_info2 {
         password             => $password,
         AutoCommit           => 1,
         RaiseError           => 1,
-        mysql_enable_utf8    => 1,
+        mysql_enable_utf8mb4 => 1,
         mysql_auto_reconnect => 1,
-
     };
 }
 
