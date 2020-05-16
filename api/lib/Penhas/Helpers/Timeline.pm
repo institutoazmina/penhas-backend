@@ -9,6 +9,7 @@ use JSON;
 use Penhas::Logger;
 use Penhas::Utils;
 
+our $ForceFilterClientes;
 sub kv { Penhas::KeyValueStorage->instance }
 
 sub setup {
@@ -78,7 +79,6 @@ sub like_tweet {
             ],
         }
     )->next;
-
     $reference = {$reference->get_columns()};
 
     return {tweet => &_fomart_tweet($user, $reference)};
@@ -164,7 +164,7 @@ sub add_tweet {
     $tweet = {$tweet->get_columns};
 
     if ($reply_to) {
-        $rs->search({id => $id})->update(
+        $rs->search({id => $reply_to})->update(
             {
                 qtde_comentarios     => \'qtde_comentarios + 1',
                 ultimo_comentario_id => \[
@@ -253,23 +253,24 @@ sub list_tweets {
             ),
         ],
     };
+
+    push $cond->{'-and'}->@*, {'me.cliente_id' => $ForceFilterClientes} if $ForceFilterClientes;
+
     delete $cond->{'-and'} if scalar $cond->{'-and'}->@* == 0;
 
-    my @rows = $c->schema2->resultset('Tweet')->search(
-        $cond,
-        {
-            join       => 'cliente',
-            order_by   => [{'-desc' => 'me.id'}],
-            rows       => $rows + 1,
-            '+columns' => [
-                {cliente_apelido            => 'cliente.apelido'},
-                {cliente_modo_anonimo_ativo => 'cliente.modo_anonimo_ativo'},
-                {cliente_avatar_url         => 'cliente.avatar_url'}
+    my $attr = {
+        join       => 'cliente',
+        order_by   => [{'-desc' => 'me.id'}],
+        rows       => $rows + 1,
+        '+columns' => [
+            {cliente_apelido            => 'cliente.apelido'},
+            {cliente_modo_anonimo_ativo => 'cliente.modo_anonimo_ativo'},
+            {cliente_avatar_url         => 'cliente.avatar_url'}
+        ],
+        result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+    };
 
-            ],
-            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
-        }
-    )->all;
+    my @rows     = $c->schema2->resultset('Tweet')->search($cond, $attr)->all;
     my $has_more = scalar @rows > $rows ? 1 : 0;
     pop @rows if $has_more;
 
@@ -282,13 +283,23 @@ sub list_tweets {
         push @unique_ids, $tweet->{id};
         push @unique_ids, $tweet->{ultimo_comentario_id}
           and push @comments, $tweet->{ultimo_comentario_id}
-          if $tweet->{ultimo_comentario_id};
+          if $tweet->{ultimo_comentario_id} && !$opts{parent_id};  # nao tem parent, faz 'prefetch' do ultmo comentarios
 
         my $item = &_fomart_tweet($user, $tweet);
 
-        use DDP;
-        p $tweet;
         push @tweets, $item;
+    }
+
+    my %last_reply;
+    if (@comments) {
+
+        # para fazer a pesquisa dos comentarios, nao importa a ordem, nem podemos limitar as linhas
+        delete $attr->{rows};
+        delete $attr->{order_by};
+        my @childs = $c->schema2->resultset('Tweet')->search({'me.id' => {in => \@comments}}, $attr)->all;
+        foreach my $me (@childs) {
+            $last_reply{$me->{parent_id}} = &_fomart_tweet($user, $me);
+        }
     }
 
     my %already_liked = map { $_->{tweet_id} => 1 } $c->schema2->resultset('TweetLikes')->search(
@@ -298,8 +309,14 @@ sub list_tweets {
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
     )->all;
+
     foreach my $tweet (@tweets) {
         $tweet->{meta}{liked} = $already_liked{$tweet->{id}} || 0;
+
+        $tweet->{last_reply} = $last_reply{$tweet->{id}};
+        if ($tweet->{last_reply}) {
+            $tweet->{last_reply}{meta}{liked} = $already_liked{$tweet->{last_reply}->{id}} || 0;
+        }
     }
 
     return {

@@ -56,7 +56,9 @@ subtest_buffered 'Cadastro com sucesso' => sub {
 
 on_scope_exit { user_cleanup(user_id => $cliente_id); };
 
+my $tweet_rs = app->schema2->resultset('Tweet');
 subtest_buffered 'Tweet' => sub {
+    push $Penhas::Helpers::Timeline::ForceFilterClientes->@*, $cliente_id;
 
     my $cadastro = $t->get_ok(
         '/me',
@@ -87,13 +89,17 @@ subtest_buffered 'Tweet' => sub {
         {'x-api-key' => $session},
         form => {content => 'mata itsuka'}
     )->status_is(200)->tx->res->json;
+    is $tweet_rs->find($comment1->{id})->ultimo_comentario_id, undef, 'ultimo_comentario_id tem q ser vazio';
+
+    is $tweet_rs->find($tweet_id)->ultimo_comentario_id, $comment1->{id}, 'ultimo_comentario_id tem q ser a resposta';
 
     # busca timeline principal
     $t->get_ok(
         ('/timeline'),
         {'x-api-key' => $session}
     )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'ijime dame zettai')
-      ->json_is('/tweets/0/id', $tweet_id);
+      ->json_is('/tweets/0/id',            $tweet_id)->json_is('/tweets/0/meta/liked', 1)
+      ->json_is('/tweets/0/last_reply/id', $comment1->{id})->json_is('/tweets/0/last_reply/meta/liked', 0);
 
     # busca comentarios
     $t->get_ok(
@@ -111,7 +117,7 @@ subtest_buffered 'Tweet' => sub {
             }
         )->status_is(200);
     }
-    my $page1=$t->get_ok(
+    my $page1 = $t->get_ok(
         ('/timeline'),
         {'x-api-key' => $session},
         form => {
@@ -124,7 +130,7 @@ subtest_buffered 'Tweet' => sub {
         ('/timeline'),
         {'x-api-key' => $session},
         form => {
-            rows => 2,
+            rows   => 2,
             before => $page1->{tweets}[-1]->{id}
         }
     )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'ijime dame zettai')
