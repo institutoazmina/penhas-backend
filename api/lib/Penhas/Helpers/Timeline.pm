@@ -254,7 +254,9 @@ sub list_tweets {
         ],
     };
 
-    push $cond->{'-and'}->@*, {'me.cliente_id' => $ForceFilterClientes} if $ForceFilterClientes;
+    push $cond->{'-and'}->@*, {'me.cliente_id' => $ForceFilterClientes}  if $ForceFilterClientes;
+    push $cond->{'-and'}->@*, {'me.cliente_id' => $user->{id}}           if $opts{only_myself};
+    push $cond->{'-and'}->@*, {'me.cliente_id' => {'!=' => $user->{id}}} if $opts{skip_myself};
 
     delete $cond->{'-and'} if scalar $cond->{'-and'}->@* == 0;
 
