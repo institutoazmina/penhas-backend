@@ -260,9 +260,10 @@ sub list_tweets {
 
     delete $cond->{'-and'} if scalar $cond->{'-and'}->@* == 0;
 
-    my $attr = {
+    my $sort_direction = exists $opts{after} ? '-asc' : '-desc';
+    my $attr           = {
         join       => 'cliente',
-        order_by   => [{'-desc' => 'me.id'}],
+        order_by   => [{$sort_direction => 'me.id'}],
         rows       => $rows + 1,
         '+columns' => [
             {cliente_apelido            => 'cliente.apelido'},
@@ -324,6 +325,7 @@ sub list_tweets {
     return {
         tweets   => \@tweets,
         has_more => $has_more,
+        order_by => $sort_direction eq '-desc' ? 'latest_first' : 'oldest_first',
     };
 }
 

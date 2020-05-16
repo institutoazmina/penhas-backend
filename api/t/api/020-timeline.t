@@ -191,9 +191,23 @@ subtest_buffered 'Tweet' => sub {
             rows   => 2,
             before => $page1->{tweets}[-1]->{id}
         }
-    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'ijime dame zettai')
-      ->json_is('/tweets/1/content', undef);
+    )->status_is(200)->json_is('/order_by', 'latest_first')->json_is('/has_more', '0')
+      ->json_is('/tweets/0/content', 'ijime dame zettai')->json_is('/tweets/1/content', undef);
 
+    # pega o primeiro tweet apos o primeiro tweet ever
+    # que na realidade eh o reply, mas tem que filtrar e trazer o Kazoeru 1
+    # sempre que filtra usando AFTER o index inverte e traz primeiro os mais antigos (asc)
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session},
+        form => {
+            rows  => 1,
+            after => $tweet_id
+        }
+    )->status_is(200)->json_is('/order_by', 'oldest_first')->json_is('/has_more', '1')
+      ->json_is('/tweets/0/content', 'Kazoeru 1')->json_is('/tweets/1/content', undef);
+
+    # reportando um tweet
     $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'report'),
         {'x-api-key' => $session},
@@ -212,7 +226,8 @@ subtest_buffered 'Tweet' => sub {
         ('/timeline'),
         {'x-api-key' => $session2},
         form => {only_myself => 1, rows => 1}
-    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'Just me');
+    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'Just me')
+      ->json_is('/tweets/1/content', undef);
 
     $t->get_ok(
         ('/timeline'),
