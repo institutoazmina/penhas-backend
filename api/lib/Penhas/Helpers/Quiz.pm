@@ -250,8 +250,11 @@ sub load_quiz_session {
             my $item = shift $stash->{pending}->@*;
             if ($item) {
 
-                # pegamos um item que eh input, entao vamos sair do loop nesta vez
-                $is_last_item = 1 if $item->{type} ne 'displaytext';
+                # ao menos que seja "auto continue" (continua sem iteracao do usuario)
+                if (!exists $item->{_autocontinue} && !$item->{_autocontinue}){
+                    # pegamos um item que eh input, entao vamos sair do loop nesta vez
+                    $is_last_item = 1 if $item->{type} ne 'displaytext';
+                }
 
                 # joga item pra lista de msg correntes
                 push $current_msgs->@*, $item;
