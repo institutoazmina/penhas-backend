@@ -2,7 +2,7 @@ package Penhas::Types;
 use strict;
 use warnings;
 
-use MooseX::Types -declare => [qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome Raca TweetID)];
+use MooseX::Types -declare => [qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome Raca TweetID UploadIntention)];
 use MooseX::Types::Moose qw(ArrayRef HashRef CodeRef Str ScalarRef);
 use MooseX::Types::Common::String qw(NonEmptySimpleStr NonEmptyStr);
 use Business::BR::CEP qw(test_cep);
@@ -86,6 +86,17 @@ subtype Raca, as Str, where {
 }, message {"$_[0] is not a valid Raca"};
 
 coerce Raca, from Str, via {
+    $_;
+};
+
+
+subtype UploadIntention, as Str, where {
+    my $str = $_;
+
+    return $str =~ /^(tweet|guardiao|chat)$/ ? 1 : 0;
+}, message {"$_[0] is not a valid UploadIntention"};
+
+coerce UploadIntention, from Str, via {
     $_;
 };
 

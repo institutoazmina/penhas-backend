@@ -73,6 +73,10 @@ sub get_schema {
     if (!$ENV{CPF_CACHE_HASH_SALT}) {
         die 'Missing CPF_CACHE_HASH_SALT';
     }
+    $ENV{MEDIA_HASH_SALT} ||= $ENV{CPF_CACHE_HASH_SALT};
+
+    die 'missing PUBLIC_API_URL' unless $ENV{PUBLIC_API_URL};
+    $ENV{PUBLIC_API_URL} .= '/' unless $ENV{PUBLIC_API_URL} =~ /\/$/;
 
     undef $Penhas::Logger::instance;
 

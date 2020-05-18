@@ -35,15 +35,15 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "stash",
-  { data_type => "mediumtext", is_nullable => 1 },
+  { data_type => "text", is_nullable => 1 },
   "responses",
   { data_type => "text", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-12 05:30:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:omYjz8doUCUMPGf0jhkqEw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-18 00:31:07
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IKgQu8W823E29WfqS+xg4g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

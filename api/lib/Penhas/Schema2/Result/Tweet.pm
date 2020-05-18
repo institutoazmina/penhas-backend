@@ -56,12 +56,14 @@ __PACKAGE__->add_columns(
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "ultimo_comentario_id",
   { data_type => "varchar", is_nullable => 1, size => 20 },
+  "media_ids",
+  { data_type => "text", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-13 18:26:26
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Gg1MpKo4PULgZenGC6EQJg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-18 00:58:50
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dD/1c9kMYRZau61MhDAxQg
 
 
 __PACKAGE__->belongs_to(

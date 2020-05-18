@@ -89,11 +89,7 @@ subtest_buffered 'Cadastro2 com sucesso' => sub {
     $session2    = $res->{session};
 };
 
-
-my $tweet_rs = app->schema2->resultset('Tweet');
-subtest_buffered 'Tweet' => sub {
-    $Penhas::Helpers::Timeline::ForceFilterClientes = [$cliente_id, $cliente_id2];
-
+subtest_buffered 'cadastro' => sub {
     my $cadastro = $t->get_ok(
         '/me',
         {'x-api-key' => $session}
@@ -103,6 +99,21 @@ subtest_buffered 'Tweet' => sub {
     is $cadastro->{user_profile}{nome_social}, '', 'nome social nao existe em genero=feminino';
 
     ok grep {/timeline/} $cadastro->{modules}->@*, 1, 'modulo timeline presente';
+};
+
+my $tweet_rs = app->schema2->resultset('Tweet');
+subtest_buffered 'Tweet' => sub {
+    $Penhas::Helpers::Timeline::ForceFilterClientes = [$cliente_id, $cliente_id2];
+
+    my $media = $t->post_ok(
+        '/me/media',
+        {'x-api-key' => $session},
+        form => {
+            intention => 'tweet',
+            media     => {file => "$RealBin/../data/small.png"}
+        },
+
+    )->status_is(200)->tx->res->json;
 
     my $res = $t->post_ok(
         '/me/tweets',
@@ -121,7 +132,7 @@ subtest_buffered 'Tweet' => sub {
     my $comment1 = $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'comment'),
         {'x-api-key' => $session},
-        form => {content => 'mata itsuka'}
+        form => {content => 'mata itsuka', media_ids => $media->{id}}
     )->status_is(200)->tx->res->json;
     is $tweet_rs->find($comment1->{id})->ultimo_comentario_id, undef, 'ultimo_comentario_id tem q ser vazio';
 
@@ -253,6 +264,7 @@ subtest_buffered 'Tweet' => sub {
             id => $tweet_id,
         }
     )->status_is(204);
+
 
 };
 

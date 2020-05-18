@@ -107,14 +107,16 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 200 },
   "genero_outro",
   { data_type => "varchar", is_nullable => 1, size => 200 },
+  "upload_status",
+  { data_type => "varchar", default_value => "ok", is_nullable => 1, size => 20 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
 __PACKAGE__->add_unique_constraint("email", ["email"]);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-12 05:30:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aAhp0u5ihUqw/6+2Tx7UXA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-18 00:31:07
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:y3Dc4KMtfKHhwpmSZpOZFQ
 
 __PACKAGE__->has_many(
   "tweets",

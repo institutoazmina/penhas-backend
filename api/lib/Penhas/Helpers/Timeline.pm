@@ -4,6 +4,8 @@ use Carp qw/croak/;
 use utf8;
 use Penhas::KeyValueStorage;
 use Scope::OnExit;
+use Digest::MD5 qw/md5_hex/;
+
 
 use JSON;
 use Penhas::Logger;
@@ -120,7 +122,28 @@ sub add_tweet {
 
     my $user    = $opts{user}    or croak 'missing user';
     my $content = $opts{content} or croak 'missing content';
-    my $reply_to = $opts{reply_to};
+    my $media_ids = $opts{media_ids};
+    my $reply_to  = $opts{reply_to};
+
+    if ($media_ids) {
+        $media_ids = [split ',', $media_ids];
+        foreach my $media_id ($media_ids->@*) {
+            die {error => 'media_id', message => 'invalid uuid v4'}
+              unless $media_id =~ /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
+        }
+
+        my $count = $c->schema2->resultset('MediaUpload')->search(
+            {
+                cliente_id => $user->{id},
+                id         => {'in' => $media_ids},
+            }
+        )->count;
+
+        # precisa ser o dono de todos
+        if ($count != scalar $media_ids->@*) {
+            die {error => 'media_id', message => 'media_id not found'};
+        }
+    }
 
     # die {message => 'O conteúdo precisa ser menor que 500 caracteres', error => 'tweet_too_long'}
     #   if length $content > 500; Validado no controller
@@ -159,6 +182,7 @@ sub add_tweet {
             anonimo      => $user->{modo_anonimo_ativo} ? 1 : 0,
             parent_id    => $reply_to,
             created_at   => $now->datetime(' '),
+            media_ids    => $media_ids ? to_json($media_ids) : undef,
         }
     );
     $tweet = {$tweet->get_columns};
@@ -278,6 +302,7 @@ sub list_tweets {
     pop @rows if $has_more;
 
 
+    my $remote_addr = $c->remote_addr;
     my @tweets;
     my @unique_ids;
     my @comments;
@@ -288,7 +313,7 @@ sub list_tweets {
           and push @comments, $tweet->{ultimo_comentario_id}
           if $tweet->{ultimo_comentario_id} && !$opts{parent_id};  # nao tem parent, faz 'prefetch' do ultmo comentarios
 
-        my $item = &_fomart_tweet($user, $tweet);
+        my $item = &_fomart_tweet($user, $tweet, $remote_addr);
 
         push @tweets, $item;
     }
@@ -301,7 +326,7 @@ sub list_tweets {
         delete $attr->{order_by};
         my @childs = $c->schema2->resultset('Tweet')->search({'me.id' => {in => \@comments}}, $attr)->all;
         foreach my $me (@childs) {
-            $last_reply{$me->{parent_id}} = &_fomart_tweet($user, $me);
+            $last_reply{$me->{parent_id}} = &_fomart_tweet($user, $me, $remote_addr);
         }
     }
 
@@ -330,11 +355,22 @@ sub list_tweets {
 }
 
 sub _fomart_tweet {
-    my ($user, $me) = @_;
+    my ($user, $me, $remote_addr) = @_;
     my $avatar_anonimo = $ENV{AVATAR_ANONIMO_URL};
     my $avatar_default = $ENV{AVATAR_PADRAO_URL};
 
     my $anonimo = $me->{anonimo} || $me->{cliente_modo_anonimo_ativo};
+
+    my $media_ref = [];
+
+    if ($me->{media_ids} && $me->{media_ids} =~ /^\[/) {
+        foreach my $media_id (@{from_json($me->{media_ids}) || []}) {
+            push @$media_ref, {
+                sd => &_gen_uniq_media_url($media_id, $user, 'sd', $remote_addr),
+                hd => &_gen_uniq_media_url($media_id, $user, 'hd', $remote_addr),
+            };
+        }
+    }
 
     return {
         meta => {
@@ -345,13 +381,24 @@ sub _fomart_tweet {
         anonimo          => $anonimo ? 1 : 0,
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
-        media            => [],
+        media            => $media_ref,
         icon             => $anonimo ? $avatar_anonimo : $me->{cliente_avatar_url} || $avatar_default,
         name             => $anonimo ? 'Anônimo' : $me->{cliente_apelido},
         created_at       => $me->{created_at},
         ($anonimo ? () : (cliente_id => $me->{cliente_id})),
 
     };
+}
+
+sub _gen_uniq_media_url {
+    my ($media_id, $user, $quality, $ip) = @_;
+
+    # 10 ate 20 minutos pra baixar
+    my $now     = time();
+    my $ttl     = $now - ($now % 600);
+    my $user_id = $user->{id};
+    my $hash    = substr(md5_hex($ENV{MEDIA_HASH_SALT} . "$user_id$quality$ttl$ip"), 0, 6);
+    return $ENV{PUBLIC_API_URL} . "media-download/?m=$media_id&q=$quality&u=$user_id&ttl=$ttl&h=$hash";
 }
 
 1;

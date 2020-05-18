@@ -31,6 +31,10 @@ sub register {
     my $me_quiz = $me->under('/quiz')->to(controller => 'Me_Quiz', action => 'ensure_user_loaded');
     $me_quiz->post()->to(action => 'process');
 
+    # /me/media
+    my $me_media = $me->under('/media')->to(controller => 'Me_Media', action => 'ensure_user_loaded');
+    $me_media->post()->to(action => 'upload');
+
     # /me/tweets
     my $me_tweets = $me->under('/tweets')->to(controller => 'Me_Tweets', action => 'ensure_user_loaded');
     $me_tweets->post()->to(action => 'add');

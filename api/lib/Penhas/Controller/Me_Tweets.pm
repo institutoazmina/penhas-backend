@@ -16,14 +16,16 @@ sub add {
 
     my $params = $c->req->params->to_hash;
     $c->validate_request_params(
-        content => {required => 1, type => 'Str', max_length => 500},
+        content   => {required => 1, type => 'Str', max_length => 500},
+        media_ids => {required => 0, type => 'Str', max_length => 500},
     );
     my $user = $c->stash('user');
 
     my $tweet = $c->add_tweet(
-        user     => $user,
-        content  => $params->{content},
-        reply_to => $c->stash('reply_to'),
+        user      => $user,
+        content   => $params->{content},
+        media_ids => $params->{media_ids},
+        reply_to  => $c->stash('reply_to'),
     );
 
     return $c->render(
