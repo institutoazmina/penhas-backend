@@ -78,6 +78,8 @@ sub get_schema {
     die 'missing PUBLIC_API_URL' unless $ENV{PUBLIC_API_URL};
     $ENV{PUBLIC_API_URL} .= '/' unless $ENV{PUBLIC_API_URL} =~ /\/$/;
 
+    $ENV{MEDIA_CACHE_DIR} = '/tmp' unless -d $ENV{MEDIA_CACHE_DIR};
+
     undef $Penhas::Logger::instance;
 
     $schema_instance = $schema;

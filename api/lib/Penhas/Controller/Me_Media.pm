@@ -8,6 +8,7 @@ use Digest::SHA1;
 use Scope::OnExit;
 use Penhas::Types qw/UploadIntention/;
 use Penhas::Uploader;
+use Penhas::Utils qw/get_media_filepath/;
 
 has _uploader => sub { Penhas::Uploader->new() };
 
@@ -72,25 +73,23 @@ sub upload {
 
     # Quando o upload é pequeno, o Mojo otimiza deixando tudo na RAM. Para fazer o upload pra S3, é necessário
     # mover para um arquivo em disco.
-    my $ext   = (split(m{\.}, $upload->filename))[-1];
-    my $media = File::Temp->new(UNLINK => 1, SUFFIX => ".$ext");
+    my $ext = (split(m{\.}, $upload->filename))[-1];
+
+    #my $media = File::Temp->new(UNLINK => 1, SUFFIX => ".$ext");
 
     # Em caso de PNG, vamos mudar pra JPEG (pelo menos ate alguem reclamar de transparencia kk)
     my $convert_ext = $ext =~ /png/i ? 'jpg' : $ext;
+
     # para imagens, fazer o resize
-    my $media_sd    = File::Temp->new(UNLINK => 1, SUFFIX => ".$convert_ext");
-    my $media_hd    = File::Temp->new(UNLINK => 1, SUFFIX => ".$convert_ext");
+    my $media_sd = File::Temp->new(UNLINK => 1, SUFFIX => ".$convert_ext");
+    my $media_hd = File::Temp->new(UNLINK => 1, SUFFIX => ".$convert_ext");
 
     on_scope_exit {
 
         # Delete temporary files.
-        close $media;
         close $media_sd;
         close $media_hd;
     };
-
-
-    $upload->move_to($media);
 
     my $dbh_pg    = $c->schema->storage->dbh;
     my $now       = DateTime->now;
@@ -103,6 +102,9 @@ sub upload {
         $now->hms(''),
         $id
     );
+
+    my $media = get_media_filepath("$id.$ext");
+    $upload->move_to($media);
 
     my $row;
     if ($ext =~ /(png|jpeg|jpg)/i) {
@@ -120,6 +122,7 @@ sub upload {
         my $max_ypixels_hd = $ENV{MAX_UPLOAD_HD_Y_PIXELS} || 1080;
 
         my $image_sd = $image;
+
         # se altura ou largura passar, faz o resize
         if ($image->getwidth > $max_xpixels_sd || $image->getheight > $max_ypixels_sd) {
             $image_sd
@@ -133,13 +136,15 @@ sub upload {
         }
         $image->write(file => $media_hd) or die $image->errstr;
 
-        my $sd = $c->_uploader->upload({path => $s3_prefix . ".sd.$convert_ext", file => $media_sd, type => 'image/jpeg',});
+        my $sd
+          = $c->_uploader->upload({path => $s3_prefix . ".sd.$convert_ext", file => $media_sd, type => 'image/jpeg',});
         my ($hd, $uploaded) = ($sd, 0);
 
         # se a resolucao eh diferente, faz upload, caso contrario copia
         if (join('', $image_sd->getwidth, $image_sd->getheight) ne join('', $image->getwidth, $image->getheight)) {
             $uploaded++;
-            $hd = $c->_uploader->upload({path => $s3_prefix . ".hd.$convert_ext", file => $media_hd, type => 'image/jpeg',});
+            $hd = $c->_uploader->upload(
+                {path => $s3_prefix . ".hd.$convert_ext", file => $media_hd, type => 'image/jpeg',});
         }
 
         $row = {

@@ -7,7 +7,7 @@ use Mojo::URL;
 use Crypt::PRNG qw(random_string random_string_from);
 use Encode qw/encode_utf8/;
 use Digest::SHA qw/sha256_hex/;
-
+use File::Path qw(make_path);
 use Carp;
 use Time::HiRes qw//;
 use Text::Xslate;
@@ -32,6 +32,9 @@ state $text_xslate = Text::Xslate->new(
   tt_render
 
   cpf_hash_with_salt
+
+  filename_cache_three
+  get_media_filepath
 );
 
 
@@ -124,5 +127,23 @@ sub cpf_hash_with_salt {
     return sha256_hex($cpf_salt . encode_utf8($str));
 }
 
+
+sub filename_cache_three {
+    my ($filename) = @_;
+
+    my (@parts) = $filename =~ /^(..)(..)(...)/;
+
+    return join('/', @parts);
+}
+
+sub get_media_filepath {
+    my ($filename) = @_;
+
+    my $path = $ENV{MEDIA_CACHE_DIR} . '/' . filename_cache_three($filename);
+
+    make_path($path) unless -d $path;
+
+    return join('/', $path, $filename);
+}
 
 1;
