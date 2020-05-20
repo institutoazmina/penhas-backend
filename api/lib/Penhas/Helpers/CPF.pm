@@ -4,6 +4,7 @@ use Carp qw/croak/;
 use Penhas::Utils qw/exec_tx_with_retry cpf_hash_with_salt/;
 use Text::Unaccent::PurePerl qw(unac_string);
 use Penhas::Logger;
+use utf8;
 
 sub setup {
     my $self = shift;

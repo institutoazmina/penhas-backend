@@ -2,7 +2,7 @@ package Penhas::Helpers::ClienteSetSkill;
 use common::sense;
 use Penhas::Directus;
 use Carp qw/croak/;
-
+use utf8;
 use JSON;
 use Penhas::Logger;
 

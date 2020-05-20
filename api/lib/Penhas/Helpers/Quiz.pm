@@ -4,6 +4,7 @@ use Carp qw/croak/;
 use Digest::MD5 qw/md5_hex/;
 use Penhas::Utils qw/tt_test_condition tt_render is_test/;
 use JSON;
+use utf8;
 use Readonly;
 use DateTime;
 use Penhas::Logger;
