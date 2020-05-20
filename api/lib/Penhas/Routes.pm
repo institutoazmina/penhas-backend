@@ -50,6 +50,11 @@ sub register {
     $timeline_object->under('like')->post()->to(action => 'add_like');
     $timeline_object->under('report')->post()->to(action => 'add_report');
 
+    my $media_download = $authenticated->under('/media-download')->to(controller => 'MediaDownload', action => 'ensure_user_loaded');
+    $media_download->get()->to(action => 'get_media');
+
+
+
 }
 
 1;
