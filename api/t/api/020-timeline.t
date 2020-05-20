@@ -89,6 +89,9 @@ subtest_buffered 'Cadastro2 com sucesso' => sub {
     $session2    = $res->{session};
 };
 
+$Penhas::Helpers::Timeline::ForceFilterClientes = [$cliente_id, $cliente_id2];
+on_scope_exit { user_cleanup(user_id => $Penhas::Helpers::Timeline::ForceFilterClientes); };
+
 subtest_buffered 'cadastro' => sub {
     my $cadastro = $t->get_ok(
         '/me',
@@ -103,7 +106,6 @@ subtest_buffered 'cadastro' => sub {
 
 my $tweet_rs = app->schema2->resultset('Tweet');
 subtest_buffered 'Tweet' => sub {
-    $Penhas::Helpers::Timeline::ForceFilterClientes = [$cliente_id, $cliente_id2];
 
     my $media = $t->post_ok(
         '/me/media',
@@ -268,7 +270,6 @@ subtest_buffered 'Tweet' => sub {
 
 };
 
-on_scope_exit { user_cleanup(user_id => $Penhas::Helpers::Timeline::ForceFilterClientes); };
 done_testing();
 
 exit;
