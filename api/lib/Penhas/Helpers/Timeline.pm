@@ -83,7 +83,10 @@ sub like_tweet {
     )->next;
     $reference = {$reference->get_columns()};
 
-    return {tweet => &_fomart_tweet($user, $reference)};
+    my $tweet = &_fomart_tweet($user, $reference);
+    $tweet->{meta}{liked} = 1;
+
+    return {tweet => $tweet};
 }
 
 sub delete_tweet {

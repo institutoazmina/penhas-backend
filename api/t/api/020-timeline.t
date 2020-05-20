@@ -129,7 +129,7 @@ subtest_buffered 'Tweet' => sub {
     $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'like'),
         {'x-api-key' => $session},
-    )->status_is(200)->json_is('/tweet/qtde_likes', 1);
+    )->status_is(200)->json_is('/tweet/qtde_likes', 1)->json_is('/tweet/meta/liked', 1);
 
     my $comment1 = $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'comment'),
