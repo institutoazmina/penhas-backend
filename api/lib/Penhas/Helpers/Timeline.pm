@@ -393,12 +393,8 @@ sub _fomart_tweet {
 sub _gen_uniq_media_url {
     my ($media_id, $user, $quality, $ip) = @_;
 
-    # 10 ate 20 minutos pra baixar
-    my $now     = time();
-    my $ttl     = $now - ($now % 600);
-    my $user_id = $user->{id};
-    my $hash    = substr(md5_hex($ENV{MEDIA_HASH_SALT} . "$user_id$quality$ttl$ip"), 0, 6);
-    return $ENV{PUBLIC_API_URL} . "media-download/?m=$media_id&q=$quality&u=$user_id&ttl=$ttl&h=$hash";
+    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $user->{id} . $quality . $ip), 0, 6);
+    return $ENV{PUBLIC_API_URL} . "media-download/?m=$media_id&q=$quality&h=$hash";
 }
 
 1;

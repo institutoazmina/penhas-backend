@@ -232,7 +232,7 @@ sub user_cleanup {
     my (%opts) = @_;
 
     my $user_id = $opts{user_id};
-    log_info("Apagando cliente $user_id");
+    log_info("Apagando cliente " . ref $user_id ? join ',', $user_id->@* : $user_id);
 
     foreach my $table (
         qw/

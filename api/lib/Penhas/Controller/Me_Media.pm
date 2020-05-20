@@ -184,8 +184,6 @@ sub upload {
     $row->{cliente_id} = $c->stash('user')->{id};
     $row->{created_at} = DateTime->now->datetime(' ');
 
-    use DDP;
-    p $row;
     $ret = $rs->create($row);
   RENDER:
 
