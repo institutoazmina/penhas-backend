@@ -261,7 +261,7 @@ sub load_quiz_session {
                 slog_info(
                     'DURING ADD: testing question relevance "%s" Result: %s FOR %s',
                     (exists $item->{_sub} && exists $item->{_sub}{ref} ? $item->{_sub}{ref} : $item->{content}),
-                    $has ? 'True' : 'False',
+                    $has ? '✔️ True ✔️' : '❌ False ❌',
                     $item->{_relevance},
                 );
 
@@ -340,7 +340,7 @@ require Data::Printer;
         slog_info(
             'testing question relevance "%s" Result: %s FOR %s',
             (exists $q->{_sub} && exists $q->{_sub}{ref} ? $q->{_sub}{ref} : $q->{content}),
-            $has ? 'True' : 'False',
+            $has ? '✔️ True ✔️' : '❌ False ❌',
             $q->{_relevance},
         );
 
@@ -364,7 +364,7 @@ require Data::Printer;
             $add_more_questions = 1;
 
             # diz que nao eh mais um caller, pq nao teve botao e chegamos no final..
-            $opts{caller_is_process} = 0;
+            # $opts{caller_is_process} = 0;
             goto ADD_QUESTIONS;
         }
         else {
