@@ -284,7 +284,7 @@ sub load_quiz_session {
 
                     slog_info(
                         'DURING ADD: testing question relevance "%s" Result: %s FOR %s',
-                        (exists $item->{_sub}{ref} ? $item->{_sub}{ref} : $item->{content}),
+                        (exists $item->{_sub} && exists $item->{_sub}{ref} ? $item->{_sub}{ref} : $item->{content}),
                         $has ? 'True' : 'False',
                         $item->{_relevance},
                     );
@@ -324,7 +324,7 @@ sub load_quiz_session {
         $q->{_currently_has_relevance} = $has;
         slog_info(
             'testing question relevance "%s" Result: %s FOR %s',
-            (exists $q->{_sub}{ref} ? $q->{_sub}{ref} : $q->{content}),
+            (exists $q->{_sub} && exists $q->{_sub}{ref} ? $q->{_sub}{ref} : $q->{content}),
             $has ? 'True' : 'False',
             $q->{_relevance},
         );
