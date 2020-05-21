@@ -277,6 +277,7 @@ sub load_quiz_session {
 
                         my @keeped;
 
+require Data::Printer;
                         log_info(Data::Printer::p($current_msgs, {colored => 1}));
                         for my $msg ($current_msgs->@*) {
                             if (!$msg->{_currently_has_relevance}) {
