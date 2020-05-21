@@ -48,8 +48,7 @@ sub find {
         $c->load_quiz_session(session => $quiz_session, user => $user);
 
         $extra{quiz_session} = $c->stash('quiz_session');
-my $x = $extra{quiz_session};
-        use DDP; p $x;
+use JSON;$c->log->info(to_json($extra{quiz_session}));
     }
 
     return $c->render(
