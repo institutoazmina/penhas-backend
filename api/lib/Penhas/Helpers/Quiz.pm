@@ -283,7 +283,8 @@ sub load_quiz_session {
         if ($has){
 
             push @frontend_msg, &_render_question($q, $vars) ;
-            if ($q->{_autocontinue}){
+            if ($q->{_autocontinue} && $q->{seen} == 0){
+                $q->{seen}++;
                 $add_more_questions++;
                 goto ADD_QUESTIONS;
             }
