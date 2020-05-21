@@ -279,7 +279,15 @@ sub load_quiz_session {
     foreach my $q ($current_msgs->@*) {
         my $has = &has_relevance($vars, $q);
         $q->{_currently_has_relevance} = $has;
-        push @frontend_msg, &_render_question($q, $vars) if $has;
+
+        if ($has){
+
+            push @frontend_msg, &_render_question($q, $vars) ;
+            if ($q->{_autocontinue}){
+                $add_more_questions++;
+                goto ADD_QUESTIONS;
+            }
+        }
     }
 
     # nao teve nenhuma relevante, adiciona mais questoes,
