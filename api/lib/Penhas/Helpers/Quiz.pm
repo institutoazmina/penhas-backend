@@ -268,22 +268,23 @@ sub load_quiz_session {
                 # auto continue precisa ja colocar em @preprend_msg tudo o que esta visivel atualmente
                 # e mover as pendings visiveis para o prev_message
                 if (exists $item->{_autocontinue} && $item->{_autocontinue}) {
-                    log_info("_autocontinue, moving current relevant messages to prev_msgs");
 
                     if ($has) {
+                        log_info("_autocontinue, moving current relevant messages to prev_msgs");
+
                         push $stash->{prev_msgs}->@*, $item;
                         push @frontend_msg, &_render_question($item, $vars);
 
                         my @keeped;
 
+                        log_info(Data::Printer::p($current_msgs, {colored => 1}));
                         for my $msg ($current_msgs->@*) {
-                            use DDP; p $msg;
                             if (!$msg->{_currently_has_relevance}) {
-                                log_info("keep " . to_json($msg)  );
+                                log_info("keep " . to_json($msg));
                                 push @keeped, $msg;
                             }
                             else {
-                                log_info("move to prev_msgs " . to_json($msg)  );
+                                log_info("move to prev_msgs " . to_json($msg));
                                 push $stash->{prev_msgs}->@*, $msg;
                             }
                         }
@@ -291,6 +292,7 @@ sub load_quiz_session {
                         $current_msgs = \@keeped;
                     }
                     else {
+                        log_info("_autocontinue is not relevant");
                         # joga item pra lista de msg correntes
                         push $current_msgs->@*, $item;
 
