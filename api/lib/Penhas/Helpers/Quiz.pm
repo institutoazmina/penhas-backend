@@ -387,6 +387,8 @@ sub load_quiz_session {
                         label      => 'Continuar',
                     }
                 ];
+                $stash->{is_eof}++;
+                $update_db++;
             }
             else {
                 if (!$stash->{is_finished}) {
