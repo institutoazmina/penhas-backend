@@ -230,7 +230,7 @@ sub load_quiz_session {
     my $add_more_questions = &any_has_relevance($vars, $current_msgs) == 0;
 
     # se chegar em 0, estamos em loop...
-    my $loop_detection = 100;
+    my $loop_detection = 10;
   ADD_QUESTIONS:
     log_debug("loop_detection=$loop_detection");
     if (--$loop_detection < 0) {
@@ -279,6 +279,12 @@ sub load_quiz_session {
                     # ao menos que seja "auto continue" (continua sem iteracao do usuario)
                     # pegamos um item que eh input, entao vamos sair do loop nesta vez
                     $is_last_item = 1 if $item->{type} ne 'displaytext';
+
+                    my $has = &has_relevance($vars, $item);
+                    if (!$has){
+                        log_info("Item is not relevant, keep adding items..");
+                        $is_last_item = 0;
+                    }
 
                     # joga item pra lista de msg correntes
                     push $current_msgs->@*, $item;
