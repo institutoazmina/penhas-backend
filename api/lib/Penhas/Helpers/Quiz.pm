@@ -251,14 +251,36 @@ sub load_quiz_session {
             my $item = shift $stash->{pending}->@*;
             if ($item) {
 
-                # ao menos que seja "auto continue" (continua sem iteracao do usuario)
-                if (!exists $item->{_autocontinue} && !$item->{_autocontinue}){
+                # auto continue precisa ja colocar em @preprend_msg tudo o que esta visivel atualmente
+                # e mover as pendings visiveis para o prev_message
+                if (exists $item->{_autocontinue} && $item->{_autocontinue}) {
+
+                    push $stash->{prev_msgs}->@*, $item;
+                    push @preprend_msg, &_render_question($item, $vars);
+
+                    my @keeped;
+
+                    for my $msg ($current_msgs->@*) {
+                        if (!$msg->{_currently_has_relevance}) {
+                            push @keeped, $msg;
+                            next;
+                        }
+                        else {
+                            push $stash->{prev_msgs}->@*, $msg;
+                        }
+                    }
+
+                    $current_msgs = \@keeped;
+                }
+                else {
+                    # ao menos que seja "auto continue" (continua sem iteracao do usuario)
                     # pegamos um item que eh input, entao vamos sair do loop nesta vez
                     $is_last_item = 1 if $item->{type} ne 'displaytext';
+
+                    # joga item pra lista de msg correntes
+                    push $current_msgs->@*, $item;
                 }
 
-                # joga item pra lista de msg correntes
-                push $current_msgs->@*, $item;
             }
             else {
                 $is_last_item = 1;
@@ -280,14 +302,8 @@ sub load_quiz_session {
         my $has = &has_relevance($vars, $q);
         $q->{_currently_has_relevance} = $has;
 
-        if ($has){
-
-            push @frontend_msg, &_render_question($q, $vars) ;
-            #if ($q->{_autocontinue} && $q->{seen} == 0){
-            #    $q->{seen}++;
-            #    $add_more_questions++;
-            #    goto ADD_QUESTIONS;
-            #}
+        if ($has) {
+            push @frontend_msg, &_render_question($q, $vars);
         }
     }
 
@@ -495,8 +511,8 @@ sub process_quiz_session {
                 if (defined $val && length $val <= 6000 && $val =~ /^(\d{1,4},){0,999}\d{1,4}$/a) {
 
                     my $reverse_index = {map { $_->{index} => $_->{display} } $msg->{options}->@*};
-                    my $output       = '';
-                    my $output_human = '';
+                    my $output        = '';
+                    my $output_human  = '';
                     foreach my $index (split /,/, $val) {
 
                         # pula caso venha opcoes invalidas
