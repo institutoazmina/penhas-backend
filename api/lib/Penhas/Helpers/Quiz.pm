@@ -474,6 +474,8 @@ sub process_quiz_session {
     my $session = $opts{session}       or croak 'missing session';
     my $params  = delete $opts{params} or croak 'missing params';
 
+    log_info("process_quiz_session " . to_json($params));
+
     my $stash        = $session->{stash};
     my $current_msgs = $stash->{current_msgs} || [];
     my $responses    = $session->{responses};
@@ -620,6 +622,8 @@ sub process_quiz_session {
         # pelo menos eh assim que eu imagino o uso por enquanto
         last QUESTIONS if $have_new_responses;
     }
+
+    log_info("have_new_responses=$have_new_responses");
 
     # teve respostas, na teoria seria mover as atuais para o "prev_msgs",
     # mas só devemos movimentar o que estava relevante momento anteriores as respostas
