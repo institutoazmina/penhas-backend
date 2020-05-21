@@ -230,7 +230,7 @@ sub load_quiz_session {
     my $add_more_questions = &any_has_relevance($vars, $current_msgs) == 0;
 
     # se chegar em 0, estamos em loop...
-    my $loop_detection = 10;
+    my $loop_detection = 100;
   ADD_QUESTIONS:
     log_debug("loop_detection=$loop_detection");
     if (--$loop_detection < 0) {
@@ -281,9 +281,17 @@ sub load_quiz_session {
                     $is_last_item = 1 if $item->{type} ne 'displaytext';
 
                     my $has = &has_relevance($vars, $item);
-                    if (!$has){
-                        log_info("Item is not relevant, keep adding items..");
-                        $is_last_item = 0;
+
+                    slog_info(
+                        'DURING ADD: testing question relevance "%s" Result: %s FOR %s',
+                        (exists $item->{_sub}{ref} ? $item->{_sub}{ref} : $item->{content}),
+                        $has ? 'True' : 'False',
+                        $item->{_relevance},
+                    );
+                    if (!$has) {
+
+                        #log_info("Item is not relevant, keep adding items..");
+                        #$is_last_item = 0;
                     }
 
                     # joga item pra lista de msg correntes
@@ -511,9 +519,10 @@ sub process_quiz_session {
                             $responses->{$code} += $msg->{_sub}{p2a} if $val eq 'Y';
                         }
                         else {
-                            if ($val eq 'Y'){
-                                $responses->{$code} = $msg->{_sub}{p2a} ;
-                            }else{
+                            if ($val eq 'Y') {
+                                $responses->{$code} = $msg->{_sub}{p2a};
+                            }
+                            else {
                                 # inicia como '0'
                                 $responses->{$code} = 0;
                             }

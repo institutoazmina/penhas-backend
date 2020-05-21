@@ -199,7 +199,7 @@ subtest_buffered 'group de questoes boolean' => sub {
             ok $prev->{display_response}, 'has display_response';
         }
     }
-    is scalar @$prev_msgs, 9, '9 prev questions';
+    is scalar @$prev_msgs, 10, '10 prev questions';
 
     # apertando o botao botao_tela_socorro
     $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
