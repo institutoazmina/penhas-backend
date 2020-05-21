@@ -513,6 +513,7 @@ sub process_quiz_session {
     my $update_user_skills;
     my $have_new_responses;
   QUESTIONS:
+    log_info("testing reverse... order of messages..");
     foreach my $msg (reverse $current_msgs->@*) {
 
         # se ela nao tava na tela, nao podemos processar as respostas
@@ -521,10 +522,14 @@ sub process_quiz_session {
         my $ref = $msg->{ref};
         next unless $ref;
 
+        log_info("ref=$ref?");
         if (exists $params->{$ref}) {
-            my $val  = $params->{$ref} || '';
+            my $val = $params->{$ref} || '';
+            log_info("Found, $ref=$val");
             my $code = $msg->{_code};
             die sprintf "missing `_code` on message %s", to_json($msg) unless $code;
+
+            log_info("msg type " . $msg->{type});
 
             if ($msg->{type} eq 'yesno') {
 
@@ -616,6 +621,8 @@ sub process_quiz_session {
 
             }
             elsif ($msg->{type} eq 'button') {
+
+                log_info("msg type button");
 
                 # reiniciar o fluxo
                 if ($msg->{_reset}) {
