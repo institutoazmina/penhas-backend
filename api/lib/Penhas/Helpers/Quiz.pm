@@ -230,7 +230,7 @@ sub load_quiz_session {
     my $add_more_questions = &any_has_relevance($vars, $current_msgs) == 0;
 
     # se chegar em 0, estamos em loop...
-    my $loop_detection = 10;
+    my $loop_detection = 100;
   ADD_QUESTIONS:
     log_debug("loop_detection=$loop_detection");
     if (--$loop_detection < 0) {
