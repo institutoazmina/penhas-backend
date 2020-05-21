@@ -232,6 +232,7 @@ sub load_quiz_session {
     # se chegar em 0, estamos em loop...
     my $loop_detection = 10;
   ADD_QUESTIONS:
+    log_debug("loop_detection=$loop_detection");
     if (--$loop_detection < 0) {
         $c->stash(
             quiz_session => {
@@ -250,10 +251,12 @@ sub load_quiz_session {
         do {
             my $item = shift $stash->{pending}->@*;
             if ($item) {
+                log_info("adding question " . to_json($item));
 
                 # auto continue precisa ja colocar em @preprend_msg tudo o que esta visivel atualmente
                 # e mover as pendings visiveis para o prev_message
                 if (exists $item->{_autocontinue} && $item->{_autocontinue}) {
+                    log_info("_autocontinue, moving current relevant messages to prev_msgs");
 
                     push $stash->{prev_msgs}->@*, $item;
                     push @preprend_msg, &_render_question($item, $vars);
@@ -286,21 +289,31 @@ sub load_quiz_session {
                 $is_last_item = 1;
             }
 
+            log_info("LAST_ITEM=$is_last_item");
+
             $update_db++;
         } while !$is_last_item;
 
         # chegamos no final do chat
         if ($stash->{pending}->@* == 0) {
+            log_info("set is_eof to 1");
             $stash->{is_eof} = 1;
             $update_db++;
         }
     }
 
     my @frontend_msg;
+    slog_info('vars %s', to_json($vars));
 
     foreach my $q ($current_msgs->@*) {
         my $has = &has_relevance($vars, $q);
         $q->{_currently_has_relevance} = $has;
+        slog_info(
+            'testing question relevance "%s" [% %s %] = %s',
+            (exists $q->{_code} ? $q->{_code} : $q->{content}),
+            $q->{_relevance},
+            $has,
+        );
 
         if ($has) {
             push @frontend_msg, &_render_question($q, $vars);
@@ -315,12 +328,17 @@ sub load_quiz_session {
     # a pergunta atual do 'nada' fique com dois inputs, caso mal feita a logica
     # ja que essa situacao nao esta testada no app.
     if (!@frontend_msg) {
+        log_info("no frontend questions found... current_msgs is " . to_json($current_msgs));
+
         if (!$stash->{is_eof}) {
+            log_info("is_eof=0, GOTO ADD_QUESTIONS");
             $add_more_questions = 1;
             goto ADD_QUESTIONS;
         }
         else {
+            log_info("is_eof=1. caller_is_process=" . $opts{caller_is_process});
             if (!$opts{caller_is_process}) {
+                log_info("Adding generic END button");
 
                 # acabou sem um input [pois isso aqui eh chamado no GET],
                 # vou colocar um input padrao de finalizar
@@ -330,10 +348,13 @@ sub load_quiz_session {
                         content    => 'Fim!',
                         _relevance => '1',
                         ref        => 'btn',
-                        action     => 'reload',
+                        action     => 'none',
                         label      => 'Continuar',
                     }
                 ];
+            }
+            else {
+                log_info("quiz finished, bye bye!");
             }
         }
 
