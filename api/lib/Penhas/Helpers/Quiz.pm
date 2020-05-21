@@ -254,13 +254,20 @@ sub load_quiz_session {
             if ($item) {
                 log_info("adding question " . to_json($item));
 
+                my $has = &has_relevance($vars, $item);
+                slog_info(
+                    'DURING ADD: testing question relevance "%s" Result: %s FOR %s',
+                    (exists $item->{_sub} && exists $item->{_sub}{ref} ? $item->{_sub}{ref} : $item->{content}),
+                    $has ? 'True' : 'False',
+                    $item->{_relevance},
+                );
                 # auto continue precisa ja colocar em @preprend_msg tudo o que esta visivel atualmente
                 # e mover as pendings visiveis para o prev_message
                 if (exists $item->{_autocontinue} && $item->{_autocontinue}) {
                     log_info("_autocontinue, moving current relevant messages to prev_msgs");
 
                     push $stash->{prev_msgs}->@*, $item;
-                    push @preprend_msg, &_render_question($item, $vars);
+                    push @preprend_msg, &_render_question($item, $vars) if $has;
 
                     my @keeped;
 
@@ -281,18 +288,10 @@ sub load_quiz_session {
                     # pegamos um item que eh input, entao vamos sair do loop nesta vez
                     $is_last_item = 1 if $item->{type} ne 'displaytext';
 
-                    my $has = &has_relevance($vars, $item);
 
-                    slog_info(
-                        'DURING ADD: testing question relevance "%s" Result: %s FOR %s',
-                        (exists $item->{_sub} && exists $item->{_sub}{ref} ? $item->{_sub}{ref} : $item->{content}),
-                        $has ? 'True' : 'False',
-                        $item->{_relevance},
-                    );
                     if (!$has) {
-
-                        #log_info("Item is not relevant, keep adding items..");
-                        #$is_last_item = 0;
+                        log_info("Item is not relevant, keep adding items..");
+                        $is_last_item = 0;
                     }
 
                     # joga item pra lista de msg correntes
