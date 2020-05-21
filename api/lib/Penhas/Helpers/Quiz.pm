@@ -309,10 +309,10 @@ sub load_quiz_session {
         my $has = &has_relevance($vars, $q);
         $q->{_currently_has_relevance} = $has;
         slog_info(
-            'testing question relevance "%s" [% %s %] = %s',
+            'testing question relevance "%s" Result: %s FOR %s',
             (exists $q->{_code} ? $q->{_code} : $q->{content}),
+            $has ? 'True' : 'False',
             $q->{_relevance},
-            $has,
         );
 
         if ($has) {
