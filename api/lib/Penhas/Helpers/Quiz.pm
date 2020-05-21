@@ -259,9 +259,9 @@ sub load_quiz_session {
 
                 my $has = &has_relevance($vars, $item);
                 slog_info(
-                    'DURING ADD: testing question relevance "%s" Result: %s FOR %s',
+                    'DURING ADD: testing question relevance %s "%s" %s',
+                    $has ? '✔️ True ' : '❌ False',
                     (exists $item->{_sub} && exists $item->{_sub}{ref} ? $item->{_sub}{ref} : $item->{content}),
-                    $has ? '✔️ True ✔️' : '❌ False ❌',
                     $item->{_relevance},
                 );
 
@@ -277,7 +277,7 @@ sub load_quiz_session {
 
                         my @keeped;
 
-require Data::Printer;
+                        require Data::Printer;
                         log_info(Data::Printer::p($current_msgs, {colored => 1}));
                         for my $msg ($current_msgs->@*) {
                             if (!$msg->{_currently_has_relevance}) {
@@ -294,6 +294,7 @@ require Data::Printer;
                     }
                     else {
                         log_info("_autocontinue is not relevant");
+
                         # joga item pra lista de msg correntes
                         push $current_msgs->@*, $item;
 
@@ -338,9 +339,9 @@ require Data::Printer;
         my $has = &has_relevance($vars, $q);
         $q->{_currently_has_relevance} = $has;
         slog_info(
-            'testing question relevance "%s" Result: %s FOR %s',
+            'Rendering: question relevance %s "%s" %s',
+            $has ? '✔️ True' : '❌ False',
             (exists $q->{_sub} && exists $q->{_sub}{ref} ? $q->{_sub}{ref} : $q->{content}),
-            $has ? '✔️ True ✔️' : '❌ False ❌',
             $q->{_relevance},
         );
 
@@ -357,10 +358,10 @@ require Data::Printer;
     # a pergunta atual do 'nada' fique com dois inputs, caso mal feita a logica
     # ja que essa situacao nao esta testada no app.
     if (!@frontend_msg) {
-        log_info("no frontend questions found... current_msgs is " . to_json($current_msgs));
+        log_info("⚠️ No frontend questions found... current_msgs is " . to_json($current_msgs));
 
         if (!$stash->{is_eof}) {
-            log_info("is_eof=0, GOTO ADD_QUESTIONS");
+            log_info("🔁 is_eof=0, GOTO ADD_QUESTIONS ");
             $add_more_questions = 1;
 
             # diz que nao eh mais um caller, pq nao teve botao e chegamos no final..
@@ -368,9 +369,11 @@ require Data::Printer;
             goto ADD_QUESTIONS;
         }
         else {
-            log_info("is_eof=1. caller_is_process=" . $opts{caller_is_process});
+            log_info("is_eof=1  caller_is_process=" . $opts{caller_is_process});
             if (!$opts{caller_is_process}) {
-                log_info("Adding generic END button");
+
+              ADD_BTN:
+                log_info("🔴 Adding generic END button");
 
                 # acabou sem um input [pois isso aqui eh chamado no GET],
                 # vou colocar um input padrao de finalizar
@@ -386,7 +389,13 @@ require Data::Printer;
                 ];
             }
             else {
-                log_info("quiz finished, bye bye!");
+                if (!$stash->{is_finished}) {
+                    log_info("😟 forcing add-button");
+                    goto ADD_BTN;
+                }
+                else {
+                    log_info("🉑 quiz finished, bye bye!");
+                }
             }
         }
 
