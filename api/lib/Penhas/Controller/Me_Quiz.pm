@@ -19,6 +19,8 @@ sub process {
     );
     my $session_id = delete $params->{session_id};
 
+    $c->render_later, return 1 if $params->{timeout};
+
     my $user = $c->stash('user');
 
     my $quiz_session = $c->user_get_quiz_session(user => $user);
