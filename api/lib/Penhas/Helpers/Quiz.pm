@@ -316,7 +316,7 @@ sub load_quiz_session {
         $q->{_currently_has_relevance} = $has;
         slog_info(
             'testing question relevance "%s" Result: %s FOR %s',
-            (exists $q->{_code} ? $q->{_code} : $q->{content}),
+            (exists $q->{_sub}{ref} ? $q->{_sub}{ref} : $q->{content}),
             $has ? 'True' : 'False',
             $q->{_relevance},
         );
@@ -511,7 +511,13 @@ sub process_quiz_session {
                             $responses->{$code} += $msg->{_sub}{p2a} if $val eq 'Y';
                         }
                         else {
-                            $responses->{$code} = $msg->{_sub}{p2a} if $val eq 'Y';
+                            if ($val eq 'Y'){
+                                $responses->{$code} = $msg->{_sub}{p2a} ;
+                            }else{
+                                # inicia como '0'
+                                $responses->{$code} = 0;
+                            }
+
                         }
 
                         $code = $msg->{_sub}{code} . '_' . $msg->{_sub}{p2a};
