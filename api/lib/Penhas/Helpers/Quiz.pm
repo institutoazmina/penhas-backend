@@ -214,6 +214,7 @@ sub _quiz_get_vars {
 sub load_quiz_session {
     my ($c, %opts) = @_;
 
+    $opts{caller_is_process} ||= 0;
 
     my $user    = $opts{user}    or croak 'missing user';
     my $session = $opts{session} or croak 'missing session';
@@ -246,6 +247,7 @@ sub load_quiz_session {
     }
 
     my @frontend_msg;
+
     # nao tem nenhuma relevante pro usuario, pegar todas as pending ate um input
     if ($add_more_questions) {
 
@@ -262,29 +264,33 @@ sub load_quiz_session {
                     $has ? 'True' : 'False',
                     $item->{_relevance},
                 );
+
                 # auto continue precisa ja colocar em @preprend_msg tudo o que esta visivel atualmente
                 # e mover as pendings visiveis para o prev_message
                 if (exists $item->{_autocontinue} && $item->{_autocontinue}) {
                     log_info("_autocontinue, moving current relevant messages to prev_msgs");
 
-                    if ($has){
+                    if ($has) {
                         push $stash->{prev_msgs}->@*, $item;
                         push @frontend_msg, &_render_question($item, $vars);
 
                         my @keeped;
 
                         for my $msg ($current_msgs->@*) {
+                            use DDP; p $msg;
                             if (!$msg->{_currently_has_relevance}) {
+                                log_info("keep " . to_json($msg)  );
                                 push @keeped, $msg;
-                                next;
                             }
                             else {
+                                log_info("move to prev_msgs " . to_json($msg)  );
                                 push $stash->{prev_msgs}->@*, $msg;
                             }
                         }
 
                         $current_msgs = \@keeped;
-                    }else{
+                    }
+                    else {
                         # joga item pra lista de msg correntes
                         push $current_msgs->@*, $item;
 
@@ -353,6 +359,9 @@ sub load_quiz_session {
         if (!$stash->{is_eof}) {
             log_info("is_eof=0, GOTO ADD_QUESTIONS");
             $add_more_questions = 1;
+
+            # diz que nao eh mais um caller, pq nao teve botao e chegamos no final..
+            $opts{caller_is_process} = 0;
             goto ADD_QUESTIONS;
         }
         else {
