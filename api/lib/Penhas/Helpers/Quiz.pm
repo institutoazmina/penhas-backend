@@ -245,6 +245,7 @@ sub load_quiz_session {
         return;
     }
 
+    my @frontend_msg;
     # nao tem nenhuma relevante pro usuario, pegar todas as pending ate um input
     if ($add_more_questions) {
 
@@ -268,7 +269,7 @@ sub load_quiz_session {
 
                     if ($has){
                         push $stash->{prev_msgs}->@*, $item;
-                        push @preprend_msg, &_render_question($item, $vars);
+                        push @frontend_msg, &_render_question($item, $vars);
 
                         my @keeped;
 
@@ -322,7 +323,6 @@ sub load_quiz_session {
         }
     }
 
-    my @frontend_msg;
     slog_info('vars %s', to_json($vars));
 
     foreach my $q ($current_msgs->@*) {
