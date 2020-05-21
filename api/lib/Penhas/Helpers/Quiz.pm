@@ -266,22 +266,28 @@ sub load_quiz_session {
                 if (exists $item->{_autocontinue} && $item->{_autocontinue}) {
                     log_info("_autocontinue, moving current relevant messages to prev_msgs");
 
-                    push $stash->{prev_msgs}->@*, $item;
-                    push @preprend_msg, &_render_question($item, $vars) if $has;
+                    if ($has){
+                        push $stash->{prev_msgs}->@*, $item;
+                        push @preprend_msg, &_render_question($item, $vars);
 
-                    my @keeped;
+                        my @keeped;
 
-                    for my $msg ($current_msgs->@*) {
-                        if (!$msg->{_currently_has_relevance}) {
-                            push @keeped, $msg;
-                            next;
+                        for my $msg ($current_msgs->@*) {
+                            if (!$msg->{_currently_has_relevance}) {
+                                push @keeped, $msg;
+                                next;
+                            }
+                            else {
+                                push $stash->{prev_msgs}->@*, $msg;
+                            }
                         }
-                        else {
-                            push $stash->{prev_msgs}->@*, $msg;
-                        }
+
+                        $current_msgs = \@keeped;
+                    }else{
+                        # joga item pra lista de msg correntes
+                        push $current_msgs->@*, $item;
+
                     }
-
-                    $current_msgs = \@keeped;
                 }
                 else {
                     # ao menos que seja "auto continue" (continua sem iteracao do usuario)
