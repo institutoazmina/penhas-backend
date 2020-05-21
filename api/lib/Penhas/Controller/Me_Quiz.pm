@@ -38,6 +38,8 @@ sub process {
 
         $c->process_quiz_session(user => $user, session => $quiz_session, params => $params);
         $extra{quiz_session} = $c->stash('quiz_session');
+        my $x = $extra{quiz_session};
+        use DDP; p $x;
 
     }
     else {
