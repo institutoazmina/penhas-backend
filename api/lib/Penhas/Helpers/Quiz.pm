@@ -582,7 +582,9 @@ sub process_quiz_session {
 
                         if (exists $msg->{_skills}) {
                             $update_user_skills = {} unless defined $update_user_skills;
-                            $update_user_skills->{set}{$msg->{_skills}{$index}} = 1;
+                            my $id = ref $msg->{_skills} eq 'ARRAY' ? $msg->{_skills}[$index] : $msg->{_skills}{$index};
+                            log_info("skill ref is " . ref $msg->{_skills});
+                            $update_user_skills->{set}{$id} = 1;
                         }
                     }
                     chop($output_human);    # rm espaco
