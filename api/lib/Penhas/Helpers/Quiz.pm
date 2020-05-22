@@ -640,7 +640,7 @@ sub process_quiz_session {
                     $msg->{display_response} = $msg->{label};
                     $have_new_responses++;
 
-                    if ($stash->{is_eof}) {
+                    if ($stash->{is_eof} || $msg->{type} eq 'btn_fim') {
                         $stash->{is_finished} = 1;
                     }
                 }
