@@ -382,7 +382,7 @@ sub load_quiz_session {
                         type       => 'button',
                         content    => 'Fim!',
                         _relevance => '1',
-                        ref        => 'btn',
+                        ref        => 'botao_fim',
                         action     => 'none',
                         label      => 'Continuar',
                     }
@@ -640,7 +640,7 @@ sub process_quiz_session {
                     $msg->{display_response} = $msg->{label};
                     $have_new_responses++;
 
-                    if ($stash->{is_eof} || $msg->{type} eq 'btn_fim') {
+                    if ($stash->{is_eof} || $msg->{type} eq 'botao_fim') {
                         $stash->{is_finished} = 1;
                     }
                 }
