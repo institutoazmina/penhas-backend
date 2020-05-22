@@ -512,7 +512,7 @@ sub process_quiz_session {
 
     my $update_user_skills;
     my $have_new_responses;
-    log_info("testing reverse... order of messages..");
+    log_info("testing reverse... order of messages.." . to_json($current_msgs));
   QUESTIONS:
     foreach my $msg (reverse $current_msgs->@*) {
 
