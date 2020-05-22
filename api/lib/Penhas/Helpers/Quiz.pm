@@ -834,6 +834,7 @@ sub _init_questionnaire_stash {
             my $button_title = {
                 botao_tela_modo_camuflado => 'Ver',
                 botao_tela_socorro        => 'Ver',
+                botao_fim                 => 'Finalizar'
             };
 
             push @questions, {
