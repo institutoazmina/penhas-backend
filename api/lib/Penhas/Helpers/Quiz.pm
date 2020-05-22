@@ -384,6 +384,7 @@ sub load_quiz_session {
                         _relevance               => '1',
                         ref                      => 'botao_fim',
                         action                   => 'none',
+                        _code => 'FORCED_END_CHAT',
                         _currently_has_relevance => 1,
                         label                    => 'Continuar',
                     }
@@ -922,6 +923,7 @@ sub _get_error_questionnaire_stash {
                 _relevance               => '1',
                 _currently_has_relevance => 1,
                 _reset                   => 1,
+                _code => 'ERROR',
                 ref                      => 'btn',
                 action                   => 'reload',
                 label                    => 'Tentar agora',
