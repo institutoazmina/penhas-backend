@@ -512,8 +512,8 @@ sub process_quiz_session {
 
     my $update_user_skills;
     my $have_new_responses;
-  QUESTIONS:
     log_info("testing reverse... order of messages..");
+  QUESTIONS:
     foreach my $msg (reverse $current_msgs->@*) {
 
         # se ela nao tava na tela, nao podemos processar as respostas
