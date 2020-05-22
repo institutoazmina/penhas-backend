@@ -379,12 +379,13 @@ sub load_quiz_session {
                 # vou colocar um input padrao de finalizar
                 $current_msgs = [
                     {
-                        type       => 'button',
-                        content    => 'Fim!',
-                        _relevance => '1',
-                        ref        => 'botao_fim',
-                        action     => 'none',
-                        label      => 'Continuar',
+                        type                     => 'button',
+                        content                  => 'Fim!',
+                        _relevance               => '1',
+                        ref                      => 'botao_fim',
+                        action                   => 'none',
+                        _currently_has_relevance => 1,
+                        label                    => 'Continuar',
                     }
                 ];
                 $stash->{is_eof}++;
@@ -916,13 +917,14 @@ sub _get_error_questionnaire_stash {
             &_new_displaytext('Encontramos um problema para montar o questionário!'),
             &_new_displaytext($err . ''),
             {
-                type       => 'button',
-                content    => 'Tente novamente mais tarde, e entre em contato caso o erro persista.',
-                _relevance => '1',
-                _reset     => 1,
-                ref        => 'btn',
-                action     => 'reload',
-                label      => 'Tentar agora',
+                type                     => 'button',
+                content                  => 'Tente novamente mais tarde, e entre em contato caso o erro persista.',
+                _relevance               => '1',
+                _currently_has_relevance => 1,
+                _reset                   => 1,
+                ref                      => 'btn',
+                action                   => 'reload',
+                label                    => 'Tentar agora',
             }
         ]
     };
