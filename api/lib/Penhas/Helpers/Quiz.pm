@@ -214,7 +214,7 @@ sub _quiz_get_vars {
 sub load_quiz_session {
     my ($c, %opts) = @_;
 
-    $opts{caller_is_process} ||= 0;
+    $opts{caller_is_post} ||= 0;
 
     my $user    = $opts{user}    or croak 'missing user';
     my $session = $opts{session} or croak 'missing session';
@@ -255,65 +255,26 @@ sub load_quiz_session {
         do {
             my $item = shift $stash->{pending}->@*;
             if ($item) {
-                log_info("adding question " . to_json($item));
+                log_info("Maybe adding question " . to_json($item));
 
                 my $has = &has_relevance($vars, $item);
                 slog_info(
-                    'DURING ADD: testing question relevance %s "%s" %s',
+                    '  Testing question relevance %s "%s" %s',
                     $has ? '✔️ True ' : '❌ False',
                     (exists $item->{_sub} && exists $item->{_sub}{ref} ? $item->{_sub}{ref} : $item->{content}),
                     $item->{_relevance},
                 );
 
-                # auto continue precisa ja colocar em @preprend_msg tudo o que esta visivel atualmente
-                # e mover as pendings visiveis para o prev_message
-                if (exists $item->{_autocontinue} && $item->{_autocontinue}) {
+                # pegamos um item que eh input, entao vamos sair do loop nesta vez
+                $is_last_item = 1 if $item->{type} ne 'displaytext';
 
-                    if ($has) {
-                        log_info("_autocontinue, moving current relevant messages to prev_msgs");
-
-                        push $stash->{prev_msgs}->@*, $item;
-                        push @frontend_msg, &_render_question($item, $vars);
-
-                        my @keeped;
-
-                        require Data::Printer;
-                        log_info(Data::Printer::p($current_msgs, {colored => 1}));
-                        for my $msg ($current_msgs->@*) {
-                            if (!$msg->{_currently_has_relevance}) {
-                                log_info("keep " . to_json($msg));
-                                push @keeped, $msg;
-                            }
-                            else {
-                                log_info("move to prev_msgs " . to_json($msg));
-                                push $stash->{prev_msgs}->@*, $msg;
-                            }
-                        }
-
-                        $current_msgs = \@keeped;
-                    }
-                    else {
-                        log_info("_autocontinue is not relevant");
-
-                        # joga item pra lista de msg correntes
-                        push $current_msgs->@*, $item;
-
-                    }
+                if (!$has) {
+                    log_info("question is not relevant, testing next question...");
+                    $is_last_item = 0;
                 }
-                else {
-                    # ao menos que seja "auto continue" (continua sem iteracao do usuario)
-                    # pegamos um item que eh input, entao vamos sair do loop nesta vez
-                    $is_last_item = 1 if $item->{type} ne 'displaytext';
 
-
-                    if (!$has) {
-                        log_info("Item is not relevant, keep adding items..");
-                        $is_last_item = 0;
-                    }
-
-                    # joga item pra lista de msg correntes
-                    push $current_msgs->@*, $item;
-                }
+                # joga item pra lista de msg correntes
+                push $current_msgs->@*, $item;
 
             }
             else {
@@ -364,29 +325,28 @@ sub load_quiz_session {
             log_info("🔁 is_eof=0, GOTO ADD_QUESTIONS ");
             $add_more_questions = 1;
 
-            # diz que nao eh mais um caller, pq nao teve botao e chegamos no final..
-            # $opts{caller_is_process} = 0;
             goto ADD_QUESTIONS;
         }
         else {
-            log_info("is_eof=1  caller_is_process=" . $opts{caller_is_process});
-            if (!$opts{caller_is_process}) {
+            log_info("is_eof=1  caller_is_post=" . $opts{caller_is_post});
+            if (!$opts{caller_is_post}) {
 
-              ADD_BTN:
+              ADD_BTN_FIM:
                 log_info("🔴 Adding generic END button");
 
                 # acabou sem um input [pois isso aqui eh chamado no GET],
                 # vou colocar um input padrao de finalizar
                 $current_msgs = [
                     {
-                        type                     => 'button',
-                        content                  => 'Fim!',
-                        _relevance               => '1',
-                        ref                      => 'botao_fim',
-                        action                   => 'none',
-                        _code => 'FORCED_END_CHAT',
+                        type       => 'button',
+                        content    => 'Tudo certo por aqui! Recado para administrador: quiz acabou sem botão fim!',
+                        action     => '',
+                        ref        => 'BT_END_' . int(rand(100000)),
+                        label      => 'Finalizar',
+                        _relevance => '1',
+                        _code      => 'FORCED_END_CHAT',
+                        _end_chat  => 1,
                         _currently_has_relevance => 1,
-                        label                    => 'Continuar',
                     }
                 ];
                 $stash->{is_eof}++;
@@ -395,7 +355,7 @@ sub load_quiz_session {
             else {
                 if (!$stash->{is_finished}) {
                     log_info("😟 forcing add-button");
-                    goto ADD_BTN;
+                    goto ADD_BTN_FIM;
                 }
                 else {
                     log_info("🉑 quiz finished, bye bye!");
@@ -452,7 +412,7 @@ sub load_quiz_session {
             'quiz_session' => {
                 current_msgs => [@preprend_msg, @frontend_msg],
                 session_id   => $session->{id},
-                prev_msgs    => $opts{caller_is_process}
+                prev_msgs    => $opts{caller_is_post}
                 ? undef
                 : [map { &_render_question($_, $vars) } $stash->{prev_msgs}->@*],
             }
@@ -642,7 +602,7 @@ sub process_quiz_session {
                     $msg->{display_response} = $msg->{label};
                     $have_new_responses++;
 
-                    if ($stash->{is_eof} || $msg->{action} eq 'botao_fim') {
+                    if ($stash->{is_eof} || $msg->{_end_chat}) {
                         $stash->{is_finished} = 1;
                     }
                 }
@@ -695,8 +655,8 @@ sub process_quiz_session {
 
     $c->load_quiz_session(
         %opts,
-        preprend_msg      => \@preprend_msg,
-        caller_is_process => 1,
+        preprend_msg   => \@preprend_msg,
+        caller_is_post => 1,
     );
 
 }
@@ -821,32 +781,44 @@ sub _init_questionnaire_stash {
             push @questions, $ref;
 
         }
-        elsif ($qc->{type} eq 'autocontinue') {
+        elsif ($qc->{type} eq 'displaytext') {
 
             push @questions, {
-                type          => 'displaytext',
-                style         => 'normal',
-                content       => $qc->{question},
-                _autocontinue => 1,
-                _relevance    => $relevance,
-            } if $qc->{question} ne 'autocontinue';
+                type       => 'displaytext',
+                style      => 'normal',
+                content    => $qc->{question},
+                _relevance => $relevance,
+            };
 
         }
-        elsif ($qc->{type} =~ /^botao_/) {
+        elsif ($qc->{type} eq 'botao_tela_modo_camuflado') {
             my $button_title = {
-                botao_tela_modo_camuflado => 'Ver',
-                botao_tela_socorro        => 'Ver',
+                botao_tela_modo_camuflado => 'Explicação do Modo Camuflado',
                 botao_fim                 => 'Finalizar'
             };
 
             push @questions, {
                 type       => 'button',
                 content    => $qc->{question},
-                _relevance => $relevance,
-                action     => $qc->{type},
+                action     => 'botao_tela_modo_camuflado',
                 ref        => 'BT' . $qc->{id},
-                label      => $button_title->{$qc->{type}} || 'Ver',
+                label      => $qc->{button_label} || 'Visualizar',
+                _relevance => $relevance,
                 _code      => $qc->{code},
+            };
+
+        }
+        elsif ($qc->{type} eq 'botao_fim') {
+
+            push @questions, {
+                type       => 'button',
+                content    => $qc->{question},
+                action     => 'none',
+                ref        => 'BT' . $qc->{id},
+                label      => $qc->{button_label}|| 'Enviar',
+                _relevance => $relevance,
+                _code      => $qc->{code},
+                _end_chat  => 1,
             };
 
         }
@@ -923,7 +895,7 @@ sub _get_error_questionnaire_stash {
                 _relevance               => '1',
                 _currently_has_relevance => 1,
                 _reset                   => 1,
-                _code => 'ERROR',
+                _code                    => 'ERROR',
                 ref                      => 'btn',
                 action                   => 'reload',
                 label                    => 'Tentar agora',

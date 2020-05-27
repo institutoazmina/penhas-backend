@@ -49,12 +49,14 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 1 },
   "relevance",
   { data_type => "varchar", default_value => 1, is_nullable => 0, size => 2000 },
+  "button_label",
+  { data_type => "varchar", is_nullable => 1, size => 200 },
 );
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-12 05:30:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:U4cfp0sRCfFxg4hq7eDg8A
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-27 10:56:33
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:95Alfo0tczHRDBO+ILx1iQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

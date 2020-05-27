@@ -165,7 +165,7 @@ subtest_buffered 'group de questoes boolean' => sub {
     $input_msg = $json->{quiz_session}{current_msgs}[-1];
 
     is $first_msg->{type},    'displaytext',       'just a text';
-    is $first_msg->{content}, 'autocontinue flow', 'context of text';
+    is $first_msg->{content}, 'displaytext flow', 'context of text';
 
     is $input_msg->{type},    'button',                    'is a button';
     is $input_msg->{content}, 'btn1',                      'button has content';
@@ -184,7 +184,7 @@ subtest_buffered 'group de questoes boolean' => sub {
     $input_msg = $json->{quiz_session}{current_msgs}[-1];
     is $input_msg->{type},    'button',             'is a button';
     is $input_msg->{content}, 'btn2',               'button has content';
-    is $input_msg->{action},  'botao_tela_socorro', 'button action is botao_tela_socorro';
+    is $input_msg->{action},  'none', 'button action is none [btn-fim]';
 
     my $prev_msgs = $t->get_ok(
         '/me',
