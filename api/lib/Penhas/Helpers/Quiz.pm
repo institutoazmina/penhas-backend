@@ -721,13 +721,6 @@ sub _init_questionnaire_stash {
         }
         elsif ($qc->{type} eq 'yesnogroup') {
 
-            push @questions, {
-                type       => 'displaytext',
-                style      => 'normal',
-                content    => $qc->{question},
-                _relevance => $relevance,
-            };
-
             my $counter = 1;
             foreach my $subq ($qc->{yesnogroup}->@*) {
                 next unless $subq->{Status};

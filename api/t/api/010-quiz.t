@@ -114,7 +114,7 @@ subtest_buffered 'group de questoes boolean' => sub {
     is $first_msg->{content}, 'a group of yes no questions will start now', 'group question intro text';
 
     is $input_msg->{type},    'yesno',      'yesno type';
-    is $input_msg->{content}, 'Question A', 'yesno type';
+    is $input_msg->{content}, 'a group of yes no questions will start now', 'yesno type';
 
     my $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
     $json = $t->post_ok(
@@ -199,7 +199,7 @@ subtest_buffered 'group de questoes boolean' => sub {
             ok $prev->{display_response}, 'has display_response';
         }
     }
-    is scalar @$prev_msgs, 10, '10 prev questions';
+    is scalar @$prev_msgs, 9, '9 prev questions';
 
     # apertando o botao botao_tela_socorro
     $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
