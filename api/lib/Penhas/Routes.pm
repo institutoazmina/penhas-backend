@@ -15,6 +15,11 @@ sub register {
     $r->route('/reset-password/request-new')->post()->to(controller => 'ResetPassword', action => 'request_new');
     $r->route('/reset-password/write-new')->post()->to(controller => 'ResetPassword', action => 'write_new');
 
+    # INTERNAL ENDPOINTS
+    # GET /maintenance/tick-rss
+    my $maintenance = $r->under('maintenance')->to(controller => 'Maintenance', action => 'check_authorization');
+    $maintenance->route('tick-rss')->get()->to(controller => 'TickRSS', action => 'tick');
+
     # PRIVATE ENDPOINTS
     my $authenticated = $r->under()->to(controller => 'JWT', action => 'check_user_jwt');
 
@@ -50,9 +55,9 @@ sub register {
     $timeline_object->under('like')->post()->to(action => 'add_like');
     $timeline_object->under('report')->post()->to(action => 'add_report');
 
-    my $media_download = $authenticated->under('/media-download')->to(controller => 'MediaDownload', action => 'ensure_user_loaded');
+    my $media_download
+      = $authenticated->under('/media-download')->to(controller => 'MediaDownload', action => 'ensure_user_loaded');
     $media_download->get()->to(action => 'get_media');
-
 
 
 }

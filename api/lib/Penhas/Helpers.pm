@@ -7,6 +7,7 @@ use Penhas::Helpers::CPF;
 use Penhas::Helpers::Quiz;
 use Penhas::Helpers::ClienteSetSkill;
 use Penhas::Helpers::Timeline;
+use Penhas::Helpers::RSS;
 
 use Carp qw/croak/;
 
@@ -17,6 +18,8 @@ sub setup {
     Penhas::Helpers::CPF::setup($self);
     Penhas::Helpers::Timeline::setup($self);
     Penhas::Helpers::ClienteSetSkill::setup($self);
+
+    Penhas::Helpers::RSS::setup($self);
 
     $self->helper(schema  => sub { state $schema  = Penhas::SchemaConnected->get_schema(@_) });
     $self->helper(schema2 => sub { state $schema2 = Penhas::SchemaConnected->get_schema2(@_) });
