@@ -13,6 +13,7 @@ use Mojo::Feed;
 
 use Mojo::DOM;
 use Penhas::KeyValueStorage;
+use Penhas::Minion;
 
 sub setup {
     my $self = shift;
@@ -159,7 +160,7 @@ sub tick_rss_feeds {
                 created_at           => $now->datetime,
                 display_created_time => $pub_date->datetime,
                 author               => substr($info->{author} || '', 0, 200),
-                published            => 'hidden', # aguardar ate ser indexada
+                published            => 'hidden',                                # aguardar ate ser indexada
                 description          => (
                     $info->{description} && length($info->{description}) > 2000
                     ? substr($info->{description}, 0, 2000) . '...'
@@ -171,9 +172,23 @@ sub tick_rss_feeds {
         push @jobs, $row->id;
     }
 
-    foreach my $job (@jobs) {
-        slog_info('Adding news id=%s to be indexed', $job);
+    my $minion = Penhas::Minion->instance;
+    my $delay  = 0;
+    foreach my $news_id (@jobs) {
 
+        my $job_id = $minion->enqueue(
+            'news_indexer',
+            [
+                $news_id,
+            ] => {
+                delay => $delay,
+            }
+        );
+
+        slog_info('Adding news id=%s added is to be indexed, job id %s', $news_id, $job_id);
+
+        # aguarda 2s entre cada job pra nao fazer flood de requests nos sites
+        $delay += 2;
     }
 
 }

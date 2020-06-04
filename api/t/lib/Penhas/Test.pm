@@ -41,6 +41,8 @@ use Test2::V0;
 use Test2::Tools::Subtest qw(subtest_buffered subtest_streamed);
 use Test2::Mock;
 use Test::Mojo;
+use Minion;
+use Minion::Job;
 use Penhas::Logger;
 use Digest::SHA qw/sha256_hex/;
 my $redis_ns;
@@ -69,6 +71,32 @@ sub trace_popall {
     @trace_logs = ();
 
     return join ',', @list;
+}
+
+our $_minion_job_id   = 0;
+our $minion_jobs_args = {};
+our %minion_mock      = (
+
+    minion => Test2::Mock->new(
+        track    => 0,
+        class    => 'Minion',
+        override => [
+            add_task => sub { $_[0] },
+            enqueue  => sub {
+                my ($minion, $task, $args) = @_;
+                my $job_id = $_minion_job_id++;
+                $minion_jobs_args->{$job_id} = from_json(to_json($args));
+                return $job_id;
+            },
+        ],
+    ),
+
+    job => Test2::Mock->new(track => 0, class => 'Minion::Job', override => [finish => sub { shift; @_ },],),
+);
+
+sub test_get_minion_args_job {
+    my @args = @{$minion_jobs_args->{shift()}};
+    return wantarray ? @args : \@args;
 }
 
 sub import {

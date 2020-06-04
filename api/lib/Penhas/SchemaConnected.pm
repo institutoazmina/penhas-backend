@@ -10,6 +10,7 @@ our @EXPORT = qw(get_schema get_connect_info get_schema2);
 my $schema_instance;
 my $schema2_instance;
 
+use Mojo::Pg;
 use Penhas::Schema;
 use Penhas::Schema2;
 use Penhas::Logger;
@@ -114,6 +115,21 @@ sub get_schema2 {
 
     $schema2_instance = $schema;
     return $schema2_instance;
+}
+
+# conexao pro minion
+sub get_mojo_pg {
+    state $pg = Mojo::Pg->new(
+        sprintf(
+            'postgresql://%s:%s@%s:%s/%s',
+            $ENV{POSTGRESQL_USER}     || 'postgres',
+            $ENV{POSTGRESQL_PASSWORD} || 'Penhas-pass',
+            $ENV{POSTGRESQL_HOST}     || 'localhost',
+            $ENV{POSTGRESQL_PORT}     || 5432,
+            $ENV{POSTGRESQL_DBNAME}   || 'Penhas',
+        )
+    );
+    return $pg;
 }
 
 

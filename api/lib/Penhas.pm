@@ -32,14 +32,33 @@ sub startup {
     # Plugins.
     $self->plugin('JWT', secret => $secret);
 
+    $self->plugin('ParamLogger', filter => [qw(password)]);
+
     # servir a /public (templates de email e arquivos static)
     $self->plugin('RenderFile');
+
+    # Minion (job manager)
+    $self->plugin('Penhas::Minion');
 
     # Helpers.
     $self->controller_class('Penhas::Controller');
 
     # Routes.
     Penhas::Routes::register($self->routes);
+
+    # minion admin
+    # Secure access to the admin ui with Basic authentication
+    my $under = $self->routes->under(
+        '/minion' => sub {
+            my $c = shift;
+            return 1
+              if $c->req->url->to_abs->userinfo eq 'admin:' . ($ENV{MINION_ADMIN_PASSWORD} || $c->reply_forbidden());
+            $c->res->headers->www_authenticate('Basic');
+            $c->render(text => 'Authentication required!', status => 401);
+            return undef;
+        }
+    );
+    $self->plugin('Minion::Admin' => {route => $under});
 
     $self->hook(
         around_dispatch => sub {
