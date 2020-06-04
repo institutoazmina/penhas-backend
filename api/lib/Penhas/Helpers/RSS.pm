@@ -26,7 +26,7 @@ sub tick_rss_feeds {
 
 
     my $now       = DateTime->now;
-    my $next_tick = $now->add({hours => $ENV{RSS_TICK_EACH_N_HOURS} || 3});
+    my $next_tick = $now->clone->add({hours => $ENV{RSS_TICK_EACH_N_HOURS} || 3});
 
     my $feeds_rs = $c->schema2->resultset('RssFeed')->search(
         {
