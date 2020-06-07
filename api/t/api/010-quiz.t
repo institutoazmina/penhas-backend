@@ -111,10 +111,8 @@ subtest_buffered 'group de questoes boolean' => sub {
     my $first_msg = $json->{quiz_session}{current_msgs}[0];
     my $input_msg = $json->{quiz_session}{current_msgs}[-1];
 
-    is $first_msg->{content}, 'a group of yes no questions will start now', 'group question intro text';
-
+    is $first_msg->{content}, 'Question A', 'NO intro text';
     is $input_msg->{type},    'yesno',      'yesno type';
-    is $input_msg->{content}, 'a group of yes no questions will start now', 'yesno type';
 
     my $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
     $json = $t->post_ok(

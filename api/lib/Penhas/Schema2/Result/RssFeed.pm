@@ -66,10 +66,22 @@ __PACKAGE__->add_columns(
   },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->has_many(
+  "noticias",
+  "Penhas::Schema2::Result::Noticia",
+  { "foreign.rss_feed_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "rss_feed_forced_tags",
+  "Penhas::Schema2::Result::RssFeedForcedTag",
+  { "foreign.rss_feed_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-03 08:31:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IU5Y+akIrhA5PNP/Dy9iaA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-04 20:32:26
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:POVJfi8lJwfmKbrRO7C3hw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

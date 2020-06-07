@@ -113,10 +113,16 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
 __PACKAGE__->add_unique_constraint("email", ["email"]);
+__PACKAGE__->has_many(
+  "cliente_skills",
+  "Penhas::Schema2::Result::ClienteSkill",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-18 00:31:07
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:y3Dc4KMtfKHhwpmSZpOZFQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-04 12:02:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LpvxuccZJ1ZZ04awCtklrw
 
 __PACKAGE__->has_many(
   "tweets",

@@ -47,10 +47,16 @@ __PACKAGE__->add_columns(
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->has_many(
+  "cliente_skills",
+  "Penhas::Schema2::Result::ClienteSkill",
+  { "foreign.skill_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-12 05:30:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xkxcaK2Xp8PxiBxnFswkiQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-04 12:02:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:b5YWPBxpkpPihaDqUtTGtw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

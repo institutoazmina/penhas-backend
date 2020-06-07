@@ -7,7 +7,7 @@ use Penhas::Logger;
 sub register {
     my ($self, $app) = @_;
 
-    $app->minion->add_task( news_indexer => \&news_indexer);
+    $app->minion->add_task(news_indexer => \&news_indexer);
 }
 
 sub news_indexer {
@@ -17,6 +17,21 @@ sub news_indexer {
 
     my $logger = $job->app->log;
     my $schema = $job->app->schema2;
+
+    my $news = $schema->resultset('Noticia')->search(
+        {
+            'me.id' => $news_id,
+        },
+        {
+            prefetch => [
+                {'rss_feed' => {'rss_feed_forced_tags' => 'tag'}},
+                'noticias2tags'
+            ],
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+        }
+    )->next;
+    use DDP;
+    p $news;
 
     $schema->txn_do(
         sub {

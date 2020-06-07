@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>mulheres no Congresso &#8211; AzMina</title>
+	<atom:link href="https://azmina.com.br/tag/mulheres-no-congresso/feed/" rel="self" type="application/rss+xml" />
+	<link>https://azmina.com.br</link>
+	<description>Para mulheres de A a Z</description>
+	<lastBuildDate>Thu, 11 Jul 2019 18:29:39 +0000</lastBuildDate>
+	<language>pt-BR</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=5.3.3</generator>
+
+<image>
+	<url>https://azmina.com.br/wp-content/uploads/2018/08/cropped-azm_favicon_2018_c-32x32.png</url>
+	<title>mulheres no Congresso &#8211; AzMina</title>
+	<link>https://azmina.com.br</link>
+	<width>32</width>
+	<height>32</height>
+</image>
+	<item>
+
+		<title>&#8220;Mulher&#8221; teste decode encoded titles</title>
+		<link>https://elasv2-api.appcivico.com/.tests-assets/feed2_page1.html</link>
+				<pubDate>Thu, 11 Jul 2019 18:29:38 +0000</pubDate>
+		<dc:creator><![CDATA[Equipe AzMina]]></dc:creator>
+				<category><![CDATA[ativismo]]></category>
+		<category><![CDATA[TAG1]]></category>
+		<category><![CDATA[TAG2]]></category>
+		<category><![CDATA[TAG3RSSONLY]]></category>
+
+		<guid isPermaLink="false">https://azmina.com.br/?post_type=az_coluna_article&#038;p=27309</guid>
+				<description><![CDATA[description
+]]></description>
+								<content:encoded><![CDATA[
+rss-description-content
+]]></content:encoded>
+										</item>
+
+	</channel>
+</rss>

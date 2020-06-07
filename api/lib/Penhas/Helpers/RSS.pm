@@ -99,9 +99,6 @@ sub tick_rss_feeds {
         );
     }
 
-    use DDP;
-    p \@news;
-
     my $news_rs      = $c->schema2->resultset('Noticia');
     my @current_news = $news_rs->search(
         {hyperlink => {'in' => [map { $_->{link} } @news]}},

@@ -10,7 +10,8 @@ $ENV{MAINTENANCE_SECRET} = '12345';
 
 my $feed_rs = app->schema2->resultset('RssFeed');
 my $news_rs = app->schema2->resultset('Noticia');
-
+my $tags_rs = app->schema2->resultset('Tag');
+my $rules_rs = app->schema2->resultset('TagIndexingConfig');
 
 my $base = 'https://elasv2-api.appcivico.com/.tests-assets';
 
@@ -18,8 +19,7 @@ my $get_feed_url = sub { "$base/feed" . shift() . ".xml" };
 my $get_page_url = sub { "$base/page" . shift() . ".html" };
 
 # apagando caso exista alguma coisa no banco
-$news_rs->search({hyperlink => {'in' => [$get_page_url->('1'), $get_page_url->('2')]}})->delete;
-$feed_rs->search({url       => {'in' => [$get_feed_url->('1'), $get_feed_url->('1_updated_titles'),]}})->delete;
+&clean_up;
 
 my $feed1 = $feed_rs->create(
     {
@@ -31,6 +31,34 @@ my $feed1 = $feed_rs->create(
 );
 
 $ENV{FILTER_RSS_IDS} = $feed1->id;
+
+my $forced_tag = $tags_rs->create(
+    {
+        status     => 'test',
+        title      => 'forced',
+        is_topic   => '0',
+        created_at => \'NOW()',
+    }
+);
+$feed1->add_to_rss_feed_forced_tags({tag_id => $forced_tag->id});
+
+my $tag1 = $tags_rs->create(
+    {
+        status     => 'test', title => 'tag1',
+        is_topic   => '0',
+        created_at => \'NOW()',
+    }
+);
+my $topic1 = $tags_rs->create(
+    {
+        status   => 'test', title      => 'topic1',
+        is_topic => '1',    created_at => \'NOW()',
+    }
+);
+
+#my $rule1 = $rules_rs->create({
+#});
+
 
 subtest_buffered 'Populate news using RSS' => sub {
 
@@ -88,4 +116,13 @@ subtest_buffered 'Populate news using RSS' => sub {
 };
 done_testing();
 
+# &clean_up;
+
 exit;
+
+sub clean_up {
+    $news_rs->search({hyperlink => {'like' => $base . '%'}})->delete;
+    $feed_rs->search({url       => {'like' => $base . '%'}})->delete;
+    $tags_rs->search({status    => 'test'})->delete;
+    $rules_rs->search({status    => 'test'})->delete;
+}

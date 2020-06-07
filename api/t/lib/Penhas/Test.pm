@@ -272,6 +272,7 @@ sub user_cleanup {
         Tweet
         TweetLikes
         TweetsReport
+        MediaUpload
         /
       )
     {
