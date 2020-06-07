@@ -30,10 +30,14 @@ sub like_tweet {
 
     my $user = $opts{user} or croak 'missing user';
     my $id   = $opts{id}   or croak 'missing id';
+    my $remove = $opts{remove};
+
+    croak 'missing remove' unless defined $remove;
 
     slog_info(
-        'like_tweet %s',
-        $id
+        'like_tweet %s %s',
+        $remove ? 'Remove' : 'Add',
+        $id,
     );
 
     my $lock = "likes:user:" . $user->{id};
@@ -49,9 +53,9 @@ sub like_tweet {
             'tweet_id'   => $id,
             'cliente_id' => $user->{id},
         }
-    )->count;
+    )->next;
 
-    if (!$already_liked) {
+    if (!$already_liked && !$remove) {
         $likes_rs->create(
             {
                 tweet_id   => $id,
@@ -64,7 +68,16 @@ sub like_tweet {
                 qtde_likes => \'qtde_likes+1',
             }
         );
+    }
+    elsif ($remove && $already_liked) {
 
+        $already_liked->delete;
+
+        $rs->search({id => $id})->update(
+            {
+                qtde_likes => \'qtde_likes-1',
+            }
+        );
     }
 
     my $reference = $rs->search(
@@ -84,7 +97,7 @@ sub like_tweet {
     $reference = {$reference->get_columns()};
 
     my $tweet = &_fomart_tweet($user, $reference);
-    $tweet->{meta}{liked} = 1;
+    $tweet->{meta}{liked} = $remove ? 0 : 1;
 
     return {tweet => $tweet};
 }
@@ -258,10 +271,11 @@ sub list_tweets {
     my $user = $opts{user} or croak 'missing user';
 
     slog_info(
-        'list_tweets after=%s before=%s parent_id=%s rows=%s',
+        'list_tweets after=%s before=%s parent_id=%s id=%s rows=%s',
         $opts{after}     || '',
         $opts{before}    || '',
         $opts{parent_id} || '',
+        $opts{id}        || '',
         $rows,
     );
 
@@ -271,6 +285,7 @@ sub list_tweets {
         'me.status'      => 'published',
 
         '-and' => [
+            ($opts{id}     ? ({'me.id' => $opts{id}})              : ()),
             ($opts{after}  ? ({'me.id' => {'>' => $opts{after}}})  : ()),
             ($opts{before} ? ({'me.id' => {'<' => $opts{before}}}) : ()),
             (
@@ -303,7 +318,6 @@ sub list_tweets {
     my @rows     = $c->schema2->resultset('Tweet')->search($cond, $attr)->all;
     my $has_more = scalar @rows > $rows ? 1 : 0;
     pop @rows if $has_more;
-
 
     my $remote_addr = $c->remote_addr;
     my @tweets;

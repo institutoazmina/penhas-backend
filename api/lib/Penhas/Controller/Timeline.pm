@@ -31,8 +31,18 @@ sub load_object {
 }
 
 sub add_like {
-    my $c     = shift;
-    my $tweet = $c->like_tweet(id => $c->stash('tweet')->{id}, user => $c->stash('user'));
+    my $c = shift;
+
+    my $params = $c->req->params->to_hash;
+    $c->validate_request_params(
+        remove => {required => 0, type => 'Str', max_length => 1},
+    );
+
+    my $tweet = $c->like_tweet(
+        id     => $c->stash('tweet')->{id},
+        user   => $c->stash('user'),
+        remove => exists $params->{remove} && $params->{remove} eq '1' ? 1 : 0,
+    );
 
     return $c->render(
         json   => $tweet,

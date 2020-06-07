@@ -131,6 +131,12 @@ subtest_buffered 'Tweet' => sub {
         {'x-api-key' => $session},
     )->status_is(200)->json_is('/tweet/qtde_likes', 1)->json_is('/tweet/meta/liked', 1);
 
+    $t->post_ok(
+        (join '/', '/timeline', $tweet_id, 'like'),
+        {'x-api-key' => $session},
+        form => {remove => '1'}
+    )->status_is(200)->json_is('/tweet/qtde_likes', 0)->json_is('/tweet/meta/liked', 0);
+
     my $comment1 = $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'comment'),
         {'x-api-key' => $session},
@@ -145,7 +151,7 @@ subtest_buffered 'Tweet' => sub {
         ('/timeline'),
         {'x-api-key' => $session}
     )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'ijime dame zettai')
-      ->json_is('/tweets/0/id', $tweet_id)->json_is('/tweets/0/meta/liked', 1)->json_is('/tweets/0/meta/owner', 1)
+      ->json_is('/tweets/0/id', $tweet_id)->json_is('/tweets/0/meta/liked', 0)->json_is('/tweets/0/meta/owner', 1)
       ->json_is('/tweets/0/last_reply/id', $comment1->{id})->json_is('/tweets/0/last_reply/meta/liked', 0);
 
     # busca timeline principal como outro usuario
@@ -160,15 +166,19 @@ subtest_buffered 'Tweet' => sub {
     $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'like'),
         {'x-api-key' => $session2},
-    )->status_is(200)->json_is('/tweet/qtde_likes', 2);
+    )->status_is(200)->json_is('/tweet/qtde_likes', 1);
 
     # repetir o like like nao pode aumentar a quantidade
-    for my $cur_ses (($session, $session2)) {
-        $t->post_ok(
-            (join '/', '/timeline', $tweet_id, 'like'),
-            {'x-api-key' => $cur_ses},
-        )->status_is(200)->json_is('/tweet/qtde_likes', 2);
-    }
+    $t->post_ok(
+        (join '/', '/timeline', $tweet_id, 'like'),
+        {'x-api-key' => $session2},
+    )->status_is(200)->json_is('/tweet/qtde_likes', 1);
+    # pode dar like depois de ter removido o like
+    $t->post_ok(
+        (join '/', '/timeline', $tweet_id, 'like'),
+        {'x-api-key' => $session},
+    )->status_is(200)->json_is('/tweet/qtde_likes', 2);
+
 
     # busca o detalhe de um tweet especifico
     $t->get_ok(
