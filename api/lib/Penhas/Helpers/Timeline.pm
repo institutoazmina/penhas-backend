@@ -94,12 +94,8 @@ sub like_tweet {
             ],
         }
     )->next;
-    $reference = {$reference->get_columns()};
 
-    my $tweet = &_fomart_tweet($user, $reference);
-    $tweet->{meta}{liked} = $remove ? 0 : 1;
-
-    return {tweet => $tweet};
+    return {tweet => &_get_tweet_by_id($c, $user, $reference->id)};
 }
 
 sub delete_tweet {
@@ -201,21 +197,21 @@ sub add_tweet {
             media_ids    => $media_ids ? to_json($media_ids) : undef,
         }
     );
-    $tweet = {$tweet->get_columns};
 
     if ($reply_to) {
+
         $rs->search({id => $reply_to})->update(
             {
                 qtde_comentarios     => \'qtde_comentarios + 1',
                 ultimo_comentario_id => \[
                     '(case when ultimo_comentario_id is null OR ultimo_comentario_id < ? then ? else ultimo_comentario_id end)',
-                    $tweet->{id}, $tweet->{id}
+                    $tweet->id, $tweet->id
                 ],
             }
         );
     }
 
-    return $tweet;
+    return &_get_tweet_by_id($c, $user, $tweet->id);
 }
 
 sub report_tweet {
@@ -291,7 +287,10 @@ sub list_tweets {
             (
                 $opts{parent_id}
                 ? ({parent_id => $opts{parent_id}})
-                : ({parent_id => undef})              # nao eh pra montar comentarios na timeline principal
+                : (
+                    $opts{id} ? ()            # nao remover comentarios se for um GET por ID
+                    : {parent_id => undef}    # nao eh pra montar comentarios na timeline principal
+                )
             ),
         ],
     };
@@ -328,7 +327,9 @@ sub list_tweets {
         push @unique_ids, $tweet->{id};
         push @unique_ids, $tweet->{ultimo_comentario_id}
           and push @comments, $tweet->{ultimo_comentario_id}
-          if $tweet->{ultimo_comentario_id} && !$opts{parent_id};  # nao tem parent, faz 'prefetch' do ultmo comentarios
+          if $tweet->{ultimo_comentario_id}
+          && !$opts{parent_id}
+          && !$opts{skip_comments};    # nao tem parent, faz 'prefetch' do ultmo comentarios
 
         my $item = &_fomart_tweet($user, $tweet, $remote_addr);
 
@@ -368,6 +369,14 @@ sub list_tweets {
         tweets   => \@tweets,
         has_more => $has_more,
         order_by => $sort_direction eq '-desc' ? 'latest_first' : 'oldest_first',
+
+        (
+            $opts{parent_id}
+            ? (
+                parent => &_get_tweet_by_id($c, $user, $opts{parent_id}),
+              )
+            : ()
+        ),
     };
 }
 
@@ -413,5 +422,15 @@ sub _gen_uniq_media_url {
     my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $user->{id} . $quality . $ip), 0, 6);
     return $ENV{PUBLIC_API_URL} . "media-download/?m=$media_id&q=$quality&h=$hash";
 }
+
+sub _get_tweet_by_id {
+    my ($c, $user, $tweet_id) = @_;
+
+    my $list  = &list_tweets($c, id => $tweet_id, user => $user, skip_comments => 1,);
+    my $tweet = $list->{tweets}[0];
+    $c->reply_item_not_found() unless $tweet;
+    return $tweet;
+}
+
 
 1;

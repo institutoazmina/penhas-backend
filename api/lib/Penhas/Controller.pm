@@ -38,13 +38,13 @@ sub apply_request_per_second_limit {
 sub reply_not_found {
     my $c = shift;
 
-    die {error => 'Page not found', status => 404,};
+    die {error => 'Page not found', message => 'Página ou item não existe',, status => 404,};
 }
 
 sub reply_item_not_found {
     my $c = shift;
 
-    die {error => 'Item not found', status => 404,};
+    die {error => 'Item not found', message => 'Item não existe', status => 404,};
 }
 
 sub reply_forbidden {

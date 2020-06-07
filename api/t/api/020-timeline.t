@@ -187,7 +187,7 @@ subtest_buffered 'Tweet' => sub {
         {'x-api-key' => $session},
         form => {parent_id => $tweet_id}
     )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'mata itsuka')
-      ->json_is('/tweets/0/id', $comment1->{id});
+      ->json_is('/tweets/0/id', $comment1->{id})->json_is('/parent/id', $tweet_id);
 
     # adicionando mais tweets para testar a paginacao
     for (1 .. 2) {
