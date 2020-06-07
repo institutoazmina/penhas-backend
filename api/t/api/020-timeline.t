@@ -173,6 +173,7 @@ subtest_buffered 'Tweet' => sub {
         (join '/', '/timeline', $tweet_id, 'like'),
         {'x-api-key' => $session2},
     )->status_is(200)->json_is('/tweet/qtde_likes', 1);
+
     # pode dar like depois de ter removido o like
     $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'like'),
@@ -269,6 +270,14 @@ subtest_buffered 'Tweet' => sub {
         form => {skip_myself => 1, rows => 2}
     )->status_is(200)->json_is('/has_more', '1')->json_is('/tweets/0/content', 'Kazoeru 2');
 
+    # filtro por um ID
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session},
+        form => {id => $tweet_id}
+    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'ijime dame zettai')
+      ->json_is('/tweets/1/content', undef);
+
     $t->delete_ok(
         '/me/tweets',
         {'x-api-key' => $session},
@@ -276,6 +285,13 @@ subtest_buffered 'Tweet' => sub {
             id => $tweet_id,
         }
     )->status_is(204);
+
+    # nao encontra os tweets apagados, mesmo se filtrar por ID
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session},
+        form => {id => $tweet_id}
+    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', undef);
 
 
 };
