@@ -32,10 +32,10 @@ sub find {
     my $feminino = $user->{genero} eq 'Feminino' || $user->{genero} eq 'MulherTrans';
 
     if ($feminino) {
-        push @modules, qw/timeline chat_privado chat_suporte noticias modo_camuflado modo_anonimo pontos_de_apoio/;
+        push @modules, qw/timeline chat_privado chat_suporte noticias modo_camuflado modo_anonimo pontos_de_apoio modo_seguranca/;
     }
     else {
-        push @modules, qw/chat_suporte noticias/;
+        push @modules, qw/chat_suporte noticias pontos_de_apoio/;
     }
 
     my $quiz_session = $c->user_get_quiz_session(user => $user);
