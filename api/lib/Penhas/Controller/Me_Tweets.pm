@@ -29,10 +29,7 @@ sub add {
     );
 
     return $c->render(
-        json => {
-            id         => $tweet->{id},
-            created_at => $tweet->{created_at}
-        },
+        json => $tweet,
         status => 200,
     );
 }
