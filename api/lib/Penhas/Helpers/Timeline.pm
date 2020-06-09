@@ -116,15 +116,32 @@ sub delete_tweet {
             cliente_id => $user->{id},
             status     => 'published',
         }
-    )->update(
+    )->next;
+    die {
+        message => 'Não foi possível encontrar a postagem.',
+        error   => 'tweet_not_found'
+    } unless $item;
+
+    $item->update(
         {
             status => 'deleted',
         }
     );
-    die {
-        message => 'Não foi possível encontrar a postagem.',
-        error   => 'tweet_not_found'
-    } if !$item;
+
+    if ($item->parent_id) {
+        $rs->search(
+            {
+                id => $item->parent_id,
+            }
+        )->update(
+            {
+                ultimo_comentario_id =>
+                  \["(SELECT max(id) FROM tweets t WHERE t.parent_id = ? AND t.status = 'published')",
+                    $item->parent_id],
+                qtde_comentarios => \'qtde_comentarios - 1'
+            }
+        );
+    }
 
     return 1;
 }

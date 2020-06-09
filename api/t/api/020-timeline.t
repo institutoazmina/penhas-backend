@@ -296,14 +296,36 @@ subtest_buffered 'Tweet' => sub {
         form => {skip_myself => 1, rows => 2}
     )->status_is(200)->json_is('/has_more', '1')->json_is('/tweets/0/content', 'Kazoeru 2');
 
-    # filtro por um ID
+
+    my $comment2 = $t->post_ok(
+        (join '/', '/timeline', $tweet_id, 'comment'),
+        {'x-api-key' => $session},
+        form => {content => 'to be removed'}
+    )->status_is(200)->tx->res->json;
+
+    # filtro por um ID e aproveita pra testar se o last_reply ta atualizando
     $t->get_ok(
         ('/timeline'),
         {'x-api-key' => $session},
         form => {id => $tweet_id}
-    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'ijime dame zettai')
-      ->json_is('/tweets/1/content', undef);
+    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/last_reply/content', 'to be removed');
 
+    $t->delete_ok(
+        '/me/tweets',
+        {'x-api-key' => $session},
+        form => {
+            id => $comment2->{id},
+        }
+    )->status_is(204);
+
+    # verifica se o last_reply ta atualizado de volta
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session},
+        form => {id => $tweet_id}
+    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/last_reply/content', 'mata itsuka');
+
+    # apaga o tweet
     $t->delete_ok(
         '/me/tweets',
         {'x-api-key' => $session},
