@@ -29,6 +29,7 @@ sub _build__s3 {
         {
             aws_access_key_id     => $self->access_key,
             aws_secret_access_key => $self->secret_key,
+            host                  => $ENV{PENHAS_S3_HOST} || 's3.amazonaws.com',
             retry                 => 1,
             timeout               => 3,
             secure                => 1,
