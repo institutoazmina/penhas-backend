@@ -31,7 +31,7 @@ sub _build__s3 {
             aws_secret_access_key => $self->secret_key,
             retry                 => 1,
             timeout               => 3,
-            secure                => 0,
+            secure                => 1,
         }
     );
 }
