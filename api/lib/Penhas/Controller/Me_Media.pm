@@ -80,17 +80,6 @@ sub upload {
     # Em caso de PNG, vamos mudar pra JPEG (pelo menos ate alguem reclamar de transparencia kk)
     my $convert_ext = $ext =~ /png/i ? 'jpg' : $ext;
 
-    # para imagens, fazer o resize
-    my $media_sd = File::Temp->new(UNLINK => 1, SUFFIX => ".$convert_ext");
-    my $media_hd = File::Temp->new(UNLINK => 1, SUFFIX => ".$convert_ext");
-
-    on_scope_exit {
-
-        # Delete temporary files.
-        close $media_sd;
-        close $media_hd;
-    };
-
     my $dbh_pg    = $c->schema->storage->dbh;
     my $now       = DateTime->now;
     my $id        = $dbh_pg->selectrow_arrayref("select uuid_generate_v4()", {Slice => {}})->[0];
@@ -111,6 +100,13 @@ sub upload {
 
     my $row;
     if ($ext =~ /(png|jpeg|jpg)/i) {
+        my $media_sd = "$media.sd.$convert_ext";
+        my $media_hd = "$media.hd.$convert_ext";
+        on_scope_exit {
+            unlink $media_hd;
+            unlink $media_sd;
+        };
+
         my $image = Imager->new;
         $image->set_file_limits(width => 5_000, height => 5_000, bytes => (5_000 * 5_000 * 4) * 1.2,);
 
@@ -140,7 +136,8 @@ sub upload {
         $image->write(file => $media_hd) or die $image->errstr;
 
         my $sd
-          = $c->_uploader->upload({path => $s3_prefix . ".sd.$convert_ext", file => $media_sd, type => 'image/jpeg',});
+          = $c->_uploader->upload({path => $s3_prefix . ".sd.$convert_ext", file => $media, type => 'image/jpeg',});
+
         my ($hd, $uploaded) = ($sd, 0);
 
         # se a resolucao eh diferente, faz upload, caso contrario copia
