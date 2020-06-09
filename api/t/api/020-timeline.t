@@ -137,12 +137,39 @@ subtest_buffered 'Tweet' => sub {
         form => {remove => '1'}
     )->status_is(200)->json_is('/tweet/qtde_likes', 0)->json_is('/tweet/meta/liked', 0);
 
-    my $comment1 = $t->post_ok(
-        (join '/', '/timeline', $tweet_id, 'comment'),
-        {'x-api-key' => $session},
-        form => {content => 'mata itsuka', media_ids => $media->{id}}
-    )->status_is(200)->tx->res->json;
-    is $tweet_rs->find($comment1->{id})->ultimo_comentario_id, undef, 'ultimo_comentario_id tem q ser vazio';
+    my $comment1;
+    do {
+        local $ENV{PUBLIC_API_URL} = '/';
+
+        $comment1 = $t->post_ok(
+            (join '/', '/timeline', $tweet_id, 'comment'),
+            {'x-api-key' => $session},
+            form => {content => 'mata itsuka', media_ids => $media->{id}}
+        )->status_is(200)->tx->res->json;
+        is $tweet_rs->find($comment1->{id})->ultimo_comentario_id, undef, 'ultimo_comentario_id tem q ser vazio';
+
+        $t->get_ok(
+            $comment1->{media}[0]{sd},
+            {'x-api-key' => $session},
+        )->status_is(200)->json_is('/media_id', $media->{id})->json_is('/quality', 'sd');
+
+        $t->get_ok(
+            $comment1->{media}[0]{hd},
+            {'x-api-key' => $session},
+        )->status_is(200)->json_is('/media_id', $media->{id})->json_is('/quality', 'hd');
+
+        # precisa estar logado
+        $t->get_ok(
+            $comment1->{media}[0]{hd},
+            {},
+        )->status_is(401);
+
+        # url precisa estar assinada
+        $t->get_ok(
+            $comment1->{media}[0]{hd} . 'x',
+            {'x-api-key' => $session},
+        )->status_is(400);
+    };
 
     is $tweet_rs->find($tweet_id)->ultimo_comentario_id, $comment1->{id}, 'ultimo_comentario_id tem q ser a resposta';
 
@@ -292,7 +319,6 @@ subtest_buffered 'Tweet' => sub {
         {'x-api-key' => $session},
         form => {id => $tweet_id}
     )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', undef);
-
 
 };
 

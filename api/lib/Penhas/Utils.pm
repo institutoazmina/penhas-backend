@@ -35,6 +35,8 @@ state $text_xslate = Text::Xslate->new(
 
   filename_cache_three
   get_media_filepath
+
+  is_uuid_v4
 );
 
 
@@ -144,6 +146,10 @@ sub get_media_filepath {
     make_path($path) unless -d $path;
 
     return join('/', $path, $filename);
+}
+
+sub is_uuid_v4 {
+    $_[0] =~/^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i ? 1 : 0;
 }
 
 1;

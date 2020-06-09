@@ -141,7 +141,7 @@ sub add_tweet {
         $media_ids = [split ',', $media_ids];
         foreach my $media_id ($media_ids->@*) {
             die {error => 'media_id', message => 'invalid uuid v4'}
-              unless $media_id =~ /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
+              unless is_uuid_v4($media_id);
         }
 
         my $count = $c->schema2->resultset('MediaUpload')->search(

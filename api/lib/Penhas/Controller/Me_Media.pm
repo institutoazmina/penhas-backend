@@ -103,8 +103,11 @@ sub upload {
         $id
     );
 
-    my $media = get_media_filepath("$id.$ext");
+    my $media = get_media_filepath("$id.tmp-orig.$ext");
     $upload->move_to($media);
+    on_scope_exit {
+        unlink($media);
+    };
 
     my $row;
     if ($ext =~ /(png|jpeg|jpg)/i) {

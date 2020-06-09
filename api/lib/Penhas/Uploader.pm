@@ -63,7 +63,7 @@ sub _generate_auth_uri {
     my ($self, $path, $expires) = @_;
 
     my $bucket = $self->media_bucket;
-    $expires ||= 2536449072;
+    $expires ||= 2536449072;    # May 17, 2050
 
     my $str = "GET\n\n\n$expires\n/$bucket/$path";
 
