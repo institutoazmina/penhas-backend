@@ -55,7 +55,7 @@ sub upload {
         die $self->err . ': ' . $self->errstr;
     }
 
-    my $sign_url = $self->_generate_auth_uri($args->{path}, 2536449072);
+    my $sign_url = $self->_generate_auth_uri($args->{path}, 2145916800);
 
     return URI->new($sign_url);
 }
@@ -64,7 +64,7 @@ sub _generate_auth_uri {
     my ($self, $path, $expires) = @_;
 
     my $bucket = $self->media_bucket;
-    $expires ||= 2536449072;    # May 17, 2050
+    $expires ||= 2145916800;    # Jan 1, 2038
 
     my $str = "GET\n\n\n$expires\n/$bucket/$path";
 
