@@ -136,7 +136,7 @@ sub upload {
         $image->write(file => $media_hd) or die $image->errstr;
 
         my $sd
-          = $c->_uploader->upload({path => $s3_prefix . ".sd.$convert_ext", file => $media, type => 'image/jpeg',});
+          = $c->_uploader->upload({path => $s3_prefix . ".sd.$convert_ext", file => $media_sd, type => 'image/jpeg',});
 
         my ($hd, $uploaded) = ($sd, 0);
 
