@@ -154,8 +154,7 @@ subtest_buffered 'Tweet' => sub {
         )->status_is(200)->json_is('/media_id', $media->{id})->json_is('/quality', 'sd');
 
         $t->get_ok(
-            $comment1->{media}[0]{hd},
-            {'x-api-key' => $session},
+            $comment1->{media}[0]{hd} . '&api_key=' . $session,
         )->status_is(200)->json_is('/media_id', $media->{id})->json_is('/quality', 'hd');
 
         # precisa estar logado
