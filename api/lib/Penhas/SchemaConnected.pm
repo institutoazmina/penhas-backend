@@ -99,6 +99,7 @@ sub get_connect_info2 {
         dsn                  => "dbi:mysql:dbname=$dbname;host=$host;port=$port",
         user                 => $user,
         password             => $password,
+        quote_names => 1,
         AutoCommit           => 1,
         RaiseError           => 1,
         mysql_enable_utf8mb4 => 1,

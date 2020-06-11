@@ -1,16 +1,16 @@
 use Mojo::Base -strict;
 use FindBin qw($RealBin);
 use lib "$RealBin/../lib";
-
+use utf8;
 use Penhas::Test;
 
 my $t = test_instance;
 
 $ENV{MAINTENANCE_SECRET} = '12345';
 
-my $feed_rs = app->schema2->resultset('RssFeed');
-my $news_rs = app->schema2->resultset('Noticia');
-my $tags_rs = app->schema2->resultset('Tag');
+my $feed_rs  = app->schema2->resultset('RssFeed');
+my $news_rs  = app->schema2->resultset('Noticia');
+my $tags_rs  = app->schema2->resultset('Tag');
 my $rules_rs = app->schema2->resultset('TagIndexingConfig');
 
 my $base = 'https://elasv2-api.appcivico.com/.tests-assets';
@@ -56,9 +56,36 @@ my $topic1 = $tags_rs->create(
     }
 );
 
-#my $rule1 = $rules_rs->create({
-#});
+my $rule1 = $rules_rs->create(
+    {
+        status               => 'test',
+        tag_id               => $topic1->id,
+        regexp               => 1,
+        page_title_match     => 'de',
+        page_title_not_match => 'abc(\\',
+    }
+);
+is $rule1->compiled_regexp, undef, 'is invalid';
+$rule1->discard_changes;
+like $rule1->error_msg, qr/page_title_not_match regexp error\: Trailing/, 'error ok';
+$rule1->update({page_title_not_match => 'apoia pedido'});
+is $rule1->compiled_regexp(), {
+    page_title_not_match => qr/apoia pedido/iu,
+    page_title_match     => qr/de/iu,
+  },
+  'regexp compiled';
+$rule1->discard_changes;
+is $rule1->error_msg, '', 'error_msg is empty';
+is $rule1->verified, '1', 'verified is true';
 
+my $rule2 = $rules_rs->create(
+    {
+        status              => 'test',
+        tag_id              => $tag1->id,
+        regexp              => 0,
+        rss_feed_tags_match => 'TAG3RSSONLY|tag1'
+    }
+);
 
 subtest_buffered 'Populate news using RSS' => sub {
 
@@ -124,5 +151,5 @@ sub clean_up {
     $news_rs->search({hyperlink => {'like' => $base . '%'}})->delete;
     $feed_rs->search({url       => {'like' => $base . '%'}})->delete;
     $tags_rs->search({status    => 'test'})->delete;
-    $rules_rs->search({status    => 'test'})->delete;
+    $rules_rs->search({status => 'test'})->delete;
 }
