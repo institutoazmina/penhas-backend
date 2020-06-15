@@ -3,6 +3,7 @@ use Mojo::Base 'Penhas::Controller';
 
 use DateTime;
 use Penhas::Types qw/TweetID/;
+use Penhas::Controller::Me_Tweets;
 
 sub ensure_user_loaded {
     my $c = shift;
