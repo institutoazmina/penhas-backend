@@ -139,7 +139,7 @@ sub compiled_regexp {
                         error_msg   => "$field regexp error: $@",
                         verified    => '0',
                         modified_on => \'NOW()',
-                        verified    => \'NOW()'
+                        verified_at    => \'NOW()'
                     }
                 );
                 return undef;

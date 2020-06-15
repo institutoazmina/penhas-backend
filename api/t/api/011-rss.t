@@ -75,8 +75,8 @@ is $rule1->compiled_regexp(), {
   },
   'regexp compiled';
 $rule1->discard_changes;
-is $rule1->error_msg, '', 'error_msg is empty';
-is $rule1->verified, '1', 'verified is true';
+is $rule1->error_msg, '',  'error_msg is empty';
+is $rule1->verified,  '1', 'verified is true';
 
 my $rule2 = $rules_rs->create(
     {
@@ -94,10 +94,11 @@ subtest_buffered 'Populate news using RSS' => sub {
         form => {secret => $ENV{MAINTENANCE_SECRET}}
     )->status_is(200);
 
-    my @news = map { [$_->title, $_->fonte] } $news_rs->search(
+    my @news_full = $news_rs->search(
         {hyperlink => {'in' => [$get_page_url->('1'), $get_page_url->('2')]}},
-        {order_by  => 'hyperlink', columns => ['title', 'fonte']}
+        {order_by  => 'hyperlink', columns => ['id', 'title', 'fonte']}
     )->all;
+    my @news = map { [$_->title, $_->fonte] } @news_full;
     is \@news,
       [
         ['This is Page1 Title', 'Fonte1'],
@@ -107,6 +108,8 @@ subtest_buffered 'Populate news using RSS' => sub {
 
     # atualiza pro feed1 com o titulo atualizado
     $feed1->update({url => $get_feed_url->('1_updated_titles')});
+
+    is $news_rs->search({id => [map { $_->id() } @news_full]})->update({indexed => '1'}), 2, '2 rows updated';
 
     # roda novamente
     $t->get_ok(

@@ -109,7 +109,6 @@ sub tick_rss_feeds {
     );
     my %map_exists = map { $_->{hyperlink} => $_ } @current_news;
 
-    my @jobs;
     foreach my $news (@news) {
         my $info = $news->{info};
         if (exists $map_exists{$news->{link}}) {
@@ -128,7 +127,6 @@ sub tick_rss_feeds {
                         info    => to_json($info),
                     }
                 );
-                push @jobs, $row->{id};
             }
             next;
         }
@@ -166,13 +164,24 @@ sub tick_rss_feeds {
             }
         );
         slog_info('news row id %d inserted successfully', $row->id);
-        push @jobs, $row->id;
     }
 
     my $minion = Penhas::Minion->instance;
     my $delay  = 0;
-    foreach my $news_id (@jobs) {
 
+    foreach my $news_id (
+        map { $_->{id} } $news_rs->search(
+            {
+                indexed => '0',
+                (is_test() ? (hyperlink => {'like' => '%.tests-assets%'}) : ())
+            },
+            {
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                order_by     => 'id',
+            }
+        )->all
+      )
+    {
         my $job_id = $minion->enqueue(
             'news_indexer',
             [
@@ -184,8 +193,8 @@ sub tick_rss_feeds {
 
         slog_info('Adding news id=%s added is to be indexed, job id %s', $news_id, $job_id);
 
-        # aguarda 2s entre cada job pra nao fazer flood de requests nos sites
-        $delay += 2;
+        # aguarda 5s entre cada job pra nao fazer flood de requests nos sites
+        $delay += 5;
     }
 
 }
