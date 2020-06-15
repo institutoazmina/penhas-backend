@@ -9,6 +9,10 @@ use Penhas::Utils;
 use Penhas::SchemaConnected;
 use Penhas::Authentication;
 
+# carregar controllers usados usados
+use Penhas::Controller::Me;
+use Penhas::Controller::Me_Tweets;
+
 sub startup {
     my $self = shift;
 
