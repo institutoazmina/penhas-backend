@@ -38,29 +38,29 @@ __PACKAGE__->add_columns(
   "description",
   { data_type => "varchar", is_nullable => 1, size => 200 },
   "page_title_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "text", is_nullable => 1 },
   "page_title_not_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "text", is_nullable => 1 },
   "html_article_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "text", is_nullable => 1 },
   "html_article_not_match",
   { data_type => "varchar", is_nullable => 1, size => 200 },
   "page_description_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "text", is_nullable => 1 },
   "page_description_not_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "text", is_nullable => 1 },
   "url_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "text", is_nullable => 1 },
   "url_not_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "text", is_nullable => 1 },
   "rss_feed_tags_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "text", is_nullable => 1 },
   "rss_feed_tags_not_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "text", is_nullable => 1 },
   "rss_feed_content_match",
   { data_type => "varchar", is_nullable => 1, size => 200 },
   "rss_feed_content_not_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "text", is_nullable => 1 },
   "regexp",
   {
     data_type => "tinyint",
@@ -76,7 +76,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "error_msg",
-  { data_type => "varchar", default_value => "", is_nullable => 1, size => 3 },
+  { data_type => "text", default_value => "''", is_nullable => 1 },
   "verified_at",
   {
     data_type => "datetime",
@@ -93,8 +93,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-05 10:36:53
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EigsosuED7g39Cg0PolMvA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-15 17:00:26
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:V+ivrndU/9GpFOdVqsbQ6Q
 
 use Mojo::Util qw/trim/;
 use Penhas::Logger;
@@ -131,7 +131,7 @@ sub compiled_regexp {
         if ($is_regexp) {
             log_debug("$field: testing regexp '$value'");
 
-            my $test = eval {/$value/i};
+            my $test = eval {qr/$value/i};
             if ($@) {
                 log_error("$field: regexp failed $@");
                 $self->update(
@@ -139,7 +139,7 @@ sub compiled_regexp {
                         error_msg   => "$field regexp error: $@",
                         verified    => '0',
                         modified_on => \'NOW()',
-                        verified_at    => \'NOW()'
+                        verified_at => \'NOW()'
                     }
                 );
                 return undef;

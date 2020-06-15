@@ -22,8 +22,6 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 0, size => 2000 },
   "description",
   { data_type => "text", is_nullable => 1 },
-  "media_ids",
-  { data_type => "text", is_nullable => 1 },
   "created_at",
   {
     data_type => "datetime",
@@ -51,8 +49,6 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "logs",
-  { data_type => "mediumtext", is_nullable => 1 },
   "rss_feed_id",
   {
     data_type => "integer",
@@ -73,6 +69,10 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
     size => 20,
   },
+  "logs",
+  { data_type => "mediumtext", is_nullable => 1 },
+  "image_hyperlink",
+  { data_type => "varchar", is_nullable => 1, size => 200 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -94,8 +94,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-04 20:32:26
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CbuhcMjKQo9HeLsx6UM2Ig
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-15 17:00:26
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2UUa3VR+LktvdX0Ursx2+A
 
 # ALTER TABLE noticias ADD FOREIGN KEY (rss_feed_id) REFERENCES rss_feeds(id) ON DELETE CASCADE ON UPDATE cascade;
 

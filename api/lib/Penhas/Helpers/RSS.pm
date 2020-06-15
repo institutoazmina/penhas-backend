@@ -51,8 +51,7 @@ sub tick_rss_feeds {
         my $rss = Mojo::Feed->new(url => $feed->url);
         $rss->items->each(
             sub {
-                my $info = $_->to_hash();
-
+                my $info      = $_->to_hash();
                 my $link      = lc delete $info->{link};
                 my $title     = delete $info->{title};
                 my $published = delete $info->{published};
@@ -173,7 +172,11 @@ sub tick_rss_feeds {
         map { $_->{id} } $news_rs->search(
             {
                 indexed => '0',
-                (is_test() ? (hyperlink => {'like' => '%.tests-assets%'}) : ())
+                (
+                    is_test()
+                    ? (hyperlink => {'like' => '%/\.tests-assets/%'})
+                    : (hyperlink => {'not like' => '%/\.tests-assets/%'})
+                )
             },
             {
                 result_class => 'DBIx::Class::ResultClass::HashRefInflator',
@@ -182,6 +185,7 @@ sub tick_rss_feeds {
         )->all
       )
     {
+
         my $job_id = $minion->enqueue(
             'news_indexer',
             [
