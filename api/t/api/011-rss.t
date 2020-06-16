@@ -142,6 +142,9 @@ subtest_buffered 'Populate news using RSS' => sub {
 
     is trace_popall, 'minion:news_indexer,' . $news[0]->id, 'job processed';
 
+    is [sort map { $_->tag_id } $news[0]->noticias2tags->all], [$forced_tag->id, $topic1->id],
+      'tags match expected [forced from feed + topic1 from rule because page_title_match match "de"]';
+
 
 };
 done_testing();

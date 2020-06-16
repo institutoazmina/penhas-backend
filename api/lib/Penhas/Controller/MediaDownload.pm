@@ -82,4 +82,59 @@ sub get_media {
 
 }
 
+sub get_proxy {
+    my $c = shift;
+
+    my $params = $c->req->params->to_hash;
+    $c->validate_request_params(
+        'href' => {required => 1, type => 'Str', max_length => 5000, min_length => 5,},
+        'h'    => {required => 1, type => 'Str', max_length => 6,    min_length => 6},
+    );
+
+    my $href    = $params->{href};
+    my $user_id = $c->stash('user_id');
+    my $ip      = $c->remote_addr;
+
+    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $href . $user_id . $ip), 0, 6);
+
+    if ($params->{h} ne $hash) {
+        return $c->render(
+            json => {
+                error   => 'media_hash_invalid',
+                message => 'hash não confere.'
+            },
+            status => 400,
+        );
+    }
+
+    my $cached_filename = get_media_filepath('NT' . md5_hex($href));
+
+    if (-e $cached_filename) {
+        $c->reply->file($cached_filename);
+    }
+    else {
+        state $ua = Mojo::UserAgent->new;
+
+        $c->render_later;
+        $ua->get_p($href)->then(
+            sub {
+                my $tx = shift;
+
+                $tx->result->save_to($cached_filename);
+
+                $c->reply->file($cached_filename);
+
+            }
+        )->catch(
+            sub {
+                my $err = shift;
+                $c->log->debug("Proxy error: $err");
+                $c->render(text => 'Something went wrong!', status => 400);
+            }
+        );
+
+    }
+
+}
+
 1;

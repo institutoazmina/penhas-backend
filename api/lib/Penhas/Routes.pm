@@ -60,6 +60,9 @@ sub register {
       = $authenticated->under('/media-download')->to(controller => 'MediaDownload', action => 'ensure_user_loaded');
     $media_download->get()->to(action => 'get_media');
 
+    # /media-download/proxy
+    $media_download->under('proxy')->get()->to(action => 'get_proxy');
+
 
 }
 
