@@ -35,6 +35,11 @@ sub news_indexer {
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
     )->next;
+    if ($news->{indexed}) {
+        log_info("already indexed... skipping work");
+        return $job->finish('skipped');
+    }
+
     $news->{info} = from_json($news->{info});
 
     my @rules = $schema->resultset('TagIndexingConfig')->search(
@@ -64,7 +69,7 @@ sub news_indexer {
                 ]
             }
         );
-        return $job->finish(1);
+        return $job->finish('404');
     }
 
     my $og_image = $dom->at('meta[property="og:image"]');
@@ -203,7 +208,7 @@ sub news_indexer {
         }
     );
 
-    return $job->finish(1);
+    return $job->finish('ok');
 }
 
 1;
