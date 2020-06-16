@@ -144,6 +144,8 @@ subtest_buffered 'Populate news using RSS' => sub {
 
     is [sort map { $_->tag_id } $news[0]->noticias2tags->all], [$forced_tag->id, $topic1->id],
       'tags match expected [forced from feed + topic1 from rule because page_title_match match "de"]';
+    $news[0]->discard_changes;
+    is $news[0]->published, 'published', 'status is published';
 
 
 };
