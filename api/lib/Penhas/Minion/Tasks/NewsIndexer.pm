@@ -103,7 +103,7 @@ sub news_indexer {
         next unless $compiled;    # pula invalidas
 
         my $tag_id = $rule->tag_id;
-        logthis('Tag Indexing Config (%d): ', $rule->id);
+        logthis('Tag Indexing Config (%d, tag %d): %s', $rule->id, $rule->tag_id, $rule->description);
 
         foreach my $test (
             qw/
