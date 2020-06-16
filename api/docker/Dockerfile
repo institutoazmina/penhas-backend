@@ -40,3 +40,6 @@ RUN /tmp/install-cpan-extra-modules.sh
 USER root
 RUN mkdir /etc/service/api
 COPY api.sh /etc/service/api/run
+
+RUN mkdir /etc/service/penhas-minion-worker
+COPY penhas-minion-worker.sh /etc/service/penhas-minion-worker/run
