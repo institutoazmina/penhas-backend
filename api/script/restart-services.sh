@@ -14,6 +14,10 @@ export SQITCH_DEPLOY=${SQITCH_DEPLOY:=docker}
 cpanm -nv . --installdeps
 sqitch deploy -t $SQITCH_DEPLOY
 
+export RESTART_TYPE='all'
+if [ ! "$1" = "" ]; then
+    export RESTART_TYPE=$1
+fi
 [ "$RESTART_TYPE" == "all" ] && RESTART_TYPE="api minion";
 
 echo "restarting services [$RESTART_TYPE]...";
