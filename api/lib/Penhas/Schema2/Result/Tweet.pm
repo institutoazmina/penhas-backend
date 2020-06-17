@@ -58,12 +58,19 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 20 },
   "media_ids",
   { data_type => "text", is_nullable => 1 },
+  "disable_escape",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-18 00:58:50
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dD/1c9kMYRZau61MhDAxQg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-17 10:58:13
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:MSibkPEPXXyI5fYbEnuQVw
 
 
 __PACKAGE__->belongs_to(

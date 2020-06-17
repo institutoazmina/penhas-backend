@@ -5,7 +5,7 @@ use utf8;
 use Penhas::KeyValueStorage;
 use Scope::OnExit;
 use Digest::MD5 qw/md5_hex/;
-use Mojo::Util qw/trim/;
+use Mojo::Util qw/trim xml_escape/;
 
 use JSON;
 use Penhas::Logger;
@@ -424,7 +424,7 @@ sub _fomart_tweet {
             owner => $user->{id} == $me->{cliente_id} ? 1 : 0,
         },
         id               => $me->{id},
-        content          => $me->{content},
+        content          => $me->{disable_escape} ? $me->{content} : xml_escape($me->{content}),
         anonimo          => $anonimo ? 1 : 0,
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
