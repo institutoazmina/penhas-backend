@@ -167,13 +167,14 @@ subtest_buffered 'Populate news using RSS' => sub {
 
     my $tweets = [
         {content => 'keep as it is'},
-        {content => 'mod because cited shiraNAI in the text'},
+        {content => 'mod because cited shiraNAI in the text shiranai'},
         {content => 'notshiranai is not wordbreaking'}
     ];
     app->add_tweets_highlights(tweets => $tweets);
 
     is $tweets->[0]{content}, 'keep as it is';
-    is $tweets->[1]{content}, 'mod because cited <span style="color: #f982b4">shiranai</span> in the text';
+    is $tweets->[1]{content},
+      'mod because cited <span style="color: #f982b4">shiraNAI</span> in the text <span style="color: #f982b4">shiranai</span>';
     is $tweets->[2]{content}, 'notshiranai is not wordbreaking';
 
     is ref $tweets->[1]{related_news}, 'ARRAY', 'has related news added';
