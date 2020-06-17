@@ -533,13 +533,13 @@ sub add_tweets_highlights {
     my $postfix = ('</span>');
 
     foreach my $tweet (@$tweets) {
-        next unless $tweet->{content} =~ $config->{test};
+        next unless $tweet->{content} =~ m/$config->{test}/i;
 
         my $content = $tweet->{content};
         $tweet->{related_news} = [];
         foreach my $highlight (@{$config->{highlights}}) {
             my $regexp = $highlight->{regexp};
-            if ($content =~ s/\b($regexp)\b/$prefix$1$postfix/) {
+            if ($content =~ s/\b($regexp)\b/$prefix$1$postfix/i) {
 
                 push @{$tweet->{related_news}}, sample(1, $highlight->{noticias});
             }

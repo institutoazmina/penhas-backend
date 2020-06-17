@@ -167,7 +167,7 @@ subtest_buffered 'Populate news using RSS' => sub {
 
     my $tweets = [
         {content => 'keep as it is'},
-        {content => 'mod because cited shiranai in the text'},
+        {content => 'mod because cited shiraNAI in the text'},
         {content => 'notshiranai is not wordbreaking'}
     ];
     app->add_tweets_highlights(tweets => $tweets);
