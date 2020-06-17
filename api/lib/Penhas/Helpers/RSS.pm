@@ -10,6 +10,7 @@ use DateTime;
 use Penhas::Logger;
 use Scope::OnExit;
 use Mojo::Feed;
+use Mojo::Util qw/html_unescape/;
 
 use Mojo::DOM;
 use Penhas::KeyValueStorage;
@@ -63,7 +64,12 @@ sub tick_rss_feeds {
                 next unless $link =~ /^https?\:\/\//;    # precisa ser http ou https
                 next unless $title;                      # precisa ter um titulo
 
-                $title = substr($title, 0, 2000);
+                $title = substr(html_unescape($title), 0, 2000);
+
+                # limpa tags html
+                # limpa espaços repetidos
+                $title =~ s/<[^>]*>/ /g;
+                $title =~ s/\s+/ /g;
 
                 slog_info('found link "%s" with title "%s"', $link, $title);
 
