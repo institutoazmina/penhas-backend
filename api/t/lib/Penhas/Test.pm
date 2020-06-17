@@ -95,7 +95,7 @@ our %minion_mock      = (
 );
 
 sub test_get_minion_args_job {
-    my @args = @{$minion_jobs_args->{shift()}};
+    my @args = @{$minion_jobs_args->{shift()} || []};
     return wantarray ? @args : \@args;
 }
 

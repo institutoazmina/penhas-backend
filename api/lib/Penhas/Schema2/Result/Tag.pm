@@ -28,7 +28,12 @@ __PACKAGE__->add_columns(
   "title",
   { data_type => "varchar", is_nullable => 0, size => 200 },
   "is_topic",
-  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "created_at",
   {
     data_type => "datetime",
@@ -49,10 +54,16 @@ __PACKAGE__->has_many(
   { "foreign.tag_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
+__PACKAGE__->has_many(
+  "tags_highlights",
+  "Penhas::Schema2::Result::TagsHighlight",
+  { "foreign.tag_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-04 11:55:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cIwJTgwZOQZwatmD/SyKPg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-16 21:00:34
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dn8M/BzBWxK65f+jrFYlWA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

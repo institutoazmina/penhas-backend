@@ -5,7 +5,7 @@ use utf8;
 use Penhas::KeyValueStorage;
 use Scope::OnExit;
 use Digest::MD5 qw/md5_hex/;
-
+use Mojo::Util qw/trim/;
 
 use JSON;
 use Penhas::Logger;
@@ -17,12 +17,12 @@ sub kv { Penhas::KeyValueStorage->instance }
 sub setup {
     my $self = shift;
 
-    $self->helper('add_tweet'    => sub { &add_tweet(@_) });
-    $self->helper('delete_tweet' => sub { &delete_tweet(@_) });
-    $self->helper('like_tweet'   => sub { &like_tweet(@_) });
-    $self->helper('report_tweet' => sub { &report_tweet(@_) });
-    $self->helper('list_tweets'  => sub { &list_tweets(@_) });
-
+    $self->helper('add_tweet'             => sub { &add_tweet(@_) });
+    $self->helper('delete_tweet'          => sub { &delete_tweet(@_) });
+    $self->helper('like_tweet'            => sub { &like_tweet(@_) });
+    $self->helper('report_tweet'          => sub { &report_tweet(@_) });
+    $self->helper('list_tweets'           => sub { &list_tweets(@_) });
+    $self->helper('add_tweets_highlights' => sub { &add_tweets_highlights(@_) });
 }
 
 sub like_tweet {
@@ -135,9 +135,10 @@ sub delete_tweet {
             }
         )->update(
             {
-                ultimo_comentario_id =>
-                  \["(SELECT max(id) FROM tweets t WHERE t.parent_id = ? AND t.status = 'published')",
-                    $item->parent_id],
+                ultimo_comentario_id => \[
+                    "(SELECT max(id) FROM tweets t WHERE t.parent_id = ? AND t.status = 'published')",
+                    $item->parent_id
+                ],
                 qtde_comentarios => \'qtde_comentarios - 1'
             }
         );
@@ -382,6 +383,8 @@ sub list_tweets {
         }
     }
 
+    $c->add_tweets_highlights(tweets => \@tweets);
+
     return {
         tweets   => \@tweets,
         has_more => $has_more,
@@ -449,5 +452,76 @@ sub _get_tweet_by_id {
     return $tweet;
 }
 
+sub add_tweets_highlights {
+    my ($c, %opts) = @_;
+
+    my $tweets = $opts{tweets};
+
+    my $config = &kv()->redis_get_cached_or_execute(
+        'tags_highlight_regexp',
+        60 * 10,    # 10 minutes
+        sub {
+            my $rs       = $c->schema2->resultset('TagsHighlight');
+            my $query_rs = $rs->search(
+                {
+                    'noticia.published' => 'published',
+                    'me.status'         => is_test() ? 'test' : 'prod',
+                    'me.error_msg'      => '',
+                },
+                {
+                    join    => {'tag' => {'noticias2tags' => 'noticia'}},
+                    columns => [
+                        {
+                            noticias => \
+                              "group_concat(noticia.id ORDER BY noticia.display_created_time DESC SEPARATOR ',' LIMIT 15)"
+                        },
+                        (qw/me.id me.is_regexp me.match/),
+                    ],
+                    group_by     => 'me.id',
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+                }
+            );
+
+            my $tags = {};
+            my @regexps;
+            while (my $row = $query_rs->next()) {
+
+                my $match = $row->{match};
+                if ($row->{is_regexp}) {
+                    my $test = eval {qr/$match/i};
+                    if ($@) {
+                        $rs->find($row->{id})->update({error_msg => "Regexp error: $@"});
+                        next;
+                    }
+                }
+                else {
+                    my $new_regex = '(' . join('|', (map { quotemeta(trim($_)) } split qr{\|}, $match)) . ')';
+
+                    # evita regexp que da match pra tudo
+                    $new_regex =~ s{\|\|}{|}g;    # troca || por só |
+                    $new_regex =~ s{\|\)}{)};     # troca |) por só )
+                    $new_regex =~ s{\(\|}{(};     # troca (| pro só (
+
+                    $match = $new_regex;
+                }
+
+                push @regexps, $match;
+
+                $tags->{$row->{id}} = {
+                    regexp   => $match,
+                    noticias => $row->{noticias}
+                };
+            }
+
+            return {
+                tags => $tags,
+                test => scalar @regexps ? '(' . join('|', @regexps) . ')' : undef,
+            };
+        }
+    );
+    use DDP; p $config;
+
+    return 1;
+}
 
 1;

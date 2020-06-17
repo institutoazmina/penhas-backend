@@ -147,6 +147,7 @@ subtest_buffered 'Populate news using RSS' => sub {
     $news[0]->discard_changes;
     is $news[0]->published, 'published', 'status is published';
 
+    app->add_tweets_highlights( tweets => []);
 
 };
 done_testing();

@@ -35,7 +35,7 @@ sub news_indexer {
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
     )->next;
-    if ($news->{indexed}) {
+    if ($news->{indexed} && !is_test()) {
         log_info("already indexed... skipping work");
         return $job->finish('skipped');
     }

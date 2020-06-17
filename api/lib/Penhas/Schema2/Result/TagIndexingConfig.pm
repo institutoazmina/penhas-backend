@@ -149,7 +149,7 @@ sub compiled_regexp {
 
         }
         else {
-            my $new_regex = '(' . join('|', (map { quotemeta(trim($_)) } split /\|/, $value)) . ')';
+            my $new_regex = '(' . join('|', (map { quotemeta(trim($_)) } split qr{\|}, $value)) . ')';
 
             # evita regexp que da match pra tudo
             $new_regex =~ s{\|\|}{|}g;    # troca || por só |
