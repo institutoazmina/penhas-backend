@@ -15,6 +15,9 @@ sub register {
     $r->route('/reset-password/request-new')->post()->to(controller => 'ResetPassword', action => 'request_new');
     $r->route('/reset-password/write-new')->post()->to(controller => 'ResetPassword', action => 'write_new');
 
+    # GET /news-redirect
+    $r->route('news-redirect')->get()->to(controller => 'News', action => 'redirect');
+
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss
     my $maintenance = $r->under('maintenance')->to(controller => 'Maintenance', action => 'check_authorization');
@@ -59,9 +62,6 @@ sub register {
     my $media_download
       = $authenticated->under('/media-download')->to(controller => 'MediaDownload', action => 'ensure_user_loaded');
     $media_download->get()->to(action => 'get_media');
-
-    # /media-download/proxy
-    $media_download->under('proxy')->get()->to(action => 'get_proxy');
 
 
 }

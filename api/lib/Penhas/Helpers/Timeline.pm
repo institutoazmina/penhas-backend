@@ -5,7 +5,7 @@ use utf8;
 use Penhas::KeyValueStorage;
 use Scope::OnExit;
 use Digest::MD5 qw/md5_hex/;
-use Mojo::Util qw/trim xml_escape/;
+use Mojo::Util qw/trim xml_escape url_escape/;
 
 use JSON;
 use Penhas::Logger;
@@ -384,7 +384,7 @@ sub list_tweets {
         }
     }
 
-    $c->add_tweets_highlights(tweets => \@tweets);
+    $c->add_tweets_highlights(user => $user, tweets => \@tweets);
 
     return {
         tweets   => \@tweets,
@@ -440,7 +440,7 @@ sub _fomart_tweet {
 sub _gen_uniq_media_url {
     my ($media_id, $user, $quality, $ip) = @_;
 
-    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $user->{id} . $quality . $ip), 0, 6);
+    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $user->{id} . $quality . $ip), 0, 12);
     return $ENV{PUBLIC_API_URL} . "media-download/?m=$media_id&q=$quality&h=$hash";
 }
 
@@ -453,10 +453,27 @@ sub _get_tweet_by_id {
     return $tweet;
 }
 
+sub _get_tracked_news_url {
+    my ($user, $news) = @_;
+
+    my $userid      = $user->{id};
+    my $newsid      = $news->{id};
+    my $url         = $news->{hyperlink};
+    my $valid_until = time() + 3600;
+    my $trackid     = random_string(4);
+
+    my $hash = substr(md5_hex(join ':', $ENV{NEWS_HASH_SALT}, $userid, $newsid, $trackid, $valid_until, $url), 0, 12);
+    return
+        $ENV{PUBLIC_API_URL}
+      . "news-redirect/?uid=$userid&nid=$newsid&u=$valid_until&t=$trackid&h=$hash&url="
+      . url_escape($url);
+}
+
 sub add_tweets_highlights {
     my ($c, %opts) = @_;
 
-    my $tweets = $opts{tweets};
+    my $user   = $opts{user}   or croak 'missing user';
+    my $tweets = $opts{tweets} or croak 'missing tweets';
 
     my $config = &kv()->redis_get_cached_or_execute(
         'tags_highlight_regexp',
@@ -473,8 +490,13 @@ sub add_tweets_highlights {
                     join    => {'tag' => {'noticias2tags' => 'noticia'}},
                     columns => [
                         {
-                            noticias => \
-                              "group_concat(noticia.id ORDER BY noticia.display_created_time DESC SEPARATOR ',' LIMIT 15)"
+                            noticias => \ "CONCAT('[', group_concat(
+                                JSON_OBJECT(
+                                    'id',noticia.id,
+                                    'title', noticia.title,
+                                    'hyperlink', noticia.hyperlink
+                                ) ORDER BY noticia.display_created_time DESC SEPARATOR ',' LIMIT 15
+                            ), ']')"
                         },
                         (qw/me.id me.is_regexp me.match/),
                     ],
@@ -514,7 +536,7 @@ sub add_tweets_highlights {
 
                 push @highlights, {
                     regexp   => $match,
-                    noticias => [split /,/, $row->{noticias}],
+                    noticias => from_json($row->{noticias}),
                     id       => $row->{id}
                 };
             }
@@ -540,8 +562,12 @@ sub add_tweets_highlights {
         foreach my $highlight (@{$config->{highlights}}) {
             my $regexp = $highlight->{regexp};
             if ($content =~ s/\b($regexp)\b/$prefix$1$postfix/gi) {
+                my $news = sample(1, @{$highlight->{noticias}});
 
-                push @{$tweet->{related_news}}, sample(1, $highlight->{noticias});
+                push @{$tweet->{related_news}}, {
+                    hyperlink => &_get_tracked_news_url($user, $news),
+                    title     => $news->{title},
+                };
             }
         }
         $tweet->{content} = $content;

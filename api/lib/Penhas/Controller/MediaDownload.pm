@@ -19,7 +19,7 @@ sub get_media {
     my $params = $c->req->params->to_hash;
     $c->validate_request_params(
         'm' => {required => 1, type => 'Str', max_length => 36, min_length => 36,},
-        'h' => {required => 1, type => 'Str', max_length => 6,  min_length => 6},
+        'h' => {required => 1, type => 'Str', max_length => 12, min_length => 12},
         'q' => {required => 1, type => 'Str', max_length => 2,  min_length => 2},
     );
 
@@ -29,7 +29,7 @@ sub get_media {
     my $quality = $params->{q};
     my $ip      = $c->remote_addr;
 
-    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $user_id . $quality . $ip), 0, 6);
+    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $user_id . $quality . $ip), 0, 12);
 
     if ($params->{h} ne $hash) {
         return $c->render(
@@ -88,14 +88,14 @@ sub get_proxy {
     my $params = $c->req->params->to_hash;
     $c->validate_request_params(
         'href' => {required => 1, type => 'Str', max_length => 5000, min_length => 5,},
-        'h'    => {required => 1, type => 'Str', max_length => 6,    min_length => 6},
+        'h'    => {required => 1, type => 'Str', max_length => 12,   min_length => 12},
     );
 
     my $href    = $params->{href};
     my $user_id = $c->stash('user_id');
     my $ip      = $c->remote_addr;
 
-    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $href . $user_id . $ip), 0, 6);
+    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $href . $user_id . $ip), 0, 12);
 
     if ($params->{h} ne $hash) {
         return $c->render(

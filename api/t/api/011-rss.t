@@ -165,12 +165,14 @@ subtest_buffered 'Populate news using RSS' => sub {
     $news[0]->discard_changes;
     is $news[0]->published, 'published', 'status is published';
 
+    local $ENV{PUBLIC_API_URL} = '/';
+
     my $tweets = [
         {content => 'keep as it is'},
         {content => 'mod because cited shiraNAI in the text shiranai'},
         {content => 'notshiranai is not wordbreaking'}
     ];
-    app->add_tweets_highlights(tweets => $tweets);
+    app->add_tweets_highlights(user => {id => 0}, tweets => $tweets);
 
     is $tweets->[0]{content}, 'keep as it is';
     is $tweets->[1]{content},
@@ -179,6 +181,9 @@ subtest_buffered 'Populate news using RSS' => sub {
 
     is ref $tweets->[1]{related_news}, 'ARRAY', 'has related news added';
 
+    like(my $tracking_url = $tweets->[1]{related_news}[0]{hyperlink}, qr/news-redirect/, 'tracking url');
+
+    $t->get_ok($tracking_url)->status_is(302);
 
 };
 done_testing();
@@ -188,8 +193,13 @@ done_testing();
 exit;
 
 sub clean_up {
-    $news_rs->search({hyperlink => {'like' => $base . '%'}})->delete;
-    $feed_rs->search({url       => {'like' => $base . '%'}})->delete;
+    my $noticias = $news_rs->search({hyperlink => {'like' => $base . '%'}});
+
+    app->schema2->resultset('NoticiasAbertura')
+      ->search({noticias_id => {'in' => $noticias->get_column('id')->as_query}})->delete;
+
+    $noticias->delete;
+    $feed_rs->search({url => {'like' => $base . '%'}})->delete;
     $highlight_rs->search({status => 'test'})->delete;
     $rules_rs->search({status => 'test'})->delete;
     $tags_rs->search({status => 'test'})->delete;
