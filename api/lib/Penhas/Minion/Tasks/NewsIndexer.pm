@@ -81,7 +81,7 @@ sub news_indexer {
     my $log = '';
 
     # cria uma sub valida apenas neste escopo, que tem acesso a variavel $log
-    *logthis = sub {
+    my $logthis = sub {
         my ($string, @other) = @_;
         my $text = sprintf $string, @other;
         log_info($text);
@@ -90,10 +90,10 @@ sub news_indexer {
 
     my $tags = {};
     if ($news->{rss_feed}) {
-        logthis('Adding tags from RSS feed (%d): ', $news->{rss_feed}{id});
+        $logthis->('Adding tags from RSS feed (%d): ', $news->{rss_feed}{id});
         foreach (@{$news->{rss_feed}{rss_feed_forced_tags} || []}) {
             $tags->{$_->{tag_id}}++;
-            logthis($_->{tag_id} . ' added');
+            $logthis->($_->{tag_id} . ' added');
         }
     }
 
@@ -103,7 +103,7 @@ sub news_indexer {
         next unless $compiled;    # pula invalidas
 
         my $tag_id = $rule->tag_id;
-        logthis('Tag Indexing Config (%d, tag %d): %s', $rule->id, $rule->tag_id, $rule->description);
+        $logthis->('Tag Indexing Config (%d, tag %d): %s', $rule->id, $rule->tag_id, $rule->description||'');
 
         foreach my $test (
             qw/
@@ -152,6 +152,7 @@ sub news_indexer {
                   = exists $news->{info}{tags}
                   ? (ref $news->{info}{tags} eq 'ARRAY' ? join(' ', $news->{info}{tags}->@*) : $news->{info}{tags})
                   : '';
+                  use DDP; p $content; p $news;
             }
             elsif ($test eq 'rss_feed_content_match') {
                 $content = $news->{info}{content} || '';
@@ -161,7 +162,7 @@ sub news_indexer {
 
             slog_debug('%s content is 「%s」', $test, $content || 'empty');
             if (!$content) {
-                logthis("$test content is empty, match skiped.");
+                $logthis->("$test content is empty, match skiped.");
                 next;
             }
 
@@ -169,19 +170,19 @@ sub news_indexer {
             my $tested_false = defined $test_false ? $content =~ $test_false : 0;
 
             if ($tested_true && $tested_false) {
-                logthis("$test MATCHES but also $test_not also. Tag $tag_id NOT Added");
+                $logthis->("$test MATCHES but also $test_not also. Tag $tag_id NOT Added");
             }
             elsif ($tested_true) {
-                logthis("$test MATCHES Adding tag $tag_id");
+                $logthis->("$test MATCHES Adding tag $tag_id");
                 $tags->{$tag_id}++;
             }
             else {
-                logthis("$test not matched");
+                $logthis->("$test not matched");
             }
         }
     }
 
-    logthis("\n" . 'Final tags for Noticia (%d) is %s', $news->{id}, join(', ', keys %$tags));
+    $logthis->("\n" . 'Final tags for Noticia (%d) is %s', $news->{id}, join(', ', keys %$tags));
 
 
     $schema->txn_do(

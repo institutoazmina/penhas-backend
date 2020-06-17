@@ -8,10 +8,11 @@ my $t = test_instance;
 
 $ENV{MAINTENANCE_SECRET} = '12345';
 
-my $feed_rs  = app->schema2->resultset('RssFeed');
-my $news_rs  = app->schema2->resultset('Noticia');
-my $tags_rs  = app->schema2->resultset('Tag');
-my $rules_rs = app->schema2->resultset('TagIndexingConfig');
+my $feed_rs      = app->schema2->resultset('RssFeed');
+my $news_rs      = app->schema2->resultset('Noticia');
+my $tags_rs      = app->schema2->resultset('Tag');
+my $highlight_rs = app->schema2->resultset('TagsHighlight');
+my $rules_rs     = app->schema2->resultset('TagIndexingConfig');
 
 my $base = 'https://elasv2-api.appcivico.com/.tests-assets';
 
@@ -44,7 +45,8 @@ $feed1->add_to_rss_feed_forced_tags({tag_id => $forced_tag->id});
 
 my $tag1 = $tags_rs->create(
     {
-        status     => 'test', title => 'tag1',
+        status     => 'test',
+        title      => 'tag1',
         is_topic   => '0',
         created_at => \'NOW()',
     }
@@ -84,6 +86,15 @@ my $rule2 = $rules_rs->create(
         tag_id              => $tag1->id,
         regexp              => 0,
         rss_feed_tags_match => 'TAG3RSSONLY|tag1'
+    }
+);
+
+$highlight_rs->create(
+    {
+        status    => 'test',
+        tag_id    => $forced_tag->id,
+        match     => 'shiranai',
+        is_regexp => 1
     }
 );
 
@@ -138,7 +149,7 @@ subtest_buffered 'Populate news using RSS' => sub {
 
     trace_popall;
     my $job = Minion::Job->new(id => fake_int(1, 99)->(), minion => $t->app->minion, task => 'news_indexer');
-    ok(Penhas::Minion::Tasks::NewsIndexer::news_indexer($job, test_get_minion_args_job(0))), 'run task';
+    ok(Penhas::Minion::Tasks::NewsIndexer::news_indexer($job, test_get_minion_args_job(0)), 'indexing news 0');
 
     is trace_popall, 'minion:news_indexer,' . $news[0]->id, 'job processed';
 
@@ -147,7 +158,26 @@ subtest_buffered 'Populate news using RSS' => sub {
     $news[0]->discard_changes;
     is $news[0]->published, 'published', 'status is published';
 
-    app->add_tweets_highlights( tweets => []);
+    ok(Penhas::Minion::Tasks::NewsIndexer::news_indexer($job, test_get_minion_args_job(1)), 'indexing news 1');
+
+    is [sort map { $_->tag_id } $news[1]->noticias2tags->all], [$forced_tag->id],
+      'tags match expected [forced from feed only]';
+    $news[0]->discard_changes;
+    is $news[0]->published, 'published', 'status is published';
+
+    my $tweets = [
+        {content => 'keep as it is'},
+        {content => 'mod because cited shiranai in the text'},
+        {content => 'notshiranai is not wordbreaking'}
+    ];
+    app->add_tweets_highlights(tweets => $tweets);
+
+    is $tweets->[0]{content}, 'keep as it is';
+    is $tweets->[1]{content}, 'mod because cited <span style="color: #f982b4">shiranai</span> in the text';
+    is $tweets->[2]{content}, 'notshiranai is not wordbreaking';
+
+    is ref $tweets->[1]{related_news}, 'ARRAY', 'has related news added';
+
 
 };
 done_testing();
@@ -159,6 +189,7 @@ exit;
 sub clean_up {
     $news_rs->search({hyperlink => {'like' => $base . '%'}})->delete;
     $feed_rs->search({url       => {'like' => $base . '%'}})->delete;
-    $tags_rs->search({status    => 'test'})->delete;
+    $highlight_rs->search({status => 'test'})->delete;
     $rules_rs->search({status => 'test'})->delete;
+    $tags_rs->search({status => 'test'})->delete;
 }

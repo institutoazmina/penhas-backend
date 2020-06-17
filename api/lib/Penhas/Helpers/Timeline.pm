@@ -10,6 +10,7 @@ use Mojo::Util qw/trim/;
 use JSON;
 use Penhas::Logger;
 use Penhas::Utils;
+use List::Util '1.54' => qw/sample/;
 
 our $ForceFilterClientes;
 sub kv { Penhas::KeyValueStorage->instance }
@@ -482,13 +483,17 @@ sub add_tweets_highlights {
                 }
             );
 
-            my $tags = {};
+            my @highlights;
             my @regexps;
             while (my $row = $query_rs->next()) {
 
                 my $match = $row->{match};
                 if ($row->{is_regexp}) {
-                    my $test = eval {qr/$match/i};
+
+                    my $test = eval {
+                        die "não pode ter parenteses sem escape\n" if $match =~ /[^\\]\(/;
+                        qr/$match/i;
+                    };
                     if ($@) {
                         $rs->find($row->{id})->update({error_msg => "Regexp error: $@"});
                         next;
@@ -507,19 +512,40 @@ sub add_tweets_highlights {
 
                 push @regexps, $match;
 
-                $tags->{$row->{id}} = {
+                push @highlights, {
                     regexp   => $match,
-                    noticias => $row->{noticias}
+                    noticias => [split /,/, $row->{noticias}],
+                    id       => $row->{id}
                 };
             }
 
             return {
-                tags => $tags,
-                test => scalar @regexps ? '(' . join('|', @regexps) . ')' : undef,
+                highlights => \@highlights,
+                test       => scalar @regexps ? '\\b(' . join('|', @regexps) . ')\\b' : undef,
             };
         }
     );
-    use DDP; p $config;
+
+    # se nao tem nada, nao precisa fazer loop algum.
+    return 1 unless $config->{test};
+
+    my $prefix  = ('<span style="color: #f982b4">');
+    my $postfix = ('</span>');
+
+    foreach my $tweet (@$tweets) {
+        next unless $tweet->{content} =~ $config->{test};
+
+        my $content = $tweet->{content};
+        $tweet->{related_news} = [];
+        foreach my $highlight (@{$config->{highlights}}) {
+            my $regexp = $highlight->{regexp};
+            if ($content =~ s/\b($regexp)\b/$prefix$1$postfix/) {
+
+                push @{$tweet->{related_news}}, sample(1, $highlight->{noticias});
+            }
+        }
+        $tweet->{content} = $content;
+    }
 
     return 1;
 }
