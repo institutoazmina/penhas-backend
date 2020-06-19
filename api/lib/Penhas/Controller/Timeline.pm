@@ -83,13 +83,13 @@ sub list {
 
     my $params = $c->req->params->to_hash;
     $c->validate_request_params(
-        rows        => {required => 0, type => 'Int'},
-        after       => {required => 0, type => TweetID},
-        before      => {required => 0, type => TweetID},
-        parent_id   => {required => 0, type => TweetID},
-        id          => {required => 0, type => TweetID},
-        skip_myself => {required => 0, type => 'Int'},
-        only_myself => {required => 0, type => 'Int'},
+        rows         => {required => 0, type => 'Int'},
+        after        => {required => 0, type => TweetID},
+        before       => {required => 0, type => TweetID},
+        parent_id    => {required => 0, type => TweetID},
+        id           => {required => 0, type => TweetID},
+        skip_myself  => {required => 0, type => 'Int'},
+        only_myself  => {required => 0, type => 'Int'},
     );
 
     my $tweets = $c->list_tweets(

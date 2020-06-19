@@ -376,6 +376,7 @@ sub list_tweets {
     )->all;
 
     foreach my $tweet (@tweets) {
+        $tweet->{type} = 'tweet';
         $tweet->{meta}{liked} = $already_liked{$tweet->{id}} || 0;
 
         $tweet->{last_reply} = $last_reply{$tweet->{id}};
@@ -384,7 +385,56 @@ sub list_tweets {
         }
     }
 
+
     $c->add_tweets_highlights(user => $user, tweets => \@tweets);
+
+    my $include_news = !$opts{before} && !$opts{after} && !$opts{parent_id} ? 1 : 0;
+    my @tweets2;
+    my $i = 0;
+    foreach my $tweet (@tweets) {
+        push @tweets2, $tweet;
+        if (++$i % 3 == 0 && $include_news) {
+
+            my $news = $c->schema2->resultset('Noticia')
+              ->search({published => 'published'}, {rows => 1, offset => int(rand() * 99)})->next;
+            if ($news) {
+                push @tweets2, {
+                    type     => 'news',
+                    href     => $news->hyperlink,
+                    title    => $news->title,
+                    source   => $news->fonte,
+                    date_str => $news->display_created_time->dmy('/'),
+                    image =>
+                      'https://s2.glbimg.com/IKEfOHvbA827tcq660lssE-11mI=/512x320/smart/e.glbimg.com/og/ed/f/original/2020/06/19/82145061_2427549444202692_6151441996146155645_n.jpg',
+                };
+            }
+        }
+        elsif (++$i % 10 == 0 && $include_news) {
+
+            my @news = $c->schema2->resultset('Noticia')
+              ->search({published => 'published'}, {rows => 4, offset => int(rand() * 99)})->all;
+            if (scalar @news) {
+                push @tweets2, {
+                    type   => 'news_group',
+                    header => 'Relacionamento API Random',
+                    news   => [
+                        map {
+                            +{
+                                href     => $_->hyperlink,
+                                title    => $_->title,
+                                source   => $_->fonte,
+                                date_str => $_->display_created_time->dmy('/'),
+                                image =>
+                                  'https://s2.glbimg.com/IKEfOHvbA827tcq660lssE-11mI=/512x320/smart/e.glbimg.com/og/ed/f/original/2020/06/19/82145061_2427549444202692_6151441996146155645_n.jpg',
+                            }
+                        } @news,
+                    ],
+                };
+            }
+        }
+
+    }
+    @tweets = @tweets2;
 
     return {
         tweets   => \@tweets,
