@@ -105,8 +105,7 @@ subtest_buffered 'cadastro' => sub {
 };
 
 my $tweet_rs = app->schema2->resultset('Tweet');
-subtest_buffered 'Tweet' => sub {
-
+do {
     my $media = $t->post_ok(
         '/me/media',
         {'x-api-key' => $session},
@@ -231,8 +230,10 @@ subtest_buffered 'Tweet' => sub {
         form => {
             rows => 2,
         }
-    )->status_is(200)->json_is('/has_more', '1')->json_is('/tweets/0/content', 'Kazoeru 2')
-      ->json_is('/tweets/1/content', 'Kazoeru 1')->tx->res->json;
+    )->status_is(200)->json_is('/has_more', '1')->json_is('/tweets/0/type', 'tweet', 'row 0 is tweet')
+      ->json_is('/tweets/0/content', 'Kazoeru 2')->json_is('/tweets/1/content', 'Kazoeru 1')
+      ->json_is('/tweets/1/type', 'tweet', 'row 1 is tweet')->json_is('/tweets/2', undef, 'rows 2 not exists')
+      ->tx->res->json;
 
     $t->get_ok(
         ('/timeline'),
@@ -241,7 +242,7 @@ subtest_buffered 'Tweet' => sub {
             rows   => 2,
             before => $page1->{tweets}[-1]->{id}
         }
-    )->status_is(200)->json_is('/order_by', 'latest_first')->json_is('/has_more', '0')
+    )->status_is(200)->json_is('/order_by', 'latest_first')->json_is('/has_more', '0', 'before has no more')
       ->json_is('/tweets/0/content', 'ijime dame zettai')->json_is('/tweets/1/content', undef);
 
     # pega o primeiro tweet apos o primeiro tweet ever
@@ -254,7 +255,7 @@ subtest_buffered 'Tweet' => sub {
             rows  => 1,
             after => $tweet_id
         }
-    )->status_is(200)->json_is('/order_by', 'oldest_first')->json_is('/has_more', '1')
+    )->status_is(200)->json_is('/order_by', 'oldest_first')->json_is('/has_more', '1', 'after has no more')
       ->json_is('/tweets/0/content', 'Kazoeru 1')->json_is('/tweets/1/content', undef)->tx->res->json;
 
     # pega todos os proximos
@@ -282,7 +283,7 @@ subtest_buffered 'Tweet' => sub {
         form => {
             content => 'Just me',
         }
-    )->status_is(200);
+    )->status_is(200, 'filtro just me');
     $t->get_ok(
         ('/timeline'),
         {'x-api-key' => $session2},
@@ -339,8 +340,7 @@ subtest_buffered 'Tweet' => sub {
         ('/timeline'),
         {'x-api-key' => $session},
         form => {id => $tweet_id}
-    )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', undef);
-
+    )->status_is(200)->json_is('/has_more', '0', 'has more filtro por id')->json_is('/tweets/0/content', undef);
 };
 
 done_testing();

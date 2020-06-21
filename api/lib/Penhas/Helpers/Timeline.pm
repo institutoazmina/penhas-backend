@@ -24,6 +24,8 @@ sub setup {
     $self->helper('report_tweet'          => sub { &report_tweet(@_) });
     $self->helper('list_tweets'           => sub { &list_tweets(@_) });
     $self->helper('add_tweets_highlights' => sub { &add_tweets_highlights(@_) });
+    $self->helper('add_tweets_news'       => sub { &add_tweets_news(@_) });
+
 }
 
 sub like_tweet {
@@ -281,16 +283,17 @@ sub list_tweets {
     my ($c, %opts) = @_;
 
     my $rows = $opts{rows} || 10;
-    $rows = 10 if $rows > 100 || $rows < 1;
+    $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
     my $user = $opts{user} or croak 'missing user';
 
     slog_info(
-        'list_tweets after=%s before=%s parent_id=%s id=%s rows=%s',
+        'list_tweets after=%s before=%s parent_id=%s id=%s rows=%s tags=%s',
         $opts{after}     || '',
         $opts{before}    || '',
         $opts{parent_id} || '',
         $opts{id}        || '',
+        $opts{tags}      || '',
         $rows,
     );
 
@@ -303,6 +306,14 @@ sub list_tweets {
             ($opts{id}     ? ({'me.id' => $opts{id}})              : ()),
             ($opts{after}  ? ({'me.id' => {'>' => $opts{after}}})  : ()),
             ($opts{before} ? ({'me.id' => {'<' => $opts{before}}}) : ()),
+            (
+                $opts{tags}
+                ? (
+                    # retorna qualquer tweets que contem aquele tema
+                    {'-or' => [map { +{'me.tags_index' => {'like' => ",$_,"}} } split ',', $opts{tags}]}
+                  )
+                : ()
+            ),
             (
                 $opts{parent_id}
                 ? ({parent_id => $opts{parent_id}})
@@ -385,56 +396,11 @@ sub list_tweets {
         }
     }
 
-
     $c->add_tweets_highlights(user => $user, tweets => \@tweets);
 
-    my $include_news = !$opts{before} && !$opts{after} && !$opts{parent_id} ? 1 : 0;
-    my @tweets2;
-    my $i = 0;
-    foreach my $tweet (@tweets) {
-        push @tweets2, $tweet;
-        if (++$i % 3 == 0 && $include_news) {
-
-            my $news = $c->schema2->resultset('Noticia')
-              ->search({published => 'published'}, {rows => 1, offset => int(rand() * 99)})->next;
-            if ($news) {
-                push @tweets2, {
-                    type     => 'news',
-                    href     => $news->hyperlink,
-                    title    => $news->title,
-                    source   => $news->fonte,
-                    date_str => $news->display_created_time->dmy('/'),
-                    image =>
-                      'https://s2.glbimg.com/IKEfOHvbA827tcq660lssE-11mI=/512x320/smart/e.glbimg.com/og/ed/f/original/2020/06/19/82145061_2427549444202692_6151441996146155645_n.jpg',
-                };
-            }
-        }
-        elsif (++$i % 10 == 0 && $include_news) {
-
-            my @news = $c->schema2->resultset('Noticia')
-              ->search({published => 'published'}, {rows => 4, offset => int(rand() * 99)})->all;
-            if (scalar @news) {
-                push @tweets2, {
-                    type   => 'news_group',
-                    header => 'Relacionamento API Random',
-                    news   => [
-                        map {
-                            +{
-                                href     => $_->hyperlink,
-                                title    => $_->title,
-                                source   => $_->fonte,
-                                date_str => $_->display_created_time->dmy('/'),
-                                image =>
-                                  'https://s2.glbimg.com/IKEfOHvbA827tcq660lssE-11mI=/512x320/smart/e.glbimg.com/og/ed/f/original/2020/06/19/82145061_2427549444202692_6151441996146155645_n.jpg',
-                            }
-                        } @news,
-                    ],
-                };
-            }
-        }
-
-    }
-    @tweets = @tweets2;
+    # nao adicionar noticias nos detalhes
+    $c->add_tweets_news(user => $user, tweets => \@tweets, tags => $opts{tags})
+      if !$opts{parent_id};
 
     return {
         tweets   => \@tweets,
@@ -610,7 +576,7 @@ sub add_tweets_highlights {
         my $current_tags = delete $tweet->{_tags_index};
 
         # se nao da match em nenhuma tag atualmente, e nao tem tag, nao precisa atualizar, nem passar no loop
-        next unless $tweet->{content} =~ m/$config->{test}/i && $current_tags eq ',,';
+        next if $tweet->{content} !~ m/$config->{test}/i && ($current_tags eq ',,' || !defined $current_tags);
 
         my %seen_tags;
         my $content = $tweet->{content};
@@ -631,12 +597,64 @@ sub add_tweets_highlights {
 
         # atualiza de forma lazy os tweets com as tags que dão match atualmente
         my $new_tweet_tags = ',' . (join ',', sort keys %seen_tags) . ',';
-        if ($current_tags ne $new_tweet_tags) {
+        if ($current_tags && $current_tags ne $new_tweet_tags) {
             $c->schema2->resultset('Tweet')->search({id => $tweet->{id}})->update({tags_index => $new_tweet_tags});
         }
     }
 
     return 1;
+}
+
+sub add_tweets_news {
+    my ($c, %opts) = @_;
+
+=pod
+    my @tweets2;
+    my $i = 0;
+    foreach my $tweet (@tweets) {
+        push @tweets2, $tweet;
+        if (++$i % 3 == 0 && $include_news) {
+
+            my $news = $c->schema2->resultset('Noticia')
+              ->search({published => 'published'}, {rows => 1, offset => int(rand() * 99)})->next;
+            if ($news) {
+                push @tweets2, {
+                    type     => 'news',
+                    href     => $news->hyperlink,
+                    title    => $news->title,
+                    source   => $news->fonte,
+                    date_str => $news->display_created_time->dmy('/'),
+                    image =>
+                      'https://s2.glbimg.com/IKEfOHvbA827tcq660lssE-11mI=/512x320/smart/e.glbimg.com/og/ed/f/original/2020/06/19/82145061_2427549444202692_6151441996146155645_n.jpg',
+                };
+            }
+        }
+        elsif (++$i % 10 == 0 && $include_news) {
+
+            my @news = $c->schema2->resultset('Noticia')
+              ->search({published => 'published'}, {rows => 4, offset => int(rand() * 99)})->all;
+            if (scalar @news) {
+                push @tweets2, {
+                    type   => 'news_group',
+                    header => 'Relacionamento API Random',
+                    news   => [
+                        map {
+                            +{
+                                href     => $_->hyperlink,
+                                title    => $_->title,
+                                source   => $_->fonte,
+                                date_str => $_->display_created_time->dmy('/'),
+                                image =>
+                                  'https://s2.glbimg.com/IKEfOHvbA827tcq660lssE-11mI=/512x320/smart/e.glbimg.com/og/ed/f/original/2020/06/19/82145061_2427549444202692_6151441996146155645_n.jpg',
+                            }
+                        } @news,
+                    ],
+                };
+            }
+        }
+    }
+=cut
+
 }
 
 1;

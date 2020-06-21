@@ -2,7 +2,8 @@ package Penhas::Types;
 use strict;
 use warnings;
 
-use MooseX::Types -declare => [qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome Raca TweetID UploadIntention)];
+use MooseX::Types -declare =>
+  [qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome Raca TweetID UploadIntention IntList)];
 use MooseX::Types::Moose qw(ArrayRef HashRef CodeRef Str ScalarRef);
 use MooseX::Types::Common::String qw(NonEmptySimpleStr NonEmptyStr);
 use Business::BR::CEP qw(test_cep);
@@ -107,6 +108,20 @@ subtype TweetID, as Str, where {
 }, message {"$_[0] is not a valid TweetID"};
 
 coerce TweetID, from Str, via {
+    $_;
+};
+
+subtype IntList, as Str, where {
+    my $str = $_;
+
+    # too long
+    return 0 if length $str > 2000;
+
+    # até aprox 332 numeros max
+    return $str =~ /^[0-9]{1,6}(?>,[0-9]{1,6})*$/ ? 1 : 0;
+}, message {"$_[0] is not a valid IntList"};
+
+coerce IntList, from Str, via {
     $_;
 };
 

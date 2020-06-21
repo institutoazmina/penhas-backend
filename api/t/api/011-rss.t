@@ -98,7 +98,7 @@ $highlight_rs->create(
     }
 );
 
-subtest_buffered 'Populate news using RSS' => sub {
+do {
 
     $t->get_ok(
         '/maintenance/tick-rss',
@@ -174,6 +174,7 @@ subtest_buffered 'Populate news using RSS' => sub {
     ];
     app->add_tweets_highlights(user => {id => 0}, tweets => $tweets);
 
+use DDP; p $tweets;
     is $tweets->[0]{content}, 'keep as it is';
     is $tweets->[1]{content},
       'mod because cited <span style="color: #f982b4">shiraNAI</span> in the text <span style="color: #f982b4">shiranai</span>';
@@ -182,8 +183,9 @@ subtest_buffered 'Populate news using RSS' => sub {
     is ref $tweets->[1]{related_news}, 'ARRAY', 'has related news added';
 
     like(my $tracking_url = $tweets->[1]{related_news}[0]{hyperlink}, qr/news-redirect/, 'tracking url');
+    use DDP; p $tracking_url;
 
-    $t->get_ok($tracking_url)->status_is(302);
+    ok($tracking_url, 'has $tracking_url') and $t->get_ok($tracking_url)->status_is(302);
 
 };
 done_testing();

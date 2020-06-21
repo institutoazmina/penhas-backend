@@ -69,7 +69,7 @@ sub sum_cpf_errors {
             'reset_at'  => {'>' => DateTime->now->datetime(' ')},
             'remote_ip' => ($opts{remote_ip} or croak 'missing remote_ip'),
         }
-    )->get_column('count')->sum();
+    )->get_column('count')->sum() || 0;
     return $total;
 }
 

@@ -95,7 +95,7 @@ sub post {
     }
 
     # banir temporariamente quem tentar varias vezes com cpf invalido
-    if ($c->sum_cpf_errors(remote_ip => $remote_ip) > $max_errors_in_24h) {
+    if ($c->sum_cpf_errors(remote_ip => $remote_ip) > $max_errors_in_24h ) {
         die {
             error   => 'too_many_requests',
             message => 'Você fez muitos acessos recentemente. Aguarde e tente novamente.',
