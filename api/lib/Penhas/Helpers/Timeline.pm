@@ -287,13 +287,30 @@ sub list_tweets {
 
     my $user = $opts{user} or croak 'missing user';
 
+    $opts{$_} ||= '' for qw/after before parent_id id tags/;
+
+    if ($opts{next_page}) {
+        slog_info('list_tweets applying next_page=%s' . to_json($opts{next_page}));
+
+        $c->reply_invalid_param('uso do parent_id com next_page') if $opts{parent_id};
+        $c->reply_invalid_param('uso do after com next_page')     if $opts{after};
+        $c->reply_invalid_param('uso do before com next_page')    if $opts{before};
+        $c->reply_invalid_param('uso do id com next_page')        if $opts{id};
+
+        $opts{before} = $opts{next_page}{before};
+
+        if ($opts{tags} ne $opts{next_page}{tags}) {
+            $c->reply_invalid_param('trocar de tags durante uso do next_page');
+        }
+    }
+
     slog_info(
         'list_tweets after=%s before=%s parent_id=%s id=%s rows=%s tags=%s',
-        $opts{after}     || '',
-        $opts{before}    || '',
-        $opts{parent_id} || '',
-        $opts{id}        || '',
-        $opts{tags}      || '',
+        $opts{after},
+        $opts{before},
+        $opts{parent_id},
+        $opts{id},
+        $opts{tags},
         $rows,
     );
 
@@ -331,7 +348,7 @@ sub list_tweets {
 
     delete $cond->{'-and'} if scalar $cond->{'-and'}->@* == 0;
 
-    my $sort_direction = exists $opts{after} ? '-asc' : '-desc';
+    my $sort_direction = $opts{after} ? '-asc' : '-desc';
     my $attr           = {
         join       => 'cliente',
         order_by   => [{$sort_direction => 'me.id'}],
@@ -398,14 +415,32 @@ sub list_tweets {
 
     $c->add_tweets_highlights(user => $user, tweets => \@tweets);
 
+    my $next_page;
+
     # nao adicionar noticias nos detalhes
-    $c->add_tweets_news(user => $user, tweets => \@tweets, tags => $opts{tags})
-      if !$opts{parent_id};
+    # nem quando sao tweets puxados com after
+    # tambem nao deve ter next_page
+    if (!$opts{parent_id} && !$opts{after} && @tweets) {
+        my $last_tweet = $tweets[-1]{id};
+
+        $c->add_tweets_news(user => $user, tweets => \@tweets, tags => $opts{tags});
+
+        $next_page = $c->encode_jwt(
+            {
+                tags   => $opts{tags},
+                before => $last_tweet ? $last_tweet : '',
+                iss    => 'next_page',
+            },
+            1
+        );
+    }
+
 
     return {
         tweets   => \@tweets,
         has_more => $has_more,
         order_by => $sort_direction eq '-desc' ? 'latest_first' : 'oldest_first',
+        ($next_page ? (next_page => $next_page) : ()),
 
         (
             $opts{parent_id}

@@ -56,6 +56,8 @@ sub setup {
     $self->helper('reply.not_found' => sub { Penhas::Controller::reply_not_found(@_) });
     $self->helper('user_not_found'  => sub { Penhas::Controller::reply_not_found(@_, type => 'user_not_found') });
 
+    $self->helper('reply_invalid_param' => sub { Penhas::Controller::reply_invalid_param(@_) });
+
     $self->helper(directus => sub { Penhas::Directus->instance });
 
 }
@@ -69,7 +71,8 @@ sub sum_cpf_errors {
             'reset_at'  => {'>' => DateTime->now->datetime(' ')},
             'remote_ip' => ($opts{remote_ip} or croak 'missing remote_ip'),
         }
-    )->get_column('count')->sum() || 0;
+    )->get_column('count')->sum()
+      || 0;
     return $total;
 }
 

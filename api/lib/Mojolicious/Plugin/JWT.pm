@@ -20,14 +20,9 @@ sub register {
             $data->{iss} = 'P';
         }
 
-        #die 'missing exp' unless exists $data->{exp};
-
         my $jws_token = encode_jwt(payload => $data, alg => 'HS384', key => $secret);
         return $jws_token;
     };
-
-    # little hack
-    *main::jwt_encode = $encode_sub;
 
     $app->helper(encode_jwt => $encode_sub);
 

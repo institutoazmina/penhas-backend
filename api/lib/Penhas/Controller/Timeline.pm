@@ -91,7 +91,17 @@ sub list {
         skip_myself => {required => 0, type => 'Int'},
         only_myself => {required => 0, type => 'Int'},
         tags        => {required => 0, type => IntList},
+        next_page   => {required => 0, type => 'Str'},
     );
+
+    if (defined $params->{next_page}) {
+        $params->{next_page} = eval { $c->decode_jwt($params->{next_page}) };
+        $c->reply_invalid_param('next_page')
+          if ($params->{next_page}{iss} || '') ne 'next_page';
+    }
+    else {
+        delete $params->{next_page};
+    }
 
     my $tweets = $c->list_tweets(
         %$params,
