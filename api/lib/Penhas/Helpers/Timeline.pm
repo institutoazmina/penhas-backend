@@ -420,8 +420,9 @@ sub list_tweets {
     # nao adicionar noticias nos detalhes
     # nem quando sao tweets puxados com after
     # tambem nao deve ter next_page
-    if (!$opts{parent_id} && !$opts{after} && @tweets) {
-        my $last_tweet = $tweets[-1]{id};
+    if (!$opts{parent_id} && !$opts{after} && !$opts{id}) {
+
+        my $last_tweet = scalar @tweets ? $tweets[-1]{id} : undef;
 
         $c->add_tweets_news(user => $user, tweets => \@tweets, tags => $opts{tags});
 
@@ -433,6 +434,7 @@ sub list_tweets {
             },
             1
         );
+
     }
 
 
