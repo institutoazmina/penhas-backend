@@ -647,9 +647,9 @@ sub add_tweets_news {
 
     my @tweets2;
     my $i = 0;
-    foreach my $tweet (@tweets) {
+    foreach my $tweet ($opts{tweets}->@*) {
         push @tweets2, $tweet;
-        if (++$i % 3 == 0 && $include_news) {
+        if (++$i % 3 == 0 ) {
 
             my $news = $c->schema2->resultset('Noticia')
               ->search({published => 'published'}, {rows => 1, offset => int(rand() * 99)})->next;
@@ -665,7 +665,7 @@ sub add_tweets_news {
                 };
             }
         }
-        elsif (++$i % 10 == 0 && $include_news) {
+        elsif (++$i % 10 == 0 ) {
 
             my @news = $c->schema2->resultset('Noticia')
               ->search({published => 'published'}, {rows => 4, offset => int(rand() * 99)})->all;
