@@ -645,7 +645,6 @@ sub add_tweets_highlights {
 sub add_tweets_news {
     my ($c, %opts) = @_;
 
-=pod
     my @tweets2;
     my $i = 0;
     foreach my $tweet (@tweets) {
@@ -690,7 +689,6 @@ sub add_tweets_news {
             }
         }
     }
-=cut
 
 }
 
