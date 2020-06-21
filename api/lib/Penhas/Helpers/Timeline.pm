@@ -645,11 +645,15 @@ sub add_tweets_highlights {
 sub add_tweets_news {
     my ($c, %opts) = @_;
 
+    log_info("running add_tweets_news");
+
     my @tweets2;
     my $i = 0;
     foreach my $tweet ($opts{tweets}->@*) {
         push @tweets2, $tweet;
-        if (++$i % 3 == 0 ) {
+
+        log_info("row $i");
+        if (++$i % 3 == 0) {
 
             my $news = $c->schema2->resultset('Noticia')
               ->search({published => 'published'}, {rows => 1, offset => int(rand() * 99)})->next;
@@ -665,7 +669,7 @@ sub add_tweets_news {
                 };
             }
         }
-        elsif (++$i % 10 == 0 ) {
+        elsif ($i % 10 == 0) {
 
             my @news = $c->schema2->resultset('Noticia')
               ->search({published => 'published'}, {rows => 4, offset => int(rand() * 99)})->all;
