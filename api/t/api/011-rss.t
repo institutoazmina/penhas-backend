@@ -45,10 +45,11 @@ $feed1->add_to_rss_feed_forced_tags({tag_id => $forced_tag->id});
 
 my $tag1 = $tags_rs->create(
     {
-        status     => 'test',
-        title      => 'tag1',
-        is_topic   => '0',
-        created_at => \'NOW()',
+        status          => 'test',
+        title           => 'tag1',
+        is_topic        => '0',
+        created_at      => \'NOW()',
+        show_on_filters => 1,
     }
 );
 my $topic1 = $tags_rs->create(
@@ -57,6 +58,10 @@ my $topic1 = $tags_rs->create(
         is_topic => '1',    created_at => \'NOW()',
     }
 );
+
+$t->get_ok(
+    '/filter-tags',
+)->status_is(200)->json_is('/tags/0/title', 'tag1', 'tag 1')->json_is('/tags/1/title', undef, 'no more tags');
 
 my $rule1 = $rules_rs->create(
     {
@@ -174,7 +179,8 @@ do {
     ];
     app->add_tweets_highlights(user => {id => 0}, tweets => $tweets);
 
-use DDP; p $tweets;
+    use DDP;
+    p $tweets;
     is $tweets->[0]{content}, 'keep as it is';
     is $tweets->[1]{content},
       'mod because cited <span style="color: #f982b4">shiraNAI</span> in the text <span style="color: #f982b4">shiranai</span>';
@@ -183,7 +189,8 @@ use DDP; p $tweets;
     is ref $tweets->[1]{related_news}, 'ARRAY', 'has related news added';
 
     like(my $tracking_url = $tweets->[1]{related_news}[0]{hyperlink}, qr/news-redirect/, 'tracking url');
-    use DDP; p $tracking_url;
+    use DDP;
+    p $tracking_url;
 
     ok($tracking_url, 'has $tracking_url') and $t->get_ok($tracking_url)->status_is(302);
 

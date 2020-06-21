@@ -18,6 +18,12 @@ sub register {
     # GET /news-redirect
     $r->route('news-redirect')->get()->to(controller => 'News', action => 'redirect');
 
+    # GET /news-redirect
+    $r->route('get-proxy')->get()->to(controller => 'MediaDownload', action => 'public_get_proxy');
+
+    # GET /filter-tags
+    $r->route('filter-tags')->get()->to(controller => 'Tags', action => 'filter_tags');
+
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss
     my $maintenance = $r->under('maintenance')->to(controller => 'Maintenance', action => 'check_authorization');
@@ -61,7 +67,7 @@ sub register {
     # /media-download
     my $media_download
       = $authenticated->under('/media-download')->to(controller => 'MediaDownload', action => 'ensure_user_loaded');
-    $media_download->get()->to(action => 'get_media');
+    $media_download->get()->to(action => 'logged_in_get_media');
 
 
 }

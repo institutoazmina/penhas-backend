@@ -13,7 +13,7 @@ sub ensure_user_loaded {
     return 1;
 }
 
-sub get_media {
+sub logged_in_get_media {
     my $c = shift;
 
     my $params = $c->req->params->to_hash;
@@ -82,8 +82,16 @@ sub get_media {
 
 }
 
-sub get_proxy {
+# download de photos com cache+proxy pra sempre ser https
+sub public_get_proxy {
     my $c = shift;
+
+    # limite bem generoso por IP, 180x por minuto [3 loads a cada 10 segundos, repetindo por 1 minuto]
+    my $remote_ip = $c->remote_addr();
+
+    # recortando o IPV6 para apenas o prefixo (18 chars)
+    $c->stash(apply_rps_on => substr($remote_ip, 0, 18));
+    $c->apply_request_per_second_limit(180, 60);
 
     my $params = $c->req->params->to_hash;
     $c->validate_request_params(
@@ -91,11 +99,10 @@ sub get_proxy {
         'h'    => {required => 1, type => 'Str', max_length => 12,   min_length => 12},
     );
 
-    my $href    = $params->{href};
-    my $user_id = $c->stash('user_id');
-    my $ip      = $c->remote_addr;
+    my $href = $params->{href};
+    my $ip   = $c->remote_addr;
 
-    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $href . $user_id . $ip), 0, 12);
+    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $href . $ip), 0, 12);
 
     if ($params->{h} ne $hash) {
         return $c->render(

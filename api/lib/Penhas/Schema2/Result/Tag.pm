@@ -40,6 +40,13 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 0,
   },
+  "show_on_filters",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -62,8 +69,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-16 21:00:34
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dn8M/BzBWxK65f+jrFYlWA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-21 20:00:36
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YPFmy3AQelOAAjlPlaslaA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
