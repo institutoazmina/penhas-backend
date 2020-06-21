@@ -649,7 +649,10 @@ sub add_tweets_news {
 
     my @tweets2;
     my $i = 0;
-    foreach my $tweet ($opts{tweets}->@*) {
+    while ($opts{tweets}->@*) {
+
+        # esvazia a array, mas mantendo a referencia
+        my $tweet = shift $opts{tweets}->@*;
         push @tweets2, $tweet;
 
         log_info("row $i");
@@ -694,7 +697,8 @@ sub add_tweets_news {
         }
     }
 
-    $opts{tweets} = \@tweets2;
+    # repopular
+    push $opts{tweets}->@*, @tweets2;
 
 }
 
