@@ -20,7 +20,11 @@ sub register {
             $data->{iss} = 'P';
         }
 
-        my $jws_token = encode_jwt(payload => $data, alg => 'HS384', key => $secret);
+        my $jws_token = encode_jwt(
+            payload => $data,
+            alg     => $data->{iss} && $data->{iss} eq 'P' ? 'HS384' : 'HS256',
+            key     => $secret
+        );
         return $jws_token;
     };
 
@@ -35,7 +39,7 @@ sub register {
                 key          => $secret,
                 verify_exp   => undef,
                 verify_nbf   => undef,
-                accepted_alg => 'HS384'
+                accepted_alg => ['HS256', 'HS384']
             );
         }
     );
