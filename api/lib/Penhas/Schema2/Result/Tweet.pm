@@ -65,12 +65,19 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "tags_index",
+  {
+    data_type => "varchar",
+    default_value => ",,",
+    is_nullable => 0,
+    size => 5000,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-17 10:58:13
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:MSibkPEPXXyI5fYbEnuQVw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-20 21:04:53
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kU2WvsuNqndSZ+cUDMCwrg
 
 
 __PACKAGE__->belongs_to(

@@ -482,6 +482,7 @@ sub _fomart_tweet {
         icon             => $anonimo ? $avatar_anonimo : $me->{cliente_avatar_url} || $avatar_default,
         name             => $anonimo ? 'Anônimo' : $me->{cliente_apelido},
         created_at       => $me->{created_at},
+        _tags_index      => $me->{tags_index},
         ($anonimo ? () : (cliente_id => $me->{cliente_id})),
 
     };
@@ -548,7 +549,7 @@ sub add_tweets_highlights {
                                 ) ORDER BY noticia.display_created_time DESC SEPARATOR ',' LIMIT 15
                             ), ']')"
                         },
-                        (qw/me.id me.is_regexp me.match/),
+                        (qw/me.id me.is_regexp me.tag_id me.match/),
                     ],
                     group_by     => 'me.id',
                     result_class => 'DBIx::Class::ResultClass::HashRefInflator'
@@ -587,7 +588,8 @@ sub add_tweets_highlights {
                 push @highlights, {
                     regexp   => $match,
                     noticias => from_json($row->{noticias}),
-                    id       => $row->{id}
+                    id       => $row->{id},
+                    tag_id   => $row->{tag_id},
                 };
             }
 
@@ -605,8 +607,12 @@ sub add_tweets_highlights {
     my $postfix = ('</span>');
 
     foreach my $tweet (@$tweets) {
-        next unless $tweet->{content} =~ m/$config->{test}/i;
+        my $current_tags = delete $tweet->{_tags_index};
 
+        # se nao da match em nenhuma tag atualmente, e nao tem tag, nao precisa atualizar, nem passar no loop
+        next unless $tweet->{content} =~ m/$config->{test}/i && $current_tags eq ',,';
+
+        my %seen_tags;
         my $content = $tweet->{content};
         $tweet->{related_news} = [];
         foreach my $highlight (@{$config->{highlights}}) {
@@ -614,6 +620,7 @@ sub add_tweets_highlights {
             if ($content =~ s/\b($regexp)\b/$prefix$1$postfix/gi) {
                 my $news = sample(1, @{$highlight->{noticias}});
 
+                $seen_tags{$highlight->{tag_id}}++;
                 push @{$tweet->{related_news}}, {
                     hyperlink => &_get_tracked_news_url($user, $news),
                     title     => $news->{title},
@@ -621,6 +628,12 @@ sub add_tweets_highlights {
             }
         }
         $tweet->{content} = $content;
+
+        # atualiza de forma lazy os tweets com as tags que dão match atualmente
+        my $new_tweet_tags = ',' . (join ',', sort keys %seen_tags) . ',';
+        if ($current_tags ne $new_tweet_tags) {
+            $c->schema2->resultset('Tweet')->search({id => $tweet->{id}})->update({tags_index => $new_tweet_tags});
+        }
     }
 
     return 1;
