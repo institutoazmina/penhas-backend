@@ -690,6 +690,8 @@ sub add_tweets_news {
         }
     }
 
+    $opts{tweets} = \@tweets2;
+
 }
 
 1;
