@@ -341,6 +341,25 @@ do {
         {'x-api-key' => $session},
         form => {id => $tweet_id}
     )->status_is(200)->json_is('/has_more', '0', 'has more filtro por id')->json_is('/tweets/0/content', undef);
+
+    # pega os 2 mais recentes
+    $res = $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session},
+        form => {rows => 2}
+    )->status_is(200)->json_is('/tweets/0/content', 'Just me')->json_is('/tweets/1/content', 'Kazoeru 2')
+      ->json_is('/has_more', '1')->json_has('/next_page', 'has next page')->tx->res->json;
+
+    # pega com next-page
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session},
+        form => {
+            next_page => $res->{next_page},
+        }
+    )->status_is(200)->json_is('/tweets/0/content', 'Kazoeru 1')->json_is('/has_more', '0')
+      ->json_has('/next_page', 'has next page still');
+
 };
 
 done_testing();
