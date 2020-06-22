@@ -720,9 +720,10 @@ sub add_tweets_news {
     my $news_added = {map { $_ => 1 } @{$opts{news_added} || []}};
 
     foreach my $tweet (@list) {
-        $i++;
-        log_info("row $i");
         push $opts{tweets}->@*, $tweet;
+
+        next if $tweet->{type} eq 'related_news';
+        $i++;
 
         if ($i % 10 == 0 || $only_news) {
             log_info("adicionando item noticia");
