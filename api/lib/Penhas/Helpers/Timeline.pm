@@ -625,7 +625,7 @@ sub add_tweets_highlights {
         my %seen_tags;
         my $content = $tweet->{content};
         $tweet->{related_news} = [];
-        foreach my $highlight (@{$config->{highlights}}) {
+       foreach my $highlight (@{$config->{highlights}}) {
             my $regexp = $highlight->{regexp};
             if ($content =~ s/\b($regexp)\b/$prefix$1$postfix/gi) {
                 my $news = sample(1, @{$highlight->{noticias}});
@@ -685,8 +685,6 @@ sub add_tweets_news {
         $opts{next_page}{has_more_vitrine} = $has_more_vitrine;
     }
 
-    use DDP;
-    p \@vitrine;
     my $news_added = {map { $_ => 1 } @{$opts{news_added} || []}};
 
     foreach my $tweet (@list) {
