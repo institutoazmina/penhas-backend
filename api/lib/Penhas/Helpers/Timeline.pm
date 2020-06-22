@@ -656,6 +656,7 @@ sub add_tweets_news {
         push @tweets2, $tweet;
 
         log_info("row $i");
+use DDP; p $i;
         if (++$i % 3 == 0) {
 
             my $news = $c->schema2->resultset('Noticia')

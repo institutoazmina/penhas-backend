@@ -5,6 +5,7 @@ use JSON;
 use utf8;
 use Penhas::Logger;
 use Mojo::UserAgent;
+use Penhas::KeyValueStorage;
 
 sub register {
     my ($self, $app) = @_;
@@ -103,7 +104,7 @@ sub news_indexer {
         next unless $compiled;    # pula invalidas
 
         my $tag_id = $rule->tag_id;
-        $logthis->('Tag Indexing Config (%d, tag %d): %s', $rule->id, $rule->tag_id, $rule->description||'');
+        $logthis->('Tag Indexing Config (%d, tag %d): %s', $rule->id, $rule->tag_id, $rule->description || '');
 
         foreach my $test (
             qw/
@@ -152,7 +153,9 @@ sub news_indexer {
                   = exists $news->{info}{tags}
                   ? (ref $news->{info}{tags} eq 'ARRAY' ? join(' ', $news->{info}{tags}->@*) : $news->{info}{tags})
                   : '';
-                  use DDP; p $content; p $news;
+                use DDP;
+                p $content;
+                p $news;
             }
             elsif ($test eq 'rss_feed_content_match') {
                 $content = $news->{info}{content} || '';
@@ -184,7 +187,6 @@ sub news_indexer {
 
     $logthis->("\n" . 'Final tags for Noticia (%d) is %s', $news->{id}, join(', ', keys %$tags));
 
-
     $schema->txn_do(
         sub {
             $filter_rs->search_related_rs('noticias2tags')->delete;
@@ -208,6 +210,22 @@ sub news_indexer {
             );
         }
     );
+
+    my $now = time();
+    Penhas::KeyValueStorage->instance->redis->setex($ENV{REDIS_NS} . 'news_display_indexer.modtime', 3600, $now);
+
+    # se outra noticia for indexada nos proximos 60 segundos, esse job nao sera executado
+    # apenxas eh indexado apos 60 segundo sem entrar novas noticias
+    my $job_id = $job->app->minion->enqueue(
+        'news_display_indexer',
+        [
+            $now,
+        ] => {
+            delay => 60,
+        }
+    );
+    slog_info('enqueued news_display_indexer in 60 seconds, job id %s with now=%s', $job_id, $now);
+
 
     return $job->finish('ok');
 }

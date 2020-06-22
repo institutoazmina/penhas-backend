@@ -194,6 +194,10 @@ do {
 
     ok($tracking_url, 'has $tracking_url') and $t->get_ok($tracking_url)->status_is(302);
 
+    ok(Penhas::Minion::Tasks::NewsDisplayIndexer::news_display_indexer($job, test_get_minion_args_job(4)), 'display indexing');
+
+
+
 };
 done_testing();
 
