@@ -16,7 +16,7 @@ sub filter_tags {
 
     my $tags = Penhas::KeyValueStorage->instance->redis_get_cached_or_execute(
         'tags_filter',
-        60 * 10,    # 10 minutes
+        86400,    # 1 day
         sub {
             my @tags = $c->schema2->resultset('Tag')->search(
                 {
@@ -39,6 +39,16 @@ sub filter_tags {
     );
 
     return $c->render(json => $tags);
+}
+
+sub clear_cache {
+    my $c     = shift;
+    my $redis = Penhas::KeyValueStorage->instance->redis;
+
+    $redis->del($ENV{REDIS_NS} . 'tags_filter');
+    $redis->del($ENV{REDIS_NS} . 'tags_highlight_regexp');
+
+    return $c->render(json => {});
 }
 
 1;
