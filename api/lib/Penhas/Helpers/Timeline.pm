@@ -625,7 +625,7 @@ sub add_tweets_highlights {
         my %seen_tags;
         my $content = $tweet->{content};
         $tweet->{related_news} = [];
-       foreach my $highlight (@{$config->{highlights}}) {
+        foreach my $highlight (@{$config->{highlights}}) {
             my $regexp = $highlight->{regexp};
             if ($content =~ s/\b($regexp)\b/$prefix$1$postfix/gi) {
                 my $news = sample(1, @{$highlight->{noticias}});
@@ -664,8 +664,10 @@ sub add_tweets_news {
 
     my @vitrine;
     if (!$only_news) {
-        my $vitrine_rows = int(@list / 3);
+        my $vitrine_rows = int(scalar @list / 3);
         $vitrine_rows = 2 if $vitrine_rows < 2;
+
+        log_info("loading $vitrine_rows vitrine");
 
         @vitrine = $c->schema2->resultset('NoticiasVitrine')->search(
             {
@@ -684,6 +686,8 @@ sub add_tweets_news {
 
         $opts{next_page}{has_more_vitrine} = $has_more_vitrine;
     }
+
+    log_info("vitrine array . " . dumper(\@vitrine));
 
     my $news_added = {map { $_ => 1 } @{$opts{news_added} || []}};
 
@@ -814,12 +818,12 @@ sub _process_vitrine_item {
     my $news_group;
     my @out_news;
 
-    for my $news (@$noticias) {
-        next if $news_added->{$news->{id}};
+    for my $news_id (@$noticias) {
+        next if $news_added->{$news_id};
 
-        push @out_news, $news;
+        push @out_news, $news_id;
 
-        $news_added->{$news->{id}}++;
+        $news_added->{$news_id}++;
     }
 
     if (@out_news) {
