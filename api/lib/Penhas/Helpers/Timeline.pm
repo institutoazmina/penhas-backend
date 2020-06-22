@@ -11,6 +11,7 @@ use JSON;
 use Penhas::Logger;
 use Penhas::Utils;
 use List::Util '1.54' => qw/sample/;
+use DateTime::Format::Pg;
 
 our $ForceFilterClientes;
 sub kv { Penhas::KeyValueStorage->instance }
@@ -437,6 +438,8 @@ sub list_tweets {
             next_page => $next_page,
         );
 
+        $has_more = 1 if delete $next_page->{next_page}{has_more_vitrine};
+
         $next_page = $c->encode_jwt($next_page, 1);
 
     }
@@ -651,17 +654,45 @@ sub add_tweets_news {
 
     log_info("running add_tweets_news");
 
-    my $tags = $opts{tags};
+    my $tags      = $opts{tags};
+    my $only_news = $tags ? 1 : 0;
 
     # esvazia os itens da array, mas mantem a referencia
     my @list = splice $opts{tweets}->@*, 0;
     my $i    = 0;
+
+
+    my @vitrine;
+    if (!$only_news) {
+        my $vitrine_rows = int(@list / 3);
+        $vitrine_rows = 2 if $vitrine_rows < 2;
+
+        @vitrine = $c->schema2->resultset('NoticiasVitrine')->search(
+            {
+                status => is_test() ? 'test' : 'prod',
+                order  => {'>=' => $opts{vitrine_order} || 0},
+            },
+            {
+                order_by     => 'me.order',
+                rows         => $vitrine_rows + 1,
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            }
+        )->all;
+
+        my $has_more_vitrine = scalar @vitrine > $vitrine_rows ? 1 : 0;
+        pop @vitrine if $has_more_vitrine;
+
+        $opts{next_page}{has_more_vitrine} = $has_more_vitrine;
+    }
+
+    my $news_added = {map { $_ => 1 } @{$opts{news_added} || []}};
+
     foreach my $tweet (@list) {
         $i++;
         log_info("row $i");
         push $opts{tweets}->@*, $tweet;
 
-        if ($i % 10 == 0) {
+        if ($i % 10 == 0 || $only_news) {
 
             my $news = $c->schema2->resultset('Noticia')
               ->search({published => 'published'}, {rows => 1, offset => int(rand() * 99)})->next;
@@ -678,32 +709,123 @@ sub add_tweets_news {
             }
         }
         elsif ($i % 3 == 0) {
+          AGAIN:
+            my $vitrine = shift(@vitrine);
 
-            $opts{tweets}->@*;
+            if ($vitrine) {
+                $vitrine = &_process_vitrine_item(
+                    $vitrine,
+                    $news_added,
+                    user => $opts{user}
+                );
 
-            my @news = $c->schema2->resultset('Noticia')
-              ->search({published => 'published'}, {rows => 4, offset => int(rand() * 99)})->all;
-            if (scalar @news) {
-                push $opts{tweets}->@*, {
-                    type   => 'news_group',
-                    header => 'Relacionamento API Random',
-                    news   => [
-                        map {
-                            +{
-                                href     => $_->hyperlink,
-                                title    => $_->title,
-                                source   => $_->fonte,
-                                date_str => $_->display_created_time->dmy('/'),
-                                image =>
-                                  'https://s2.glbimg.com/IKEfOHvbA827tcq660lssE-11mI=/512x320/smart/e.glbimg.com/og/ed/f/original/2020/06/19/82145061_2427549444202692_6151441996146155645_n.jpg',
-                            }
-                        } @news,
-                    ],
-                };
+                # pega mais uma item, caso nao tenha nada (todas noticias ja foram entregues)
+                goto AGAIN unless $vitrine;
+
+                push $opts{tweets}->@*, $vitrine;
             }
+
         }
     }
 
+    # sobrou itens, nao tinha tweets suficientes para preencher tudo
+    if (@vitrine) {
+        foreach my $item (@vitrine) {
+            my $vitrine = &_process_vitrine_item(
+                $item,
+                $news_added,
+                user => $opts{user}
+            );
+
+            push $opts{tweets}->@*, $vitrine if $vitrine;
+        }
+    }
+
+    $opts{next_page}{news_added} = [keys %$news_added];
+
+    # descobre todas as noticias que precisam ser carregas e marca qual em objeto
+    my $new_vs_ref;
+    my @news_ids;
+    foreach my $item ($opts{tweets}->@*) {
+        next unless $item->{type} eq 'news_group';
+
+        foreach my $new_id ($item->{news}->@*) {
+            push @news_ids, $new_id;
+            push @{$new_vs_ref->{$new_id}}, $item;
+        }
+    }
+
+    # carrega as noticias
+    my $news_rs = $c->schema2->resultset('Noticia')->search(
+        {
+            published => 'published',
+            id        => {'in' => \@news_ids}
+        },
+        {
+            columns      => [qw/me.id me.title me.display_created_time me.fonte me.hyperlink me.image_hyperlink/],
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+        }
+    );
+    while (my $r = $news_rs->next) {
+        my $new_rendered = {
+            id       => $r->{id},
+            href     => $r->{hyperlink},
+            title    => $r->{title},
+            source   => $r->{fonte},
+            date_str => DateTime::Format::Pg->parse_datetime($r->{display_created_time})->dmy('/'),
+        };
+
+        # atualiza todas as referencias
+        foreach my $item ($new_vs_ref->{$r->{id}}->@*) {
+            $item->{_news}{$r->{id}} = $new_rendered;
+        }
+    }
+
+    # percorre novamente a lista, colocando as noticias na ordem que apareceram
+    foreach my $item ($opts{tweets}->@*) {
+        next unless $item->{type} eq 'news_group';
+
+        my @news_in_order;
+        foreach my $new_id ($item->{news}->@*) {
+            push @news_in_order, $item->{_news}{$new_id};
+        }
+
+        $item->{news} = \@news_in_order;
+        delete $item->{_news};
+    }
+
 }
+
+sub _process_vitrine_item {
+    my ($vitrine, $news_added, %opts) = @_;
+
+    my $noticias = from_json($vitrine->{noticias});
+    die "vitrine.noticias is not array on " . $vitrine->{id} unless ref $noticias eq 'ARRAY';
+
+    my $meta = from_json($vitrine->{meta});
+    die "vitrine.meta is not hash on " . $vitrine->{id} unless ref $meta eq 'HASH';
+
+    my $news_group;
+    my @out_news;
+
+    for my $news (@$noticias) {
+        next if $news_added->{$news->{id}};
+
+        push @out_news, $news;
+
+        $news_added->{$news->{id}}++;
+    }
+
+    if (@out_news) {
+        $news_group = {
+            type   => 'news_group',
+            header => $meta->{title},
+            news   => \@out_news
+        };
+    }
+
+    return $news_group;
+}
+
 
 1;

@@ -19,6 +19,9 @@ my $base = 'https://elasv2-api.appcivico.com/.tests-assets';
 my $get_feed_url = sub { "$base/feed" . shift() . ".xml" };
 my $get_page_url = sub { "$base/page" . shift() . ".html" };
 
+
+my $random_cpf = 71380843669;
+
 # apagando caso exista alguma coisa no banco
 &clean_up;
 
@@ -194,9 +197,19 @@ do {
 
     ok($tracking_url, 'has $tracking_url') and $t->get_ok($tracking_url)->status_is(302);
 
-    ok(Penhas::Minion::Tasks::NewsDisplayIndexer::news_display_indexer($job, test_get_minion_args_job(4)), 'display indexing');
+    ok(
+        Penhas::Minion::Tasks::NewsDisplayIndexer::news_display_indexer($job, test_get_minion_args_job(4)),
+        'display indexing'
+    );
 
+    my ($session, $user_id) = get_user_session($random_cpf);
+    $Penhas::Helpers::Timeline::ForceFilterClientes = [$user_id];
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session}
+    )->status_is(200);
 
+    on_scope_exit { user_cleanup(user_id => $user_id); };
 
 };
 done_testing();
