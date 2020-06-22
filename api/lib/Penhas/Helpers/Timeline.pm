@@ -5,7 +5,7 @@ use utf8;
 use Penhas::KeyValueStorage;
 use Scope::OnExit;
 use Digest::MD5 qw/md5_hex/;
-use Mojo::Util qw/trim xml_escape url_escape/;
+use Mojo::Util qw/trim xml_escape url_escape dumper/;
 
 use JSON;
 use Penhas::Logger;
@@ -438,7 +438,7 @@ sub list_tweets {
             next_page => $next_page,
         );
 
-        $has_more = 1 if delete $next_page->{next_page}{has_more_vitrine};
+        $has_more = 1 if delete $next_page->{has_more_vitrine};
 
         $next_page = $c->encode_jwt($next_page, 1);
 
@@ -685,6 +685,8 @@ sub add_tweets_news {
         $opts{next_page}{has_more_vitrine} = $has_more_vitrine;
     }
 
+    use DDP;
+    p \@vitrine;
     my $news_added = {map { $_ => 1 } @{$opts{news_added} || []}};
 
     foreach my $tweet (@list) {
@@ -693,7 +695,7 @@ sub add_tweets_news {
         push $opts{tweets}->@*, $tweet;
 
         if ($i % 10 == 0 || $only_news) {
-
+            log_info("adicionando item noticia");
             my $news = $c->schema2->resultset('Noticia')
               ->search({published => 'published'}, {rows => 1, offset => int(rand() * 99)})->next;
             if ($news) {
@@ -709,6 +711,7 @@ sub add_tweets_news {
             }
         }
         elsif ($i % 3 == 0) {
+            log_info("adicionando item de vitrine");
           AGAIN:
             my $vitrine = shift(@vitrine);
 
@@ -722,6 +725,8 @@ sub add_tweets_news {
                 # pega mais uma item, caso nao tenha nada (todas noticias ja foram entregues)
                 goto AGAIN unless $vitrine;
 
+                log_info("=> " . dumper($vitrine));
+
                 push $opts{tweets}->@*, $vitrine;
             }
 
@@ -730,6 +735,7 @@ sub add_tweets_news {
 
     # sobrou itens, nao tinha tweets suficientes para preencher tudo
     if (@vitrine) {
+        log_info("alguns itens da vitrine ainda existem... adicionando no final");
         foreach my $item (@vitrine) {
             my $vitrine = &_process_vitrine_item(
                 $item,
@@ -740,6 +746,8 @@ sub add_tweets_news {
             push $opts{tweets}->@*, $vitrine if $vitrine;
         }
     }
+
+    log_info(dumper($news_added));
 
     $opts{next_page}{news_added} = [keys %$news_added];
 
