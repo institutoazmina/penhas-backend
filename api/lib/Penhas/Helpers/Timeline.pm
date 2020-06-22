@@ -353,7 +353,7 @@ sub list_tweets {
     elsif ($category eq 'only_news') {
 
         # filtra por um id que nao existe
-        push $cond->{'-and'}->@*, '0 = 1';
+        push $cond->{'-and'}->@*, \'0 = 1';
     }
 
     delete $cond->{'-and'} if scalar $cond->{'-and'}->@* == 0;
@@ -430,7 +430,7 @@ sub list_tweets {
     # nao adicionar noticias nos detalhes
     # nem quando sao tweets puxados com after
     # tambem nao deve ter next_page
-    if (!$opts{parent_id} && !$opts{after} && !$opts{id}) {
+    if (!$opts{parent_id} && !$opts{after} && !$opts{id} && $category =~ /^(all|only_news)$/) {
 
         my $last_tweet = scalar @tweets ? $tweets[-1]{id} : undef;
 

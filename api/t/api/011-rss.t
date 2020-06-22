@@ -202,7 +202,7 @@ do {
     my ($session, $user_id) = get_user_session($random_cpf);
     $Penhas::Helpers::Timeline::ForceFilterClientes = [$user_id];
     $t->get_ok(
-        ('/timeline'),
+        ('/timeline?category=only_news'),
         {'x-api-key' => $session}
     )->status_is(200);
 
