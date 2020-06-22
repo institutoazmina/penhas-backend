@@ -18,6 +18,7 @@ my $random_email2 = 'email' . $random_cpf2 . '@something.com';
 goto AGAIN2 if cpf_already_exists($random_cpf2);
 
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
+$ENV{SKIP_END_NEWS} = '1';
 
 my @other_fields = (
     raca        => 'pardo',

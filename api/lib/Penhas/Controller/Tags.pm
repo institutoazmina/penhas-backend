@@ -1,4 +1,5 @@
 package Penhas::Controller::Tags;
+use utf8;
 use Mojo::Base 'Penhas::Controller';
 
 use Penhas::Utils qw/is_test/;
@@ -33,7 +34,13 @@ sub filter_tags {
             )->all;
 
             return {
-                tags => \@tags,
+                tags       => \@tags,
+                categories => [
+                    {default => 1, value => 'all',         label => 'Tudo',},
+                    {default => 0, value => 'only_news',   label => 'Apenas notícias',},
+                    {default => 0, value => 'only_tweets', label => 'Apenas publicações',},
+                    {default => 0, value => 'all_myself',  label => 'Minhas publicações e comentários',},
+                ],
             };
         }
     );

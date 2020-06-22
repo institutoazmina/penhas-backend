@@ -560,6 +560,7 @@ sub add_tweets_highlights {
                             ), ']')"
                         },
                         (qw/me.id me.is_regexp me.tag_id me.match/),
+                        {header => 'tag.title'}
                     ],
                     group_by     => 'me.id',
                     result_class => 'DBIx::Class::ResultClass::HashRefInflator'
@@ -600,6 +601,7 @@ sub add_tweets_highlights {
                     noticias => from_json($row->{noticias}),
                     id       => $row->{id},
                     tag_id   => $row->{tag_id},
+                    header   => $row->{header},
                 };
             }
 
@@ -616,7 +618,10 @@ sub add_tweets_highlights {
     my $prefix  = ('<span style="color: #f982b4">');
     my $postfix = ('</span>');
 
-    foreach my $tweet (@$tweets) {
+    my @list = splice $tweets->@*, 0;
+
+    foreach my $tweet (@list) {
+        push $tweets->@*, $tweet;
         my $current_tags = delete $tweet->{_tags_index};
 
         # se nao da match em nenhuma tag atualmente, e nao tem tag, nao precisa atualizar, nem passar no loop
@@ -624,20 +629,43 @@ sub add_tweets_highlights {
 
         my %seen_tags;
         my $content = $tweet->{content};
-        $tweet->{related_news} = [];
+
+        my @headers;
+        my $seen_headers;
+        my @related_news;
+
         foreach my $highlight (@{$config->{highlights}}) {
             my $regexp = $highlight->{regexp};
             if ($content =~ s/\b($regexp)\b/$prefix$1$postfix/gi) {
+
                 my $news = sample(1, @{$highlight->{noticias}});
 
                 $seen_tags{$highlight->{tag_id}}++;
-                push @{$tweet->{related_news}}, {
-                    hyperlink => &_get_tracked_news_url($user, $news),
-                    title     => $news->{title},
+                push @related_news, {
+                    href  => &_get_tracked_news_url($user, $news),
+                    title => $news->{title},
                 };
+
+                if (!$seen_headers->{$highlight->{header}}) {
+                    $seen_headers->{$highlight->{header}}++;
+
+                    push @headers, $highlight->{header};
+                }
             }
         }
         $tweet->{content} = $content;
+
+        my $header = '';
+        if (@related_news) {
+            my $last = pop @headers;
+
+            $header = (join ', ', @headers) . (@headers ? ' e ' . $last : '');
+
+            push $tweets->@*, {
+                type => 'related_news',
+                news => \@related_news
+            };
+        }
 
         # atualiza de forma lazy os tweets com as tags que dão match atualmente
         my $new_tweet_tags = ',' . (join ',', sort keys %seen_tags) . ',';
@@ -736,7 +764,7 @@ sub add_tweets_news {
     }
 
     # sobrou itens, nao tinha tweets suficientes para preencher tudo
-    if (@vitrine) {
+    if (@vitrine && !$ENV{SKIP_END_NEWS}) {
         log_info("alguns itens da vitrine ainda existem... adicionando no final");
         foreach my $item (@vitrine) {
             my $vitrine = &_process_vitrine_item(
