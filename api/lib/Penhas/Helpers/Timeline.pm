@@ -424,16 +424,20 @@ sub list_tweets {
 
         my $last_tweet = scalar @tweets ? $tweets[-1]{id} : undef;
 
-        $c->add_tweets_news(user => $user, tweets => \@tweets, tags => $opts{tags});
+        $next_page = {
+            tags   => $opts{tags},
+            before => $last_tweet ? $last_tweet : '',
+            iss    => 'next_page',
+        };
 
-        $next_page = $c->encode_jwt(
-            {
-                tags   => $opts{tags},
-                before => $last_tweet ? $last_tweet : '',
-                iss    => 'next_page',
-            },
-            1
+        $c->add_tweets_news(
+            user   => $user,
+            tweets => \@tweets,
+            %{$opts{next_page}},
+            next_page => $next_page,
         );
+
+        $next_page = $c->encode_jwt($next_page, 1);
 
     }
 
@@ -647,22 +651,22 @@ sub add_tweets_news {
 
     log_info("running add_tweets_news");
 
-    my @tweets2;
-    my $i = 0;
-    while ($opts{tweets}->@*) {
+    my $tags = $opts{tags};
 
-        # esvazia a array, mas mantendo a referencia
-        my $tweet = shift $opts{tweets}->@*;
-        push @tweets2, $tweet;
-
+    # esvazia os itens da array, mas mantem a referencia
+    my @list = splice $opts{tweets}->@*, 0;
+    my $i    = 0;
+    foreach my $tweet (@list) {
+        $i++;
         log_info("row $i");
-use DDP; p $i;
-        if (++$i % 3 == 0) {
+        push $opts{tweets}->@*, $tweet;
+
+        if ($i % 10 == 0) {
 
             my $news = $c->schema2->resultset('Noticia')
               ->search({published => 'published'}, {rows => 1, offset => int(rand() * 99)})->next;
             if ($news) {
-                push @tweets2, {
+                push $opts{tweets}->@*, {
                     type     => 'news',
                     href     => $news->hyperlink,
                     title    => $news->title,
@@ -673,12 +677,14 @@ use DDP; p $i;
                 };
             }
         }
-        elsif ($i % 10 == 0) {
+        elsif ($i % 3 == 0) {
+
+            $opts{tweets}->@*;
 
             my @news = $c->schema2->resultset('Noticia')
               ->search({published => 'published'}, {rows => 4, offset => int(rand() * 99)})->all;
             if (scalar @news) {
-                push @tweets2, {
+                push $opts{tweets}->@*, {
                     type   => 'news_group',
                     header => 'Relacionamento API Random',
                     news   => [
@@ -697,9 +703,6 @@ use DDP; p $i;
             }
         }
     }
-
-    # repopular
-    push $opts{tweets}->@*, @tweets2;
 
 }
 

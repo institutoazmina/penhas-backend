@@ -48,7 +48,6 @@ sub news_display_indexer {
         }
     )->all;
 
-
     my @display;
     my $order = 0;
 
@@ -57,14 +56,19 @@ sub news_display_indexer {
 
         my $added = 0;
         foreach my $topic (@topic_news) {
-            my @group = map { $_->{noticias_id} } splice($topic->{noticias2tags}->@*, 0, 3);
+            my @group = splice($topic->{noticias2tags}->@*, 0, 3);
 
             if (@group) {
 
                 push @display, {
-                    order      => $order,
-                    noticias   => to_json(\@group),
-                    meta       => to_json({title => $topic->{title}}),
+                    order    => $order,
+                    noticias => to_json([map { $_->{noticias_id} } @group]),
+                    meta     => to_json(
+                        {
+                            title   => $topic->{title},
+                            tags_id => ',' . $topic->{id} . ',',
+                        }
+                    ),
                     status     => is_test() ? 'test' : 'prod',
                     created_at => \'NOW()',
                 };
