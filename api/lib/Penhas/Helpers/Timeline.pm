@@ -288,6 +288,8 @@ sub list_tweets {
 
     my $user = $opts{user} or croak 'missing user';
 
+    my $category = $opts{category} || 'all';
+
     $opts{$_} ||= '' for qw/after before parent_id id tags/;
 
     if ($opts{next_page}) {
@@ -336,16 +338,23 @@ sub list_tweets {
                 $opts{parent_id}
                 ? ({parent_id => $opts{parent_id}})
                 : (
-                    $opts{id} ? ()            # nao remover comentarios se for um GET por ID
-                    : {parent_id => undef}    # nao eh pra montar comentarios na timeline principal
+                    $opts{id} || $category eq 'all_myself'
+                    ? ()                    # nao remover comentarios se for um GET por ID, ou listar tudo de um usaurio
+                    : {parent_id => undef}  # nao eh pra montar comentarios na timeline principal
                 )
             ),
         ],
     };
 
-    push $cond->{'-and'}->@*, {'me.cliente_id' => $ForceFilterClientes}  if $ForceFilterClientes;
-    push $cond->{'-and'}->@*, {'me.cliente_id' => $user->{id}}           if $opts{only_myself};
-    push $cond->{'-and'}->@*, {'me.cliente_id' => {'!=' => $user->{id}}} if $opts{skip_myself};
+    push $cond->{'-and'}->@*, {'me.cliente_id' => $ForceFilterClientes} if $ForceFilterClientes;
+    if ($category eq 'all_myself') {
+        push $cond->{'-and'}->@*, {'me.cliente_id' => $user->{id}};
+    }
+    elsif ($category eq 'only_news') {
+
+        # filtra por um id que nao existe
+        push $cond->{'-and'}->@*, '0 = 1';
+    }
 
     delete $cond->{'-and'} if scalar $cond->{'-and'}->@* == 0;
 
@@ -449,6 +458,7 @@ sub list_tweets {
         tweets   => \@tweets,
         has_more => $has_more,
         order_by => $sort_direction eq '-desc' ? 'latest_first' : 'oldest_first',
+        category => $category,
         ($next_page ? (next_page => $next_page) : ()),
 
         (

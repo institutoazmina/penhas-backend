@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use MooseX::Types -declare =>
-  [qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome Raca TweetID UploadIntention IntList)];
+  [qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome Raca TweetID UploadIntention IntList TimelineCategory)];
 use MooseX::Types::Moose qw(ArrayRef HashRef CodeRef Str ScalarRef);
 use MooseX::Types::Common::String qw(NonEmptySimpleStr NonEmptyStr);
 use Business::BR::CEP qw(test_cep);
@@ -15,6 +15,10 @@ use Business::BR::CPF qw(test_cpf);
 
 my $is_international_mobile_number = sub {
     my $num = shift;
+
+    # too long
+    return 0 if length $num > 100;
+
     return $num =~ /^\+\d{12,13}$/ ? 1 : 0 if $num =~ /\+55/;
 
     return $num =~ /^\+\d{10,16}$/ ? 1 : 0;
@@ -82,7 +86,7 @@ coerce Genero, from Str, via {
 
 subtype Raca, as Str, where {
     my $str = $_;
-
+    return 0 if length $str > 100;
     return $str =~ /^(branco|pardo|preto|amarelo|indigena|nao_declarado)$/ ? 1 : 0;
 }, message {"$_[0] is not a valid Raca"};
 
@@ -93,7 +97,7 @@ coerce Raca, from Str, via {
 
 subtype UploadIntention, as Str, where {
     my $str = $_;
-
+    return 0 if length $str > 100;
     return $str =~ /^(tweet|guardiao|chat)$/ ? 1 : 0;
 }, message {"$_[0] is not a valid UploadIntention"};
 
@@ -101,8 +105,19 @@ coerce UploadIntention, from Str, via {
     $_;
 };
 
+subtype TimelineCategory, as Str, where {
+    my $str = $_;
+    return 0 if length $str > 100;
+    return $str =~ /^(all|only_news|only_tweets|all_myself)$/ ? 1 : 0;
+}, message {"$_[0] is not a valid TimelineCategory"};
+
+coerce TimelineCategory, from Str, via {
+    $_;
+};
+
 subtype TweetID, as Str, where {
     my $str = $_;
+    return 0 if length $str > 100;
 
     return $str =~ /^[0-9]{6}T[0-9]{10}$/ ? 1 : 0;
 }, message {"$_[0] is not a valid TweetID"};
@@ -127,6 +142,9 @@ coerce IntList, from Str, via {
 
 subtype Nome, as Str, where {
     my $str = $_;
+
+    # too long
+    return 0 if length $str >= 200;
 
     $str =~ s/^\s+//;
     $str =~ s/\s+$//;

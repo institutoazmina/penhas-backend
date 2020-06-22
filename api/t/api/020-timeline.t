@@ -18,7 +18,7 @@ my $random_email2 = 'email' . $random_cpf2 . '@something.com';
 goto AGAIN2 if cpf_already_exists($random_cpf2);
 
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
-$ENV{SKIP_END_NEWS} = '1';
+$ENV{SKIP_END_NEWS}            = '1';
 
 my @other_fields = (
     raca        => 'pardo',
@@ -288,16 +288,9 @@ do {
     $t->get_ok(
         ('/timeline'),
         {'x-api-key' => $session2},
-        form => {only_myself => 1, rows => 1}
+        form => {category => 'all_myself', rows => 1}
     )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'Just me')
       ->json_is('/tweets/1/content', undef);
-
-    $t->get_ok(
-        ('/timeline'),
-        {'x-api-key' => $session2},
-        form => {skip_myself => 1, rows => 2}
-    )->status_is(200)->json_is('/has_more', '1')->json_is('/tweets/0/content', 'Kazoeru 2');
-
 
     my $comment2 = $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'comment'),
