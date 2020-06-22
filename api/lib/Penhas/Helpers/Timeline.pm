@@ -662,8 +662,9 @@ sub add_tweets_highlights {
             $header = (join ', ', @headers) . (@headers ? ' e ' . $last : '');
 
             push $tweets->@*, {
-                type => 'related_news',
-                news => \@related_news
+                type   => 'related_news',
+                news   => \@related_news,
+                header => $header,
             };
         }
 
@@ -687,8 +688,6 @@ sub add_tweets_news {
 
     # esvazia os itens da array, mas mantem a referencia
     my @list = splice $opts{tweets}->@*, 0;
-    my $i    = 0;
-
 
     my @vitrine;
     if (!$only_news) {
@@ -719,13 +718,18 @@ sub add_tweets_news {
 
     my $news_added = {map { $_ => 1 } @{$opts{news_added} || []}};
 
+    my $news_conter = 0;
+    my $idx         = 0;
     foreach my $tweet (@list) {
         push $opts{tweets}->@*, $tweet;
 
-        next if $tweet->{type} eq 'related_news';
-        $i++;
+        $idx++;
+        my $next_item = $list[$idx];
+        next if $next_item && $next_item->{type} ne 'tweet';
 
-        if ($i % 10 == 0 || $only_news) {
+        $news_conter++;
+
+        if ($news_conter % 10 == 0 || $only_news) {
             log_info("adicionando item noticia");
             my $news = $c->schema2->resultset('Noticia')
               ->search({published => 'published'}, {rows => 1, offset => int(rand() * 99)})->next;
@@ -741,7 +745,7 @@ sub add_tweets_news {
                 };
             }
         }
-        elsif ($i % 3 == 0) {
+        elsif ($news_conter % 3 == 0) {
             log_info("adicionando item de vitrine");
           AGAIN:
             my $vitrine = shift(@vitrine);
