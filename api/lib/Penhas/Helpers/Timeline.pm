@@ -375,6 +375,10 @@ log_info(dumper([
 ]));
     my @rows     = $c->schema2->resultset('Tweet')->search($cond, $attr)->all;
     my $has_more = scalar @rows > $rows ? 1 : 0;
+log_info(dumper([
+    @rows
+]));
+
     use DDP;
     p $has_more;
     if ($has_more) {
