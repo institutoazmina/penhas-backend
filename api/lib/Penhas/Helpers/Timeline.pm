@@ -377,7 +377,7 @@ sub list_tweets {
     p $has_more;
     if ($has_more) {
         use DDP;
-        p pop @rows;
+        pop @rows;
     }
 
 
@@ -739,8 +739,8 @@ sub add_tweets_news {
             }
         )->all;
 
-        use DDP;
-        p \@news;
+        #use DDP;
+        #p @news;
         my $has_more = scalar @news > $expected_rows ? 1 : 0;
         pop @news if $has_more;
 
