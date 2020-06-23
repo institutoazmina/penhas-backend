@@ -33,7 +33,7 @@ sub news_display_indexer {
 
             'me.status'         => is_test() ? 'test' : 'prod',
             'me.is_topic'       => 1,
-            'noticia.published' => 'published',
+            'noticia.published' => is_test() ? 'published:testing' : 'published',
         },
         {
             join     => {'noticias2tags' => 'noticia'},

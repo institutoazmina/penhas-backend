@@ -441,13 +441,14 @@ sub list_tweets {
         };
 
         $c->add_tweets_news(
-            user   => $user,
-            tweets => \@tweets,
+            user     => $user,
+            tweets   => \@tweets,
+            category => $category,
             %{$opts{next_page}},
             next_page => $next_page,
         );
 
-        $has_more = 1 if delete $next_page->{has_more_vitrine};
+        $has_more = 1 if delete $next_page->{set_has_more_true};
 
         $next_page = $c->encode_jwt($next_page, 1);
 
@@ -553,8 +554,8 @@ sub add_tweets_highlights {
             my $rs       = $c->schema2->resultset('TagsHighlight');
             my $query_rs = $rs->search(
                 {
-                    'noticia.published' => 'published',
-                    'me.status'         => is_test() ? 'test' : 'prod',
+                    'noticia.published' => is_test() ? 'published:testing' : 'published',
+                    'me.status'         => is_test() ? 'test'              : 'prod',
                     'me.error_msg'      => '',
                 },
                 {
@@ -693,18 +694,51 @@ sub add_tweets_news {
 
     log_info("running add_tweets_news");
 
-    my $tags      = $opts{tags};
-    my $only_news = $tags ? 1 : 0;
+    my $tags       = $opts{tags};
+    my $plain_news = $tags ? 1 : $opts{category} eq 'only_news';
+    my $news_added = {map { $_ => 1 } @{$opts{news_added} || []}};
 
     # esvazia os itens da array, mas mantem a referencia
     my @list = splice $opts{tweets}->@*, 0;
 
-    my @vitrine;
-    if (!$only_news) {
-        my $vitrine_rows = int(scalar @list / 3);
-        $vitrine_rows = 2 if $vitrine_rows < 2;
+    my (@vitrine, @news);
+    if ($plain_news) {
+        my $expected_rows = int(scalar @list / 3);
+        $expected_rows = 2 if $expected_rows < 2;
 
-        log_info("loading $vitrine_rows vitrine");
+        log_info("loading $expected_rows Noticias");
+        my $cond = {
+            'me.published' => is_test() ? 'published:testing' : 'published',
+            'me.id'        => {'not in' => [keys %$news_added]},
+            (
+                $tags
+                ? ('noticias2tags.tag_id' => {'in' => [split ',', $tags]})
+                : ()
+            ),
+
+        };
+
+        @news = $c->schema2->resultset('Noticia')->search(
+            $cond,
+            {
+                join         => 'noticias2tags',
+                order_by     => [{'-desc' => 'me.display_created_time'}],
+                rows         => $expected_rows + 1,
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            }
+        )->all;
+
+        my $has_more = scalar @news > $expected_rows ? 1 : 0;
+        pop @news if $has_more;
+
+        $opts{next_page}{set_has_more_true} = $has_more;
+
+    }
+    else {
+        my $expected_rows = int(scalar @list / 3);
+        $expected_rows = 2 if $expected_rows < 2;
+
+        log_info("loading $expected_rows NoticiasVitrine");
 
         @vitrine = $c->schema2->resultset('NoticiasVitrine')->search(
             {
@@ -713,20 +747,19 @@ sub add_tweets_news {
             },
             {
                 order_by     => 'me.order',
-                rows         => $vitrine_rows + 1,
+                rows         => $expected_rows + 1,
                 result_class => 'DBIx::Class::ResultClass::HashRefInflator'
             }
         )->all;
 
-        my $has_more_vitrine = scalar @vitrine > $vitrine_rows ? 1 : 0;
-        pop @vitrine if $has_more_vitrine;
+        my $has_more = scalar @vitrine > $expected_rows ? 1 : 0;
+        pop @vitrine if $has_more;
 
-        $opts{next_page}{has_more_vitrine} = $has_more_vitrine;
+        $opts{next_page}{set_has_more_true} = $has_more;
     }
 
     log_info("vitrine array . " . dumper(\@vitrine));
 
-    my $news_added = {map { $_ => 1 } @{$opts{news_added} || []}};
 
     my $news_conter = 0;
     my $idx         = 0;
@@ -739,23 +772,19 @@ sub add_tweets_news {
 
         $news_conter++;
 
-        if ($news_conter % 10 == 0 || $only_news) {
-            log_info("adicionando item noticia");
-            my $news = $c->schema2->resultset('Noticia')
-              ->search({published => 'published'}, {rows => 1, offset => int(rand() * 99)})->next;
+        next unless $news_conter % 3 == 00;
+
+
+        if ($plain_news) {
+
+            my $news = shift(@news);
             if ($news) {
-                push $opts{tweets}->@*, {
-                    type     => 'news',
-                    href     => $news->hyperlink,
-                    title    => $news->title,
-                    source   => $news->fonte,
-                    date_str => $news->display_created_time->dmy('/'),
-                    image =>
-                      'https://s2.glbimg.com/IKEfOHvbA827tcq660lssE-11mI=/512x320/smart/e.glbimg.com/og/ed/f/original/2020/06/19/82145061_2427549444202692_6151441996146155645_n.jpg',
-                };
+                $news_added->{$news->{id}}++;
+                push $opts{tweets}->@*, &_format_noticia($news, %opts);
             }
+
         }
-        elsif ($news_conter % 3 == 0) {
+        else {
             log_info("adicionando item de vitrine");
           AGAIN:
             my $vitrine = shift(@vitrine);
@@ -774,8 +803,9 @@ sub add_tweets_news {
 
                 push $opts{tweets}->@*, $vitrine;
             }
-
         }
+
+
     }
 
     # sobrou itens, nao tinha tweets suficientes para preencher tudo
@@ -792,61 +822,84 @@ sub add_tweets_news {
         }
     }
 
+    # sobrou itens, nao tinha tweets suficientes para preencher tudo
+    if (@news && !$ENV{SKIP_END_NEWS}) {
+        log_info("alguns itens da noticias ainda existem... adicionando no final");
+        foreach my $r (@news) {
+            $news_added->{$r->{id}}++;
+            push $opts{tweets}->@*, &_format_noticia($r, %opts);
+        }
+    }
+
     log_info(dumper($news_added));
 
     $opts{next_page}{news_added} = [keys %$news_added];
 
     # descobre todas as noticias que precisam ser carregas e marca qual em objeto
-    my $new_vs_ref;
-    my @news_ids;
-    foreach my $item ($opts{tweets}->@*) {
-        next unless $item->{type} eq 'news_group';
+    my $news_item_ref;
+    my @group_news_ids;
 
-        foreach my $new_id ($item->{news}->@*) {
-            push @news_ids, $new_id;
-            push @{$new_vs_ref->{$new_id}}, $item;
+    if (!$plain_news) {
+        foreach my $item ($opts{tweets}->@*) {
+            next unless $item->{type} eq 'news_group';
+
+            foreach my $new_id ($item->{news}->@*) {
+                push @group_news_ids, $new_id;
+                push @{$news_item_ref->{$new_id}}, $item;
+            }
         }
     }
 
-    # carrega as noticias
-    my $news_rs = $c->schema2->resultset('Noticia')->search(
-        {
-            published => 'published',
-            id        => {'in' => \@news_ids}
-        },
-        {
-            columns      => [qw/me.id me.title me.display_created_time me.fonte me.hyperlink me.image_hyperlink/],
-            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
-        }
-    );
-    while (my $r = $news_rs->next) {
-        my $new_rendered = {
-            id       => $r->{id},
-            href     => $r->{hyperlink},
-            title    => $r->{title},
-            source   => $r->{fonte},
-            date_str => DateTime::Format::Pg->parse_datetime($r->{display_created_time})->dmy('/'),
-        };
+    if (@group_news_ids) {
 
-        # atualiza todas as referencias
-        foreach my $item ($new_vs_ref->{$r->{id}}->@*) {
-            $item->{_news}{$r->{id}} = $new_rendered;
+        # carrega as noticias
+        my $news_rs = $c->schema2->resultset('Noticia')->search(
+            {
+                published => is_test() ? 'published:testing' : 'published',
+                id        => {'in' => \@group_news_ids}
+            },
+            {
+                columns      => [qw/me.id me.title me.display_created_time me.fonte me.hyperlink me.image_hyperlink/],
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            }
+        );
+        while (my $r = $news_rs->next) {
+            my $new_rendered = &_format_noticia($r, %opts);
+            delete $new_rendered->{type};
+
+            # atualiza todas as referencias
+            foreach my $item ($news_item_ref->{$r->{id}}->@*) {
+                $item->{_news}{$r->{id}} = $new_rendered;
+            }
+        }
+
+        # percorre novamente a lista, colocando as noticias na ordem que apareceram
+        foreach my $item ($opts{tweets}->@*) {
+            next unless $item->{type} eq 'news_group';
+
+            my @news_in_order;
+            foreach my $new_id ($item->{news}->@*) {
+                push @news_in_order, $item->{_news}{$new_id};
+            }
+
+            $item->{news} = \@news_in_order;
+            delete $item->{_news};
         }
     }
 
-    # percorre novamente a lista, colocando as noticias na ordem que apareceram
-    foreach my $item ($opts{tweets}->@*) {
-        next unless $item->{type} eq 'news_group';
+}
 
-        my @news_in_order;
-        foreach my $new_id ($item->{news}->@*) {
-            push @news_in_order, $item->{_news}{$new_id};
-        }
+sub _format_noticia {
+    my ($r, %opts) = @_;
 
-        $item->{news} = \@news_in_order;
-        delete $item->{_news};
-    }
-
+    return {
+        type     => 'news',
+        id       => $r->{id},
+        href     => $r->{hyperlink},
+        title    => $r->{title},
+        source   => $r->{fonte},
+        date_str => DateTime::Format::Pg->parse_datetime($r->{display_created_time})->dmy('/'),
+    };
 }
 
 sub _process_vitrine_item {

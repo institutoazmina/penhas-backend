@@ -164,14 +164,14 @@ do {
     is [sort map { $_->tag_id } $news[0]->noticias2tags->all], [$forced_tag->id, $topic1->id],
       'tags match expected [forced from feed + topic1 from rule because page_title_match match "de"]';
     $news[0]->discard_changes;
-    is $news[0]->published, 'published', 'status is published';
+    is $news[0]->published, 'published:testing', 'status is published';
 
     ok(Penhas::Minion::Tasks::NewsIndexer::news_indexer($job, test_get_minion_args_job(1)), 'indexing news 1');
 
     is [sort map { $_->tag_id } $news[1]->noticias2tags->all], [$forced_tag->id],
       'tags match expected [forced from feed only]';
     $news[0]->discard_changes;
-    is $news[0]->published, 'published', 'status is published';
+    is $news[0]->published, 'published:testing', 'status is published';
 
     local $ENV{PUBLIC_API_URL} = '/';
 
@@ -194,17 +194,24 @@ do {
 
     ok($tracking_url, 'has $tracking_url') and $t->get_ok($tracking_url)->status_is(302);
 
-    ok(
-        Penhas::Minion::Tasks::NewsDisplayIndexer::news_display_indexer($job, test_get_minion_args_job(4)),
-        'display indexing'
-    );
-
     my ($session, $user_id) = get_user_session($random_cpf);
     $Penhas::Helpers::Timeline::ForceFilterClientes = [$user_id];
     $t->get_ok(
         ('/timeline?category=only_news'),
         {'x-api-key' => $session}
-    )->status_is(200);
+    )->status_is(200)->json_is('/tweets/0/type', 'news')
+      ->json_is('/tweets/0/title', 'Tachiagare. Dare mo Soba ni Inakutatte');
+
+    ok(
+        Penhas::Minion::Tasks::NewsDisplayIndexer::news_display_indexer($job, test_get_minion_args_job(4)),
+        'display indexing'
+    );
+
+    $t->get_ok(
+        ('/timeline?category=all'),
+        {'x-api-key' => $session}
+    )->status_is(200)->json_is('/tweets/0/type', 'news_group')->json_is('/tweets/0/header', 'topic1')
+      ->json_is('/tweets/0/news/0/title', 'This is Page1 Title');
 
     on_scope_exit { user_cleanup(user_id => $user_id); };
 

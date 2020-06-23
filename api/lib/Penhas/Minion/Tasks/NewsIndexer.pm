@@ -202,7 +202,7 @@ sub news_indexer {
             $filter_rs->update(
                 {
                     indexed_at      => \'NOW()',
-                    published       => 'published',
+                    published       => is_test() ? 'published:testing' : 'published',
                     indexed         => '1',
                     logs            => \["CONCAT(COALESCE(logs,''), ?)", $log],
                     image_hyperlink => \["COALESCE(nullif(image_hyperlink,''), ?)", $og_image],
