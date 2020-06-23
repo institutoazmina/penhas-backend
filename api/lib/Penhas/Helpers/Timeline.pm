@@ -370,7 +370,9 @@ sub list_tweets {
         ],
         result_class => 'DBIx::Class::ResultClass::HashRefInflator'
     };
-
+log_info(dumper([
+    $cond, $attr
+]));
     my @rows     = $c->schema2->resultset('Tweet')->search($cond, $attr)->all;
     my $has_more = scalar @rows > $rows ? 1 : 0;
     use DDP;
