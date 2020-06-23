@@ -18,8 +18,6 @@ sub news_display_indexer {
 
     my $schema = $job->app->schema2;
 
-    log_trace("minion:news_display_indexer", $modtime);
-
     my $redis       = Penhas::KeyValueStorage->instance->redis;
     my $cur_modtime = $redis->get($ENV{REDIS_NS} . 'news_display_indexer.modtime');
     if ($cur_modtime && $modtime ne $cur_modtime) {
@@ -27,6 +25,7 @@ sub news_display_indexer {
         return $job->finish('skipped');
     }
     slog_info("recalculing news_display_indexer as modtime %s", $modtime);
+    log_trace("minion:news_display_indexer", $modtime);
 
     my @topic_news = $schema->resultset('Tag')->search(
         {

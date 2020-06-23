@@ -165,8 +165,9 @@ do {
 
     is trace_popall, 'minion:news_indexer,' . $news[0]->id, 'job processed';
 
-    is [sort map { $_->tag_id } $news[0]->noticias2tags->all], [$forced_tag->id, $topic1->id],
+    is [sort { $a <=> $b } map { $_->tag_id } $news[0]->noticias2tags->all], [$forced_tag->id, $topic1->id],
       'tags match expected [forced from feed + topic1 from rule because page_title_match match "de"]';
+
     $news[0]->discard_changes;
     is $news[0]->published, 'published:testing', 'status is published';
 
@@ -221,8 +222,6 @@ do {
             {order_by  => 'hyperlink', columns => ['title', 'fonte', 'id']}
         )->all;
 
-        use DDP;
-        p \@news2;
         is scalar @news2, '1', 'there is one news!';
 
         is [
@@ -252,12 +251,23 @@ do {
 
     my ($session, $user_id) = get_user_session($random_cpf);
     $Penhas::Helpers::Timeline::ForceFilterClientes = [$user_id];
-    my $json = $t->get_ok(
+
+    # testa visao filtrando apenas noticias
+    # deve trazer apenas onde is_topic
+    $t->get_ok(
         ('/timeline?category=only_news'),
         {'x-api-key' => $session}
+    )->status_is(200)->json_is('/tweets/0/type', 'news')->json_is('/tweets/0/title', 'This is Page1 Title')
+      ->json_is('/has_more', '0')->tx->res->json;
+
+    # testa visao tweets+noticias, mas passando tags
+    # deve trazer noticias ou tweets marcados
+    $t->get_ok(
+        ('/timeline?category=all&tags=' . $tag1->id),
+        {'x-api-key' => $session}
     )->status_is(200)->json_is('/tweets/0/type', 'news')
-      ->json_is('/tweets/0/title', 'Tachiagare. Dare mo Soba ni Inakutatte')
-      ->json_is('/tweets/1/title', 'This is Page1 Title')->json_is('/has_more', '1')->tx->res->json;
+      ->json_is('/tweets/0/title', '“Mulher” teste decode encoded titles')->json_is('/has_more', '0')
+      ->tx->res->json;
 
 #    $t->get_ok(
 #        ('/timeline?category=only_news&next_page=' . $json->{next_page}),
@@ -266,10 +276,15 @@ do {
 #      ->json_is('/tweets/0/title', 'Tachiagare. Dare mo Soba ni Inakutatte')
 #      ->json_is('/tweets/1/title', 'This is Page1 Title')->json_is('/has_more', '1');
 
+    trace_popall;
     ok(
-        Penhas::Minion::Tasks::NewsDisplayIndexer::news_display_indexer($job, test_get_minion_args_job(4)),
+        Penhas::Minion::Tasks::NewsDisplayIndexer::news_display_indexer(
+            $job, test_get_minion_args_job($minion_job_id + 3)
+        ),
         'display indexing'
     );
+    is trace_popall, 'minion:news_display_indexer,' . test_get_minion_args_job($minion_job_id + 3)->[0],
+      'job processed';
 
     $t->get_ok(
         ('/timeline?category=all'),

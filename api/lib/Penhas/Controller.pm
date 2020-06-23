@@ -161,7 +161,7 @@ sub validate_request_params {
         my $val = $params->{$key};
         $val = '' if !defined $val && $me->{empty_if_undef};
 
-        my %def_message = (message => $campos_nao_foram_preenchidos . ' (' . $key . ')' );
+        my %def_message = (message => $campos_nao_foram_preenchidos . ' (' . $key . ')');
         if (defined($val) && (exists $me->{min_length} || exists $me->{max_length})) {
             my $len     = length $val;
             my $min_len = $me->{min_length};

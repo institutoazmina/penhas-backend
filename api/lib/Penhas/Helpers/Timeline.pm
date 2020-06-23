@@ -450,6 +450,7 @@ sub list_tweets {
             user     => $user,
             tweets   => \@tweets,
             category => $category,
+            tags     => $opts{tags},
             %{$opts{next_page}},
             next_page => $next_page,
         );
@@ -722,7 +723,9 @@ sub add_tweets_news {
             'me.id'        => {'not in' => [keys %$news_added]},
             (
                 $tags
-                ? ({'-and' => [{'-or' => [map { +{'me.tags_index' => {'like' => ",$_,"}} } split ',', $tags]}]})
+                ? (
+                    '-and' => [{'-or' => [map { +{'me.tags_index' => {'like' => ",$_,"}} } split ',', $tags]}],
+                  )
                 : (
                     'me.has_topic_tags' => '1',
                 )
@@ -738,15 +741,11 @@ sub add_tweets_news {
             }
         )->all;
 
-        #use DDP;
-        #p @news;
         my $has_more = scalar @news > $expected_rows ? 1 : 0;
         pop @news if $has_more;
 
-        use DDP;
-        p $has_more;
         $opts{next_page}{set_has_more_true} = $has_more;
-
+        log_info("news array . " . dumper(\@news));
     }
     else {
         my $expected_rows = int(scalar @list / 3);
@@ -770,9 +769,9 @@ sub add_tweets_news {
         pop @vitrine if $has_more;
 
         $opts{next_page}{set_has_more_true} = $has_more;
-    }
 
-    log_info("vitrine array . " . dumper(\@vitrine));
+        log_info("vitrine array . " . dumper(\@vitrine));
+    }
 
 
     my $news_conter = 0;
@@ -865,11 +864,10 @@ sub add_tweets_news {
     }
 
     if (@group_news_ids) {
-
         # carrega as noticias
         my $news_rs = $c->schema2->resultset('Noticia')->search(
             {
-                published => is_test() ? 'published:testing' : 'published',
+                #published => is_test() ? 'published:testing' : 'published',
                 id        => {'in' => \@group_news_ids}
             },
             {
@@ -877,27 +875,40 @@ sub add_tweets_news {
                 result_class => 'DBIx::Class::ResultClass::HashRefInflator'
             }
         );
+        my $x = 0;
         while (my $r = $news_rs->next) {
+            $x++;
             my $new_rendered = &_format_noticia($r, %opts);
             delete $new_rendered->{type};
 
             # atualiza todas as referencias
             foreach my $item ($news_item_ref->{$r->{id}}->@*) {
+
+                use DDP;
+                p $item;
                 $item->{_news}{$r->{id}} = $new_rendered;
             }
         }
+        die 'not matched' if $x != scalar @group_news_ids;
 
         # percorre novamente a lista, colocando as noticias na ordem que apareceram
         foreach my $item ($opts{tweets}->@*) {
             next unless $item->{type} eq 'news_group';
 
+            use DDP;
+            p $item;
             my @news_in_order;
             foreach my $new_id ($item->{news}->@*) {
-                push @news_in_order, $item->{_news}{$new_id};
+
+                use DDP;
+                p $new_id;
+
+                push @news_in_order, $item->{_news}{$new_id} if $item->{_news}{$new_id};
             }
 
             $item->{news} = \@news_in_order;
-            delete $item->{_news};
+
+            #delete $item->{_news};
         }
     }
 
