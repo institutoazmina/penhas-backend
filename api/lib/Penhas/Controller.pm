@@ -41,6 +41,13 @@ sub reply_not_found {
     die {error => 'Page not found', message => 'Página ou item não existe',, status => 404,};
 }
 
+sub reply_invalid_param {
+    my $c     = shift;
+    my $param = shift;
+
+    die {error => 'form_error', message => "$param inválido", status => 400,};
+}
+
 sub reply_item_not_found {
     my $c = shift;
 
