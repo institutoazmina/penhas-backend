@@ -45,7 +45,10 @@ sub news_indexer {
 
     my @rules = $schema->resultset('TagIndexingConfig')->search(
         {
-            (status => is_test() ? 'test' : 'prod'),
+            ('me.status' => is_test() ? 'test' : 'prod'),
+        },
+        {
+            prefetch => 'tag',
         }
     )->all;
 
@@ -91,12 +94,21 @@ sub news_indexer {
 
     my $tags = {};
     if ($news->{rss_feed}) {
-        $logthis->('Adding tags from RSS feed (%d): ', $news->{rss_feed}{id});
-        foreach (@{$news->{rss_feed}{rss_feed_forced_tags} || []}) {
-            $tags->{$_->{tag_id}}++;
-            $logthis->($_->{tag_id} . ' added');
+        my @feed_tags = @{$news->{rss_feed}{rss_feed_forced_tags} || []};
+        if (@feed_tags) {
+            $logthis->('Adding tags from RSS feed (%d)', $news->{rss_feed}{id});
+
+            foreach (@feed_tags) {
+                $tags->{$_->{tag_id}}++;
+                $logthis->('tag ' . $_->{tag_id} . ' added');
+            }
+        }
+        else {
+            $logthis->('No tags from RSS feed (%d)', $news->{rss_feed}{id});
         }
     }
+
+    $logthis->('Testing rules...');
 
     my $cached_content;
     foreach my $rule (@rules) {
@@ -104,7 +116,10 @@ sub news_indexer {
         next unless $compiled;    # pula invalidas
 
         my $tag_id = $rule->tag_id;
-        $logthis->('Tag Indexing Config (%d, tag %d): %s', $rule->id, $rule->tag_id, $rule->description || '');
+        $logthis->(
+            'Tag Indexing Config (%d %s) tag %d %s', $rule->id, ($rule->description || ''), $rule->tag_id,
+            $rule->tag->title
+        );
 
         foreach my $test (
             qw/
@@ -153,9 +168,6 @@ sub news_indexer {
                   = exists $news->{info}{tags}
                   ? (ref $news->{info}{tags} eq 'ARRAY' ? join(' ', $news->{info}{tags}->@*) : $news->{info}{tags})
                   : '';
-                use DDP;
-                p $content;
-                p $news;
             }
             elsif ($test eq 'rss_feed_content_match') {
                 $content = $news->{info}{content} || '';
@@ -163,9 +175,11 @@ sub news_indexer {
             $content = '' unless defined $content;
             $cached_content->{$test} = $content;
 
-            slog_debug('%s content is 「%s」', $test, $content || 'empty');
+            slog_debug("\%s TRUE test is $test_true",   $test);
+            slog_debug("\%s FALSE test is $test_false", $test) if $test_false;
+            slog_debug('--> %s 「%s」',               $test, $content || '(not set)');
             if (!$content) {
-                $logthis->("$test content is empty, match skiped.");
+                $logthis->("$test content is empty, skipping matching column");
                 next;
             }
 
@@ -173,14 +187,14 @@ sub news_indexer {
             my $tested_false = defined $test_false ? $content =~ $test_false : 0;
 
             if ($tested_true && $tested_false) {
-                $logthis->("$test MATCHES but also $test_not also. Tag $tag_id NOT Added");
+                $logthis->(" $test MATCHES but also $test_not also. Tag $tag_id WAS NOT added");
             }
             elsif ($tested_true) {
-                $logthis->("$test MATCHES Adding tag $tag_id");
+                $logthis->(" $test MATCHES Adding tag $tag_id");
                 $tags->{$tag_id}++;
             }
             else {
-                $logthis->("$test not matched");
+                $logthis->(" $test not matched any rule");
             }
         }
     }

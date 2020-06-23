@@ -34,7 +34,12 @@ __PACKAGE__->add_columns(
     size => 20,
   },
   "tag_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "description",
   { data_type => "varchar", is_nullable => 1, size => 200 },
   "page_title_match",
@@ -91,10 +96,18 @@ __PACKAGE__->add_columns(
   },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->belongs_to(
+  "tag",
+  "Penhas::Schema2::Result::Tag",
+  { id => "tag_id" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-15 17:00:26
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:V+ivrndU/9GpFOdVqsbQ6Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-23 11:49:29
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:O+50eUEIK7ClwwCYGOO+Kg
+
+# ALTER TABLE tag_indexing_config ADD FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE ON UPDATE cascade;
 
 use Mojo::Util qw/trim/;
 use Penhas::Logger;
@@ -149,7 +162,7 @@ sub compiled_regexp {
 
         }
         else {
-            my $new_regex = '(' . join('|', (map { quotemeta(trim($_)) } split qr{\|}, $value)) . ')';
+            my $new_regex = '(' . join('|', (map { '\b' . quotemeta(trim($_)) . '\b' } split qr{\|}, $value)) . ')';
 
             # evita regexp que da match pra tudo
             $new_regex =~ s{\|\|}{|}g;    # troca || por só |

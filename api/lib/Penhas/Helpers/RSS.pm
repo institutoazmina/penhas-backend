@@ -11,6 +11,7 @@ use Penhas::Logger;
 use Scope::OnExit;
 use Mojo::Feed;
 use Mojo::Util qw/html_unescape/;
+use Mojo::URL;
 
 use Mojo::DOM;
 use Penhas::KeyValueStorage;
@@ -56,6 +57,11 @@ sub tick_rss_feeds {
                 my $link      = lc delete $info->{link};
                 my $title     = delete $info->{title};
                 my $published = delete $info->{published};
+
+                # tratando google
+                if ($link =~ /www\.google\.com.+url/) {
+                    $link = Mojo::URL->new($link)->query->param('url');
+                }
 
                 # o ID nao precisa ir pro index, e geralmente ele eh a propria URL
                 delete $info->{guid};

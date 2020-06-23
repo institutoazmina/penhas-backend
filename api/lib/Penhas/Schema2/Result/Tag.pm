@@ -64,6 +64,12 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "tag_indexing_configs",
+  "Penhas::Schema2::Result::TagIndexingConfig",
+  { "foreign.tag_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "tags_highlights",
   "Penhas::Schema2::Result::TagsHighlight",
   { "foreign.tag_id" => "self.id" },
@@ -71,8 +77,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-23 10:43:23
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:chPhTqSxv12VFw+yoWqb3Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-23 11:49:29
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3U96Iy6EroxnBxMQ9hnaJw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -71,7 +71,7 @@ my $rule1 = $rules_rs->create(
         status               => 'test',
         tag_id               => $topic1->id,
         regexp               => 1,
-        page_title_match     => 'de',
+        page_title_match     => '\bde\b',
         page_title_not_match => 'abc(\\',
     }
 );
@@ -81,7 +81,7 @@ like $rule1->error_msg, qr/page_title_not_match regexp error\: Trailing/, 'error
 $rule1->update({page_title_not_match => 'apoia pedido'});
 is $rule1->compiled_regexp(), {
     page_title_not_match => qr/apoia pedido/iu,
-    page_title_match     => qr/de/iu,
+    page_title_match     => qr/\bde\b/iu,
   },
   'regexp compiled';
 $rule1->discard_changes;
@@ -93,7 +93,7 @@ my $rule2 = $rules_rs->create(
         status              => 'test',
         tag_id              => $tag1->id,
         regexp              => 0,
-        rss_feed_tags_match => 'TAG3RSSONLY|tag1'
+        rss_feed_tags_match => 'foo|TAG3RSSONLY|tag1'
     }
 );
 
@@ -106,6 +106,7 @@ $highlight_rs->create(
     }
 );
 
+my $minion_job_id = 0;
 do {
 
     $t->get_ok(
@@ -128,6 +129,8 @@ do {
     # atualiza pro feed1 com o titulo atualizado
     $feed1->update({url => $get_feed_url->('1_updated_titles')});
 
+    # atualiza o feed pra manter indexed => 1 assim a segunda chamada do tick nao adiciona os jobs
+    # na fila do minion mesmo nao sendo processados
     is $news_rs->search({id => [map { $_->id() } @news_full]})->update({indexed => '1'}), 2, '2 rows updated';
 
     # roda novamente
@@ -156,8 +159,9 @@ do {
     is test_get_minion_args_job(2), [$news[1]->id], 'page2 id is minion job 2 AGAIN (title changed)';
 
     trace_popall;
-    my $job = Minion::Job->new(id => fake_int(1, 99)->(), minion => $t->app->minion, task => 'news_indexer');
+    my $job = Minion::Job->new(id => fake_int(1, 99)->(), minion => $t->app->minion, task => 'testmocked');
     ok(Penhas::Minion::Tasks::NewsIndexer::news_indexer($job, test_get_minion_args_job(0)), 'indexing news 0');
+    $minion_job_id++;
 
     is trace_popall, 'minion:news_indexer,' . $news[0]->id, 'job processed';
 
@@ -167,6 +171,7 @@ do {
     is $news[0]->published, 'published:testing', 'status is published';
 
     ok(Penhas::Minion::Tasks::NewsIndexer::news_indexer($job, test_get_minion_args_job(1)), 'indexing news 1');
+    $minion_job_id++;
 
     is [sort map { $_->tag_id } $news[1]->noticias2tags->all], [$forced_tag->id],
       'tags match expected [forced from feed only]';
@@ -193,6 +198,57 @@ do {
     is($tweets->[2]{type}, 'related_news', 'related_news type');
 
     ok($tracking_url, 'has $tracking_url') and $t->get_ok($tracking_url)->status_is(302);
+
+    my @news2;
+    do {
+        # cadastrando um novo feed pra testar as tags no feed
+        my $feed2 = $feed_rs->create(
+            {
+                url            => $get_feed_url->('2'),
+                status         => 'paused',
+                fonte          => 'Fonte2',
+                autocapitalize => '0'
+            }
+        );
+        $ENV{FILTER_RSS_IDS} = $feed2->id;
+        $t->get_ok(
+            '/maintenance/tick-rss',
+            form => {secret => $ENV{MAINTENANCE_SECRET}}
+        )->status_is(200);
+
+        @news2 = $news_rs->search(
+            {hyperlink => {'in' => [$get_page_url->('1_feed2')]}},
+            {order_by  => 'hyperlink', columns => ['title', 'fonte', 'id']}
+        )->all;
+
+        use DDP;
+        p \@news2;
+        is scalar @news2, '1', 'there is one news!';
+
+        is [
+            [$news2[0]->title, $news2[0]->fonte],
+          ],
+          [
+            ['“Mulher” teste decode encoded titles', 'Fonte2'],
+          ],
+          'decoded title is working';
+
+        is test_get_minion_args_job($minion_job_id + 3), [$news2[0]->id], 'page2 id is minion job 3';
+
+        trace_popall;
+        ok(
+            Penhas::Minion::Tasks::NewsIndexer::news_indexer($job, test_get_minion_args_job($minion_job_id + 3)),
+            'indexing...'
+        );
+        $minion_job_id++;
+        is trace_popall, 'minion:news_indexer,' . $news2[0]->id, 'job processed';
+
+        is [sort map { $_->tag_id } $news2[0]->noticias2tags->all], [$tag1->id],
+          'tags match expected [only tag1 from rule feed tags "TAG3RSSONLY"]';
+
+        $news2[0]->discard_changes;
+        is $news2[0]->tags_index, ",${\$tag1->id},", 'only tag1 added';
+    };
 
     my ($session, $user_id) = get_user_session($random_cpf);
     $Penhas::Helpers::Timeline::ForceFilterClientes = [$user_id];
