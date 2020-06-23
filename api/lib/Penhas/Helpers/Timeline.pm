@@ -373,7 +373,13 @@ sub list_tweets {
 
     my @rows     = $c->schema2->resultset('Tweet')->search($cond, $attr)->all;
     my $has_more = scalar @rows > $rows ? 1 : 0;
-    pop @rows if $has_more;
+    use DDP;
+    p $has_more;
+    if ($has_more) {
+        use DDP;
+        p pop @rows;
+    }
+
 
     my $remote_addr = $c->remote_addr;
     my @tweets;
@@ -448,8 +454,12 @@ sub list_tweets {
             next_page => $next_page,
         );
 
+        use DDP;
+        p $has_more;
         $has_more = 1 if delete $next_page->{set_has_more_true};
 
+        use DDP;
+        p $has_more;
         $next_page = $c->encode_jwt($next_page, 1);
 
     }
@@ -706,7 +716,7 @@ sub add_tweets_news {
         my $expected_rows = int(scalar @list / 3);
         $expected_rows = 2 if $expected_rows < 2;
 
-        log_info("loading $expected_rows Noticias");
+        log_info("asking for $expected_rows rows of Noticias");
         my $cond = {
             'me.published' => is_test() ? 'published:testing' : 'published',
             'me.id'        => {'not in' => [keys %$news_added]},
@@ -724,13 +734,18 @@ sub add_tweets_news {
                 join         => 'noticias2tags',
                 order_by     => [{'-desc' => 'me.display_created_time'}],
                 rows         => $expected_rows + 1,
-                result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                group_by     => 'me.id',
             }
         )->all;
 
+        use DDP;
+        p \@news;
         my $has_more = scalar @news > $expected_rows ? 1 : 0;
         pop @news if $has_more;
 
+        use DDP;
+        p $has_more;
         $opts{next_page}{set_has_more_true} = $has_more;
 
     }
@@ -738,7 +753,7 @@ sub add_tweets_news {
         my $expected_rows = int(scalar @list / 3);
         $expected_rows = 2 if $expected_rows < 2;
 
-        log_info("loading $expected_rows NoticiasVitrine");
+        log_info("asking for $expected_rows rows of NoticiasVitrine");
 
         @vitrine = $c->schema2->resultset('NoticiasVitrine')->search(
             {

@@ -196,11 +196,19 @@ do {
 
     my ($session, $user_id) = get_user_session($random_cpf);
     $Penhas::Helpers::Timeline::ForceFilterClientes = [$user_id];
-    $t->get_ok(
+    my $json = $t->get_ok(
         ('/timeline?category=only_news'),
         {'x-api-key' => $session}
     )->status_is(200)->json_is('/tweets/0/type', 'news')
-      ->json_is('/tweets/0/title', 'Tachiagare. Dare mo Soba ni Inakutatte');
+      ->json_is('/tweets/0/title', 'Tachiagare. Dare mo Soba ni Inakutatte')
+      ->json_is('/tweets/1/title', 'This is Page1 Title')->json_is('/has_more', '1')->tx->res->json;
+
+#    $t->get_ok(
+#        ('/timeline?category=only_news&next_page=' . $json->{next_page}),
+#        {'x-api-key' => $session}
+#    )->status_is(200)->json_is('/tweets/0/type', 'news')
+#      ->json_is('/tweets/0/title', 'Tachiagare. Dare mo Soba ni Inakutatte')
+#      ->json_is('/tweets/1/title', 'This is Page1 Title')->json_is('/has_more', '1');
 
     ok(
         Penhas::Minion::Tasks::NewsDisplayIndexer::news_display_indexer($job, test_get_minion_args_job(4)),
