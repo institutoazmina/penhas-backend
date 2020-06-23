@@ -680,7 +680,7 @@ sub add_tweets_highlights {
         if (@related_news) {
             my $last = pop @headers;
 
-            $header = (join ', ', @headers) . (@headers ? ' e ' . $last : '');
+            $header = (join ', ', @headers) . (@headers ? ' e ' . $last : $last);
 
             push $tweets->@*, {
                 type   => 'related_news',
