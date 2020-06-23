@@ -722,20 +722,19 @@ sub add_tweets_news {
             'me.id'        => {'not in' => [keys %$news_added]},
             (
                 $tags
-                ? ('noticias2tags.tag_id' => {'in' => [split ',', $tags]})
-                : ()
+                ? ({'-and' => [{'-or' => [map { +{'me.tags_index' => {'like' => ",$_,"}} } split ',', $tags]}]})
+                : (
+                    'me.has_topic_tags' => '1',
+                )
             ),
-
         };
 
         @news = $c->schema2->resultset('Noticia')->search(
             $cond,
             {
-                join         => 'noticias2tags',
                 order_by     => [{'-desc' => 'me.display_created_time'}],
                 rows         => $expected_rows + 1,
                 result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-                group_by     => 'me.id',
             }
         )->all;
 
@@ -915,7 +914,7 @@ sub _format_noticia {
         source   => $r->{fonte},
         date_str => DateTime::Format::Pg->parse_datetime($r->{display_created_time})->dmy('/'),
         image    => (
-                 $r->{image_hyperlink} ? ( $r->{image_hyperlink} ) : $ENV{NEWS_DEFAULT_IMAGE}
+                 $r->{image_hyperlink} ? ($r->{image_hyperlink}) : $ENV{NEWS_DEFAULT_IMAGE}
               || $ENV{PUBLIC_API_URL} . '/avatar/news.jpg'
         )
     };

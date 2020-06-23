@@ -190,7 +190,8 @@ sub news_indexer {
     $schema->txn_do(
         sub {
             $filter_rs->search_related_rs('noticias2tags')->delete;
-            foreach my $tag_id (keys %$tags) {
+            my @tags = keys %$tags;
+            foreach my $tag_id (@tags) {
                 $filter_rs->search_related_rs('noticias2tags')->create(
                     {
                         tag_id      => $tag_id,
@@ -206,6 +207,17 @@ sub news_indexer {
                     indexed         => '1',
                     logs            => \["CONCAT(COALESCE(logs,''), ?)", $log],
                     image_hyperlink => \["COALESCE(nullif(image_hyperlink,''), ?)", $og_image],
+                    has_topic_tags  => (
+                        scalar @tags
+                        ? \[
+                                "(SELECT count(1) FROM tags t WHERE t.id in ("
+                              . join(',', ('?') x scalar @tags)
+                              . ") AND t.is_topic = TRUE) > 0",
+                            @tags
+                          ]
+                        : '0'
+                    ),
+                    tags_index => ',' . join(',', @tags) . ',',
                 }
             );
         }
@@ -225,7 +237,6 @@ sub news_indexer {
         }
     );
     slog_info('enqueued news_display_indexer in 60 seconds, job id %s with now=%s', $job_id, $now);
-
 
     return $job->finish('ok');
 }
