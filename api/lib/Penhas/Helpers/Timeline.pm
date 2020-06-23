@@ -914,6 +914,10 @@ sub _format_noticia {
         title    => $r->{title},
         source   => $r->{fonte},
         date_str => DateTime::Format::Pg->parse_datetime($r->{display_created_time})->dmy('/'),
+        image    => (
+                 $r->{image_hyperlink} ? ( $r->{image_hyperlink} ) : $ENV{NEWS_DEFAULT_IMAGE}
+              || $ENV{PUBLIC_API_URL} . '/avatar/news.jpg'
+        )
     };
 }
 
