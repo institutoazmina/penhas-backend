@@ -70,4 +70,18 @@ sub redirect {
     $c->redirect_to($url);
 }
 
+sub rebuild_index {
+    my $c = shift;
+
+    my $reindex = $c->schema2->resultset('Noticia')->search(
+        {
+            published => 'published',
+        }
+    )->update({indexed => '0'});
+
+    $c->tick_rss_feeds();
+
+    return $c->render(json => {reindex => $reindex});
+}
+
 1;

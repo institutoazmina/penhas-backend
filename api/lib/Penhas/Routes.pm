@@ -28,8 +28,12 @@ sub register {
     # GET /maintenance/tick-rss
     my $maintenance = $r->under('maintenance')->to(controller => 'Maintenance', action => 'check_authorization');
     $maintenance->route('tick-rss')->get()->to(controller => 'TickRSS', action => 'tick');
+
     # GET /maintenance/tags-clear-cache
     $maintenance->route('tags-clear-cache')->get()->to(controller => 'Tags', action => 'clear_cache');
+
+    # GET /maintenance/reindex-all-news
+    $maintenance->route('reindex-all-news')->get()->to(controller => 'News', action => 'rebuild_index');
 
     # PRIVATE ENDPOINTS
     my $authenticated = $r->under()->to(controller => 'JWT', action => 'check_user_jwt');
