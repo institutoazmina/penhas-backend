@@ -370,14 +370,10 @@ sub list_tweets {
         ],
         result_class => 'DBIx::Class::ResultClass::HashRefInflator'
     };
-log_info(dumper([
-    $cond, $attr
-]));
+    log_info(dumper([$cond, $attr]));
     my @rows     = $c->schema2->resultset('Tweet')->search($cond, $attr)->all;
     my $has_more = scalar @rows > $rows ? 1 : 0;
-log_info(dumper([
-    @rows
-]));
+    log_info(dumper([@rows]));
 
     use DDP;
     p $has_more;
@@ -461,16 +457,9 @@ log_info(dumper([
             next_page => $next_page,
         );
 
-        use DDP;
-        p $has_more;
-        $has_more = 1 if delete $next_page->{set_has_more_true};
-
-        use DDP;
-        p $has_more;
+        $has_more  = 1 if delete $next_page->{set_has_more_true};
         $next_page = $c->encode_jwt($next_page, 1);
-
     }
-
 
     return {
         tweets   => \@tweets,
@@ -583,7 +572,8 @@ sub add_tweets_highlights {
                                 JSON_OBJECT(
                                     'id',noticia.id,
                                     'title', noticia.title,
-                                    'hyperlink', noticia.hyperlink
+                                    'hyperlink', noticia.hyperlink,
+                                    'source', noticia.fonte
                                 ) ORDER BY noticia.display_created_time DESC SEPARATOR ',' LIMIT 15
                             ), ']')"
                         },
@@ -670,8 +660,9 @@ sub add_tweets_highlights {
 
                 $seen_tags{$highlight->{tag_id}}++;
                 push @related_news, {
-                    href  => &_get_tracked_news_url($user, $news),
-                    title => $news->{title},
+                    href   => &_get_tracked_news_url($user, $news),
+                    title  => $news->{title},
+                    source => $news->{source},
                 };
 
                 if (!$seen_headers->{$highlight->{header}}) {
@@ -870,11 +861,12 @@ sub add_tweets_news {
     }
 
     if (@group_news_ids) {
+
         # carrega as noticias
         my $news_rs = $c->schema2->resultset('Noticia')->search(
             {
                 #published => is_test() ? 'published:testing' : 'published',
-                id        => {'in' => \@group_news_ids}
+                id => {'in' => \@group_news_ids}
             },
             {
                 columns      => [qw/me.id me.title me.display_created_time me.fonte me.hyperlink me.image_hyperlink/],

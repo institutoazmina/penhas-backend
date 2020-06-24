@@ -20,6 +20,7 @@ sub startup {
     Penhas::Config::setup($self);
 
     # Logger.
+    undef $Penhas::Logger::instance;
     get_logger();
     $self->plugin('Log::Any' => {logger => 'Log::Log4perl'});
 
