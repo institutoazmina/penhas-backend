@@ -1,6 +1,6 @@
 package Penhas::Helpers::Timeline;
 use common::sense;
-use Carp qw/croak/;
+use Carp qw/croak confess/;
 use utf8;
 use Penhas::KeyValueStorage;
 use Scope::OnExit;
@@ -12,6 +12,7 @@ use Penhas::Logger;
 use Penhas::Utils;
 use List::Util '1.54' => qw/sample/;
 use DateTime::Format::Pg;
+use Encode;
 
 our $ForceFilterClientes;
 sub kv { Penhas::KeyValueStorage->instance }
@@ -534,9 +535,9 @@ sub _get_tweet_by_id {
 sub _get_tracked_news_url {
     my ($user, $news) = @_;
 
-    my $userid      = $user->{id};
-    my $newsid      = $news->{id};
-    my $url         = $news->{hyperlink};
+    my $userid = $user->{id}        or confess 'missing user.id';
+    my $newsid = $news->{id}        or confess 'missing news.id';
+    my $url    = $news->{hyperlink} or confess 'missing news.hyperlink';
     my $valid_until = time() + 3600;
     my $trackid     = random_string(4);
 
@@ -545,6 +546,14 @@ sub _get_tracked_news_url {
         $ENV{PUBLIC_API_URL}
       . "news-redirect/?uid=$userid&nid=$newsid&u=$valid_until&t=$trackid&h=$hash&url="
       . url_escape($url);
+}
+
+sub _get_proxy_image_url {
+    my ($url) = @_;
+
+    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . encode_utf8($url)), 0, 12);
+
+    return $ENV{PUBLIC_API_URL} . "get-proxy/?h=$hash&href=" . url_escape($url);
 }
 
 sub add_tweets_highlights {
@@ -915,16 +924,19 @@ sub add_tweets_news {
 sub _format_noticia {
     my ($r, %opts) = @_;
 
+    $opts{user} or confess 'missing $opts{user}';
+
     return {
         type     => 'news',
         id       => $r->{id},
-        href     => $r->{hyperlink},
+        href     => &_get_tracked_news_url($opts{user}, $r),
         title    => $r->{title},
         source   => $r->{fonte},
         date_str => DateTime::Format::Pg->parse_datetime($r->{display_created_time})->dmy('/'),
         image    => (
-                 $r->{image_hyperlink} ? ($r->{image_hyperlink}) : $ENV{NEWS_DEFAULT_IMAGE}
-              || $ENV{PUBLIC_API_URL} . '/avatar/news.jpg'
+              $r->{image_hyperlink}
+            ? &_get_proxy_image_url($r->{image_hyperlink})
+            : $ENV{NEWS_DEFAULT_IMAGE} || $ENV{PUBLIC_API_URL} . '/avatar/news.jpg'
         )
     };
 }

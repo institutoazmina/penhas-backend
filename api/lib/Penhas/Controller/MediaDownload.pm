@@ -5,6 +5,7 @@ use DateTime;
 use Penhas::Utils qw/get_media_filepath is_uuid_v4 is_test/;
 use Mojo::UserAgent;
 use feature 'state';
+use Encode;
 
 sub ensure_user_loaded {
     my $c = shift;
@@ -100,9 +101,8 @@ sub public_get_proxy {
     );
 
     my $href = $params->{href};
-    my $ip   = $c->remote_addr;
 
-    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $href . $ip), 0, 12);
+    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . encode_utf8($href)), 0, 12);
 
     if ($params->{h} ne $hash) {
         return $c->render(

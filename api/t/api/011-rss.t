@@ -186,7 +186,7 @@ do {
         {content => 'mod because cited shiraNAI in the text shiranai'},
         {content => 'notshiranai is not wordbreaking'}
     ];
-    app->add_tweets_highlights(user => {id => 0}, tweets => $tweets);
+    app->add_tweets_highlights(user => {id => '0e0'}, tweets => $tweets);
 
     use DDP;
     p $tweets;

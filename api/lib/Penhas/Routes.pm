@@ -18,7 +18,7 @@ sub register {
     # GET /news-redirect
     $r->route('news-redirect')->get()->to(controller => 'News', action => 'redirect');
 
-    # GET /news-redirect
+    # GET /get-proxy
     $r->route('get-proxy')->get()->to(controller => 'MediaDownload', action => 'public_get_proxy');
 
     # GET /filter-tags
