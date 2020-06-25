@@ -445,7 +445,7 @@ sub list_tweets {
 
         $next_page = {
             tags   => $opts{tags},
-            before => $last_tweet ? $last_tweet : '',
+            before => $last_tweet ? $last_tweet : '000000T0000000000',
             iss    => 'next_page',
         };
 
