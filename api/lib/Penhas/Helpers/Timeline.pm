@@ -502,7 +502,7 @@ sub _fomart_tweet {
             owner => $user->{id} == $me->{cliente_id} ? 1 : 0,
         },
         id               => $me->{id},
-        content          => $me->{disable_escape} ? $me->{content} : xml_escape($me->{content}),
+        content          => $me->{disable_escape} ? $me->{content} : &_nl2br(xml_escape($me->{content})),
         anonimo          => $anonimo ? 1 : 0,
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
@@ -514,6 +514,13 @@ sub _fomart_tweet {
         ($anonimo ? () : (cliente_id => $me->{cliente_id})),
 
     };
+}
+
+sub _nl2br {
+    my ($text) = @_;
+    $text =~ s/(\r\n|\n\r|\n|\r)/<br\/>$1/g;
+    $text =~ s/\s\s/&nbsp;&nbsp;/g;
+    return $text;
 }
 
 sub _gen_uniq_media_url {
