@@ -16,7 +16,7 @@ sub add {
 
     my $params = $c->req->params->to_hash;
     $c->validate_request_params(
-        content   => {required => 1, type => 'Str', max_length => 500},
+        content   => {required => 1, type => 'Str', max_length => $ENV{TWEET_CONTENT_MAX_LENGTH} || 2200},
         media_ids => {required => 0, type => 'Str', max_length => 500},
     );
     my $user = $c->stash('user');
@@ -29,7 +29,7 @@ sub add {
     );
 
     return $c->render(
-        json => $tweet,
+        json   => $tweet,
         status => 200,
     );
 }
