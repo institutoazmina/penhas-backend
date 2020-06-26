@@ -167,11 +167,19 @@ sub validate_request_params {
             my $min_len = $me->{min_length};
             my $max_len = $me->{max_length};
 
-            die {error => 'form_error', field => $key, reason => 'invalid_max_length', %def_message, status => 400}
-              if (defined($max_len) && $len > $max_len);
+            if (defined($max_len) && $len > $max_len) {
+                my %msg = %def_message;
+                $c->log->debug($val);
+                $msg{message} .= ' máximo: ' . $max_len . ' enviado: ' . $len;
+                die {error => 'form_error', field => $key, reason => 'invalid_max_length', %msg, status => 400};
+            }
 
-            die {error => 'form_error', field => $key, reason => 'invalid_min_length', %def_message, status => 400}
-              if (defined($min_len) && $len < $min_len);
+            if (defined($min_len) && $len < $min_len) {
+                my %msg = %def_message;
+                $c->log->debug($val);
+                $msg{message} .= ' mínimo: ' . $max_len . ' enviado: ' . $len;
+                die {error => 'form_error', field => $key, reason => 'invalid_min_length', %msg, status => 400};
+            }
         }
 
         if (!defined $val && $me->{required} && !($me->{undef_is_valid} && !defined $val)) {
