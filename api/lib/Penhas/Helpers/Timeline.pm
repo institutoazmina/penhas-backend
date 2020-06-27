@@ -897,9 +897,6 @@ sub add_tweets_news {
 
             # atualiza todas as referencias
             foreach my $item ($news_item_ref->{$r->{id}}->@*) {
-
-                use DDP;
-                p $item;
                 $item->{_news}{$r->{id}} = $new_rendered;
             }
         }
@@ -909,20 +906,14 @@ sub add_tweets_news {
         foreach my $item ($opts{tweets}->@*) {
             next unless $item->{type} eq 'news_group';
 
-            use DDP;
-            p $item;
             my @news_in_order;
             foreach my $new_id ($item->{news}->@*) {
-
-                use DDP;
-                p $new_id;
-
                 push @news_in_order, $item->{_news}{$new_id} if $item->{_news}{$new_id};
             }
 
             $item->{news} = \@news_in_order;
 
-            #delete $item->{_news};
+            delete $item->{_news};
         }
     }
 
