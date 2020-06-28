@@ -74,8 +74,10 @@ sub get_schema {
     if (!$ENV{CPF_CACHE_HASH_SALT}) {
         die 'Missing CPF_CACHE_HASH_SALT';
     }
-    $ENV{MEDIA_HASH_SALT} ||= $ENV{CPF_CACHE_HASH_SALT};
-    $ENV{NEWS_HASH_SALT} ||= $ENV{CPF_CACHE_HASH_SALT};
+
+    $ENV{MEDIA_HASH_SALT} ||= $ENV{CPF_CACHE_HASH_SALT} . '.media';
+    $ENV{NEWS_HASH_SALT}  ||= $ENV{CPF_CACHE_HASH_SALT} . '.news';
+    $ENV{GUARD_HASH_SALT} ||= $ENV{CPF_CACHE_HASH_SALT} . '.guard';
 
     die 'missing PUBLIC_API_URL' unless $ENV{PUBLIC_API_URL};
     $ENV{PUBLIC_API_URL} .= '/' unless $ENV{PUBLIC_API_URL} =~ /\/$/;
@@ -100,7 +102,7 @@ sub get_connect_info2 {
         dsn                  => "dbi:mysql:dbname=$dbname;host=$host;port=$port",
         user                 => $user,
         password             => $password,
-        quote_names => 1,
+        quote_names          => 1,
         AutoCommit           => 1,
         RaiseError           => 1,
         mysql_enable_utf8mb4 => 1,

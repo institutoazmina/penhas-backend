@@ -6,7 +6,7 @@ use Penhas::Utils qw/get_media_filepath is_uuid_v4 is_test/;
 use Mojo::UserAgent;
 use feature 'state';
 
-sub ensure_user_loaded {
+sub assert_user_perms {
     my $c = shift;
 
     die 'missing user' unless $c->stash('user_id');

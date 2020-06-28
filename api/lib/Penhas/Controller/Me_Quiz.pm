@@ -3,7 +3,7 @@ use Mojo::Base 'Penhas::Controller';
 
 use DateTime;
 
-sub ensure_user_loaded {
+sub assert_user_perms {
     my $c = shift;
 
     die 'missing user' unless $c->stash('user');

@@ -4,7 +4,7 @@ use Mojo::Base 'Penhas::Controller';
 use DateTime;
 use Penhas::Types qw/TweetID/;
 
-sub ensure_user_loaded {
+sub assert_user_perms {
     my $c = shift;
 
     die 'missing user' unless $c->stash('user');

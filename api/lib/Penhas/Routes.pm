@@ -48,20 +48,26 @@ sub register {
     $me->under('/increment-fake-password-usage')->post()->to(action => 'inc_senha_falsa_counter');
 
     # /me/quiz
-    my $me_quiz = $me->under('/quiz')->to(controller => 'Me_Quiz', action => 'ensure_user_loaded');
+    my $me_quiz = $me->under('/quiz')->to(controller => 'Me_Quiz', action => 'assert_user_perms');
     $me_quiz->post()->to(action => 'process');
 
     # /me/media
-    my $me_media = $me->under('/media')->to(controller => 'Me_Media', action => 'ensure_user_loaded');
+    my $me_media = $me->under('/media')->to(controller => 'Me_Media', action => 'assert_user_perms');
     $me_media->post()->to(action => 'upload');
 
     # /me/tweets
-    my $me_tweets = $me->under('/tweets')->to(controller => 'Me_Tweets', action => 'ensure_user_loaded');
+    my $me_tweets = $me->under('/tweets')->to(controller => 'Me_Tweets', action => 'assert_user_perms');
     $me_tweets->post()->to(action => 'add');
     $me_tweets->delete()->to(action => 'delete');
 
+    # /me/guardioes
+    my $me_guardioes = $me->under('/guardioes')->to(controller => 'Me_Guardioes', action => 'assert_user_perms');
+    $me_guardioes->post()->to(action => 'upsert');
+    $me_guardioes->delete()->to(action => 'delete');
+
+
     # /timeline/
-    my $timeline = $authenticated->under('/timeline')->to(controller => 'Timeline', action => 'ensure_user_loaded');
+    my $timeline = $authenticated->under('/timeline')->to(controller => 'Timeline', action => 'assert_user_perms');
     $timeline->get()->to(action => 'list');
 
     # /timeline/:id
@@ -72,7 +78,7 @@ sub register {
 
     # /media-download
     my $media_download
-      = $authenticated->under('/media-download')->to(controller => 'MediaDownload', action => 'ensure_user_loaded');
+      = $authenticated->under('/media-download')->to(controller => 'MediaDownload', action => 'assert_user_perms');
     $media_download->get()->to(action => 'logged_in_get_media');
 
 

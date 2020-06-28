@@ -12,7 +12,7 @@ use Penhas::Utils qw/get_media_filepath/;
 
 has _uploader => sub { Penhas::Uploader->new() };
 
-sub ensure_user_loaded {
+sub assert_user_perms {
     my $c = shift;
 
     die 'missing user' unless $c->stash('user');

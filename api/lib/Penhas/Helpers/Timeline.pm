@@ -296,15 +296,15 @@ sub list_tweets {
     if ($opts{next_page}) {
         slog_info('list_tweets applying next_page=%s' . to_json($opts{next_page}));
 
-        $c->reply_invalid_param('uso do parent_id com next_page') if $opts{parent_id};
-        $c->reply_invalid_param('uso do after com next_page')     if $opts{after};
-        $c->reply_invalid_param('uso do before com next_page')    if $opts{before};
-        $c->reply_invalid_param('uso do id com next_page')        if $opts{id};
+        $c->reply_invalid_param('uso do parent_id com next_page é vedado') if $opts{parent_id};
+        $c->reply_invalid_param('uso do after com next_page é vedado')     if $opts{after};
+        $c->reply_invalid_param('uso do before com next_page é vedado')    if $opts{before};
+        $c->reply_invalid_param('uso do id com next_page é vedado')        if $opts{id};
 
         $opts{before} = $opts{next_page}{before};
 
         if ($opts{tags} ne $opts{next_page}{tags}) {
-            $c->reply_invalid_param('trocar de tags durante uso do next_page');
+            $c->reply_invalid_param('não pode trocar de tags durante uso do next_page');
         }
     }
 

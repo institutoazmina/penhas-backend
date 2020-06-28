@@ -42,10 +42,14 @@ sub reply_not_found {
 }
 
 sub reply_invalid_param {
-    my $c     = shift;
-    my $param = shift;
+    my ($c, $message, $error, $field, $reason) = @_;
 
-    die {error => 'form_error', message => "$param inválido", status => 400,};
+    die {
+        error   => $error || 'form_error',
+        message => "$message",
+        (defined $field ? (field => $field, reason => $reason || 'invalid') : ()),
+        status => 400,
+    };
 }
 
 sub reply_item_not_found {
@@ -154,6 +158,7 @@ sub validate_request_params {
     my ($c, %fields) = @_;
 
     my $params = $c->req->params->to_hash;
+    my $tested = {};
     foreach my $key (keys %fields) {
         my $me   = $fields{$key};
         my $type = $me->{type};
@@ -199,6 +204,7 @@ sub validate_request_params {
             die {error => 'form_error', field => $key, reason => 'is_required', %def_message}, status => 400,;
         }
 
+        $tested->{$key} = $val;
         next unless $val;
 
         my $cons = Moose::Util::TypeConstraints::find_or_parse_type_constraint($type);
@@ -210,8 +216,10 @@ sub validate_request_params {
         if (!$cons->check($val)) {
             die {error => 'form_error', field => $key, reason => 'invalid', %def_message, status => 400};
         }
+
     }
 
+    return $tested;
 }
 
 

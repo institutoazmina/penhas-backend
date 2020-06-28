@@ -7,7 +7,7 @@ use Mojo::UserAgent;
 use feature 'state';
 use Encode;
 
-sub ensure_user_loaded {
+sub assert_user_perms {
     my $c = shift;
 
     die 'missing user' unless $c->stash('user_id');

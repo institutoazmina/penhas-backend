@@ -4,7 +4,7 @@ use Mojo::Base 'Penhas::Controller';
 use DateTime;
 use Penhas::Types qw/TweetID IntList TimelineCategory/;
 
-sub ensure_user_loaded {
+sub assert_user_perms {
     my $c = shift;
 
     Penhas::Controller::Me::check_and_load($c);

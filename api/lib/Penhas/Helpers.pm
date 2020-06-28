@@ -8,6 +8,7 @@ use Penhas::Helpers::Quiz;
 use Penhas::Helpers::ClienteSetSkill;
 use Penhas::Helpers::Timeline;
 use Penhas::Helpers::RSS;
+use Penhas::Helpers::Guardioes;
 
 use Carp qw/croak/;
 
@@ -15,6 +16,7 @@ sub setup {
     my $self = shift;
 
     Penhas::Helpers::Quiz::setup($self);
+    Penhas::Helpers::Guardioes::setup($self);
     Penhas::Helpers::CPF::setup($self);
     Penhas::Helpers::Timeline::setup($self);
     Penhas::Helpers::ClienteSetSkill::setup($self);

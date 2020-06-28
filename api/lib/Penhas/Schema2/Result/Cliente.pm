@@ -109,6 +109,14 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 200 },
   "upload_status",
   { data_type => "varchar", default_value => "ok", is_nullable => 1, size => 20 },
+  "panic_status_last_blocked_at",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
+  "panic_status",
+  { data_type => "varchar", default_value => "OK", is_nullable => 1, size => 20 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
@@ -119,10 +127,16 @@ __PACKAGE__->has_many(
   { "foreign.cliente_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
+__PACKAGE__->has_many(
+  "clientes_guardioes",
+  "Penhas::Schema2::Result::ClientesGuardio",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-04 12:02:24
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LpvxuccZJ1ZZ04awCtklrw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-28 07:01:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Sf3G3xREYR7ex/4lkgPx5Q
 
 __PACKAGE__->has_many(
   "tweets",

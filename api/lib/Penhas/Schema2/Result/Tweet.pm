@@ -21,7 +21,7 @@ __PACKAGE__->add_columns(
     size => 20,
   },
   "content",
-  { data_type => "varchar", is_nullable => 1, size => 2000 },
+  { data_type => "text", is_nullable => 1 },
   "parent_id",
   { data_type => "varchar", is_nullable => 1, size => 20 },
   "anonimo",
@@ -76,8 +76,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-20 21:04:53
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kU2WvsuNqndSZ+cUDMCwrg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-28 05:38:58
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ESdwQSLHRGl1qmo+EFEMkg
 
 
 __PACKAGE__->belongs_to(
