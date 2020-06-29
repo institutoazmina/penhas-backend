@@ -548,7 +548,7 @@ sub process_quiz_session {
             elsif ($msg->{type} eq 'multiplechoices') {
 
                 # lista de ate 999 numeros
-                if (defined $val && length $val <= 6000 && $val =~ /^(\d{1,4},){0,999}\d{1,4}$/a) {
+                if (defined $val && length $val <= 6000 && $val =~ /^[0-9]{1,6}(?>,[0-9]{1,6})*$/a) {
 
                     my $reverse_index = {map { $_->{index} => $_->{display} } $msg->{options}->@*};
                     my $output        = '';
