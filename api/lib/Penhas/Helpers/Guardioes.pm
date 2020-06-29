@@ -27,10 +27,6 @@ sub cliente_upsert_guardioes {
 
 
     my ($celular_e164, $celular_national) = &_parse_celular($c, $celular);
-    use DDP;
-    p $celular_e164;
-    p $celular_national;
-
     $user = $c->schema2->resultset('Cliente')->find($user->{id}) or croak 'Cliente not found';
 
     my $filtered_rs = $user->clientes_guardioes_rs->search_rs(
@@ -41,6 +37,10 @@ sub cliente_upsert_guardioes {
 
     $filtered_rs->expires_pending_invites;
 
+    my ($message, $row);
+
+    my $already_sent_msg
+      = 'O seu guardião pode aceitar o seu convite utilizando o mesmo link que foi enviado anteriormente.';
     my $exists_active = $filtered_rs->search(
         {
             status => {in => [qw/pending accepted/]},
@@ -50,19 +50,21 @@ sub cliente_upsert_guardioes {
         }
     )->next;
     if ($exists_active) {
-        $c->reply_invalid_param(
-            sprintf(
-                'O número %s %s',
-                $celular_national,
-                (
-                    $exists_active->status eq 'pending'
-                    ? 'já tem um convite aberto'
-                    : 'já é um guardião'
-                ),
+
+        $row = $exists_active;
+
+        $message = sprintf(
+            'O número %s %s',
+            $celular_national,
+            (
+                $exists_active->status eq 'pending'
+                ? "já tem um convite aguardando ativação. $already_sent_msg"
+                : 'já é um guardião!'
             ),
-            'open_invite_or_invited',
-            'celular'
-        );
+          ),
+          'open_invite_or_invited',
+          'celular';
+        goto RENDER;
     }
 
     my $recent_refused = $filtered_rs->search(
@@ -96,7 +98,6 @@ sub cliente_upsert_guardioes {
             'columns' => [qw/id deleted_at/],
         }
     )->next;
-    my ($message, $row);
     if ($recent_refused) {
 
         $recent_refused->update(
@@ -108,7 +109,7 @@ sub cliente_upsert_guardioes {
         $row = $recent_refused;
 
         $message = sprintf(
-            'O convite para o número %s foi reativado! O seu guardião pode aceitar o seu convite utilizando o mesmo link que foi enviado anteriormente.',
+            "O convite para o número %s foi reativado! $already_sent_msg",
             $celular_national,
         );
         goto RENDER;

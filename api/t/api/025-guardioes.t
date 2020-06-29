@@ -90,8 +90,54 @@ do {
             celular => '+14842918467',
         }
     )->status_is(200)->json_is('/data/celular_formatted_as_national', '+1 484-291-8467')
-      ->json_is('/data/nome',       'test nome')->json_is('/data/apelido', 'apelido!!')->json_is('/data/is_pending', '1')
-      ->json_is('/data/is_expired', '0')->json_is('/data/is_accepted', '0')->json_like('/message', qr/SMS/);
+      ->json_is('/data/nome', 'test nome')->json_is('/data/apelido', 'apelido!!')->json_is('/data/is_pending', '1')
+      ->json_is('/data/is_expired', '0')->json_is('/data/is_accepted', '0')->json_like('/message', qr/Enviamos um SMS/);
+
+    $t->post_ok(
+        '/me/guardioes',
+        {'x-api-key' => $session},
+        form => {
+            nome    => 'portugues',
+            apelido => 'sao paulo',
+            celular => '021 11 912341234',
+        }
+    )->status_is(200)->json_is('/data/celular_formatted_as_national', '(11) 91234-1234')
+      ->json_is('/data/nome', 'portugues')->json_is('/data/apelido', 'sao paulo')->json_is('/data/is_pending', '1')
+      ->json_is('/data/is_expired', '0')->json_is('/data/is_accepted', '0')->json_like('/message', qr/Enviamos um SMS/);
+
+    ok(my $id = $t->tx->res->json->{data}{id}, 'has id');
+
+    $t->post_ok(
+        '/me/guardioes',
+        {'x-api-key' => $session},
+        form => {
+            nome    => 'portugues',
+            apelido => 'sao paulo',
+            celular => '021 11 912341234',
+        }
+    )->status_is(200)->json_is('/data/celular_formatted_as_national', '(11) 91234-1234')
+      ->json_like('/message', qr/convite aguardando/);
+
+    $t->delete_ok(
+        '/me/guardioes',
+        {'x-api-key' => $session},
+        form => {
+            id => $id,
+        }
+    )->status_is(204);
+
+
+    $t->post_ok(
+        '/me/guardioes',
+        {'x-api-key' => $session},
+        form => {
+            nome    => 'portugues',
+            apelido => 'sao paulo',
+            celular => '021 11 912341234',
+        }
+    )->status_is(200)->json_is('/data/celular_formatted_as_national', '(11) 91234-1234')
+      ->json_like('/message', qr/enviado anteriormente/);
+
 
 };
 
