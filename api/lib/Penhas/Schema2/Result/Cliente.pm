@@ -139,11 +139,37 @@ __PACKAGE__->has_many(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Sf3G3xREYR7ex/4lkgPx5Q
 
 __PACKAGE__->has_many(
-  "tweets",
-  "Penhas::Schema2::Result::Tweet",
-  { "foreign.cliente_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
+    "tweets",
+    "Penhas::Schema2::Result::Tweet",
+    {"foreign.cliente_id" => "self.id"},
+    {cascade_copy         => 0, cascade_delete => 0},
 );
+
+sub is_female {
+    my $self = shift;
+    return $self->genero() =~ /^(Feminino|MulherTrans)$/ ? 1 : 0;
+}
+
+sub access_modules {
+    my $self = shift;
+
+    my @modules;
+    if ($self->is_female) {
+        push @modules,
+          qw/tweets chat_privado chat_suporte noticias modo_camuflado modo_anonimo pontos_de_apoio modo_seguranca/;
+    }
+    else {
+        push @modules, qw/chat_suporte noticias pontos_de_apoio/;
+    }
+
+    return {map { ($_ => {}) } @modules};
+}
+
+sub access_modules_str {
+    my $self = shift;
+
+    return ',' . join(',', keys $self->access_modules->%*) . ',';
+}
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

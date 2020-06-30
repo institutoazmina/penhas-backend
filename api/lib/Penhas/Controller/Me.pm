@@ -6,6 +6,7 @@ use DateTime;
 sub check_and_load {
     my $c = shift;
 
+use DDP; p $c;
     die 'missing user_id' unless $c->stash('user_id');
 
     my $user = $c->schema2->resultset('Cliente')->search(
@@ -14,11 +15,11 @@ sub check_and_load {
             'status'       => 'active',
             'login_status' => 'OK',
         },
-        {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
     )->next;
 
     $c->reply_not_found() unless $user;
-    $c->stash('user' => $user);
+    $c->stash('user_obj' => $user);
+    $c->stash('user'     => {$user->get_inflated_columns});
     return 1;
 }
 
@@ -26,29 +27,24 @@ sub find {
     my $c = shift;
 
     my %extra;
-    my $user = $c->stash('user');
+    my $user     = $c->stash('user');
+    my $user_obj = $c->stash('user_obj');
 
-    my @modules;
-    my $feminino = $user->{genero} eq 'Feminino' || $user->{genero} eq 'MulherTrans';
-
-    if ($feminino) {
-        push @modules, qw/timeline chat_privado chat_suporte noticias modo_camuflado modo_anonimo pontos_de_apoio modo_seguranca/;
-    }
-    else {
-        push @modules, qw/chat_suporte noticias pontos_de_apoio/;
-    }
+    my $feminino = $user_obj->is_female;
+    my $modules  = $user_obj->access_modules;
 
     my $quiz_session = $c->user_get_quiz_session(user => $user);
 
     if ($quiz_session) {
 
         # remove acesso a tudo, o usuario deve completar o quiz
-        @modules = qw/quiz/;
+        $modules = {quiz => {}};
 
         $c->load_quiz_session(session => $quiz_session, user => $user);
 
         $extra{quiz_session} = $c->stash('quiz_session');
-use JSON;$c->log->info(to_json($extra{quiz_session}));
+
+        $c->log->info(to_json($extra{quiz_session}));
     }
 
     return $c->render(
@@ -64,10 +60,8 @@ use JSON;$c->log->info(to_json($extra{quiz_session}));
             modo_anonimo_ativo           => $user->{modo_anonimo_ativo}           ? 1 : 0,
             ja_foi_vitima_de_violencia   => $user->{modo_anonimo_ativo}           ? 1 : 0,
             esta_em_situcao_de_violencia => $user->{esta_em_situcao_de_violencia} ? 1 : 0,
-            mastodon_username            => $user->{mastodon_username},
-            senha_falsa_sha256           => $user->{senha_falsa_sha256},
 
-            modules => \@modules,
+            modules => $modules,
             %extra
         },
         status => 200,

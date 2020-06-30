@@ -64,7 +64,8 @@ my $topic1 = $tags_rs->create(
 
 $t->get_ok(
     '/filter-tags',
-)->status_is(200)->json_is('/tags/0/title', 'tag1', 'tag 1')->json_is('/tags/1/title', undef, 'no more tags');
+)->status_is(401);
+
 
 my $rule1 = $rules_rs->create(
     {
@@ -291,6 +292,12 @@ do {
         {'x-api-key' => $session}
     )->status_is(200)->json_is('/tweets/0/type', 'news_group')->json_is('/tweets/0/header', 'topic1')
       ->json_is('/tweets/0/news/0/title', 'This is Page1 Title');
+
+
+    $t->get_ok(
+        '/filter-tags',
+        {'x-api-key' => $session}
+    )->status_is(200)->json_is('/tags/0/title', 'tag1', 'tag 1')->json_is('/tags/1/title', undef, 'no more tags');
 
     on_scope_exit { user_cleanup(user_id => $user_id); };
 

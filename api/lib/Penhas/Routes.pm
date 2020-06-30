@@ -21,9 +21,6 @@ sub register {
     # GET /get-proxy
     $r->route('get-proxy')->get()->to(controller => 'MediaDownload', action => 'public_get_proxy');
 
-    # GET /filter-tags
-    $r->route('filter-tags')->get()->to(controller => 'Tags', action => 'filter_tags');
-
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss
     my $maintenance = $r->under('maintenance')->to(controller => 'Maintenance', action => 'check_authorization');
@@ -37,6 +34,9 @@ sub register {
 
     # PRIVATE ENDPOINTS
     my $authenticated = $r->under()->to(controller => 'JWT', action => 'check_user_jwt');
+
+    # GET /filter-tags
+    $authenticated->under('/filter-tags')->get()->to(controller => 'Tags', action => 'filter_tags');
 
     # POST /logout
     $authenticated->under('/logout')->post()->to(controller => 'Logout', action => 'post');
@@ -63,7 +63,10 @@ sub register {
     # /me/guardioes
     my $me_guardioes = $me->under('/guardioes')->to(controller => 'Me_Guardioes', action => 'assert_user_perms');
     $me_guardioes->post()->to(action => 'upsert');
-    $me_guardioes->delete()->to(action => 'delete');
+
+    my $me_guardioes_object = $me_guardioes->under(':guard_id');
+    $me_guardioes_object->delete()->to(action => 'delete');
+    $me_guardioes_object->put()->to(action => 'edit');
 
 
     # /timeline/

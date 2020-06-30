@@ -1,22 +1,23 @@
 package Penhas::Controller::Tags;
 use utf8;
 use Mojo::Base 'Penhas::Controller';
-
+use Penhas::Controller::Me;
 use Penhas::Utils qw/is_test/;
 use Penhas::KeyValueStorage;
 
 sub filter_tags {
     my $c = shift;
 
-    # limite bem generoso por IP, 60x por minuto
-    my $remote_ip = $c->remote_addr();
+    Penhas::Controller::Me::check_and_load($c);
 
-    # recortando o IPV6 para apenas o prefixo (18 chars)
-    $c->stash(apply_rps_on => substr($remote_ip, 0, 18));
-    $c->apply_request_per_second_limit(60, 60);
+    my $modules = $c->stash('user_obj')->access_modules_str;
+
+    my $cache_key = '';
+    $cache_key .= 'T' if $modules =~ /,tweets,/;
+    $cache_key .= 'N' if $modules =~ /,noticias,/;
 
     my $tags = Penhas::KeyValueStorage->instance->redis_get_cached_or_execute(
-        'tags_filter',
+        "tags_filter:$cache_key",
         86400,    # 1 day
         sub {
             my @tags = $c->schema2->resultset('Tag')->search(
@@ -36,10 +37,22 @@ sub filter_tags {
             return {
                 tags       => \@tags,
                 categories => [
-                    {default => 1, value => 'all',         label => 'Tudo',},
-                    {default => 0, value => 'only_news',   label => 'Apenas notícias',},
-                    {default => 0, value => 'only_tweets', label => 'Apenas publicações',},
-                    {default => 0, value => 'all_myself',  label => 'Minhas publicações e comentários',},
+                    {default => 1, value => 'all', label => 'Tudo',},
+                    (
+                        $modules =~ /,noticias,/
+                        ? (
+                            {default => 0, value => 'only_news', label => 'Apenas notícias',},
+                          )
+                        : ()
+                    ),
+                    (
+                        $modules =~ /,tweets,/
+                        ? (
+                            {default => 0, value => 'only_tweets', label => 'Apenas publicações',},
+                            {default => 0, value => 'all_myself',  label => 'Minhas publicações e comentários',},
+                          )
+                        : ()
+                    )
                 ],
             };
         }
