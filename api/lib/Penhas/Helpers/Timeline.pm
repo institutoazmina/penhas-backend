@@ -378,11 +378,7 @@ sub list_tweets {
 
     use DDP;
     p $has_more;
-    if ($has_more) {
-        use DDP;
-        pop @rows;
-    }
-
+    pop @rows if $has_more;
 
     my $remote_addr = $c->remote_addr;
     my @tweets;
@@ -401,6 +397,9 @@ sub list_tweets {
 
         push @tweets, $item;
     }
+
+    # carrega o last_tweet antes de mudar a lista pra adicionar os outros tipos
+    my $last_tweet = scalar @tweets ? $tweets[-1]{id} : undef;
 
     my %last_reply;
     if (@comments) {
@@ -439,9 +438,7 @@ sub list_tweets {
     # nao adicionar noticias nos detalhes
     # nem quando sao tweets puxados com after
     # tambem nao deve ter next_page
-    if (!$opts{parent_id} && !$opts{after} && !$opts{id} && $category =~ /^(all|only_news)$/) {
-
-        my $last_tweet = scalar @tweets ? $tweets[-1]{id} : undef;
+    if (!$opts{parent_id} && !$opts{after} && !$opts{id}) {
 
         $next_page = {
             tags   => $opts{tags},
@@ -449,16 +446,19 @@ sub list_tweets {
             iss    => 'next_page',
         };
 
-        $c->add_tweets_news(
-            user     => $user,
-            tweets   => \@tweets,
-            category => $category,
-            tags     => $opts{tags},
-            %{$opts{next_page}},
-            next_page => $next_page,
-        );
+        if ($category =~ /^(all|only_news)$/) {
+            $c->add_tweets_news(
+                user     => $user,
+                tweets   => \@tweets,
+                category => $category,
+                tags     => $opts{tags},
+                %{$opts{next_page}},
+                next_page => $next_page,
+            );
 
-        $has_more  = 1 if delete $next_page->{set_has_more_true};
+            $has_more = 1 if delete $next_page->{set_has_more_true};
+        }
+
         $next_page = $c->encode_jwt($next_page, 1);
     }
 
