@@ -7,7 +7,7 @@ use Penhas::Types qw/TweetID/;
 sub assert_user_perms {
     my $c = shift;
 
-    die 'missing user' unless $c->stash('user');
+    $c->assert_user_has_module('tweets');
     return 1;
 }
 

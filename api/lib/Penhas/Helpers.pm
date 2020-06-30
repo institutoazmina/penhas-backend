@@ -10,7 +10,7 @@ use Penhas::Helpers::Timeline;
 use Penhas::Helpers::RSS;
 use Penhas::Helpers::Guardioes;
 
-use Carp qw/croak/;
+use Carp qw/croak confess/;
 
 sub setup {
     my $self = shift;
@@ -27,6 +27,26 @@ sub setup {
     $self->helper(schema2 => sub { state $schema2 = Penhas::SchemaConnected->get_schema2(@_) });
     $self->helper(sum_cpf_errors => sub { &sum_cpf_errors(@_) });
 
+
+    $self->helper(
+        assert_user_has_module => sub {
+            my $c      = shift;
+            my $module = shift or confess 'missing param $module';
+
+            my $user_obj = $c->stash('user_obj') or confess 'missing stash.user_obj';
+
+            $c->log->info(
+                "Asserting user has access to module '$module' - user modules is: " . $user_obj->access_modules_str());
+
+            die {
+                status  => 400,
+                error   => 'missing_module',
+                message => "Você não tem acesso ao modulo $module",
+            } unless $user_obj->has_module($module);
+
+            return;
+        }
+    );
     $self->helper(
         remote_addr => sub {
             my $c = shift;

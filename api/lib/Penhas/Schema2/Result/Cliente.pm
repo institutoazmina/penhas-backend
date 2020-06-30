@@ -144,6 +144,10 @@ __PACKAGE__->has_many(
     {"foreign.cliente_id" => "self.id"},
     {cascade_copy         => 0, cascade_delete => 0},
 );
+use Carp qw/confess/;
+
+my $_cached_modules;
+my $_cached_modules_str;
 
 sub is_female {
     my $self = shift;
@@ -151,6 +155,7 @@ sub is_female {
 }
 
 sub access_modules {
+    return $_cached_modules if defined $_cached_modules;
     my $self = shift;
 
     my @modules;
@@ -162,13 +167,22 @@ sub access_modules {
         push @modules, qw/chat_suporte noticias pontos_de_apoio/;
     }
 
-    return {map { ($_ => {}) } @modules};
+    $_cached_modules = {map { ($_ => {}) } @modules};
+    return $_cached_modules;
 }
 
 sub access_modules_str {
-    my $self = shift;
+    return $_cached_modules_str if defined $_cached_modules_str;
 
-    return ',' . join(',', keys $self->access_modules->%*) . ',';
+    $_cached_modules_str = ',' . join(',', keys $_[0]->access_modules->%*) . ',';
+    return $_cached_modules_str;
+}
+
+sub has_module {
+    my $self   = shift;
+    my $module = shift || confess 'missing module name';
+
+    return $self->access_modules_str() =~ /,$module,/;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
