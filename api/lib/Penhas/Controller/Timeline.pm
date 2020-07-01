@@ -105,6 +105,7 @@ sub list {
     my $tweets = $c->list_tweets(
         %$params,
         user => $c->stash('user'),
+        user_obj => $c->stash('user_obj'),
     );
 
     return $c->render(

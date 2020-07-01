@@ -1,6 +1,6 @@
 package Penhas::Helpers::Timeline;
 use common::sense;
-use Carp qw/croak confess/;
+use Carp qw/confess /;
 use utf8;
 use Penhas::KeyValueStorage;
 use Scope::OnExit;
@@ -33,11 +33,11 @@ sub setup {
 sub like_tweet {
     my ($c, %opts) = @_;
 
-    my $user = $opts{user} or croak 'missing user';
-    my $id   = $opts{id}   or croak 'missing id';
+    my $user = $opts{user} or confess 'missing user';
+    my $id   = $opts{id}   or confess 'missing id';
     my $remove = $opts{remove};
 
-    croak 'missing remove' unless defined $remove;
+    confess 'missing remove' unless defined $remove;
 
     slog_info(
         'like_tweet %s %s',
@@ -106,8 +106,8 @@ sub like_tweet {
 sub delete_tweet {
     my ($c, %opts) = @_;
 
-    my $user = $opts{user} or croak 'missing user';
-    my $id   = $opts{id}   or croak 'missing id';
+    my $user = $opts{user} or confess 'missing user';
+    my $id   = $opts{id}   or confess 'missing id';
 
     slog_info(
         'del_tweet %s',
@@ -155,8 +155,8 @@ sub delete_tweet {
 sub add_tweet {
     my ($c, %opts) = @_;
 
-    my $user    = $opts{user}    or croak 'missing user';
-    my $content = $opts{content} or croak 'missing content';
+    my $user    = $opts{user}    or confess 'missing user';
+    my $content = $opts{content} or confess 'missing content';
     my $media_ids = $opts{media_ids};
     my $reply_to  = $opts{reply_to};
 
@@ -240,9 +240,9 @@ sub add_tweet {
 sub report_tweet {
     my ($c, %opts) = @_;
 
-    my $user        = $opts{user}   or croak 'missing user';
-    my $reason      = $opts{reason} or croak 'missing reason';
-    my $reported_id = $opts{id}     or croak 'missing id';
+    my $user        = $opts{user}   or confess 'missing user';
+    my $reason      = $opts{reason} or confess 'missing reason';
+    my $reported_id = $opts{id}     or confess 'missing id';
 
     slog_info(
         'report_tweet reported_id=%s, reason=%s',
@@ -287,9 +287,26 @@ sub list_tweets {
     my $rows = $opts{rows} || 10;
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
-    my $user = $opts{user} or croak 'missing user';
+    my $user     = $opts{user} or confess 'missing user';
+    my $user_obj = $opts{skip_comments} ? undef : ($opts{user_obj} or confess 'missing user_obj');
 
-    my $category = $opts{category} || 'all';
+
+    my $modules_str = $user_obj ? $user_obj->access_modules_str : ',tweets,';
+    my $category    = $opts{category} || 'all';
+    if ($user_obj) {
+
+        # se pediu por tudo que pode incluir tweets, mas nao eh tem permissao pros tweets,
+        # volta dar erro
+        if ($category =~ /^(all_myself|only_tweets)$/ && $modules_str !~ /,tweets,/) {
+            $c->reply_invalid_param('sua conta não tem permissão para utilizar esse filtro.');
+        }
+    }
+
+    # se for "tudo", mas nao ter tweets, vamos remover e deixar only_news
+    if ($category eq 'all' && $modules_str !~ /,tweets,/) {
+        log_info("changing category form '$category' to only_news");
+        $category = 'only_news';
+    }
 
     $opts{$_} ||= '' for qw/after before parent_id id tags/;
 
@@ -309,7 +326,8 @@ sub list_tweets {
     }
 
     slog_info(
-        'list_tweets after=%s before=%s parent_id=%s id=%s rows=%s tags=%s',
+        'list_tweets category=%s after=%s before=%s parent_id=%s id=%s rows=%s tags=%s',
+        $category,
         $opts{after},
         $opts{before},
         $opts{parent_id},
@@ -566,8 +584,8 @@ sub _get_proxy_image_url {
 sub add_tweets_highlights {
     my ($c, %opts) = @_;
 
-    my $user   = $opts{user}   or croak 'missing user';
-    my $tweets = $opts{tweets} or croak 'missing tweets';
+    my $user   = $opts{user}   or confess 'missing user';
+    my $tweets = $opts{tweets} or confess 'missing tweets';
 
     my $config = &kv()->redis_get_cached_or_execute(
         'tags_highlight_regexp',

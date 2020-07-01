@@ -146,16 +146,19 @@ __PACKAGE__->has_many(
 );
 use Carp qw/confess/;
 
-my $_cached_modules;
-my $_cached_modules_str;
+use Moose;
+use MooseX::NonMoose;
+use MooseX::MarkAsMethods autoclean => 1;
+
 
 sub is_female {
     my $self = shift;
     return $self->genero() =~ /^(Feminino|MulherTrans)$/ ? 1 : 0;
 }
 
-sub access_modules {
-    return $_cached_modules if defined $_cached_modules;
+has 'access_modules' => (is => 'rw', lazy => 1, builder => '_build_access_modules');
+
+sub _build_access_modules {
     my $self = shift;
 
     my @modules;
@@ -167,15 +170,11 @@ sub access_modules {
         push @modules, qw/chat_suporte noticias pontos_de_apoio/;
     }
 
-    $_cached_modules = {map { ($_ => {}) } @modules};
-    return $_cached_modules;
+    return {map { ($_ => {}) } @modules};
 }
 
 sub access_modules_str {
-    return $_cached_modules_str if defined $_cached_modules_str;
-
-    $_cached_modules_str = ',' . join(',', keys $_[0]->access_modules->%*) . ',';
-    return $_cached_modules_str;
+    return ',' . join(',', keys $_[0]->access_modules->%*) . ',';
 }
 
 sub has_module {
