@@ -305,7 +305,7 @@ sub list_tweets {
     # se for "tudo", mas nao ter tweets, vamos remover e deixar only_news
     if ($category eq 'all' && $modules_str !~ /,tweets,/) {
         log_info("changing category form '$category' to only_news");
-        $category = 'only_news';
+        $category = 'all_but_news';
     }
 
     $opts{$_} ||= '' for qw/after before parent_id id tags/;
@@ -369,7 +369,7 @@ sub list_tweets {
     if ($category eq 'all_myself') {
         push $cond->{'-and'}->@*, {'me.cliente_id' => $user->{id}};
     }
-    elsif ($category eq 'only_news') {
+    elsif ($category eq 'only_news' || $category eq 'all_but_news') {
 
         # filtra por um id que nao existe
         push $cond->{'-and'}->@*, \'0 = 1';
@@ -464,7 +464,7 @@ sub list_tweets {
             iss    => 'next_page',
         };
 
-        if ($category =~ /^(all|only_news)$/) {
+        if ($category =~ /^(all|only_news|all_but_news)$/) {
             $c->add_tweets_news(
                 user     => $user,
                 tweets   => \@tweets,
@@ -479,6 +479,9 @@ sub list_tweets {
 
         $next_page = $c->encode_jwt($next_page, 1);
     }
+
+    # restaura pra 'all'
+    $category = 'all' if $category eq 'all_but_news';
 
     return {
         tweets   => \@tweets,
