@@ -787,11 +787,13 @@ sub add_tweets_news {
 
         log_info("asking for $expected_rows rows of NoticiasVitrine");
 
-        my $last_vitrine_order = $opts{vitrine_order} || 0;
+        my $last_vitrine_order = $opts{vitrine_order} || -1;
+
+        log_info("vitrine last_vitrine_order= $last_vitrine_order");
         @vitrine = $c->schema2->resultset('NoticiasVitrine')->search(
             {
                 status => is_test() ? 'test' : 'prod',
-                order  => {'>=' => $last_vitrine_order},
+                order  => {'>' => $last_vitrine_order},
             },
             {
                 order_by     => 'me.order',
@@ -806,7 +808,7 @@ sub add_tweets_news {
         $last_vitrine_order = $vitrine[-1]{order} if $vitrine[-1];
 
         $opts{next_page}{set_has_more_true} = $has_more;
-        $opts{next_page}{vitrine_order} = $last_vitrine_order;
+        $opts{next_page}{vitrine_order}     = $last_vitrine_order;
 
 
         log_info("vitrine array . " . dumper(\@vitrine));
