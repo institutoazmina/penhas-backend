@@ -885,7 +885,11 @@ sub add_tweets_news {
         log_info("alguns itens da noticias ainda existem... adicionando no final");
         foreach my $r (@news) {
             $news_added->{$r->{id}}++;
-            push $opts{tweets}->@*, &_format_noticia($r, %opts);
+            push $opts{tweets}->@*, {
+                type   => 'news_group',
+                header => undef,
+                news   => [&_format_noticia($r, %opts)]
+            };
         }
     }
 

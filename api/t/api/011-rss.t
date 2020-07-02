@@ -258,7 +258,7 @@ do {
     $t->get_ok(
         ('/timeline?category=only_news'),
         {'x-api-key' => $session}
-    )->status_is(200)->json_is('/tweets/0/type', 'news')->json_is('/tweets/0/title', 'This is Page1 Title')
+    )->status_is(200)->json_is('/tweets/0/type', 'news_group')->json_is('/tweets/0/news/0/title', 'This is Page1 Title')
       ->json_is('/has_more', '0')->tx->res->json;
 
     # testa visao tweets+noticias, mas passando tags
@@ -266,8 +266,8 @@ do {
     $t->get_ok(
         ('/timeline?category=all&tags=' . $tag1->id),
         {'x-api-key' => $session}
-    )->status_is(200)->json_is('/tweets/0/type', 'news')
-      ->json_is('/tweets/0/title', '“Mulher” teste decode encoded titles')->json_is('/has_more', '0')
+    )->status_is(200)->json_is('/tweets/0/type', 'news_group')
+      ->json_is('/tweets/0/news/0/title', '“Mulher” teste decode encoded titles')->json_is('/has_more', '0')
       ->tx->res->json;
 
 #    $t->get_ok(
