@@ -30,12 +30,14 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 0,
   },
+  "sns_message_id",
+  { data_type => "varchar", is_nullable => 1, size => 200 },
 );
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-02 06:27:03
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0QtAOPt8UQBpBJFLuDe0TA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-02 07:57:58
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:UIwwzUHfW1/NXjD+06dZ8w
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
