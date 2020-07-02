@@ -133,13 +133,24 @@ sub cliente_upsert_guardioes {
 
     $message = 'Enviamos um SMS com um link para que o guardião aceite o seu convite.';
 
-    my $messagem_sms = sprintf 'Você foi convidado pela %s para ser o guardião';
+    my $message_prepend = 'PenhaS: ';
+    my $message_link
+      = ' convidou vc ser guardiao dela. p/ aceitar e mais informações acesse '
+      . ($ENV{SMS_GUARD_LINK} || 'https://sms.penhas.com.br/')
+      . $row->token();
+
+    my $remaining_chars = 140 - lenght($message_prepend . $message_link);
+
+    # se ficou menor, nao tem jeito, vamo ser dois SMS..
+    $remaining_chars += 140 if $remaining_chars < 0;
+
+    my $message_sms = $message_prepend . substr($user->nome_completo, 0, $remaining_chars) . $message_link;
 
     my $job_id = $c->minion->enqueue(
         'send_sms',
         [
-           $celular_e164,
-           $messagem_sms,
+            $celular_e164,
+            $message_sms,
         ] => {
             notes    => {clientes_guardioes_id => $row->id},
             attempts => 5,
