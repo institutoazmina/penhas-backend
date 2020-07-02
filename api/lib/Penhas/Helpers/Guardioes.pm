@@ -126,7 +126,7 @@ sub cliente_upsert_guardioes {
             celular_formatted_as_national => $celular_national,
             apelido                       => $apelido,
             nome                          => $nome,
-            token                         => $token . $hash,
+            token                         => uc($token . $hash),
             expires_at                    => \'date_add(now(), interval 30 day)'
         }
     );
