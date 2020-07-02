@@ -834,7 +834,11 @@ sub add_tweets_news {
             my $news = shift(@news);
             if ($news) {
                 $news_added->{$news->{id}}++;
-                push $opts{tweets}->@*, &_format_noticia($news, %opts);
+                push $opts{tweets}->@*, {
+                    type   => 'news_group',
+                    header => undef,
+                    news   => [&_format_noticia($news, %opts)]
+                };
             }
 
         }
@@ -953,7 +957,7 @@ sub _format_noticia {
     $opts{user} or confess 'missing $opts{user}';
 
     return {
-        type     => 'news',
+        #type     => 'news',
         id       => $r->{id},
         href     => &_get_tracked_news_url($opts{user}, $r),
         title    => $r->{title},
