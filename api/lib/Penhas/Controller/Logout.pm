@@ -1,10 +1,15 @@
 package Penhas::Controller::Logout;
 use Mojo::Base 'Penhas::Controller';
+use Penhas::KeyValueStorage;
 
 sub post {
     my $c = shift;
 
-    $c->schema2->resultset('ClientesActiveSession')->search({id => $c->stash('jwt_session_id')})->delete;
+    my $session_id        = $c->stash('jwt_session_id');
+    my $session_cache_key = $c->stash('session_cache_key');
+    Penhas::KeyValueStorage->instance->redis->del($ENV{REDIS_NS} . $session_cache_key) if $session_cache_key;
+
+    $c->schema2->resultset('ClientesActiveSession')->search({id => $session_id})->delete;
 
     return $c->render(
         text   => '',
