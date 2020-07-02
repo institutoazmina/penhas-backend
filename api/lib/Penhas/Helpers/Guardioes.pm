@@ -139,7 +139,7 @@ sub cliente_upsert_guardioes {
       . ($ENV{SMS_GUARD_LINK} || 'https://sms.penhas.com.br/')
       . $row->token();
 
-    my $remaining_chars = 140 - lenght($message_prepend . $message_link);
+    my $remaining_chars = 140 - length($message_prepend . $message_link);
 
     # se ficou menor, nao tem jeito, vamo ser dois SMS..
     $remaining_chars += 140 if $remaining_chars < 0;
