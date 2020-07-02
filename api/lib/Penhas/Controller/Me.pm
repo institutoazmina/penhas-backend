@@ -6,7 +6,6 @@ use DateTime;
 sub check_and_load {
     my $c = shift;
 
-use DDP; p $c;
     die 'missing user_id' unless $c->stash('user_id');
 
     my $user = $c->schema2->resultset('Cliente')->search(

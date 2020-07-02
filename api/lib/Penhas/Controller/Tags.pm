@@ -65,7 +65,12 @@ sub clear_cache {
     my $c     = shift;
     my $redis = Penhas::KeyValueStorage->instance->redis;
 
-    $redis->del($ENV{REDIS_NS} . 'tags_filter', $ENV{REDIS_NS} . 'tags_highlight_regexp');
+    $redis->del(
+        $ENV{REDIS_NS} . 'tags_filter:T',
+        $ENV{REDIS_NS} . 'tags_filter:N',
+        $ENV{REDIS_NS} . 'tags_filter:TN',
+        $ENV{REDIS_NS} . 'tags_highlight_regexp'
+    );
 
     return $c->render(json => {});
 }
