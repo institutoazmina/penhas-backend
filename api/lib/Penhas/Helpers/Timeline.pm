@@ -477,11 +477,15 @@ sub list_tweets {
             $has_more = 1 if delete $next_page->{set_has_more_true};
         }
 
+        log_info('next page . ' . dumper($next_page));
+
         $next_page = $c->encode_jwt($next_page, 1);
     }
 
     # restaura pra 'all'
     $category = 'all' if $category eq 'all_but_news';
+    log_info('$category . ' . $$category);
+    log_info('tweets . ' . dumper(\@tweets));
 
     return {
         tweets   => \@tweets,
