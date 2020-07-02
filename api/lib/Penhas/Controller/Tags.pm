@@ -66,9 +66,10 @@ sub clear_cache {
     my $redis = Penhas::KeyValueStorage->instance->redis;
 
     $redis->del(
-        $ENV{REDIS_NS} . 'tags_filter:T',
-        $ENV{REDIS_NS} . 'tags_filter:N',
-        $ENV{REDIS_NS} . 'tags_filter:TN',
+        $ENV{REDIS_NS} . 'tags_filter:T',     # so tweets
+        $ENV{REDIS_NS} . 'tags_filter:N',     # so news
+        $ENV{REDIS_NS} . 'tags_filter:TN',    # tweets+news
+        $ENV{REDIS_NS} . 'tags_filter:',      # nenhuma permissao
         $ENV{REDIS_NS} . 'tags_highlight_regexp'
     );
 

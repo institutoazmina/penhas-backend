@@ -22,19 +22,20 @@ sub check_user_jwt {
         if (defined $claims && ref $claims eq 'HASH' && $claims->{typ} eq 'usr') {
 
             # TODO usar o redis pra nao precisar ir toda hora no banco de dados
-            my $item = $c->directus->search_one(
-                table => 'clientes_active_sessions',
-                form  => {
-                    'filter[id][eq]' => $claims->{ses},
+            my $item = $c->schema2->resultset('ClientesActiveSession')->search(
+                {'me.id'      => $claims->{ses}},
+                {
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                    columns => ['cliente_id']
                 }
-            );
+            )->next;
             if (!$item) {
                 $c->render(
                     json => {error => 'jwt_logout', message => "Está sessão não está mais válida (Usuário saiu)"},
-                    status => 403);
+                    status => 403
+                );
                 return undef;
             }
-
             my $user_id = $item->{cliente_id};
 
             Log::Log4perl::NDC->remove;

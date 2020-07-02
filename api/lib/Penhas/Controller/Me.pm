@@ -2,6 +2,7 @@ package Penhas::Controller::Me;
 use Mojo::Base 'Penhas::Controller';
 
 use DateTime;
+use JSON;
 
 sub check_and_load {
     my $c = shift;
@@ -18,7 +19,7 @@ sub check_and_load {
 
     $c->reply_not_found() unless $user;
     $c->stash('user_obj' => $user);
-    $c->stash('user'     => {$user->get_inflated_columns});
+    $c->stash('user'     => {$user->get_columns}); # nao pode ser o inflacted
     return 1;
 }
 

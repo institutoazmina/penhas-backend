@@ -118,7 +118,7 @@ do {
     do {
         my $text = trace_popall;
         like $text, qr/minion:send_sms,\+14842918467,SentSmsLog,/, 'logs looks ok';
-        my ($log_id) = $text =~ /SentSmsLog,\d+,?/;
+        my ($log_id) = $text =~ /SentSmsLog,(\d+),?/;
 
         ok(my $logrow = $schema2->resultset('SentSmsLog')->find($log_id), 'log row found');
         is $logrow->phonenumber, '+14842918467', 'log number ok';
