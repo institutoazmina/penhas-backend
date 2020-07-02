@@ -53,12 +53,9 @@ sub edit {
 sub delete {
     my $c = shift;
 
-    my $valid = $c->validate_request_params(
-        id => {required => 1, type => 'Int'},
-    );
-
+use DDP; p $c;
     $c->cliente_delete_guardioes(
-        %$valid,
+        id => $c->param('guard_id'),
         user => $c->stash('user'),
     );
 

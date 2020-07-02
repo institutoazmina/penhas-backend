@@ -3,6 +3,8 @@ use FindBin qw($RealBin);
 use lib "$RealBin/../lib";
 use utf8;
 use Penhas::Test;
+use Penhas::Minion::Tasks::NewsIndexer;
+use Penhas::Minion::Tasks::NewsDisplayIndexer;
 
 my $t = test_instance;
 

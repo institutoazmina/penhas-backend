@@ -133,6 +133,19 @@ sub cliente_upsert_guardioes {
 
     $message = 'Enviamos um SMS com um link para que o guardião aceite o seu convite.';
 
+    my $messagem_sms = sprintf 'Você foi convidado pela %s para ser o guardião';
+
+    my $job_id = $c->minion->enqueue(
+        'send_sms',
+        [
+           $celular_e164,
+           $messagem_sms,
+        ] => {
+            notes    => {clientes_guardioes_id => $row->id},
+            attempts => 5,
+            priority => 0,
+        }
+    );
   RENDER:
     $row->discard_changes;
     return {
@@ -163,9 +176,21 @@ sub _parse_celular {
     my $is_mobile = $celular->is_mobile();
     my $code      = $celular->country_code();
 
-    # para todos os paises que eh possível verificar celular (brasil, italia, incluir outros se vc souber)
+    $c->reply_invalid_param(
+        sprintf(
+            'O pais (%s %s %s) não está liberado para uso. Entre em contato com o suporte.',
+            $celular->country_code,
+            $celular->country  || '??',
+            $celular->areaname || '??',
+        ),
+        'contry_not_allowed',
+        'celular'
+    ) if $ENV{GUARDS_ALLOWED_COUNTRY_CODES} && $ENV{GUARDS_ALLOWED_COUNTRY_CODES} !~ /,$code,/;
+
+    # para todos os paises que eh possível verificar celular (brasil, italia, portugal,
+    # incluir outros se vc souber que tem numeros de celulares padronizados
     # vou deixar passar qualquer numero que nao sejam numeros especiais
-    if (!$is_mobile && $code !~ /^(55|39)$/) {
+    if (!$is_mobile && $code !~ /^(55|39|351)$/) {
 
         $is_mobile
           = $celular->is_fixed_line()

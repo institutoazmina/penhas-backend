@@ -16,15 +16,21 @@ sub register {
     $minion = Minion->new(Pg => $pg)->app($app);
     $app->helper(minion => sub {$minion});
 
-    # Loading tasks
-    my $namespace = __PACKAGE__ . "::Tasks";
-    for my $module (find_modules $namespace) {
-        $app->log->debug("Loading task '$module'");
-        my $err = load_class $module;
-        die(qq{Can't load task "$module" failed: $err}) if ref $err;
+    if ($ENV{APP_NAME} && $ENV{APP_NAME} ne 'API') {
 
-        $app->plugin($module);
-        $app->log->debug("Task '$module' registered successfully!");
+        # guardar os jobs por 31 dias
+        $minion->remove_after(86400 * 31);
+
+        # Loading tasks
+        my $namespace = __PACKAGE__ . "::Tasks";
+        for my $module (find_modules $namespace) {
+            $app->log->debug("Loading task '$module'");
+            my $err = load_class $module;
+            die(qq{Can't load task "$module" failed: $err}) if ref $err;
+
+            $app->plugin($module);
+            $app->log->debug("Task '$module' registered successfully!");
+        }
     }
 }
 

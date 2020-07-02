@@ -18,11 +18,7 @@ my $quiz_sessions = app->directus->search(
 );
 
 foreach ($quiz_sessions->{data}->@*) {
-    app->schema2->resultset('ClientesQuizSession')->search(
-        {
-            id => $_->{id}
-        }
-    )->delete;
+    app->schema2->resultset('ClientesQuizSession')->search({id => $_->{id}})->delete;
 }
 
 my $cadastro = $t->get_ok(
@@ -35,7 +31,7 @@ is trace_popall(), 'clientes_quiz_session:created', 'clientes_quiz_session was c
 $t->get_ok(
     '/me',
     {'x-api-key' => $session}
-)->status_is(200)->json_has('/quiz_session/session_id')->json_is('/modules/0', 'quiz');
+)->status_is(200)->json_has('/quiz_session/session_id')->json_has('/modules/quiz')->json_hasnt('/modules/tweets');
 is trace_popall(), 'clientes_quiz_session:loaded', 'clientes_quiz_session was just loaded';
 
 
@@ -58,9 +54,9 @@ subtest_buffered 'Testar envio de campo boolean com valor invalido + interpolati
     is $first_msg->{style},     'error',                         'type is error';
 
 
-    is $second_msg->{content}, 'intro1',               'question intro is working';
-    is $third_msg->{content},  'HELLOQuiz User Name!', 'question intro interpolation is working';
-    is $input_msg->{content},  'yesno question☺️⚠️👍👭🤗🤳',       'yesno question question is present';
+    is $second_msg->{content}, 'intro1',                                     'question intro is working';
+    is $third_msg->{content},  'HELLOQuiz User Name!',                       'question intro interpolation is working';
+    is $input_msg->{content},  'yesno question☺️⚠️👍👭🤗🤳', 'yesno question question is present';
 };
 
 my $choose_rand = rand;
@@ -162,7 +158,7 @@ subtest_buffered 'group de questoes boolean' => sub {
     $first_msg = $json->{quiz_session}{current_msgs}[0];
     $input_msg = $json->{quiz_session}{current_msgs}[-1];
 
-    is $first_msg->{type},    'displaytext',       'just a text';
+    is $first_msg->{type},    'displaytext',      'just a text';
     is $first_msg->{content}, 'displaytext flow', 'context of text';
 
     is $input_msg->{type},    'button',                    'is a button';
@@ -180,9 +176,9 @@ subtest_buffered 'group de questoes boolean' => sub {
         }
     )->status_is(200)->json_has('/quiz_session')->tx->res->json;
     $input_msg = $json->{quiz_session}{current_msgs}[-1];
-    is $input_msg->{type},    'button',             'is a button';
-    is $input_msg->{content}, 'btn2',               'button has content';
-    is $input_msg->{action},  'none', 'button action is none [btn-fim]';
+    is $input_msg->{type},    'button', 'is a button';
+    is $input_msg->{content}, 'btn2',   'button has content';
+    is $input_msg->{action},  'none',   'button action is none [btn-fim]';
 
     my $prev_msgs = $t->get_ok(
         '/me',

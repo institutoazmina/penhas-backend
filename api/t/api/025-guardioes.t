@@ -3,10 +3,11 @@ use FindBin qw($RealBin);
 use lib "$RealBin/../lib";
 
 use Penhas::Test;
-
+use Penhas::Minion::Tasks::SendSMS;
 my $t = test_instance;
 use Business::BR::CPF qw/random_cpf/;
 
+my $schema2 = $t->app->schema2;
 
 AGAIN:
 my $random_cpf   = random_cpf();
@@ -58,6 +59,19 @@ subtest_buffered 'Cadastro com sucesso' => sub {
 on_scope_exit { user_cleanup(user_id => $cliente_id); };
 
 do {
+    $ENV{GUARDS_ALLOWED_COUNTRY_CODES} = ',55,';
+
+    $t->post_ok(
+        '/me/guardioes',
+        {'x-api-key' => $session},
+        form => {
+            nome    => 'test nome',
+            apelido => 'test apelido',
+            celular => '+1 484 2918 467',
+        }
+    )->status_is(400)->json_is('/error', 'contry_not_allowed', 'testando bloqueio de paises');
+
+    $ENV{GUARDS_ALLOWED_COUNTRY_CODES} = '';
     $t->post_ok(
         '/me/guardioes',
         {'x-api-key' => $session},
@@ -93,6 +107,24 @@ do {
       ->json_is('/data/nome', 'test nome')->json_is('/data/apelido', 'apelido!!')->json_is('/data/is_pending', '1')
       ->json_is('/data/is_expired', '0')->json_is('/data/is_accepted', '0')->json_like('/message', qr/Enviamos um SMS/);
 
+    trace_popall;
+    my $job = Minion::Job->new(
+        id     => fake_int(1, 99)->(),
+        minion => $t->app->minion,
+        task   => 'testmocked',
+        notes  => {hello => 'mock'}
+    );
+    ok(Penhas::Minion::Tasks::SendSMS::send_sms($job, test_get_minion_args_job(0)), 'send sms');
+    do {
+        my $text = trace_popall;
+        like $text, qr/minion:send_sms,\+14842918467,SentSmsLog,/, 'logs looks ok';
+        my ($log_id) = $text =~ /SentSmsLog,\d+,?/;
+
+        ok(my $logrow = $schema2->resultset('SentSmsLog')->find($log_id), 'log row found');
+        is $logrow->phonenumber, '+14842918467', 'log number ok';
+        $logrow->delete;
+    };
+
     $t->post_ok(
         '/me/guardioes',
         {'x-api-key' => $session},
@@ -119,13 +151,9 @@ do {
       ->json_like('/message', qr/convite aguardando/);
 
     $t->delete_ok(
-        '/me/guardioes',
-        {'x-api-key' => $session},
-        form => {
-            id => $id,
-        }
+        join('', '/me/guardioes/', $id),
+        {'x-api-key' => $session}
     )->status_is(204);
-
 
     $t->post_ok(
         '/me/guardioes',
