@@ -12,8 +12,7 @@ sub assert_user_perms {
 }
 
 my @commonfields = (
-    apelido => {required => 1, type => 'Str', max_length => 200},
-    nome    => {required => 1, type => 'Str', max_length => 200},
+    nome => {required => 1, type => 'Str', max_length => 200},
 );
 
 sub upsert {
@@ -27,7 +26,7 @@ sub upsert {
     return $c->render(
         json => $c->cliente_upsert_guardioes(
             %$valid,
-            user => $c->stash('user'),
+            user_obj => $c->stash('user_obj'),
         ),
         status => 200,
     );
@@ -37,14 +36,14 @@ sub edit {
     my $c = shift;
 
     my $valid = $c->validate_request_params(
-        id => {required => 1, type => 'Int'},
         @commonfields,
     );
 
     return $c->render(
         json => $c->cliente_edit_guardioes(
             %$valid,
-            user => $c->stash('user'),
+            id       => $c->stash('guard_id'),
+            user_obj => $c->stash('user_obj'),
         ),
         status => 200,
     );
@@ -53,15 +52,27 @@ sub edit {
 sub delete {
     my $c = shift;
 
-use DDP; p $c;
     $c->cliente_delete_guardioes(
-        id => $c->param('guard_id'),
-        user => $c->stash('user'),
+        id       => $c->stash('guard_id'),
+        user_obj => $c->stash('user_obj'),
     );
 
     return $c->render(
         text   => '',
         status => 204,
+    );
+}
+
+sub list {
+    my $c = shift;
+
+    my $ret = $c->cliente_list_guardioes(
+        user_obj => $c->stash('user_obj'),
+    );
+
+    return $c->render(
+        json   => $ret,
+        status => 200,
     );
 }
 

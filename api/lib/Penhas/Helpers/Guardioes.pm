@@ -1,6 +1,6 @@
 package Penhas::Helpers::Guardioes;
 use common::sense;
-use Carp qw/croak/;
+use Carp qw/confess/;
 use utf8;
 use JSON;
 use Penhas::Logger;
@@ -14,22 +14,21 @@ sub setup {
     $self->helper('cliente_upsert_guardioes' => sub { &cliente_upsert_guardioes(@_) });
     $self->helper('cliente_delete_guardioes' => sub { &cliente_delete_guardioes(@_) });
     $self->helper('cliente_edit_guardioes'   => sub { &cliente_edit_guardioes(@_) });
-}
+    $self->helper('cliente_list_guardioes'   => sub { &cliente_list_guardioes(@_) });
 
+}
 
 sub cliente_upsert_guardioes {
     my ($c, %opts) = @_;
 
-    my $user    = $opts{user}    or croak 'missing user';
-    my $nome    = $opts{nome}    or croak 'missing nome';
-    my $apelido = $opts{apelido} or croak 'missing apelido';
-    my $celular = $opts{celular} or croak 'missing celular';
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+    my $nome     = $opts{nome}     or confess 'missing nome';
+    my $celular  = $opts{celular}  or confess 'missing celular';
 
 
     my ($celular_e164, $celular_national) = &_parse_celular($c, $celular);
-    $user = $c->schema2->resultset('Cliente')->find($user->{id}) or croak 'Cliente not found';
 
-    my $filtered_rs = $user->clientes_guardioes_rs->search_rs(
+    my $filtered_rs = $user_obj->clientes_guardioes_rs->search_rs(
         {
             celular_e164 => $celular_e164,
         }
@@ -69,8 +68,8 @@ sub cliente_upsert_guardioes {
 
     my $recent_refused = $filtered_rs->search(
         {
-            status     => 'refused',
-            refused_at => {'>=' => \'date_sub(now(), interval 7 day)'}
+            'me.status'     => {in   => ['refused', 'removed_by_user']},
+            'me.refused_at' => {'>=' => \'date_sub(now(), interval 7 day)'}
         },
         {
             'columns' => [qw/id refused_at/],
@@ -91,7 +90,7 @@ sub cliente_upsert_guardioes {
 
     my $recent_deleted = $filtered_rs->search(
         {
-            status     => 'refused',
+            status     => 'removed_by_user',
             deleted_at => {'>=' => \'date_sub(now(), interval 1 day)'}
         },
         {
@@ -118,13 +117,12 @@ sub cliente_upsert_guardioes {
     my $token = random_string_from('ASDFGHJKLQWERTYUIOPZXCVBNM0123456789', 7);
     my $hash  = substr(md5_hex($ENV{GUARD_HASH_SALT} . $token), 0, 3);
 
-    $row = $user->clientes_guardioes_rs->create(
+    $row = $user_obj->clientes_guardioes_rs->create(
         {
             status                        => 'pending',
             created_at                    => \'NOW()',
             celular_e164                  => $celular_e164,
             celular_formatted_as_national => $celular_national,
-            apelido                       => $apelido,
             nome                          => $nome,
             token                         => uc($token . $hash),
             expires_at                    => \'date_add(now(), interval 30 day)'
@@ -144,7 +142,7 @@ sub cliente_upsert_guardioes {
     # se ficou menor, nao tem jeito, vamo ser dois SMS..
     $remaining_chars += 140 if $remaining_chars < 0;
 
-    my $message_sms = $message_prepend . substr($user->nome_completo, 0, $remaining_chars) . $message_link;
+    my $message_sms = $message_prepend . substr($user_obj->nome_completo, 0, $remaining_chars) . $message_link;
 
     my $job_id = $c->minion->enqueue(
         'send_sms',
@@ -161,16 +159,57 @@ sub cliente_upsert_guardioes {
     $row->discard_changes;
     return {
         message => $message,
-        data    => &_format_guard_row($c, $user, $row),
+        data    => &_format_guard_row($c, $user_obj, $row),
     };
 }
 
 sub cliente_delete_guardioes {
+    my ($c, %opts) = @_;
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+    my $guard_id = $opts{id}       or confess 'missing id';
 
+    my $row = $user_obj->clientes_guardioes_rs->search_rs(
+        {
+            'me.id' => $guard_id,
+        }
+    )->next or $c->reply_item_not_found();
+
+    $row->update(
+        {
+            status     => 'removed_by_user',
+            deleted_at => \'NOW()',
+        }
+    ) if $row->status ne 'removed_by_user';
+
+    return 1;
 }
 
 sub cliente_edit_guardioes {
+    my ($c, %opts) = @_;
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+    my $guard_id = $opts{id}       or confess 'missing id';
+    my $nome     = $opts{nome}     or confess 'missing nome';
 
+
+    use DDP;
+    p $guard_id;
+    my $row = $user_obj->clientes_guardioes_rs->search_rs(
+        {
+            'me.id'         => $guard_id,
+            'me.deleted_at' => undef,
+        }
+    )->next or $c->reply_item_not_found();
+
+    $row->update(
+        {
+            nome => $nome,
+        }
+    );
+
+    return {
+        message => 'Editado com sucesso!',
+        data    => &_format_guard_row($c, $user_obj, $row),
+    };
 }
 
 sub _parse_celular {
@@ -233,10 +272,10 @@ sub _parse_celular {
 }
 
 sub _format_guard_row {
-    my ($c, $user, $row) = @_;
+    my ($c, $user_obj, $row) = @_;
 
     return {
-        (map { $_ => $row->$_ } qw/id nome apelido celular_formatted_as_national/),
+        (map { $_ => $row->$_ } qw/id nome celular_formatted_as_national/),
 
         is_accepted => $row->status eq 'accepted'            ? 1 : 0,
         is_pending  => $row->status eq 'pending'             ? 1 : 0,
@@ -244,6 +283,99 @@ sub _format_guard_row {
 
         created_at => $row->created_at->datetime(),
         expires_at => $row->expires_at->datetime(),
+
+    };
+}
+
+sub cliente_list_guardioes {
+    my ($c, %opts) = @_;
+
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+
+    my $remaing_invites = 5;
+    $user_obj->clientes_guardioes_rs->expires_pending_invites;
+
+    my $filtered_rs = $user_obj->clientes_guardioes_rs->search_rs(
+        {
+            '-or' => [
+                {'me.status'     => {in   => [qw/pending accepted expired_for_not_use/]}},
+                {'me.refused_at' => {'!=' => undef}}
+            ]
+        },
+        {order_by => [qw/me.status/, {'-desc' => 'me.created_at'}]}
+    );
+
+    my $by_status = {};
+    while (my $r = $filtered_rs->next) {
+        push $by_status->{$r->status()}->@*, $r;
+    }
+
+    my $config_map = {
+        accepted => {
+            header         => 'Guardiões',
+            description    => 'Guardiões que recebem seus pedidos de socorro.',
+            delete_warning => '',
+            can_delete     => 1,
+            can_resend     => 0,
+            layout         => 'accepted',
+        },
+        pending => {
+            header         => 'Pendentes',
+            description    => 'Guardiões que ainda não aceitaram seu convite.',
+            delete_warning => '',
+            can_delete     => 1,
+            can_resend     => 0,
+            layout         => 'pending',
+        },
+        expired_for_not_use => {
+            header         => 'Convites expirados',
+            description    => 'Convites não podem mais serem aceitos aceitos, convite novamente',
+            delete_warning => '',
+            can_delete     => 1,
+            can_resend     => 1,
+            layout         => 'pending',
+        },
+        refused => {
+            header => 'Convites recusados',
+            description =>
+              'Convite recusado! O guardião ainda pode aceitar o convite usando o mesmo link. Use o botão 🗑️ para cancelar o convite.',
+            delete_warning =>
+              'Após apagar um convite recusado, você não poderá convidar este número por até 7 dias.',
+            can_delete => 1,
+            can_resend => 0,
+            layout     => 'pending',
+        },
+    };
+    my @guards;
+
+    for my $type (qw/accepted pending expired_for_not_use refused/) {
+
+        my $config = $config_map->{$type};
+
+        my @rows = $by_status->{$type}->@*;
+
+        next if @rows == 0 && $type =~ /^(expired_for_not_use|refused)$/;
+
+        push @guards, {
+            meta => $config,
+            rows => [
+                map {
+                    +{
+                        id       => $_->id(),
+                        nome     => $_->nome(),
+                        celular  => $_->celular_formatted_as_national(),
+                        subtexto => $_->subtexto(),
+                    }
+                } @rows
+            ],
+        };
+
+
+    }
+
+    return {
+        remaing_invites => $remaing_invites,
+        guards          => \@guards
 
     };
 }

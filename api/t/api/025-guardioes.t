@@ -66,7 +66,6 @@ do {
         {'x-api-key' => $session},
         form => {
             nome    => 'test nome',
-            apelido => 'test apelido',
             celular => '+1 484 2918 467',
         }
     )->status_is(400)->json_is('/error', 'contry_not_allowed', 'testando bloqueio de paises');
@@ -77,7 +76,6 @@ do {
         {'x-api-key' => $session},
         form => {
             nome    => 'test nome',
-            apelido => 'test apelido',
             celular => '11 81144666',
         }
     )->status_is(400)->json_is('/error', 'parser_error', 'numero nao existe no brasil')->json_is('/field', 'celular')
@@ -88,7 +86,6 @@ do {
         {'x-api-key' => $session},
         form => {
             nome    => 'test nome',
-            apelido => 'test apelido',
             celular => '11 31144666',
         }
     )->status_is(400)->json_is('/error', 'number_is_not_mobile', 'numero nao eh celular')
@@ -100,12 +97,11 @@ do {
         {'x-api-key' => $session},
         form => {
             nome    => 'test nome',
-            apelido => 'apelido!!',
             celular => '+14842918467',
         }
     )->status_is(200)->json_is('/data/celular_formatted_as_national', '+1 484-291-8467')
-      ->json_is('/data/nome', 'test nome')->json_is('/data/apelido', 'apelido!!')->json_is('/data/is_pending', '1')
-      ->json_is('/data/is_expired', '0')->json_is('/data/is_accepted', '0')->json_like('/message', qr/Enviamos um SMS/);
+      ->json_is('/data/nome',        'test nome')->json_is('/data/is_pending', '1')->json_is('/data/is_expired', '0')
+      ->json_is('/data/is_accepted', '0')->json_like('/message', qr/Enviamos um SMS/);
 
     trace_popall;
     my $job = Minion::Job->new(
@@ -130,12 +126,11 @@ do {
         {'x-api-key' => $session},
         form => {
             nome    => 'portugues',
-            apelido => 'sao paulo',
             celular => '021 11 912341234',
         }
     )->status_is(200)->json_is('/data/celular_formatted_as_national', '(11) 91234-1234')
-      ->json_is('/data/nome', 'portugues')->json_is('/data/apelido', 'sao paulo')->json_is('/data/is_pending', '1')
-      ->json_is('/data/is_expired', '0')->json_is('/data/is_accepted', '0')->json_like('/message', qr/Enviamos um SMS/);
+      ->json_is('/data/nome',        'portugues')->json_is('/data/is_pending', '1')->json_is('/data/is_expired', '0')
+      ->json_is('/data/is_accepted', '0')->json_like('/message', qr/Enviamos um SMS/);
 
     ok(my $id = $t->tx->res->json->{data}{id}, 'has id');
 
@@ -144,27 +139,61 @@ do {
         {'x-api-key' => $session},
         form => {
             nome    => 'portugues',
-            apelido => 'sao paulo',
             celular => '021 11 912341234',
         }
     )->status_is(200)->json_is('/data/celular_formatted_as_national', '(11) 91234-1234')
       ->json_like('/message', qr/convite aguardando/);
+    do {
+        my $row_to_be_removed;
+        ok(my $id2 = $t->tx->res->json->{data}{id}, 'has id');
+        is $id, $id2, 'same invite';
 
-    $t->delete_ok(
-        join('', '/me/guardioes/', $id),
-        {'x-api-key' => $session}
-    )->status_is(204);
+        $t->put_ok(
+            join('', '/me/guardioes/', $id2),
+            {'x-api-key' => $session},
+            form => {nome => 'imasuguni'}
+        )->status_is(200, 'edit name');
 
+        ok($row_to_be_removed = $schema2->resultset('ClientesGuardio')->find($id2), 'row found');
+        is $row_to_be_removed->nome, 'imasuguni', 'name updated';
+
+        $t->delete_ok(
+            join('', '/me/guardioes/', $id),
+            {'x-api-key' => $session}
+        )->status_is(204);
+
+        $t->put_ok(
+            join('', '/me/guardioes/', $id),
+            {'x-api-key' => $session},
+            form => {nome => 'imasuguni'}
+        )->status_is(404, 'not found after delete');
+        $row_to_be_removed->discard_changes;
+        is $row_to_be_removed->status, 'removed_by_user', '$row_to_be_removed is removed';
+    };
+
+    # testa limpeza da cod de operadora
     $t->post_ok(
         '/me/guardioes',
         {'x-api-key' => $session},
         form => {
             nome    => 'portugues',
-            apelido => 'sao paulo',
             celular => '021 11 912341234',
         }
     )->status_is(200)->json_is('/data/celular_formatted_as_national', '(11) 91234-1234')
-      ->json_like('/message', qr/enviado anteriormente/);
+      ->json_like('/message', qr/Enviamos um SMS/);
+    ok(my $id3  = $t->tx->res->json->{data}{id},                      'has id');
+    ok(my $row3 = $schema2->resultset('ClientesGuardio')->find($id3), 'row found');
+    $row3->update({created_at => \'date_sub(now(), interval 10 day)'});
+
+    # testa GET
+    $t->get_ok(
+        join('', '/me/guardioes'),
+        {'x-api-key' => $session}
+    )->status_is(200)->json_is('/guards/0/rows', [], 'nothing is accepted')
+      ->json_is('/guards/0/meta/layout',    'accepted',        'first row layout is accepted')
+      ->json_is('/guards/1/meta/layout',    'pending',         'second row layout is pending')
+      ->json_is('/guards/1/rows/0/celular', '+1 484-291-8467', 'celular ok')
+      ->json_is('/guards/1/rows/1/id',      $id3,              'id ok');
 
 
 };

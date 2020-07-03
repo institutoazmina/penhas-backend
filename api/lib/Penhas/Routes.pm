@@ -63,6 +63,7 @@ sub register {
     # /me/guardioes
     my $me_guardioes = $me->under('/guardioes')->to(controller => 'Me_Guardioes', action => 'assert_user_perms');
     $me_guardioes->post()->to(action => 'upsert');
+    $me_guardioes->get()->to(action => 'list');
 
     my $me_guardioes_object = $me_guardioes->under(':guard_id');
     $me_guardioes_object->delete()->to(action => 'delete');

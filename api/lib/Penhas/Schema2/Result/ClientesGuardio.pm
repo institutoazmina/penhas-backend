@@ -32,8 +32,6 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => 20,
   },
-  "apelido",
-  { data_type => "varchar", is_nullable => 0, size => 200 },
   "celular_e164",
   { data_type => "varchar", is_nullable => 0, size => 25 },
   "nome",
@@ -85,9 +83,44 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-28 07:56:06
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:MTDTtNhfs3G6rbgCeFCpkA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-03 04:28:27
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jPxg37KelT/JPkLDZ8WoOg
 
+# ALTER TABLE clientes_guardioes ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
+
+sub subtexto {
+    my ($self) = @_;
+
+    my $tmp = '';
+
+    if ($self->status eq 'pending') {
+        my $age = int((time() - $self->created_at->epoch) / 3600);
+
+        my $expires_in = int(($self->expires_at->epoch - time()) / 3600);
+
+        if ($expires_in <= 24) {
+            $tmp = 'Convite próximo de expirar!';
+
+        }
+        elsif ($age <= 1) {
+            $tmp .= 'Convite enviado há pouco tempo';
+        }
+        elsif ($age <= 24) {
+            $tmp = sprintf('Convite enviado há %d horas.', $age);
+        }
+        else {
+            $tmp = sprintf('Convite enviado há %d dias.', int($age / 24));
+        }
+    }
+    elsif ($self->status eq 'expired_for_not_use') {
+        $tmp = sprintf('Convite expirou em %s', $self->expires_at->ymd('/'));
+    }
+    elsif ($self->status eq 'refused' && $self->refused_at) {
+        $tmp = sprintf('Convite recusado em %s', $self->refused_at->ymd('/'));
+    }
+
+    return $tmp;
+}
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;
