@@ -115,6 +115,16 @@ sub cliente_upsert_guardioes {
         goto RENDER;
     }
 
+    # se adicionar um numero expirado, remover da lista de expirados (marca como apagado)
+    $filtered_rs->search(
+        {
+            status => 'expired_for_not_use',
+        },
+        {
+            'columns' => [qw/id/],
+        }
+    )->update({deleted_at => \'NOW()'});
+
     my $token = random_string_from('ASDFGHJKLQWERTYUIOPZXCVBNM0123456789', 7);
     my $hash  = substr(md5_hex($ENV{GUARD_HASH_SALT} . $token), 0, 3);
 

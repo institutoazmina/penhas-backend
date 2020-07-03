@@ -223,6 +223,24 @@ do {
       ->json_is('/guards/2/rows/0/nome',    'Expiraldo Silva',      'id ok')
       ->json_is('/guards/2/rows/0/id',      $row_to_be_removed->id, 'id ok');
 
+    # testa cadastrar o numero expirado
+    $t->post_ok(
+        '/me/guardioes',
+        {'x-api-key' => $session},
+        form => {
+            nome    => 'portugues',
+            celular => $row_to_be_removed->celular_formatted_as_national,
+        }
+    )->status_is(200)->json_is('/data/celular_formatted_as_national', '(11) 91234-1234')
+      ->json_like('/message', qr/Enviamos um SMS/);
+    ok(my $id4  = $t->tx->res->json->{data}{id},                      'has id');
+    ok(my $row4 = $schema2->resultset('ClientesGuardio')->find($id4), 'row found');
+
+    $row_to_be_removed->discard_changes;
+    is $row_to_be_removed->status, 'expired_for_not_use', 'status is still expired';
+    ok $row_to_be_removed->deleted_at, 'but deleted_at is marked';
+
+
 
 };
 
