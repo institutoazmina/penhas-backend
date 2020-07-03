@@ -97,15 +97,16 @@ sub cliente_upsert_guardioes {
             'columns' => [qw/id deleted_at/],
         }
     )->next;
-    if ($recent_refused) {
+    if ($recent_deleted) {
 
-        $recent_refused->update(
+        $recent_deleted->update(
             {
+                nome       => $nome,
                 status     => 'pending',
                 deleted_at => undef,
             }
         );
-        $row = $recent_refused;
+        $row = $recent_deleted;
 
         $message = sprintf(
             "O convite para o número %s foi reativado! $already_sent_msg",

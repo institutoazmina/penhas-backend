@@ -46,12 +46,13 @@ sub send_sms {
         {
             'Action'           => 'Publish',
             'Message'          => $message,
-            PhoneNumber        => $phonenumber,
-            'MessageStructure' => 'AWS.SNS.SMS.SMSType' => {
-                DataType    => 'String',
-                StringValue => 'Transactional',
+            'PhoneNumber'      => $phonenumber,
+            'MessageStructure' => {
+                'AWS.SNS.SMS.SMSType' => {
+                    DataType    => 'String',
+                    StringValue => 'Transactional',
+                }
             },
-
         }
     );
 
