@@ -114,7 +114,7 @@ sub public_get_proxy {
         );
     }
 
-    my $cached_filename = get_media_filepath('NT' . md5_hex($href));
+    my $cached_filename = get_media_filepath('NT' . md5_hex(encode_utf8($href)));
 
     if (-e $cached_filename) {
         $c->reply->file($cached_filename);
