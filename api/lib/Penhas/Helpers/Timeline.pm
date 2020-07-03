@@ -577,7 +577,7 @@ sub _get_tracked_news_url {
     return
         $ENV{PUBLIC_API_URL}
       . "news-redirect/?uid=$userid&nid=$newsid&u=$valid_until&t=$trackid&h=$hash&url="
-      . url_escape($url);
+      . url_escape(encode_utf8($url));
 }
 
 sub _get_proxy_image_url {
@@ -585,7 +585,7 @@ sub _get_proxy_image_url {
 
     my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . encode_utf8($url)), 0, 12);
 
-    return $ENV{PUBLIC_API_URL} . "get-proxy/?h=$hash&href=" . url_escape($url);
+    return $ENV{PUBLIC_API_URL} . "get-proxy/?h=$hash&href=" . url_escape( encode_utf8($url) );
 }
 
 sub add_tweets_highlights {
