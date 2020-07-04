@@ -127,16 +127,28 @@ sub public_get_proxy {
             sub {
                 my $tx = shift;
 
-                $tx->result->save_to($cached_filename);
+                my $code = $tx->result->code;
 
-                $c->reply->file($cached_filename);
+                if ($code == 200) {
+                    $tx->result->save_to($cached_filename);
+
+                    $c->reply->file($cached_filename);
+                }
+                else {
+                    if ($code == 404) {
+                        $c->reply->file('avatar/news.404.jpg');
+                    }
+                    else {
+                        $c->reply->file('avatar/news.err.jpg');
+                    }
+                }
 
             }
         )->catch(
             sub {
                 my $err = shift;
                 $c->log->debug("Proxy error: $err");
-                $c->render(text => 'Something went wrong!', status => 400);
+                $c->reply->file('avatar/news.err.jpg');
             }
         );
 
