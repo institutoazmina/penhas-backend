@@ -230,15 +230,16 @@ do {
         form => {token => $row_to_be_removed->token()}
     )->status_is(200)->json_is('/guardiao/is_expired', '1', 'buscar token expirado deve retornar dados');
 
+    for my $action (qw/accept refuse/) {
+        $t->post_ok(
+            '/web/guardiao',
+            form => {token => $row_to_be_removed->token(), action => $action}
+        )->status_is(400)->json_is('/error', 'guard_invite_expired', 'nao deve aceitar com token expirado');
+    }
     $t->post_ok(
         '/web/guardiao',
-        form => {token => $row_to_be_removed->token(), action => 'accept'}
-    )->status_is(400)->json_is('/error', 'guard_invite_expired', 'nao deve aceitar com token expirado');
-
-    $t->post_ok(
-        '/web/guardiao',
-        form => {token => $row_to_be_removed->token(), action => 'refuse'}
-    )->status_is(400)->json_is('/error', 'guard_invite_expired', 'nao deve recusar com token expirado');
+        form => {token => $row_to_be_removed->token(), action => 'foo'}
+    )->status_is(400)->json_is('/error', 'action_invalid', 'nao deve aceitar action invalidos');
 
     # testa cadastrar o numero expirado
     $t->post_ok(
@@ -324,9 +325,6 @@ do {
     $t->post_ok('/web/guardiao' => form => {token => $row3->token(), action => 'accept'})->status_is(200)
       ->json_is('/guardiao/is_accepted', '1');
 
-    use DDP;
-    p $row4;
-
     # testa GET como usuario logado
     $t->get_ok(
         join('', '/me/guardioes'),
@@ -336,7 +334,7 @@ do {
       ->json_is('/guards/1/meta/header',     'Pendentes',            'Pendentes')
       ->json_is('/guards/1/meta/layout',     'pending',              'second row layout is pending')
       ->json_is('/guards/1/rows/0/celular',  '+1 484-291-8467',      'celular ok')
-      ->json_is('/guards/1/rows/1',       undef,                   'nao tem mais dois convites pendentes')
+      ->json_is('/guards/1/rows/1',          undef,                  'nao tem mais dois convites pendentes')
       ->json_is('/guards/2/meta/header',     'Convites expirados',   'Convites expirados')
       ->json_is('/guards/2/rows/0/nome',     'Expiraldo Silva',      'id ok')
       ->json_is('/guards/2/meta/can_resend', '1',                    'pode reenviar no expired')
