@@ -136,10 +136,10 @@ sub public_get_proxy {
                 }
                 else {
                     if ($code == 404) {
-                        $c->reply->file('avatar/news.404.jpg');
+                        $c->reply->static('avatar/news.404.jpg');
                     }
                     else {
-                        $c->reply->file('avatar/news.err.jpg');
+                        $c->reply->static('avatar/news.err.jpg');
                     }
                 }
 
@@ -148,7 +148,7 @@ sub public_get_proxy {
             sub {
                 my $err = shift;
                 $c->log->debug("Proxy error: $err");
-                $c->reply->file('avatar/news.err.jpg');
+                $c->reply->static('avatar/news.err.jpg');
             }
         );
 
