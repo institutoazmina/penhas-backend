@@ -521,7 +521,7 @@ sub cliente_alert_guards {
     my $user_obj = $opts{user_obj} or confess 'missing user_obj';
 
     my %extra_db;
-    my $regex = /^-?\d{1,2}(\.\d{1,17})?$/;
+    my $regex = qr/^-?\d{1,2}(?:\.\d{1,15})?$/a;
     for my $field (qw/gps_lat gps_long/) {
         next unless defined $opts{$field};
 
@@ -558,7 +558,7 @@ sub cliente_alert_guards {
     my $limit_per_minute = $ENV{MAX_GUARD_ALERT_PER_MINUTE} || 1;
     my $key              = 'GuardAlertsMinute:' . $user_obj->id;
     my $reqcount         = $c->kv()->local_get_count_and_inc(key => $key, expires => 60);
-    if ($reqcount > $limit_per_minute) {
+    if ($reqcount >= $limit_per_minute) {
         die {
             error   => 'too_many_alerts',
             message => 'Os alertas já foram enviados no último minuto!',
@@ -569,7 +569,7 @@ sub cliente_alert_guards {
     my $limit_per_day = $ENV{MAX_GUARD_ALERT_PER_24H} || 5;
     my $key           = 'GuardAlerts24h:' . $user_obj->id;
     my $reqcount      = $c->kv()->local_get_count_and_inc(key => $key, expires => 86400);
-    if ($reqcount > $limit_per_day) {
+    if ($reqcount >= $limit_per_day) {
         die {
             error   => 'too_many_alerts',
             message => 'Você atingiu o limite de alertas no período de 24h.',
@@ -635,9 +635,9 @@ sub cliente_alert_guards {
 
     return {
         message => (
-              $sms_enviados > 1  ? sprintf('Alerta disparado com sucesso para %d guardiões', $sms_enviados)
-            : $sms_enviados == 1 ? 'Alerta disparado com sucesso para 1 guardião'
-            :                      'Não há guardiões cadastros! Nenhum alerta foi enviado'
+              $sms_enviados > 1  ? sprintf('Alerta disparado com sucesso para %d guardiões.', $sms_enviados)
+            : $sms_enviados == 1 ? 'Alerta disparado com sucesso para 1 guardião.'
+            :                      'Não há guardiões cadastros! Nenhum alerta foi enviado.'
         )
     };
 }

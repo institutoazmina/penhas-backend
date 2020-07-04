@@ -348,7 +348,7 @@ do {
         {'x-api-key' => $session},
         form => {
             gps_lat  => '12.33445',
-            gps_long => '-23.888887',
+            gps_long => '-23.123456789123456',
         }
     )->status_is(200);
 
@@ -362,9 +362,28 @@ do {
     );
     is $alert->cliente_id, $cliente_id, 'cliente_id match';
     like($alert->alert_sent_to(), qr/5511943214321/, '5511943214321 was logged');
-    is $alert->sms_enviados, 1,            'sms_enviados=1';
-    is $alert->gps_lat,      '12.33445',   'lat ok';
-    is $alert->gps_long,     '-23.888887', 'long ok';
+    is $alert->sms_enviados, 1,                     'sms_enviados=1';
+    is $alert->gps_lat,      '12.33445',            'lat ok';
+    is $alert->gps_long,     '-23.123456789123456', 'long ok';
+
+    $t->post_ok(
+        join('', '/me/guardioes/alert'),
+        {'x-api-key' => $session},
+        form => {
+            gps_long => '3.123456789123456',
+        }
+    )->status_is(400)->json_is('/error', 'too_many_alerts', 'limites de requests por minuto');
+
+    $t->post_ok(
+        join('', '/me/guardioes/alert'),
+        {'x-api-key' => $session},
+        form => {
+            gps_lat  => '3.123456789123456',
+            gps_long => '3.1234567891234567',
+        }
+    )->status_is(400)->json_is('/error', 'gps_position_invalid', 'maximo 15 chars')
+      ->json_is('/field', 'gps_long', 'erro no campo gps_long');
+
 };
 
 done_testing();
