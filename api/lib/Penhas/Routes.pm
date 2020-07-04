@@ -21,6 +21,13 @@ sub register {
     # GET /get-proxy
     $r->route('get-proxy')->get()->to(controller => 'MediaDownload', action => 'public_get_proxy');
 
+    # Convite de guardiões
+    # GET /guardiao?token=
+    # POST /guardiao?token=&action=
+    my $guardioes = $r->under('/web/guardiao')->to(controller => 'Guardiao', action => 'apply_rps');
+    $guardioes->get()->to(action => 'get');
+    $guardioes->post()->to(action => 'post');
+
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss
     my $maintenance = $r->under('maintenance')->to(controller => 'Maintenance', action => 'check_authorization');

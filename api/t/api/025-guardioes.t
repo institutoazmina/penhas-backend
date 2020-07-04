@@ -223,6 +223,23 @@ do {
       ->json_is('/guards/2/rows/0/nome',    'Expiraldo Silva',      'id ok')
       ->json_is('/guards/2/rows/0/id',      $row_to_be_removed->id, 'id ok');
 
+    $row_to_be_removed->discard_changes;
+    is $row_to_be_removed->status, 'expired_for_not_use', 'status is expired';
+    $t->get_ok(
+        '/web/guardiao',
+        form => {token => $row_to_be_removed->token()}
+    )->status_is(200)->json_is('/guardiao/is_expired', '1', 'buscar token expirado deve retornar dados');
+
+    $t->post_ok(
+        '/web/guardiao',
+        form => {token => $row_to_be_removed->token(), action => 'accept'}
+    )->status_is(400)->json_is('/error', 'guard_invite_expired', 'nao deve aceitar com token expirado');
+
+    $t->post_ok(
+        '/web/guardiao',
+        form => {token => $row_to_be_removed->token(), action => 'refuse'}
+    )->status_is(400)->json_is('/error', 'guard_invite_expired', 'nao deve recusar com token expirado');
+
     # testa cadastrar o numero expirado
     $t->post_ok(
         '/me/guardioes',
@@ -240,7 +257,93 @@ do {
     is $row_to_be_removed->status, 'expired_for_not_use', 'status is still expired';
     ok $row_to_be_removed->deleted_at, 'but deleted_at is marked';
 
+    # token expirado (mas apagado por reuso) nao deve funcionar
+    $t->get_ok(
+        '/web/guardiao',
+        form => {token => $row_to_be_removed->token()}
+    )->status_is(404)->json_is('/error', 'Item not found');
 
+    # token com hash invalido
+    $t->get_ok(
+        '/web/guardiao',
+        form => {
+            token => substr($row_to_be_removed->token(), 0, -4) . '0AAA',
+        }
+    )->status_is(400)->json_is('/error', 'token_invalid_hash');
+
+    db_transaction2 {
+        is $row4->status, 'pending', 'status do row4 eh pending';
+        $row4->update(
+            {
+                created_at => \'date_sub(now(), interval 30 day)',
+                expires_at => \'date_sub(now(), interval 1 second)',
+                nome       => 'expirando durante aceite'
+            }
+        );
+        $t->post_ok(
+            '/web/guardiao',
+            form => {
+                token  => $row4->token(),
+                action => 'accept'
+            }
+        )->status_is(400)->json_is('/error', 'guard_invite_expired');
+    };
+
+    # aceita o token 4
+    $row4->discard_changes;
+    is $row4->status, 'pending', 'status eh pending';
+    $t->get_ok('/web/guardiao' => form => {token => $row4->token()})->status_is(200)
+      ->json_is('/guardiao/is_accepted', '0')->json_is('/guardiao/is_pending', '1');
+    $t->post_ok(
+        '/web/guardiao',
+        form => {
+            token  => $row4->token(),
+            action => 'accept',
+        }
+    )->status_is(200)->json_is('/guardiao/is_accepted', '1')->json_is('/guardiao/is_pending', '0');
+    $row4->discard_changes;
+    is $row4->status, 'accepted', 'status eh accepted';
+    $t->get_ok('/web/guardiao' => form => {token => $row4->token()})->status_is(200)
+      ->json_is('/guardiao/is_accepted', '1')->json_is('/guardiao/is_pending', '0');
+
+    # pode mudar de ideia
+    $t->post_ok(
+        '/web/guardiao',
+        form => {
+            token  => $row4->token(),
+            action => 'refuse',
+        }
+    )->status_is(200)->json_is('/guardiao/is_accepted', '0')->json_is('/guardiao/is_pending', '0');
+    $row4->discard_changes;
+    is $row4->status, 'refused', 'status eh refused';
+
+    $t->get_ok('/web/guardiao' => form => {token => $row4->token()})->status_is(200)
+      ->json_is('/guardiao/is_accepted', '0')->json_is('/guardiao/is_pending', '0');
+
+    # aceita o convite 3
+    $t->post_ok('/web/guardiao' => form => {token => $row3->token(), action => 'accept'})->status_is(200)
+      ->json_is('/guardiao/is_accepted', '1');
+
+    use DDP;
+    p $row4;
+
+    # testa GET como usuario logado
+    $t->get_ok(
+        join('', '/me/guardioes'),
+        {'x-api-key' => $session}
+    )->status_is(200)->json_is('/guards/0/meta/layout', 'accepted', 'first row layout is accepted')
+      ->json_is('/guards/0/rows/0/id',       $row3->id,              'row3 is accepted')
+      ->json_is('/guards/1/meta/header',     'Pendentes',            'Pendentes')
+      ->json_is('/guards/1/meta/layout',     'pending',              'second row layout is pending')
+      ->json_is('/guards/1/rows/0/celular',  '+1 484-291-8467',      'celular ok')
+      ->json_is('/guards/1/rows/1',       undef,                   'nao tem mais dois convites pendentes')
+      ->json_is('/guards/2/meta/header',     'Convites expirados',   'Convites expirados')
+      ->json_is('/guards/2/rows/0/nome',     'Expiraldo Silva',      'id ok')
+      ->json_is('/guards/2/meta/can_resend', '1',                    'pode reenviar no expired')
+      ->json_is('/guards/2/rows/0/id',       $row_to_be_removed->id, 'id ok')
+      ->json_is('/guards/3/meta/can_resend', '0',                    'nao pode reenviar no recusado')
+      ->json_is('/guards/3/rows/0/id',       $row4->id,              'id ok')
+      ->json_is('/guards/3/meta/header',     'Convites recusados',   'Convites recusados');
 
 };
 

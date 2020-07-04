@@ -135,6 +135,7 @@ sub t             {$t}
 sub app { $t->app }
 
 sub get_schema { $t->app->schema }
+sub get_schema2 { $t->app->schema2 }
 
 sub resultset { get_schema->resultset(@_) }
 
@@ -142,6 +143,21 @@ sub db_transaction (&) {
     my ($code) = @_;
 
     my $schema = get_schema;
+    eval {
+        $schema->txn_do(
+            sub {
+                $code->();
+                die "rollback\n";
+            }
+        );
+    };
+    die $@ unless $@ =~ m{rollback};
+}
+
+sub db_transaction2 (&) {
+    my ($code) = @_;
+
+    my $schema = get_schema2;
     eval {
         $schema->txn_do(
             sub {

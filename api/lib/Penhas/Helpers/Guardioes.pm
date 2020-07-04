@@ -15,7 +15,131 @@ sub setup {
     $self->helper('cliente_delete_guardioes' => sub { &cliente_delete_guardioes(@_) });
     $self->helper('cliente_edit_guardioes'   => sub { &cliente_edit_guardioes(@_) });
     $self->helper('cliente_list_guardioes'   => sub { &cliente_list_guardioes(@_) });
+    $self->helper('guardiao_load_by_token'   => sub { &guardiao_load_by_token(@_) });
+    $self->helper('guardiao_update_by_token' => sub { &guardiao_update_by_token(@_) });
 
+}
+
+sub guardiao_load_by_token {
+    my ($c, %opts) = @_;
+
+    my $token = $opts{token};
+
+    if (length($token) == 10 && $token =~ /^[ASDFGHJKLQWERTYUIOPZXCVBNM0123456789\-\.\,\*\_]{10}$/) {
+
+        my $test_token = substr($token, 0, 7);
+        my $hash       = uc(substr(md5_hex($ENV{GUARD_HASH_SALT} . $test_token), 0, 3));
+
+        if ($token ne "$test_token$hash") {
+            $c->reply_invalid_param(
+                'Assinatura do código não confere.',
+                'token_invalid_hash',
+                'token'
+            );
+        }
+    }
+    else {
+        $c->reply_invalid_param(
+            'O código informado não é válido. Confira novamente o link recebido no SMS.',
+            'token_invalid_format',
+            'token'
+        );
+    }
+
+    my $row = $c->schema2->resultset('ClientesGuardio')->search(
+        {
+            'me.status'     => {'in' => [qw/pending accepted refused expired_for_not_use/]},
+            'me.token'      => $token,
+            'me.deleted_at' => undef,
+        },
+        {
+            prefetch => 'cliente',
+        }
+    )->next or $c->reply_item_not_found();
+
+    # expira os convites que ja expiraram
+    $row->cliente->clientes_guardioes_rs->expires_pending_invites;
+
+    # desconsidera as mudanças
+    $row->discard_changes({prefetch => 'cliente'});
+
+    # confere se o status nao mudou
+    if ($row->status !~ /^(pending|accepted|refused|expired_for_not_use)$/) {
+        $c->reply_item_not_found();
+    }
+
+    return $row;
+}
+
+sub guardiao_update_by_token {
+    my ($c, %opts) = @_;
+
+    my $action = $opts{action};
+    if ($action !~ /^(accept|refuse)$/) {
+        $c->reply_invalid_param(
+            'action não reconhecido',
+            'action_invalid',
+            'action'
+        );
+    }
+    my $row = $c->guardiao_load_by_token(%opts);
+
+    # se expirou, nao pode mais ser aceito
+    if ($row->status eq 'expired_for_not_use') {
+        $c->reply_invalid_param(
+            'Este convite já expirou!',
+            'guard_invite_expired',
+            'token'
+        );
+    }
+
+    if ($action eq 'accept' && $row->status ne 'accepted') {
+        $row->update(
+            {
+                status        => 'accepted',
+                accepted_at   => \'NOW()',
+                accepted_meta => $row->accepted_meta_merge_with(
+                    {
+                        ip => $c->remote_addr(),
+                        (
+                            $row->refused_at
+                            ? (
+                                old_refused_at => $row->refused_at->datetime,
+                              )
+                            : ()
+                        ),
+                    }
+                ),
+                refused_at => undef,
+            }
+        );
+        $row->discard_changes({prefetch => 'cliente'});
+    }
+    elsif ($action eq 'refuse' && $row->status ne 'refused') {
+        $row->update(
+            {
+                status        => 'refused',
+                accepted_at   => undef,
+                accepted_meta => $row->accepted_meta_merge_with(
+                    {
+                        refused_ip => $c->remote_addr(),
+                        (
+                            $row->accepted_at
+                            ? (
+                                old_accepted_at => $row->accepted_at->datetime,
+                              )
+                            : ()
+                        ),
+                    }
+                ),
+                refused_at => \'NOW()',
+
+            }
+        );
+        $row->discard_changes({prefetch => 'cliente'});
+    }
+
+    return $row;
 }
 
 sub cliente_upsert_guardioes {
@@ -125,7 +249,8 @@ sub cliente_upsert_guardioes {
         }
     )->update({deleted_at => \'NOW()'});
 
-    my $token = random_string_from('ASDFGHJKLQWERTYUIOPZXCVBNM0123456789', 7);
+    # ~ 94 bilhoes de combinacoes
+    my $token = random_string_from('ASDFGHJKLQWERTYUIOPZXCVBNM0123456789-.,*_', 7);
     my $hash  = substr(md5_hex($ENV{GUARD_HASH_SALT} . $token), 0, 3);
 
     $row = $user_obj->clientes_guardioes_rs->create(

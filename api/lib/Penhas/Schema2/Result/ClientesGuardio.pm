@@ -88,6 +88,8 @@ __PACKAGE__->belongs_to(
 
 # ALTER TABLE clientes_guardioes ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 
+use JSON;
+
 sub subtexto {
     my ($self) = @_;
 
@@ -120,6 +122,39 @@ sub subtexto {
     }
 
     return $tmp;
+}
+
+sub accepted_meta_merge_with {
+    my ($self, $merge_with) = @_;
+
+    my $cur_value = eval { from_json($self->accepted_meta) } || {};
+
+    $cur_value->{$_} = $merge_with->{$_} for keys $merge_with->%*;
+
+    return to_json($cur_value);
+}
+
+sub render_guardiao_public_data {
+    my ($self) = @_;
+
+    my $cliente = $self->cliente;
+
+    return {
+        guardiao => {
+            celular => $self->celular_formatted_as_national(),
+
+            is_accepted => $self->status eq 'accepted'            ? 1 : 0,
+            is_pending  => $self->status eq 'pending'             ? 1 : 0,
+            is_expired  => $self->status eq 'expired_for_not_use' ? 1 : 0,
+
+            refused_at  => ($self->refused_at()  ? $self->refused_at->datetime()  : undef),
+            created_at  => ($self->created_at()  ? $self->created_at->datetime()  : undef),
+            accepted_at => ($self->accepted_at() ? $self->accepted_at->datetime() : undef),
+        },
+        cliente => {
+            apelido => $cliente->apelido,
+        }
+    };
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
