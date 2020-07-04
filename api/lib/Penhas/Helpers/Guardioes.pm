@@ -15,6 +15,7 @@ sub setup {
     $self->helper('cliente_delete_guardioes' => sub { &cliente_delete_guardioes(@_) });
     $self->helper('cliente_edit_guardioes'   => sub { &cliente_edit_guardioes(@_) });
     $self->helper('cliente_list_guardioes'   => sub { &cliente_list_guardioes(@_) });
+    $self->helper('cliente_alert_guards'     => sub { &cliente_alert_guards(@_) });
     $self->helper('guardiao_load_by_token'   => sub { &guardiao_load_by_token(@_) });
     $self->helper('guardiao_update_by_token' => sub { &guardiao_update_by_token(@_) });
 
@@ -273,7 +274,8 @@ sub cliente_upsert_guardioes {
       . ($ENV{SMS_GUARD_LINK} || 'https://sms.penhas.com.br/')
       . $row->token();
 
-    my $remaining_chars = 140 - length($message_prepend . $message_link);
+    # 130 no lugar de 140, pois o minimo reservado pro nome sao 10 chars
+    my $remaining_chars = 130 - length($message_prepend . $message_link);
 
     # se ficou menor, nao tem jeito, vamo ser dois SMS..
     $remaining_chars += 140 if $remaining_chars < 0;
@@ -353,7 +355,8 @@ sub _parse_celular {
 
     $celular = Number::Phone::Lib->new($celular =~ /^\+/ ? ($celular) : ('BR', $celular));
     $c->reply_invalid_param(
-        'Não conseguimos decodificar o número enviado. Lembre-se de incluir o DDD para Brasil. Para números internacionais inicie com +.',
+            'Não conseguimos decodificar o número enviado. Lembre-se de incluir o DDD para Brasil.'
+          . "\nPara números internacionais inicie com +código-do-país.",
         'parser_error', 'celular'
     ) if !$celular || !$celular->is_valid();
 
@@ -509,6 +512,133 @@ sub cliente_list_guardioes {
         remaing_invites => $remaing_invites,
         guards          => \@guards
 
+    };
+}
+
+sub cliente_alert_guards {
+    my ($c, %opts) = @_;
+
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+
+    my %extra_db;
+    my $regex = /^-?\d{1,2}(\.\d{1,17})?$/;
+    for my $field (qw/gps_lat gps_long/) {
+        next unless defined $opts{$field};
+
+        if ($opts{$field} !~ $regex) {
+            $c->reply_invalid_param(
+                "$field não passa na regexp: $regex",
+                'gps_position_invalid',
+                $field
+            );
+        }
+        $extra_db{$field} = $opts{$field};
+    }
+
+    # precisa ter os dois, se nao limpa o outro.
+    if (   (defined $extra_db{gps_long} && !defined $extra_db{gps_lat})
+        || (defined $extra_db{gps_lat} && !defined $extra_db{gps_long}))
+    {
+        delete $extra_db{gps_long};
+        delete $extra_db{gps_lat};
+    }
+
+    my $meta = {ip => $c->remote_addr()};
+
+    my $alert = $user_obj->cliente_ativacoes_panicoes->create(
+        {
+            meta       => to_json($meta),
+            created_at => \'NOW()',
+
+            %extra_db,
+        }
+    );
+    slog_info('New panic activation alert number %d', $alert->id);
+
+    my $limit_per_minute = $ENV{MAX_GUARD_ALERT_PER_MINUTE} || 1;
+    my $key              = 'GuardAlertsMinute:' . $user_obj->id;
+    my $reqcount         = $c->kv()->local_get_count_and_inc(key => $key, expires => 60);
+    if ($reqcount > $limit_per_minute) {
+        die {
+            error   => 'too_many_alerts',
+            message => 'Os alertas já foram enviados no último minuto!',
+            status  => 400,
+        };
+    }
+
+    my $limit_per_day = $ENV{MAX_GUARD_ALERT_PER_24H} || 5;
+    my $key           = 'GuardAlerts24h:' . $user_obj->id;
+    my $reqcount      = $c->kv()->local_get_count_and_inc(key => $key, expires => 86400);
+    if ($reqcount > $limit_per_day) {
+        die {
+            error   => 'too_many_alerts',
+            message => 'Você atingiu o limite de alertas no período de 24h.',
+            status  => 400,
+        };
+    }
+
+    my @celulares = $user_obj->clientes_guardioes_rs->search_rs(
+        {
+            'me.status'     => 'accepted',
+            'me.deleted_at' => undef,
+        },
+        {
+            columns      => [qw/id celular_e164/],
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+        }
+    )->all;
+
+    my $message_prepend = 'PenhaS: ';
+    my $message_link    = ' adicionou um pedido de socorro. Entre em contato. ';
+
+    if ($alert->gps_lat && $alert->gps_long) {
+        $message_link .= 'Veja sua localizaçāo no mapa: https://google.com/maps?q='
+          . join(',', substr($alert->gps_lat, 0, 11), substr($alert->gps_long, 0, 11));
+    }
+    else {
+        $message_link .= 'A localizaçāo não foi recebida.';
+    }
+
+    # 130 no lugar de 140, pois o minimo reservado pro nome sao 10 chars
+    my $remaining_chars = 130 - length($message_prepend . $message_link);
+
+    # se ficou menor, nao tem jeito, vamo ser dois SMS..
+    $remaining_chars += 140 if $remaining_chars < 0;
+
+    my $message_sms = $message_prepend . substr($user_obj->nome_completo, 0, $remaining_chars) . $message_link;
+
+    my $sms_enviados = 0;
+
+    foreach my $guard (@celulares) {
+        my $number = $guard->{celular_e164};
+        my $job_id = $c->minion->enqueue(
+            'send_sms',
+            [
+                $number,
+                $message_sms,
+            ] => {
+                notes    => {alert_id => $alert->id},
+                attempts => 2,
+                priority => 10,
+            }
+        );
+        slog_info('send_sms %s job id: %s', $number, $job_id);
+        $sms_enviados++;
+    }
+
+    $alert->update(
+        {
+            sms_enviados  => $sms_enviados,
+            alert_sent_to => to_json({celulares => \@celulares}),
+        }
+    );
+
+    return {
+        message => (
+              $sms_enviados > 1  ? sprintf('Alerta disparado com sucesso para %d guardiões', $sms_enviados)
+            : $sms_enviados == 1 ? 'Alerta disparado com sucesso para 1 guardião'
+            :                      'Não há guardiões cadastros! Nenhum alerta foi enviado'
+        )
     };
 }
 

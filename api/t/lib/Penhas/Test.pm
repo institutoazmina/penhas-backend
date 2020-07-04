@@ -50,7 +50,7 @@ my $redis_ns;
 
 sub END {
     if (defined $redis_ns) {
-        my $redis = Penhas::KeyValueStorage->instance->redis;
+        my $redis = app()->kv->instance->redis;
         my @del   = $redis->keys($redis_ns . '*');
         $redis->del(@del) if @del;
     }

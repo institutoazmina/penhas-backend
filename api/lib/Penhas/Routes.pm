@@ -52,8 +52,8 @@ sub register {
     my $me = $authenticated->under('/me')->to(controller => 'Me', action => 'check_and_load');
     $me->get()->to(action => 'find');
 
-    $me->under('/increment-fake-password-usage')->post()->to(action => 'inc_senha_falsa_counter');
-
+    # POST /me/call-police-pressed
+    $me->under('/call-police-pressed')->post()->to(action => 'inc_call_police_counter');
     # /me/quiz
     my $me_quiz = $me->under('/quiz')->to(controller => 'Me_Quiz', action => 'assert_user_perms');
     $me_quiz->post()->to(action => 'process');
@@ -76,6 +76,8 @@ sub register {
     $me_guardioes_object->delete()->to(action => 'delete');
     $me_guardioes_object->put()->to(action => 'edit');
 
+    # POST /me/guardioes/alert
+    $me_guardioes->under('/alert')->post()->to(action => 'alert_guards');
 
     # /timeline/
     my $timeline = $authenticated->under('/timeline')->to(controller => 'Timeline', action => 'assert_user_perms');

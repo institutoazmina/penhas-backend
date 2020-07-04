@@ -343,6 +343,10 @@ do {
       ->json_is('/guards/3/rows/0/id',       $row4->id,              'id ok')
       ->json_is('/guards/3/meta/header',     'Convites recusados',   'Convites recusados');
 
+    $t->post_ok(
+        join('', '/me/guardioes/alert'),
+        {'x-api-key' => $session}
+    )->status_is(200);
 };
 
 done_testing();

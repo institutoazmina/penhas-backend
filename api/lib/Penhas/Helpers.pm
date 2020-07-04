@@ -1,5 +1,5 @@
 package Penhas::Helpers;
-use common::sense;
+use Mojo::Base -base;
 use Penhas::SchemaConnected;
 use Penhas::Directus;
 use Penhas::Controller;
@@ -9,6 +9,7 @@ use Penhas::Helpers::ClienteSetSkill;
 use Penhas::Helpers::Timeline;
 use Penhas::Helpers::RSS;
 use Penhas::Helpers::Guardioes;
+use Penhas::KeyValueStorage;
 
 use Carp qw/croak confess/;
 
@@ -23,9 +24,11 @@ sub setup {
 
     Penhas::Helpers::RSS::setup($self);
 
-    $self->helper(schema  => sub { state $schema  = Penhas::SchemaConnected->get_schema(@_) });
-    $self->helper(schema2 => sub { state $schema2 = Penhas::SchemaConnected->get_schema2(@_) });
-    $self->helper(sum_cpf_errors => sub { &sum_cpf_errors(@_) });
+    state $kv = Penhas::KeyValueStorage->instance;
+    $self->helper(kv             => sub {$kv});
+    $self->helper(schema         => \&Penhas::SchemaConnected::get_schema);
+    $self->helper(schema2        => \&Penhas::SchemaConnected::get_schema2);
+    $self->helper(sum_cpf_errors => \&sum_cpf_errors);
 
 
     $self->helper(
@@ -73,6 +76,7 @@ sub setup {
             return;
         },
     );
+
 
     $self->helper('reply.exception' => sub { Penhas::Controller::reply_exception(@_) });
     $self->helper('reply.not_found' => sub { Penhas::Controller::reply_not_found(@_) });

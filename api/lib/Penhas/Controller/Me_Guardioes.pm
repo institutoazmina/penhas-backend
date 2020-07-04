@@ -76,4 +76,17 @@ sub list {
     );
 }
 
+sub alert_guards {
+    my $c = shift;
+
+    my $ret = $c->cliente_alert_guards(
+        user_obj => $c->stash('user_obj'),
+    );
+
+    return $c->render(
+        json   => $ret,
+        status => 200,
+    );
+}
+
 1;

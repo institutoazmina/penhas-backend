@@ -19,7 +19,7 @@ sub check_and_load {
 
     $c->reply_not_found() unless $user;
     $c->stash('user_obj' => $user);
-    $c->stash('user'     => {$user->get_columns}); # nao pode ser o inflacted
+    $c->stash('user'     => {$user->get_columns});    # nao pode ser o inflacted
     return 1;
 }
 
@@ -76,17 +76,16 @@ sub update {
 }
 
 
-sub inc_senha_falsa_counter {
+sub inc_call_police_counter {
     my $c = shift;
 
-    my $user = $c->stash('user');
-    $c->directus->update(
-        table => 'clientes',
-        id    => $user->{id},
-        form  => {
-            qtde_login_senha_falsa => $user->{qtde_login_senha_falsa} + 1,
+    my $user_obj = $c->stash('user_obj');
+    $user_obj->update(
+        {
+            qtde_ligar_para_policia => \'qtde_ligar_para_policia+1',
         }
     );
+    $user_obj->cliente_ativacoes_policias->create({created_at => \'NOW()'});
 
     return $c->render(text => '', status => 204,);
 }

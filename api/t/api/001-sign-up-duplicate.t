@@ -186,16 +186,16 @@ subtest_buffered 'Login' => sub {
 };
 
 my $directus = get_cliente_by_email($random_email);
-subtest_buffered 'Contador login com senha falsa' => sub {
+subtest_buffered 'Contador ligacao policia' => sub {
 
-    is $directus->{qtde_login_senha_falsa}, 0, 'qtde_login_senha_falsa is 0';
+    is $directus->{qtde_ligar_para_policia}, 0, 'qtde_ligar_para_policia is 0';
     $t->post_ok(
-        '/me/increment-fake-password-usage',
+        '/me/call-police-pressed',
         {'x-api-key' => $session}
     )->status_is(204);
 
     $directus = get_cliente_by_email($random_email);
-    is $directus->{qtde_login_senha_falsa}, 1, 'qtde_login_senha_falsa increased';
+    is $directus->{qtde_ligar_para_policia}, 1, 'qtde_ligar_para_policia increased';
 };
 
 subtest_buffered 'Reset de senha' => sub {

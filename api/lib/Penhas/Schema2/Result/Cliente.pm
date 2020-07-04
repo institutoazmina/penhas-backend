@@ -97,8 +97,6 @@ __PACKAGE__->add_columns(
   },
   "qtde_login_senha_normal",
   { data_type => "integer", default_value => 1, is_nullable => 0 },
-  "qtde_login_senha_falsa",
-  { data_type => "integer", default_value => 0, is_nullable => 0 },
   "apelido",
   { data_type => "varchar", is_nullable => 0, size => 200 },
   "nome_social",
@@ -117,10 +115,24 @@ __PACKAGE__->add_columns(
   },
   "panic_status",
   { data_type => "varchar", default_value => "OK", is_nullable => 1, size => 20 },
+  "qtde_ligar_para_policia",
+  { data_type => "integer", default_value => 0, is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
 __PACKAGE__->add_unique_constraint("email", ["email"]);
+__PACKAGE__->has_many(
+  "cliente_ativacoes_panicoes",
+  "Penhas::Schema2::Result::ClienteAtivacoesPanico",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "cliente_ativacoes_policias",
+  "Penhas::Schema2::Result::ClienteAtivacoesPolicia",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 __PACKAGE__->has_many(
   "cliente_skills",
   "Penhas::Schema2::Result::ClienteSkill",
@@ -135,8 +147,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-28 07:01:17
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Sf3G3xREYR7ex/4lkgPx5Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-04 14:38:44
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CtiwzkLKEveNDA3IINSkwg
 
 __PACKAGE__->has_many(
     "tweets",
