@@ -79,7 +79,13 @@ sub list {
 sub alert_guards {
     my $c = shift;
 
+    my $valid = $c->validate_request_params(
+        gps_lat  => {required => 0, type => 'Str', max_length => 100},
+        gps_long => {required => 0, type => 'Str', max_length => 100},
+    );
+
     my $ret = $c->cliente_alert_guards(
+        %$valid,
         user_obj => $c->stash('user_obj'),
     );
 

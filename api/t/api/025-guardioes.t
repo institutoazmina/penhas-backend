@@ -345,8 +345,26 @@ do {
 
     $t->post_ok(
         join('', '/me/guardioes/alert'),
-        {'x-api-key' => $session}
+        {'x-api-key' => $session},
+        form => {
+            gps_lat  => '12.33445',
+            gps_long => '-23.888887',
+        }
     )->status_is(200);
+
+    ok(
+        my $alert = $schema2->resultset('ClienteAtivacoesPanico')->search(
+            {
+                cliente_id => $cliente_id,
+            }
+        )->next(),
+        'alert found'
+    );
+    is $alert->cliente_id, $cliente_id, 'cliente_id match';
+    like($alert->alert_sent_to(), qr/5511943214321/, '5511943214321 was logged');
+    is $alert->sms_enviados, 1,            'sms_enviados=1';
+    is $alert->gps_lat,      '12.33445',   'lat ok';
+    is $alert->gps_long,     '-23.888887', 'long ok';
 };
 
 done_testing();
