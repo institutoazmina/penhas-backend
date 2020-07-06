@@ -28,10 +28,15 @@ my $cadastro = $t->get_ok(
 
 is trace_popall(), 'clientes_quiz_session:created', 'clientes_quiz_session was created';
 
-$t->get_ok(
+my $json = $t->get_ok(
     '/me',
     {'x-api-key' => $session}
-)->status_is(200)->json_has('/quiz_session/session_id')->json_has('/modules/quiz')->json_hasnt('/modules/tweets');
+)->status_is(200)->json_has('/quiz_session/session_id')->tx->res->json;
+
+ok( (grep { $_->{code} eq 'quiz' } $json->{modules}->@* ) ? 1 : 0, 'has quiz' );
+ok( (grep { $_->{code} eq 'tweets' } $json->{modules}->@* ) ? 0 : 1, 'has not tweets' );
+
+#json_has('/modules/quiz')->json_hasnt('/modules/tweets');
 is trace_popall(), 'clientes_quiz_session:loaded', 'clientes_quiz_session was just loaded';
 
 

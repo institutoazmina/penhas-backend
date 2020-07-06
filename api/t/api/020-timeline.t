@@ -102,7 +102,7 @@ subtest_buffered 'cadastro' => sub {
     is $cadastro->{user_profile}{nome_completo}, $nome_completo;
     is $cadastro->{user_profile}{nome_social}, '', 'nome social nao existe em genero=feminino';
 
-    ok $cadastro->{modules}{tweets}, 'modulo [tweets] timeline presente';
+    ok ((grep { $_->{code} eq 'tweets'} $cadastro->{modules}->@*) , 'modulo [tweets] timeline presente');
 };
 
 my $tweet_rs = app->schema2->resultset('Tweet');

@@ -31,14 +31,17 @@ sub find {
     my $user_obj = $c->stash('user_obj');
 
     my $feminino = $user_obj->is_female;
-    my $modules  = $user_obj->access_modules;
+    my $modules  = $user_obj->access_modules_as_config;
 
     my $quiz_session = $c->user_get_quiz_session(user => $user);
 
     if ($quiz_session) {
 
         # remove acesso a tudo, o usuario deve completar o quiz
-        $modules = {quiz => {}};
+        $modules = [{
+            code => 'quiz',
+            meta => {}
+        }];
 
         $c->load_quiz_session(session => $quiz_session, user => $user);
 

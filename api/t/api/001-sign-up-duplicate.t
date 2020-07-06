@@ -175,7 +175,7 @@ subtest_buffered 'Login' => sub {
             senha       => '123456',
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         }
-    )->status_is(200)->json_has('/session')->json_is('/senha_falsa', 0)->tx->res->json;
+    )->status_is(200)->json_has('/session')->tx->res->json;
 
     $session = $res->{session};
     $t->get_ok(
@@ -277,7 +277,7 @@ subtest_buffered 'Reset de senha' => sub {
             senha       => 'abc12345678',
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         }
-    )->status_is(200)->json_has('/session')->json_is('/senha_falsa', 0)->tx->res->json;
+    )->status_is(200)->json_has('/session')->tx->res->json;
 
 };
 

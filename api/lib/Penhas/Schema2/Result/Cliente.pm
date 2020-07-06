@@ -185,12 +185,17 @@ sub _build_access_modules {
     return {map { ($_ => {}) } @modules};
 }
 
+sub access_modules_as_config {
+    my $meta = {modo_seguranca => {numero => '000',}, tweets => {max_length => 2200,},};
+    return [map { +{code => $_, meta => $meta->{$_} || {}} } keys $_[0]->access_modules->%*];
+}
+
 sub access_modules_str {
     return ',' . join(',', keys $_[0]->access_modules->%*) . ',';
 }
 
 sub has_module {
-    my $self   = shift;
+    my $self = shift;
     my $module = shift || confess 'missing module name';
 
     return $self->access_modules_str() =~ /,$module,/;
