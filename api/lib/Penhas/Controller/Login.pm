@@ -81,15 +81,6 @@ sub post {
         }
         else {
 
-            # a conta pode ter uma  senha falsa, que pode fazer login
-            if ($found->{senha_falsa_sha256}) {
-
-                if (lc($senha) eq lc($found->{senha_falsa_sha256})) {
-                    $senha_falsa = 1;
-                    goto LOGON;
-                }
-            }
-
             my $total_errors = 1 + $c->directus->sum_login_errors(cliente_id => $directus_id);
             my $now          = DateTime->now->datetime(' ');
             $c->directus->create(
@@ -138,12 +129,7 @@ sub post {
         };
     }
 
-    if ($senha_falsa) {
-        $found->{qtde_login_senha_falsa}++;
-    }
-    else {
-        $found->{qtde_login_senha_normal}++;
-    }
+    $found->{qtde_login_senha_normal}++;
 
     $c->directus->update(
         table => 'clientes',
