@@ -33,14 +33,12 @@ sub post {
     $c->stash(apply_rps_on => substr($remote_ip, 0, 18));
     $c->apply_request_per_second_limit(3, 60);
 
-    my $senha_falsa = 0;
-
     # procura pelo email
     my $schema = $c->schema;
-    my $found  = $c->schema2->resultset('Cliente')->search(
+    my $found_obj  = $c->schema2->resultset('Cliente')->search(
         {email        => $email, status => 'active'},
-        {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
     )->next;
+    my $found = $found_obj ? { $found_obj->get_columns() } : undef;
     if ($found) {
         my $directus_id = $found->{id};
         if ($found->{login_status} eq 'NOK' && $found->{login_status_last_blocked_at}) {
@@ -57,10 +55,7 @@ sub post {
 
             }
             else {
-                $c->directus->update(
-                    table => 'clientes',
-                    id    => $directus_id,
-                    form  => {
+                $found_obj->update( {
                         login_status                 => 'OK',
                         login_status_last_blocked_at => ''
                     }
@@ -93,10 +88,8 @@ sub post {
             );
 
             if ($total_errors >= $max_email_errors_before_lock) {
-                $c->directus->update(
-                    table => 'clientes',
-                    id    => $directus_id,
-                    form  => {
+                $found_obj->update(
+                    {
                         login_status                 => 'NOK',
                         login_status_last_blocked_at => $now,
                     }
@@ -129,16 +122,9 @@ sub post {
         };
     }
 
-    $found->{qtde_login_senha_normal}++;
-
-    $c->directus->update(
-        table => 'clientes',
-        id    => $directus_id,
-        form  => {
-            qtde_login_senha_normal => $found->{qtde_login_senha_normal},
-            qtde_login_senha_falsa  => $found->{qtde_login_senha_falsa},
-        }
-    );
+    $found_obj->update({
+        qtde_login_senha_normal => \'qtde_login_senha_normal + 1'
+    });
 
     my $session = $c->schema2->resultset('ClientesActiveSession')->create(
         {cliente_id => $directus_id},
@@ -162,7 +148,6 @@ sub post {
                     typ => 'usr'
                 }
             ),
-            senha_falsa => $senha_falsa ? 1 : 0,
             (is_test() ? (_test_only_id => $directus_id) : ()),
         },
         status => 200,
