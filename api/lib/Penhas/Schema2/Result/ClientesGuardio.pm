@@ -146,6 +146,7 @@ sub render_guardiao_public_data {
             is_accepted => $self->status eq 'accepted'            ? 1 : 0,
             is_pending  => $self->status eq 'pending'             ? 1 : 0,
             is_expired  => $self->status eq 'expired_for_not_use' ? 1 : 0,
+            nome  => $self->nome,
 
             refused_at  => ($self->refused_at()  ? $self->refused_at->datetime()  : undef),
             created_at  => ($self->created_at()  ? $self->created_at->datetime()  : undef),

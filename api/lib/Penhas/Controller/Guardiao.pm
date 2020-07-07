@@ -13,6 +13,10 @@ sub apply_rps {
     # recortando o IPV6 para apenas o prefixo (18 chars)
     $c->stash(apply_rps_on => substr($remote_ip, 0, 18));
     $c->apply_request_per_second_limit(100, 3600);
+
+    $c->stash( template => 'guardiao/index' );
+
+    return 1;
 }
 
 sub get {
@@ -22,9 +26,11 @@ sub get {
         token => {required => 1, type => 'Str', max_length => 100,},
     );
 
-    return $c->render(
-        json   => $c->guardiao_load_by_token(%$valid)->render_guardiao_public_data(),
-        status => 200,
+    my $res = $c->guardiao_load_by_token(%$valid)->render_guardiao_public_data();
+use DDP; p $res;
+    return $c->respond_to_if_web(
+        json   => $res,
+        html => {%$res, %$valid},
     );
 }
 
@@ -36,9 +42,11 @@ sub post {
         action => {required => 1, type => 'Str', max_length => 100,},
     );
 
-    return $c->render(
-        json   => $c->guardiao_update_by_token(%$valid)->render_guardiao_public_data(),
-        status => 200,
+    my $res = $c->guardiao_update_by_token(%$valid)->render_guardiao_public_data();
+
+    return $c->respond_to_if_web(
+        json   => $res,
+        html => { %$res, %$valid},
     );
 }
 

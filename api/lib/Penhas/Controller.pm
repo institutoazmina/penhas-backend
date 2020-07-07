@@ -25,30 +25,26 @@ sub apply_request_per_second_limit {
         die {
             error   => 'too_many_requests',
             message => 'Você fez muitos acessos recentemente. Aguarde um minuto e tente novamente.'
-              . (
-                $ENV{IS_DEV}
-                ? ('DEV ONLY: ' . $reqcount . '/' . $limit)
-                : ''
-              ),
+              . ($ENV{IS_DEV} ? ('DEV ONLY: ' . $reqcount . '/' . $limit) : ''),
             status => 429,
         };
     }
+    return 1;
 }
 
 sub reply_not_found {
     my $c = shift;
 
-    die {error => 'Page not found', message => 'Página ou item não existe',, status => 404,};
+    die {error => 'Page not found', message => 'Página ou item não existe', status => 404,};
 }
 
 sub reply_invalid_param {
     my ($c, $message, $error, $field, $reason) = @_;
 
     die {
-        error   => $error || 'form_error',
+        error => $error || 'form_error',
         message => "$message",
-        (defined $field ? (field => $field, reason => $reason || 'invalid') : ()),
-        status => 400,
+        (defined $field ? (field => $field, reason => $reason || 'invalid') : ()), status => 400,
     };
 }
 
@@ -81,9 +77,11 @@ sub reply_exception {
     my $err = shift;
     my $ret = eval { &_reply_exception($c, $err) };
     if ($@) {
+        my $err = $@;
+        $c->app->log->fatal($c->dumper($err));
         $c->app->log->fatal("reply_exception generated an exception!!!");
-        $c->app->log->fatal($@);
-        die {error => "Internal server error", status => 500,};
+        $c->render(text => 'reply_exception generated an exception', status => 500);
+        return 1;
     }
     return $ret if $ret;
 }
@@ -99,18 +97,31 @@ sub _reply_exception {
             $c->app->log->info('error 400: ' . $c->app->dumper($an_error));
 
             $an_error->{message} = $campos_nao_foram_preenchidos unless exists $an_error->{message};
-            return $c->render(json => $an_error, status => $status,);
+            return $c->respond_to_if_web(
+                json => {json => $an_error, status => $status,},
+                html => {template => 'guardiao/index', error => $an_error, status => 200}
+            );
         }
         elsif (ref $an_error eq 'REF' && ref $$an_error eq 'ARRAY' && @$$an_error == 2) {
 
             $c->app->log->info('error 400: ' . $c->app->dumper($an_error));
 
-            return $c->render(
+            return $c->respond_to_if_web(
                 json => {
-                    error   => 'form_error', field => $$an_error->[0], reason => $$an_error->[1],
-                    message => $campos_nao_foram_preenchidos
+                    json => {
+                        error   => 'form_error',
+                        field   => $$an_error->[0],
+                        reason  => $$an_error->[1],
+                        message => $campos_nao_foram_preenchidos
+                    },
+                    status => 400,
                 },
-                status => 400,
+                html => {
+                    error   => 'form_error',
+                    field   => $$an_error->[0],
+                    reason  => $$an_error->[1],
+                    message => $campos_nao_foram_preenchidos,
+                }
             );
         }
         elsif (ref $an_error eq 'DBIx::Class::Exception'
@@ -142,7 +153,7 @@ sub _reply_exception {
             $c->app->log->info('Exception treated: ' . $an_error->{message});
 
             return $c->render(
-                json   => {error => 'generic_exception', message => $an_error->{message}},
+                json => {error => 'generic_exception', message => $an_error->{message}},
                 status => $an_error->{error_code} || 500,
             );
         }
@@ -153,6 +164,7 @@ sub _reply_exception {
 
     return $c->render(json => {error => "Internal server error", message => 'Erro interno'}, status => 500,);
 }
+
 
 sub validate_request_params {
     my ($c, %fields) = @_;

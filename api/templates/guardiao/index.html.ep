@@ -1,0 +1,62 @@
+
+<div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+<header class="masthead mb-auto">
+    <div class="inner">
+      <h3 class="masthead-brand">PenhaZ</h3>
+
+    </div>
+  </header>
+
+    <main role="main" class="inner cover">
+% if (my $error = stash ('error') ) {
+<div class="alert alert-danger" role="alert">
+  <%= $error->{message} %>
+</div>
+% }
+
+% if (my $guardiao = stash ('guardiao') ) {
+
+
+    <h1 class="cover-heading"> <%= $guardiao->{nome} %> </h1>
+
+    %if ( $guardiao->{is_pending} ) {
+    <p class="lead">Você foi convidado por <%= $cliente->{apelido} %> para se tornar um guardião.</p>  
+
+    <p class="lead">
+      <a href="/web/guardiao?action=accept&token=<%=$token%>&_method=post" class="btn btn-lg btn-secondary">Aceitar convite</a>
+    </p>
+    <p class="lead">
+      <a href="/web/guardiao?action=refuse&token=<%=$token%>&_method=post" class="btn btn-danger btn-lg ">Recusar convite</a>
+    </p>    
+
+    % }
+    
+    %if ( $guardiao->{is_expired} ) {
+    <p class="lead">Este convite já foi expirou, peça um novo convite para a <%= $cliente->{apelido} %>.</p>
+    % }
+
+    %if ( $guardiao->{is_accepted} ) {
+    <p class="lead">Você faz parte dos guardiões da <%= $cliente->{apelido} %>!</p>  
+    <p class="lead">
+      <a href="/web/guardiao?action=refuse&token=<%=$token%>&_method=post" class="btn btn-danger btn-lg ">Recusar convite</a>
+    </p>
+    % } elsif ( !$guardiao->{is_pending} ) {
+    <p class="lead">Você não faz mais parte guardiões da <%= $cliente->{apelido} %>, mas pode retornar usando o botão abaixo</p>  
+    
+    <p class="lead">
+      <a href="/web/guardiao?action=accept&token=<%=$token%>&_method=post" class="btn btn-lg btn-secondary">Reaver convite</a>
+    </p>
+        
+    % }
+    
+
+
+% }
+    </main>
+
+  <footer class="mastfoot mt-auto">
+    <div class="inner">
+        &nbsp;</div>
+  </footer>
+
+</div>
