@@ -14,8 +14,11 @@
 </div>
 % }
 
-% if (my $guardiao = stash ('guardiao') ) {
+% if ((my $guardiao = stash ('guardiao') ) && (my $cliente = stash ('cliente') )) {
 
+<form method="post" action="/web/guardiao">
+
+<input type="hidden" name="token" value="<%= stash ('token') %>" / >
 
     <h1 class="cover-heading"> <%= $guardiao->{nome} %> </h1>
 
@@ -23,10 +26,12 @@
     <p class="lead">Você foi convidado por <%= $cliente->{apelido} %> para se tornar um guardião.</p>  
 
     <p class="lead">
-      <a href="/web/guardiao?action=accept&token=<%=$token%>&_method=post" class="btn btn-lg btn-secondary">Aceitar convite</a>
-    </p>
+
+      <button name="action" value="accept" class="btn btn-lg btn-secondary">Aceitar convite</button>
+     </p>
     <p class="lead">
-      <a href="/web/guardiao?action=refuse&token=<%=$token%>&_method=post" class="btn btn-danger btn-lg ">Recusar convite</a>
+
+          <button name="action" value="refuse" class="btn btn-lg btn-danger">Recusar convite</button>
     </p>    
 
     % }
@@ -38,18 +43,21 @@
     %if ( $guardiao->{is_accepted} ) {
     <p class="lead">Você faz parte dos guardiões da <%= $cliente->{apelido} %>!</p>  
     <p class="lead">
-      <a href="/web/guardiao?action=refuse&token=<%=$token%>&_method=post" class="btn btn-danger btn-lg ">Recusar convite</a>
-    </p>
+
+      <button name="action" value="refuse" class="btn btn-lg btn-danger">Cancelar convite</button>
+
+      </p>
     % } elsif ( !$guardiao->{is_pending} ) {
     <p class="lead">Você não faz mais parte guardiões da <%= $cliente->{apelido} %>, mas pode retornar usando o botão abaixo</p>  
     
     <p class="lead">
-      <a href="/web/guardiao?action=accept&token=<%=$token%>&_method=post" class="btn btn-lg btn-secondary">Reaver convite</a>
+      <button name="action" value="accept" class="btn btn-lg btn-secondary">Reaver convite</button>
+    
     </p>
         
     % }
     
-
+</form>
 
 % }
     </main>
