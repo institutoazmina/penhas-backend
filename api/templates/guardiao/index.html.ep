@@ -47,7 +47,7 @@
       <button name="action" value="refuse" class="btn btn-lg btn-danger">Cancelar convite</button>
 
       </p>
-    % } elsif ( !$guardiao->{is_pending} ) {
+    % } elsif ( !$guardiao->{is_pending} && !$guardiao->{is_expired} ) {
     <p class="lead">Você não faz mais parte guardiões da <%= $cliente->{apelido} %>, mas pode retornar usando o botão abaixo</p>  
     
     <p class="lead">
