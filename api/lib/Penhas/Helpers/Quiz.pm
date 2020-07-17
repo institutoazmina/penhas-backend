@@ -486,7 +486,7 @@ sub process_quiz_session {
 
         log_info("ref=$ref?");
         if (exists $params->{$ref}) {
-            my $val = $params->{$ref} || '';
+            my $val = defined $params->{$ref} ? $params->{$ref} : '';
             log_info("Found, $ref=$val");
             my $code = $msg->{_code};
             die sprintf "missing `_code` on message %s", to_json($msg) unless $code;
