@@ -572,7 +572,7 @@ sub process_quiz_session {
                     chop($output_human);    # rm virgula
                     chop($output);          # rm virgula
 
-                    $responses->{$code} = $output;
+                    $responses->{$code} = '[' . $output . ']';
                     $msg->{display_response} = $output_human;
                     $have_new_responses++;
 
@@ -808,7 +808,7 @@ sub _init_questionnaire_stash {
                 content    => $qc->{question},
                 action     => 'none',
                 ref        => 'BT' . $qc->{id},
-                label      => $qc->{button_label}|| 'Enviar',
+                label      => $qc->{button_label} || 'Enviar',
                 _relevance => $relevance,
                 _code      => $qc->{code},
                 _end_chat  => 1,
