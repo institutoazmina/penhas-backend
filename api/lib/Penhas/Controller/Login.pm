@@ -126,6 +126,11 @@ sub post {
         qtde_login_senha_normal => \'qtde_login_senha_normal + 1'
     });
 
+    # invalida todas as outras sessions
+    $c->schema2->resultset('ClientesActiveSession')->search(
+        {cliente_id => $directus_id},
+    )->delete;
+
     my $session = $c->schema2->resultset('ClientesActiveSession')->create(
         {cliente_id => $directus_id},
     );

@@ -25,7 +25,7 @@ sub setup {
     Penhas::Helpers::RSS::setup($self);
 
     state $kv = Penhas::KeyValueStorage->instance;
-    $self->helper(kv => sub {$kv});
+    $self->helper(kv             => sub {$kv});
     $self->helper(schema         => \&Penhas::SchemaConnected::get_schema);
     $self->helper(schema2        => \&Penhas::SchemaConnected::get_schema2);
     $self->helper(sum_cpf_errors => \&sum_cpf_errors);
@@ -33,20 +33,23 @@ sub setup {
 
     $self->helper(
         respond_to_if_web => sub {
-            my $c      = shift;
+            my $c = shift;
 
-            if ($c->stash('template')) {
+            my $accept = $c->req->headers->header('accept');
+            if ($c->stash('template') && $accept && $accept =~ /html/) {
                 $c->respond_to(@_);
             }
             else {
-                $c->render(json => {@_}->{json});
+                my %opts = %{{@_}->{json}};
+                die 'missing object json' unless $opts{json};
+                $c->render(%opts);
             }
         }
     );
 
     $self->helper(
         assert_user_has_module => sub {
-            my $c = shift;
+            my $c      = shift;
             my $module = shift or confess 'missing param $module';
 
             my $user_obj = $c->stash('user_obj') or confess 'missing stash.user_obj';
@@ -104,10 +107,10 @@ sub sum_cpf_errors {
     # contar quantas vezes o IP ja errou no ultimo dia
     my $total = $self->schema2->resultset('CpfErro')->search(
         {
-            'reset_at' => {'>' => DateTime->now->datetime(' ')},
+            'reset_at'  => {'>' => DateTime->now->datetime(' ')},
             'remote_ip' => ($opts{remote_ip} or croak 'missing remote_ip'),
         }
-      )->get_column('count')->sum()
+    )->get_column('count')->sum()
       || 0;
     return $total;
 }

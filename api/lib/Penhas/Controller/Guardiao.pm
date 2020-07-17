@@ -14,7 +14,7 @@ sub apply_rps {
     $c->stash(apply_rps_on => substr($remote_ip, 0, 18));
     $c->apply_request_per_second_limit(100, 3600);
 
-    $c->stash( template => 'guardiao/index' );
+    $c->stash(template => 'guardiao/index');
 
     return 1;
 }
@@ -27,9 +27,8 @@ sub get {
     );
 
     my $res = $c->guardiao_load_by_token(%$valid)->render_guardiao_public_data();
-use DDP; p $res;
     return $c->respond_to_if_web(
-        json   => $res,
+        json => {json => $res},
         html => {%$res, %$valid},
     );
 }
@@ -45,8 +44,8 @@ sub post {
     my $res = $c->guardiao_update_by_token(%$valid)->render_guardiao_public_data();
 
     return $c->respond_to_if_web(
-        json   => $res,
-        html => { %$res, %$valid},
+        json => {json => $res},
+        html => {%$res, %$valid},
     );
 }
 

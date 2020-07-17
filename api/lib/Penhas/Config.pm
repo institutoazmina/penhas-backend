@@ -11,6 +11,7 @@ sub setup {
     my $api_workers   = int($ENV{API_WORKERS});
     my $spare_workers = int($api_workers / 2);
 
+
     $api_workers   = 1 if $api_workers < 1;
     $spare_workers = 1 if $spare_workers < 1;
 
