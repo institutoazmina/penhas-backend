@@ -16,9 +16,11 @@ sub audio_upload {
 
     my $media_upload = Penhas::Controller::Me_Media::upload($c);
 
-use DDP; p $media_upload;
-    my $ret = {id => $media_upload->id};
-
+    my $ret = $c->cliente_new_audio(
+        %$valid,
+        media_upload => $media_upload,
+        user_obj     => $c->stash('user_obj')
+    );
 
     return $c->render(
         json   => $ret,

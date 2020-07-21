@@ -10,6 +10,7 @@ use Penhas::Helpers::Timeline;
 use Penhas::Helpers::RSS;
 use Penhas::Helpers::Guardioes;
 use Penhas::KeyValueStorage;
+use Penhas::Helpers::ClienteAudio;
 
 use Carp qw/croak confess/;
 
@@ -21,6 +22,7 @@ sub setup {
     Penhas::Helpers::CPF::setup($self);
     Penhas::Helpers::Timeline::setup($self);
     Penhas::Helpers::ClienteSetSkill::setup($self);
+    Penhas::Helpers::ClienteAudio::setup($self);
 
     Penhas::Helpers::RSS::setup($self);
 
