@@ -140,6 +140,12 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "clientes_audios",
+  "Penhas::Schema2::Result::ClientesAudio",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "clientes_guardioes",
   "Penhas::Schema2::Result::ClientesGuardio",
   { "foreign.cliente_id" => "self.id" },
@@ -147,8 +153,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-04 14:38:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CtiwzkLKEveNDA3IINSkwg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-20 22:34:40
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:B2n2cEaCloA9gstfD233tw
 
 __PACKAGE__->has_many(
     "tweets",

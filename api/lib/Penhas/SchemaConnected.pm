@@ -84,6 +84,8 @@ sub get_schema {
 
     $ENV{MEDIA_CACHE_DIR} = '/tmp' unless -d $ENV{MEDIA_CACHE_DIR};
 
+    $ENV{MEDIA_ERR_DIR} = '/tmp' unless -d $ENV{MEDIA_ERR_DIR};
+
     undef $Penhas::Logger::instance;
 
     $schema_instance = $schema;

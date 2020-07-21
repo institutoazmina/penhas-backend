@@ -384,6 +384,18 @@ do {
     )->status_is(400)->json_is('/error', 'gps_position_invalid', 'maximo 15 chars')
       ->json_is('/field', 'gps_long', 'erro no campo gps_long');
 
+
+    my $audio = $t->post_ok(
+        '/me/audios',
+        {'x-api-key' => $session},
+        form => {
+            cliente_created_at => '2047-01-01T00:33:54',
+            current_time       => '2047-01-01T00:33:56',
+            media              => {file => "$RealBin/../data/gs-16b-1c-44100hz.aac"}
+        },
+    )->status_is(200)->tx->res->json;
+
+
 };
 
 done_testing();

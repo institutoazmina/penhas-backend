@@ -14,4 +14,14 @@ sub check_authorization {
     return 1;
 }
 
+# executa tarefas para manter o banco atualizado, mas não necessáriamente essenciais
+# executar de 1 em 1 hora, por exemplo
+sub housekeeping {
+    my $c = shift;
+
+
+
+    return $c->render(json => {});
+}
+
 1;

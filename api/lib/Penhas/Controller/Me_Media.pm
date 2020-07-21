@@ -8,7 +8,11 @@ use Digest::SHA1;
 use Scope::OnExit;
 use Penhas::Types qw/UploadIntention/;
 use Penhas::Uploader;
-use Penhas::Utils qw/get_media_filepath/;
+use Penhas::Utils qw/get_media_filepath random_string/;
+use Penhas::Logger;
+use IPC::Run3;
+use File::Temp;
+use Fcntl qw(SEEK_SET);
 
 has _uploader => sub { Penhas::Uploader->new() };
 
@@ -28,9 +32,19 @@ sub assert_user_perms {
 sub upload {
     my $c      = shift;
     my $params = $c->req->params->to_hash;
-    $c->validate_request_params(
-        intention => {max_length => 200, required => 1, type => UploadIntention},
-    );
+
+    my $is_audio_upload = $c->stash('is_audio_upload');
+
+    use DDP;
+    p $is_audio_upload;
+    if ($is_audio_upload) {
+        $params->{intention} = 'guardiao';
+    }
+    else {
+        $c->validate_request_params(
+            intention => {max_length => 200, required => 1, type => UploadIntention},
+        );
+    }
 
     die {
         error   => 'upload_blocked',
@@ -50,22 +64,30 @@ sub upload {
             message => 'Upload precisa ter mais do que 3 bytes',
         };
     }
-    elsif ($upload->size > 5_000_000) {
+    elsif (!$is_audio_upload && $upload->size > 5_000_000) {
         die {
             error   => 'media_too_big',
             message => 'Arquivo muito grande, precisa ser menor que 5 Megabytes',
         };
     }
+    elsif ($is_audio_upload && $upload->size > 10_000_000) {
+        die {
+            error   => 'media_too_big',
+            message => 'Arquivo muito grande, precisa ser menor que 10 Megabytes',
+        };
+    }
 
-    my $slurp = $upload->asset->slurp;
-    my $sha1  = Digest::SHA1->new;
-    $sha1->add($slurp);
+    my $upload_asset = $upload->asset->to_file;
+    my $sha1         = Digest::SHA1->new;
+    $upload_asset->handle->sysseek(0, SEEK_SET);
+    $sha1->addfile($upload_asset->handle);
     my $file_sha1 = $sha1->hexdigest;
 
-    my $rs = $c->schema2->resultset('MediaUpload');
+    my $cliente_id = $c->stash('user')->{id};
+    my $rs         = $c->schema2->resultset('MediaUpload');
 
     # upload duplicado [por mesmo usuário], retorna o mesmo ID
-    my ($ret, $existing) = $rs->search({cliente_id => $c->stash('user')->{id}, file_sha1 => $file_sha1})->next;
+    my ($ret, $existing) = $rs->search({cliente_id => $cliente_id, file_sha1 => $file_sha1})->next;
     if ($existing) {
         $ret = $existing;
         goto RENDER;
@@ -74,8 +96,6 @@ sub upload {
     # Quando o upload é pequeno, o Mojo otimiza deixando tudo na RAM. Para fazer o upload pra S3, é necessário
     # mover para um arquivo em disco.
     my $ext = (split(m{\.}, $upload->filename))[-1];
-
-    #my $media = File::Temp->new(UNLINK => 1, SUFFIX => ".$ext");
 
     # Em caso de PNG, vamos mudar pra JPEG (pelo menos ate alguem reclamar de transparencia kk)
     my $convert_ext = $ext =~ /png/i ? 'jpg' : $ext;
@@ -86,7 +106,7 @@ sub upload {
     my $s3_prefix = sprintf(
         '%s/cliente_%d/%sT%s.%s',
         $params->{intention},
-        $c->stash('user')->{id},
+        $cliente_id,
         $now->date('-'),
         $now->hms(''),
         $id
@@ -162,19 +182,58 @@ sub upload {
         };
 
     }
-    elsif ($ext =~ /(mp3)/) {
-        my $s3
-          = $c->_uploader->upload({path => $s3_prefix . ".$ext", file => $media, type => 'application/octet-stream',});
+    elsif ($ext =~ /(aac|m4a|mp4)/) {
+
+        log_info("converting audio upload...");
+
+        # Convertendo o arquivo para AAC para funcionar no Android e no iPhone.
+        # e normaliza em 128 kbps aac_he_v2 [standardized 2006]
+        my $fhout = File::Temp->new(UNLINK => 1, SUFFIX => ".aac");
+
+        my @ffmpeg = ();
+        push @ffmpeg, qw(ffmpeg -i);
+        push @ffmpeg, $media;
+        push @ffmpeg, qw(-acodec aac -ab 128k -y -loglevel warning -profile:a aac_he_v2 -movflags +faststart -f mp4);
+        push @ffmpeg, $fhout->filename;
+
+        my $stderr = '';
+        my $stdout = '';
+
+        eval { run3 \@ffmpeg, \undef, \$stdout, \$stderr; };
+
+        if ($@ || -z $fhout->filename) {
+            log_error("converting audio upload FAILED: $@ - $stderr $stdout");
+            undef $fhout;
+
+            if (-d $ENV{MEDIA_ERR_DIR}) {
+                my $keep_original
+                  = $ENV{MEDIA_ERR_DIR} . '/'
+                  . join('.', 'cliente_id_' . $cliente_id, $now->ymd('-'), random_string(10)) . ".$ext";
+
+                $upload->move_to($keep_original);
+                log_error("original file kept at $keep_original");
+            }
+
+            die {
+                error   => 'unsupported_media_type',
+                message => 'O arquivo de áudio está corrompido ou não é suportado.',
+            };
+        }
+
+        my $s3 = $c->_uploader->upload({path => $s3_prefix . ".aac", file => $fhout->filename, type => 'audio/aac',});
 
         $row = {
             file_info => to_json(
                 {
-                    o_ext => $ext,
+                    o_ext  => $ext,
+                    o_size => $upload->size,
                 }
             ),
-            file_size => -s $media,
+            file_size => -s $fhout->filename,
             s3_path   => $s3,
         };
+
+        undef $fhout;
     }
     else {
         die {
@@ -186,10 +245,12 @@ sub upload {
     $row->{id}         = $id;
     $row->{intention}  = $params->{intention};
     $row->{file_sha1}  = $file_sha1;
-    $row->{cliente_id} = $c->stash('user')->{id};
+    $row->{cliente_id} = $cliente_id;
     $row->{created_at} = DateTime->now->datetime(' ');
 
     $ret = $rs->create($row);
+
+    return $ret if $c->stash('return_upload');
   RENDER:
 
     return $c->render(

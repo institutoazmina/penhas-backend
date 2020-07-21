@@ -39,6 +39,9 @@ sub register {
     # GET /maintenance/reindex-all-news
     $maintenance->route('reindex-all-news')->get()->to(controller => 'News', action => 'rebuild_index');
 
+    # GET /maintenance/housekeeping
+    $maintenance->route('housekeeping')->get()->to(controller => 'Maintenance', action => 'housekeeping');
+
     # PRIVATE ENDPOINTS
     my $authenticated = $r->under()->to(controller => 'JWT', action => 'check_user_jwt');
 
@@ -78,6 +81,10 @@ sub register {
 
     # POST /me/guardioes/alert
     $me_guardioes->under('/alert')->post()->to(action => 'alert_guards');
+
+    # POST /me/audios
+    my $me_audios = $me->under('/audios')->to(controller => 'Me_Audios', action => 'assert_user_perms');
+    $me_audios->post()->to(action => 'audio_upload');
 
     # /timeline/
     my $timeline = $authenticated->under('/timeline')->to(controller => 'Timeline', action => 'assert_user_perms');

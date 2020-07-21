@@ -98,7 +98,7 @@ coerce Raca, from Str, via {
 subtype UploadIntention, as Str, where {
     my $str = $_;
     return 0 if length $str > 100;
-    return $str =~ /^(tweet|guardiao|chat)$/ ? 1 : 0;
+    return $str =~ /^(tweet|chat)$/ ? 1 : 0;
 }, message {"$_[0] is not a valid UploadIntention"};
 
 coerce UploadIntention, from Str, via {
