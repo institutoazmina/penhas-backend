@@ -1,7 +1,7 @@
 use Mojo::Base -strict;
 use FindBin qw($RealBin);
 use lib "$RealBin/../lib";
-
+use DateTime;
 use Penhas::Test;
 use Penhas::Minion::Tasks::SendSMS;
 my $t = test_instance;
@@ -385,7 +385,8 @@ do {
       ->json_is('/field', 'gps_long', 'erro no campo gps_long');
 
 
-    my $audio = $t->post_ok(
+    my $current_date = DateTime->now->ymd('-');
+    my $audio        = $t->post_ok(
         '/me/audios',
         {'x-api-key' => $session},
         form => {
@@ -393,7 +394,7 @@ do {
             current_time       => '2047-01-01T00:33:56',
             media              => {file => "$RealBin/../data/gs-16b-1c-44100hz.aac"}
         },
-    )->status_is(200)->tx->res->json;
+    )->status_is(200)->json_like('/data/cliente_created_at', qr/$current_date/, "created at ajusted to $current_date")->tx->res->json;
 
 
 };

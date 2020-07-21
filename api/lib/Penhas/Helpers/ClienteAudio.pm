@@ -20,7 +20,6 @@ sub cliente_new_audio {
 
     my $user_obj           = $opts{user_obj}           or confess 'missing user_obj';
     my $cliente_created_at = $opts{cliente_created_at} or confess 'missing cliente_created_at';
-    my $current_time       = $opts{current_time}       or confess 'missing current_time';
     my $media_upload       = $opts{media_upload}       or confess 'missing media_upload';
 
     my $row = $user_obj->clientes_audios->create(
@@ -32,7 +31,6 @@ sub cliente_new_audio {
         }
     );
 
-sleep 10;
     my $message = 'Áudio recebido com sucesso!';
     return {
         message => $message,
@@ -44,7 +42,8 @@ sub _format_audio_row {
     my ($c, $user_obj, $row) = @_;
 
     return {
-        id => $row->id,
+        id                 => $row->id,
+        cliente_created_at => $row->cliente_created_at->datetime,
     };
 }
 
