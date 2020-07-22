@@ -38,10 +38,12 @@ sub find {
     if ($quiz_session) {
 
         # remove acesso a tudo, o usuario deve completar o quiz
-        $modules = [{
-            code => 'quiz',
-            meta => {}
-        }];
+        $modules = [
+            {
+                code => 'quiz',
+                meta => {}
+            }
+        ];
 
         $c->load_quiz_session(session => $quiz_session, user => $user);
 
@@ -53,16 +55,17 @@ sub find {
     return $c->render(
         json => {
             user_profile => {
+                avatar_url => $user->{avatar_url} || $ENV{AVATAR_PADRAO_URL},
+
                 (
                     map { $_ => $user->{$_} }
-                      (qw/email cep dt_nasc nome_completo genero minibio raca cpf_prefix nome_social/)
+                      (qw/email apelido cep dt_nasc nome_completo genero minibio raca cpf_prefix nome_social/)
                 ),
             },
 
-            modo_camuflado_ativo         => $user->{modo_camuflado_ativo}         ? 1 : 0,
-            modo_anonimo_ativo           => $user->{modo_anonimo_ativo}           ? 1 : 0,
-            ja_foi_vitima_de_violencia   => $user->{modo_anonimo_ativo}           ? 1 : 0,
-            esta_em_situcao_de_violencia => $user->{esta_em_situcao_de_violencia} ? 1 : 0,
+            modo_camuflado_ativo       => $user->{modo_camuflado_ativo} ? 1 : 0,
+            modo_anonimo_ativo         => $user->{modo_anonimo_ativo}   ? 1 : 0,
+            ja_foi_vitima_de_violencia => $user->{modo_anonimo_ativo}   ? 1 : 0,
 
             modules => $modules,
             %extra
