@@ -102,9 +102,10 @@ sub lock_and_wait {
     my $interval = 0.1;
     my $max_loops = $max_seconds * (1 / $interval);
 
+    my $locked;
     while ($max_loops > 0) {
 
-        my ($locked) = $self->exec_function('lockSet', 3, $lock_key, $max_seconds * 1000, time());
+        ($locked) = $self->exec_function('lockSet', 3, $lock_key, $max_seconds * 1000, time());
 
         last if $locked;
 
@@ -112,7 +113,7 @@ sub lock_and_wait {
         $max_loops--;
     }
 
-    return $lock_key;
+    return wantarray ? ($locked, $lock_key) : $lock_key;
 }
 
 sub unlock {

@@ -7,6 +7,7 @@ use Penhas::Logger;
 use Number::Phone::Lib;
 use Penhas::Utils qw/random_string_from is_test/;
 use Digest::MD5 qw/md5_hex/;
+use Scope::OnExit;
 
 sub setup {
     my $self = shift;
@@ -159,7 +160,29 @@ sub cliente_upsert_guardioes {
         }
     );
 
-    $filtered_rs->expires_pending_invites;
+    $filtered_rs->expires_pending_invites();
+
+    my ($locked1, $lock_key1) = $c->kv->lock_and_wait('cliente_upsert_guardioes:pn' . $celular_e164);
+    on_scope_exit { $c->kv->redis->del($lock_key1) };
+
+    my ($locked2, $lock_key2) = $c->kv->lock_and_wait('cliente_upsert_guardioes:uid' . $user_obj->id);
+    on_scope_exit { $c->kv->redis->del($lock_key2) };
+
+    if (!$locked1 || !$locked2) {
+        $c->reply_invalid_param(
+            'Recurso está em uso, tente novamente',
+            'already_locked'
+        );
+    }
+
+    my $invites_max     = $user_obj->clientes_guardioes_rs->max_invites_count();
+    my $remaing_invites = $invites_max - $user_obj->clientes_guardioes_rs->used_invites_count();
+    if ($remaing_invites <= 0) {
+        $c->reply_invalid_param(
+            'Vocẽ não pode adicionar mais guardiões. Excluía convites recusados e expirados.',
+            'max_invites_reached'
+        );
+    }
 
     my ($message, $row);
 
@@ -365,7 +388,8 @@ sub _parse_celular {
     my $is_mobile = $celular->is_mobile();
     my $code      = $celular->country_code();
 
-use DDP; p $ENV{GUARDS_ALLOWED_COUNTRY_CODES};
+    use DDP;
+    p $ENV{GUARDS_ALLOWED_COUNTRY_CODES};
     $c->reply_invalid_param(
         sprintf(
             'O pais (%s %s %s) não está liberado para uso. Entre em contato com o suporte.',
@@ -432,8 +456,9 @@ sub cliente_list_guardioes {
 
     my $user_obj = $opts{user_obj} or confess 'missing user_obj';
 
-    my $remaing_invites = 5;
-    $user_obj->clientes_guardioes_rs->expires_pending_invites;
+    $user_obj->clientes_guardioes_rs->expires_pending_invites();
+    my $invites_max     = $user_obj->clientes_guardioes_rs->max_invites_count();
+    my $remaing_invites = $invites_max - $user_obj->clientes_guardioes_rs->used_invites_count();
 
     my $filtered_rs = $user_obj->clientes_guardioes_rs->search_rs(
         {
@@ -511,6 +536,7 @@ sub cliente_list_guardioes {
 
     return {
         remaing_invites => $remaing_invites,
+        invites_max     => $invites_max,
         guards          => \@guards
 
     };
