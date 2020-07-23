@@ -6,8 +6,11 @@ use Penhas::Test;
 use Penhas::Minion::Tasks::SendSMS;
 my $t = test_instance;
 use Business::BR::CPF qw/random_cpf/;
+use DateTime;
 
 my $schema2 = $t->app->schema2;
+
+my $now_datetime = DateTime->now()->datetime(' ');
 
 AGAIN:
 my $random_cpf   = random_cpf();
@@ -385,20 +388,63 @@ do {
       ->json_is('/field', 'gps_long', 'erro no campo gps_long');
 
 
-    my $current_date = DateTime->now->ymd('-');
-    my $audio        = $t->post_ok(
+    my $event_id         = lc 'fb40e9b3-d89e-4a2a-9766-f33e0d430768';
+    my $current_date     = DateTime->now->ymd('-');
+    my $audio_1_response = $t->post_ok(
         '/me/audios',
         {'x-api-key' => $session},
         form => {
             cliente_created_at => '2047-01-01T00:33:54',
             current_time       => '2047-01-01T00:33:56',
-            event_id           => 'fb40e9b3-d89e-4a2a-9766-f33e0d430768',
+            event_id           => uc $event_id,
             event_sequence     => '1',
             media              => {file => "$RealBin/../data/gs-16b-1c-44100hz.aac"}
         },
-    )->status_is(200)
-      ->json_like('/data/cliente_created_at', qr/$current_date/, "created at ajusted to $current_date")->tx->res->json;
+    )->status_is(200)->json_has('/data/id')->tx->res->json;
 
+    ok(my $audio_1 = $schema2->resultset('ClientesAudio')->find($audio_1_response->{data}{id}), 'row found');
+    like($audio_1->cliente_created_at, qr/$current_date/, "created at ajusted to $current_date");
+
+    is $audio_1->audio_duration, '15.883', 'duration is right';
+
+    ok(my $event = $schema2->resultset('ClientesAudiosEvento')->find($event_id), 'event row found');
+    is $audio_1->cliente_id, $cliente_id, 'row is the same client_id';
+    is $event->cliente_id,   $cliente_id, 'event row is the same client_id as audio';
+    is $event->audio_duration, '15.883', 'duration is ok';
+
+    my $audio_2_response = $t->post_ok(
+        '/me/audios',
+        {'x-api-key' => $session},
+        form => {
+            cliente_created_at => $now_datetime,
+            current_time       => $now_datetime,
+            event_id           => $event_id,
+            event_sequence     => '2',
+            media              => {file => "$RealBin/../data/second-audio-aac.aac"}
+        },
+    )->status_is(200)->json_has('/data/id')->tx->res->json;
+
+    my $audio_2_response_dup = $t->post_ok(
+        '/me/audios',
+        {'x-api-key' => $session},
+        form => {
+            cliente_created_at => $now_datetime,
+            current_time       => $now_datetime,
+            event_id           => $event_id,
+            event_sequence     => '2',
+            media              => {file => "$RealBin/../data/second-audio-aac.aac"}
+        },
+    )->status_is(200)->json_has('/data/id')->tx->res->json;
+
+    ok(my $audio_2     = $schema2->resultset('ClientesAudio')->find($audio_2_response->{data}{id}),     'row found');
+    ok(my $audio_2_dup = $schema2->resultset('ClientesAudio')->find($audio_2_response_dup->{data}{id}), 'row found');
+
+    is $audio_2->duplicated_upload,     '1',  '$audio_2 is marked as duplicated';
+    is $audio_2_dup->duplicated_upload, '0',  '$audio_2_dup is the last';
+    is $audio_2_dup->audio_duration,    '17.369', 'duration is right';
+
+    $event->discard_changes;
+    is $event->audio_duration, 15.883+17.369, 'duration is ok';
 
 };
 

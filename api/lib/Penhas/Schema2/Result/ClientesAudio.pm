@@ -18,25 +18,11 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "status",
-  {
-    data_type => "varchar",
-    default_value => "draft",
-    is_nullable => 0,
-    size => 20,
-  },
   "cliente_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 0,
-  },
-  "requested_by_user",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
     is_nullable => 0,
   },
   "played_count",
@@ -69,6 +55,13 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 1 },
   "audio_duration",
   { data_type => "double precision", is_nullable => 0 },
+  "duplicated_upload",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -85,8 +78,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-22 21:58:00
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:maSUdVbXkchtuZdbaPcrjw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-23 05:24:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Lf2s74ceIoaIuZwbE7xALQ
 
 # ALTER TABLE clientes_audios ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 # ALTER TABLE clientes_audios ADD FOREIGN KEY (media_upload_id) REFERENCES media_upload(id) ON DELETE CASCADE ON UPDATE cascade;

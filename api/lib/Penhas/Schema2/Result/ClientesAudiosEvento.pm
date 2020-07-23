@@ -34,6 +34,20 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 0,
   },
+  "status",
+  {
+    data_type => "varchar",
+    default_value => "free_access",
+    is_nullable => 0,
+    size => 20,
+  },
+  "requested_by_user",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
 );
 __PACKAGE__->set_primary_key("event_id");
 __PACKAGE__->belongs_to(
@@ -44,8 +58,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-22 21:58:00
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:uxWqHQ3/jRm9Yw1eFOUtjg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-23 05:24:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BoeUWGAKZdx4xM2axgGoWg
 
 # ALTER TABLE clientes_audios_eventos ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

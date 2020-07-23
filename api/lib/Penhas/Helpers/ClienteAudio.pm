@@ -13,8 +13,9 @@ use Scope::OnExit;
 sub setup {
     my $self = shift;
 
-    $self->helper('cliente_new_audio'  => sub { &cliente_new_audio(@_) });
-    $self->helper('cliente_list_audio' => sub { &cliente_list_audio(@_) });
+    $self->helper('cliente_new_audio'         => sub { &cliente_new_audio(@_) });
+    $self->helper('cliente_list_audio'        => sub { &cliente_list_audio(@_) });
+    $self->helper('cliente_list_events_audio' => sub { &cliente_list_events_audio(@_) });
 }
 
 sub cliente_new_audio {
@@ -38,10 +39,11 @@ sub cliente_new_audio {
     if (
         $user_obj->clientes_audios->search(
             {
-                event_id       => $opts{event_id},
-                event_sequence => $opts{event_sequence},
+                event_id          => $opts{event_id},
+                event_sequence    => $opts{event_sequence},
+                duplicated_upload => 0,
             }
-        )->update({status => 'sequence_duplicated'}) > 0
+        )->update({duplicated_upload => '1'}) > 0
       )
     {
         slog_info(
@@ -58,7 +60,6 @@ sub cliente_new_audio {
                 {
                     media_upload_id    => $media_upload->id,
                     cliente_created_at => $cliente_created_at,
-                    status             => 'free_access',
                     created_at         => \'NOW()',
                     waveform_base64    => $opts{waveform},
                     event_id           => $opts{event_id},
@@ -71,20 +72,22 @@ sub cliente_new_audio {
             my $event = $rs->find($opts{event_id});
             my $data  = {
                 event_id       => $opts{event_id},
+                status         => 'free_access',
                 created_at     => \'NOW()',
                 updated_at     => \'NOW()',
                 audio_duration => \[
                     "coalesce((
-                            SELECT SUM(audio_duration)
-                            FROM clientes_audios
-                            WHERE cliente_id = ?
-                            AND event_id = ?
-                            AND status != 'sequence_duplicated'
+                            SELECT SUM(me.audio_duration)
+                            FROM clientes_audios me
+                            WHERE me.cliente_id = ?
+                            AND me.event_id = ?
+                            AND me.duplicated_upload = '0'
                         ), -1)", $user_obj->id, $opts{event_id}
                 ],
             };
             if ($event) {
                 delete $data->{created_at};
+                delete $data->{status};
                 $event->update($data);
             }
             else {
@@ -93,13 +96,11 @@ sub cliente_new_audio {
         }
     );
 
-    use DDP;
-    p $row;
-
     my $message = 'Áudio recebido com sucesso!';
     return {
         message => $message,
-        data    => &_format_audio_row($c, $user_obj, $row),
+        success => 1,
+        data    => {id => $row->id}
     };
 }
 
@@ -110,6 +111,99 @@ sub _format_audio_row {
         id                 => $row->id,
         cliente_created_at => $row->cliente_created_at->datetime,
     };
+}
+
+sub cliente_list_events_audio {
+    my ($c, %opts) = @_;
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+
+=pod
+    $user_obj->clientes_guardioes_rs->expires_pending_invites();
+    my $invites_max     = $user_obj->clientes_guardioes_rs->max_invites_count();
+    my $remaing_invites = $invites_max - $user_obj->clientes_guardioes_rs->used_invites_count();
+
+    my $filtered_rs = $user_obj->clientes_guardioes_rs->search_rs(
+        {
+            '-or' => [
+                {'me.status'     => {in   => [qw/pending accepted expired_for_not_use/]}},
+                {'me.refused_at' => {'!=' => undef}}
+            ]
+        },
+        {order_by => [qw/me.status/, {'-desc' => 'me.created_at'}]}
+    );
+
+    my $by_status = {};
+    while (my $r = $filtered_rs->next) {
+        push $by_status->{$r->status()}->@*, $r;
+    }
+
+    my $config_map = {
+        free_access => {
+            header         => 'Guardiões',
+            description    => 'Guardiões que recebem seus pedidos de socorro.',
+            delete_warning => '',
+            can_resend     => 0,
+            layout         => 'accepted',
+        },
+        pending => {
+            header         => 'Pendentes',
+            description    => 'Guardiões que ainda não aceitaram seu convite.',
+            delete_warning => '',
+            can_resend     => 0,
+            layout         => 'pending',
+        },
+        expired_for_not_use => {
+            header         => 'Convites expirados',
+            description    => 'Convites não podem mais serem aceitos aceitos, convite novamente',
+            delete_warning => '',
+            can_resend     => 1,
+            layout         => 'pending',
+        },
+        refused => {
+            header => 'Convites recusados',
+            description =>
+              'Convite recusado! O guardião ainda pode aceitar o convite usando o mesmo link. Use o botão 🗑️ para cancelar o convite.',
+            delete_warning =>
+              'Após apagar um convite recusado, você não poderá convidar este número por até 7 dias.',
+            can_resend => 0,
+            layout     => 'pending',
+        },
+    };
+    my @guards;
+
+    for my $type (qw/accepted pending expired_for_not_use refused/) {
+
+        my $config = $config_map->{$type};
+
+        my @rows = $by_status->{$type}->@*;
+
+        next if @rows == 0 && $type =~ /^(expired_for_not_use|refused)$/;
+
+        push @guards, {
+            meta => $config,
+            rows => [
+                map {
+                    +{
+                        id       => $_->id(),
+                        nome     => $_->nome(),
+                        celular  => $_->celular_formatted_as_national(),
+                        subtexto => $_->subtexto(),
+                    }
+                } @rows
+            ],
+        };
+
+
+    }
+
+    return {
+        remaing_invites => $remaing_invites,
+        invites_max     => $invites_max,
+        guards          => \@guards
+
+    };
+=cut
+
 }
 
 

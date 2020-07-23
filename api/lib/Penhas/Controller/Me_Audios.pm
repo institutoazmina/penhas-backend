@@ -59,5 +59,18 @@ sub audio_upload {
     );
 }
 
+sub audio_events_list {
+    my $c = shift;
+
+    my $ret = $c->cliente_list_events_audio(
+        user_obj     => $c->stash('user_obj')
+    );
+
+    return $c->render(
+        json   => $ret,
+        status => 200,
+    );
+
+}
 
 1;
