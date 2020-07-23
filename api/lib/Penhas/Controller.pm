@@ -98,7 +98,6 @@ sub _reply_exception {
             $c->app->log->info('error 400: ' . $c->app->dumper($an_error));
 
             $an_error->{message} = $campos_nao_foram_preenchidos unless exists $an_error->{message};
-            use DDP; p $status;
             return $c->respond_to_if_web(
                 json => {json => $an_error, status => $status,},
                 html => {template => 'guardiao/index', error => $an_error, status => 200}
@@ -107,7 +106,6 @@ sub _reply_exception {
         elsif (ref $an_error eq 'REF' && ref $$an_error eq 'ARRAY' && @$$an_error == 2) {
 
             $c->app->log->info('error 400: ' . $c->app->dumper($an_error));
-use DDP; p $an_error;
             return $c->respond_to_if_web(
                 json => {
                     json => {

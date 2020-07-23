@@ -424,6 +424,11 @@ do {
         },
     )->status_is(200)->json_has('/data/id')->tx->res->json;
 
+    $event->discard_changes;
+    is $event->audio_duration, 15.883 + 17.369, 'duration is ok';
+    is $event->total_bytes, 515461, 'bytes sum is right';
+
+    # duplica o envio do arquivo para verificar que o evento fica ainda OK
     my $audio_2_response_dup = $t->post_ok(
         '/me/audios',
         {'x-api-key' => $session},
@@ -439,12 +444,13 @@ do {
     ok(my $audio_2     = $schema2->resultset('ClientesAudio')->find($audio_2_response->{data}{id}),     'row found');
     ok(my $audio_2_dup = $schema2->resultset('ClientesAudio')->find($audio_2_response_dup->{data}{id}), 'row found');
 
-    is $audio_2->duplicated_upload,     '1',  '$audio_2 is marked as duplicated';
-    is $audio_2_dup->duplicated_upload, '0',  '$audio_2_dup is the last';
+    is $audio_2->duplicated_upload,     '1',      '$audio_2 is marked as duplicated';
+    is $audio_2_dup->duplicated_upload, '0',      '$audio_2_dup is the last';
     is $audio_2_dup->audio_duration,    '17.369', 'duration is right';
 
     $event->discard_changes;
-    is $event->audio_duration, 15.883+17.369, 'duration is ok';
+    is $event->audio_duration, 15.883 + 17.369, 'duration is ok';
+    is $event->total_bytes, 515461, 'bytes sum is right';
 
 };
 

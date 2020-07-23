@@ -84,6 +84,16 @@ sub cliente_new_audio {
                             AND me.duplicated_upload = '0'
                         ), -1)", $user_obj->id, $opts{event_id}
                 ],
+                total_bytes => \[
+                    "coalesce((
+                            SELECT SUM(up.file_size)
+                            FROM clientes_audios me
+                            JOIN media_upload up ON up.id = me.media_upload_id
+                            WHERE me.cliente_id = ?
+                            AND me.event_id = ?
+                            AND me.duplicated_upload = '0'
+                        ), 0)", $user_obj->id, $opts{event_id}
+                ],
             };
             if ($event) {
                 delete $data->{created_at};
