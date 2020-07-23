@@ -392,9 +392,12 @@ do {
         form => {
             cliente_created_at => '2047-01-01T00:33:54',
             current_time       => '2047-01-01T00:33:56',
+            event_id           => 'fb40e9b3-d89e-4a2a-9766-f33e0d430768',
+            event_sequence     => '1',
             media              => {file => "$RealBin/../data/gs-16b-1c-44100hz.aac"}
         },
-    )->status_is(200)->json_like('/data/cliente_created_at', qr/$current_date/, "created at ajusted to $current_date")->tx->res->json;
+    )->status_is(200)
+      ->json_like('/data/cliente_created_at', qr/$current_date/, "created at ajusted to $current_date")->tx->res->json;
 
 
 };

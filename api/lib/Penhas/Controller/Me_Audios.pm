@@ -5,6 +5,7 @@ use DateTime;
 use Penhas::Types qw/MobileNumber DateTimeStr/;
 use DateTime::Format::Pg;
 use Penhas::Logger;
+use Penhas::Utils;
 
 sub audio_upload {
     my $c = shift;
@@ -13,11 +14,21 @@ sub audio_upload {
     my $valid = $c->validate_request_params(
         cliente_created_at => {required => 1, type => DateTimeStr, max_length => 100},
         current_time       => {required => 1, type => DateTimeStr, max_length => 100},
+        event_id           => {required => 1, type => 'Str',       max_length => 36},
+        event_sequence     => {required => 1, type => 'Int',       max_length => 6},
     );
 
-    $c->stash('is_audio_upload' => 1, 'return_upload' => 1);
+    $c->reply_invalid_param('event_id',       'invalid') unless is_uuid_v4($valid->{event_id});
+    $c->reply_invalid_param('event_sequence', 'invalid')
+      if $valid->{event_sequence} < 0 || $valid->{event_sequence} > 1000;
+
+    $valid->{event_id} = lc $valid->{event_id};
+    $c->stash('is_audio_upload' => 1, 'return_upload' => 1, 'extract_waveform' => 1);
 
     my $media_upload = Penhas::Controller::Me_Media::upload($c);
+
+    $valid->{waveform} = $c->stash('waveform');
+    $valid->{audio_duration} = $c->stash('audio_duration');
 
     my $current_time = DateTime::Format::Pg->parse_datetime($valid->{current_time});
     my $created_at   = DateTime::Format::Pg->parse_datetime($valid->{cliente_created_at});

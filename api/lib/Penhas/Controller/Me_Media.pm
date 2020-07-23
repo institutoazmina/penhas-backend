@@ -13,6 +13,8 @@ use Penhas::Logger;
 use IPC::Run3;
 use File::Temp;
 use Fcntl qw(SEEK_SET);
+use MIME::Base64;
+use Mojo::File;
 
 has _uploader => sub { Penhas::Uploader->new() };
 
@@ -34,9 +36,6 @@ sub upload {
     my $params = $c->req->params->to_hash;
 
     my $is_audio_upload = $c->stash('is_audio_upload');
-
-    use DDP;
-    p $is_audio_upload;
     if ($is_audio_upload) {
         $params->{intention} = 'guardiao';
     }
@@ -188,12 +187,12 @@ sub upload {
 
         # Convertendo o arquivo para AAC para funcionar no Android e no iPhone.
         # e normaliza em 128 kbps aac_he_v2 [standardized 2006]
-        my $fhout = File::Temp->new(UNLINK => 1, SUFFIX => ".aac");
+        my $fhout = File::Temp->new(UNLINK => 1, SUFFIX => ".aac", OPEN => 0);
 
         my @ffmpeg = ();
         push @ffmpeg, qw(ffmpeg -i);
         push @ffmpeg, $media;
-        push @ffmpeg, qw(-acodec aac -ab 128k -y -loglevel warning -profile:a aac_he_v2 -movflags +faststart -f mp4);
+        push @ffmpeg, qw(-acodec aac -ab 128k -y -loglevel debug -movflags +faststart -f mp4);
         push @ffmpeg, $fhout->filename;
 
         my $stderr = '';
@@ -219,6 +218,11 @@ sub upload {
                 message => 'O arquivo de áudio está corrompido ou não é suportado.',
             };
         }
+
+        if ($c->stash('extract_waveform')) {
+            $c->stash('waveform' => &_extract_waveform($fhout->filename));
+        }
+        $c->stash('audio_duration' => &_extract_duration($fhout->filename));
 
         my $s3 = $c->_uploader->upload({path => $s3_prefix . ".aac", file => $fhout->filename, type => 'audio/aac',});
 
@@ -260,5 +264,62 @@ sub upload {
         status => 200,
     );
 }
+
+sub _extract_waveform {
+    my ($media) = @_;
+
+    my $tmp    = File::Temp->new(UNLINK => 1, SUFFIX => ".png", OPEN => 0);
+    my @ffmpeg = ();
+    push @ffmpeg, qw(ffmpeg -i);
+    push @ffmpeg, $media;
+    push @ffmpeg, '-filter_complex', 'compand,showwavespic=s=420x80:colors=#9f63ff';
+    push @ffmpeg, qw(-c:v png -f image2 -frames:v 1 -y  -loglevel debug);
+    push @ffmpeg, $tmp->filename;
+
+    my $stderr = '';
+    my $stdout = '';
+    eval { run3 \@ffmpeg, \undef, \$stdout, \$stderr; };
+
+    if ($@ || -z $tmp->filename) {
+        log_error("extrating waveform FAILED: $@ - $stderr $stdout");
+        undef $tmp;
+        die {
+            error   => 'extract_waveform_error',
+            message => 'Erro ao ler arquivo convertido',
+        };
+    }
+
+    my $content = encode_base64(Mojo::File->new($tmp->filename)->slurp, '');
+    undef $tmp;
+
+    return $content;
+}
+
+sub _extract_duration {
+    my ($media) = @_;
+
+    my @ffprobe = ();
+    push @ffprobe, qw(ffprobe -i);
+    push @ffprobe, $media;
+    push @ffprobe, qw(-show_entries format=duration);
+    push @ffprobe, qw(-v quiet);
+    push @ffprobe, '-of', 'csv=p=0';
+
+    my $stderr = '';
+    my $stdout = '';
+    eval { run3 \@ffprobe, \undef, \$stdout, \$stderr; };
+
+    chomp($stdout);
+    if ($@ || $stdout !~ /^\d{1,5}\.\d{1,}$/a) {
+        log_error("extrating duration FAILED: $@ - $stderr $stdout");
+        die {
+            error   => 'extract_duration_error',
+            message => 'Erro ao ler arquivo convertido',
+        };
+    }
+
+    return $stdout;
+}
+
 
 1;

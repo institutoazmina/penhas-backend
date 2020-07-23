@@ -61,6 +61,14 @@ __PACKAGE__->add_columns(
   },
   "media_upload_id",
   { data_type => "varchar", is_foreign_key => 1, is_nullable => 0, size => 200 },
+  "event_id",
+  { data_type => "varchar", is_nullable => 0, size => 200 },
+  "event_sequence",
+  { data_type => "smallint", extra => { unsigned => 1 }, is_nullable => 0 },
+  "waveform_base64",
+  { data_type => "text", is_nullable => 1 },
+  "audio_duration",
+  { data_type => "double precision", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -77,8 +85,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-20 22:34:40
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2nuodxNx+PYQ7/YSU1JVDg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-22 21:58:00
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:maSUdVbXkchtuZdbaPcrjw
 
 # ALTER TABLE clientes_audios ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 # ALTER TABLE clientes_audios ADD FOREIGN KEY (media_upload_id) REFERENCES media_upload(id) ON DELETE CASCADE ON UPDATE cascade;
