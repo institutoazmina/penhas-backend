@@ -452,6 +452,10 @@ do {
     is $event->audio_duration, 15.883 + 17.369, 'duration is ok';
     is $event->total_bytes, 515461, 'bytes sum is right';
 
+    $t->get_ok(
+        '/me/audios',
+        {'x-api-key' => $session}
+    )->status_is(200);
 };
 
 done_testing();

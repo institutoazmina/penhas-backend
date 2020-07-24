@@ -57,6 +57,7 @@ sub register {
 
     # POST /me/call-police-pressed
     $me->under('/call-police-pressed')->post()->to(action => 'inc_call_police_counter');
+
     # /me/quiz
     my $me_quiz = $me->under('/quiz')->to(controller => 'Me_Quiz', action => 'assert_user_perms');
     $me_quiz->post()->to(action => 'process');
@@ -85,6 +86,7 @@ sub register {
     # POST /me/audios
     my $me_audios = $me->under('/audios')->to(controller => 'Me_Audios', action => 'assert_user_perms');
     $me_audios->post()->to(action => 'audio_upload');
+    $me_audios->get()->to(action => 'audio_events_list');
 
     # /timeline/
     my $timeline = $authenticated->under('/timeline')->to(controller => 'Timeline', action => 'assert_user_perms');

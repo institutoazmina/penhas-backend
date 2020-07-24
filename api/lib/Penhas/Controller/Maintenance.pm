@@ -19,7 +19,7 @@ sub check_authorization {
 sub housekeeping {
     my $c = shift;
 
-
+    $c->schema2->resultset('ClientesAudiosEvento')->tick_audios_eventos_status();
 
     return $c->render(json => {});
 }

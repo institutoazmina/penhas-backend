@@ -351,9 +351,6 @@ sub cliente_edit_guardioes {
     my $guard_id = $opts{id}       or confess 'missing id';
     my $nome     = $opts{nome}     or confess 'missing nome';
 
-
-    use DDP;
-    p $guard_id;
     my $row = $user_obj->clientes_guardioes_rs->search_rs(
         {
             'me.id'         => $guard_id,

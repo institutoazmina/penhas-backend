@@ -71,11 +71,12 @@ sub cliente_new_audio {
             my $rs    = $user_obj->clientes_audios_eventos;
             my $event = $rs->find($opts{event_id});
             my $data  = {
-                event_id       => $opts{event_id},
-                status         => 'free_access',
-                created_at     => \'NOW()',
-                updated_at     => \'NOW()',
-                audio_duration => \[
+                event_id                => $opts{event_id},
+                status                  => 'free_access',
+                created_at              => \'NOW()',
+                updated_at              => \'NOW()',
+                last_cliente_created_at => $cliente_created_at,
+                audio_duration          => \[
                     "coalesce((
                             SELECT SUM(me.audio_duration)
                             FROM clientes_audios me
@@ -127,92 +128,23 @@ sub cliente_list_events_audio {
     my ($c, %opts) = @_;
     my $user_obj = $opts{user_obj} or confess 'missing user_obj';
 
-=pod
-    $user_obj->clientes_guardioes_rs->expires_pending_invites();
-    my $invites_max     = $user_obj->clientes_guardioes_rs->max_invites_count();
-    my $remaing_invites = $invites_max - $user_obj->clientes_guardioes_rs->used_invites_count();
+    $user_obj->clientes_audios_eventos->tick_audios_eventos_status();
 
-    my $filtered_rs = $user_obj->clientes_guardioes_rs->search_rs(
+    my $filtered_rs = $user_obj->clientes_audios_eventos->search_rs(
         {
-            '-or' => [
-                {'me.status'     => {in   => [qw/pending accepted expired_for_not_use/]}},
-                {'me.refused_at' => {'!=' => undef}}
-            ]
+            'me.status' => {in => [qw/free_access blocked_access free_access_by_admin/]},
         },
-        {order_by => [qw/me.status/, {'-desc' => 'me.created_at'}]}
+        {order_by => [{'-desc' => 'me.last_cliente_created_at'}, {'-desc' => 'me.created_at'}]}
     );
 
-    my $by_status = {};
+    my @rows;
     while (my $r = $filtered_rs->next) {
-        push $by_status->{$r->status()}->@*, $r;
-    }
-
-    my $config_map = {
-        free_access => {
-            header         => 'Guardiões',
-            description    => 'Guardiões que recebem seus pedidos de socorro.',
-            delete_warning => '',
-            can_resend     => 0,
-            layout         => 'accepted',
-        },
-        pending => {
-            header         => 'Pendentes',
-            description    => 'Guardiões que ainda não aceitaram seu convite.',
-            delete_warning => '',
-            can_resend     => 0,
-            layout         => 'pending',
-        },
-        expired_for_not_use => {
-            header         => 'Convites expirados',
-            description    => 'Convites não podem mais serem aceitos aceitos, convite novamente',
-            delete_warning => '',
-            can_resend     => 1,
-            layout         => 'pending',
-        },
-        refused => {
-            header => 'Convites recusados',
-            description =>
-              'Convite recusado! O guardião ainda pode aceitar o convite usando o mesmo link. Use o botão 🗑️ para cancelar o convite.',
-            delete_warning =>
-              'Após apagar um convite recusado, você não poderá convidar este número por até 7 dias.',
-            can_resend => 0,
-            layout     => 'pending',
-        },
-    };
-    my @guards;
-
-    for my $type (qw/accepted pending expired_for_not_use refused/) {
-
-        my $config = $config_map->{$type};
-
-        my @rows = $by_status->{$type}->@*;
-
-        next if @rows == 0 && $type =~ /^(expired_for_not_use|refused)$/;
-
-        push @guards, {
-            meta => $config,
-            rows => [
-                map {
-                    +{
-                        id       => $_->id(),
-                        nome     => $_->nome(),
-                        celular  => $_->celular_formatted_as_national(),
-                        subtexto => $_->subtexto(),
-                    }
-                } @rows
-            ],
-        };
-
-
+        push @rows, {$r->columns};
     }
 
     return {
-        remaing_invites => $remaing_invites,
-        invites_max     => $invites_max,
-        guards          => \@guards
-
+        rows => \@rows,
     };
-=cut
 
 }
 
