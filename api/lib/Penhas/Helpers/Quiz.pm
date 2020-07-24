@@ -791,13 +791,15 @@ sub _init_questionnaire_stash {
             };
 
             push @questions, {
-                type       => 'button',
-                content    => $qc->{question},
-                action     => 'botao_tela_modo_camuflado',
-                ref        => 'BT' . $qc->{id},
-                label      => $qc->{button_label} || 'Visualizar',
-                _relevance => $relevance,
-                _code      => $qc->{code},
+                type               => 'button',
+                content            => $qc->{question},
+                action             => 'botao_tela_modo_camuflado',
+                ending_cancel_text => 'Tutorial cancelado',
+                ending_action_text => 'Modo camuflado ativado',
+                ref                => 'BT' . $qc->{id},
+                label              => $qc->{button_label} || 'Visualizar',
+                _relevance         => $relevance,
+                _code              => $qc->{code},
             };
 
         }
