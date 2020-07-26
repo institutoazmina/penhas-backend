@@ -7,6 +7,16 @@ my $t = test_instance;
 my $json;
 
 my ($session, $user_id) = get_user_session('24115775670');
+my $cliente = get_schema2->resultset('Cliente')->find($user_id);
+
+$cliente->update(
+    {
+        modo_camuflado_ativo         => '0',
+        modo_camuflado_atualizado_em => undef,
+        modo_anonimo_ativo           => '0',
+        modo_anonimo_atualizado_em   => undef,
+    }
+);
 
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '4,5';
 
@@ -28,13 +38,13 @@ my $cadastro = $t->get_ok(
 
 is trace_popall(), 'clientes_quiz_session:created', 'clientes_quiz_session was created';
 
-my $json = $t->get_ok(
+$json = $t->get_ok(
     '/me',
     {'x-api-key' => $session}
 )->status_is(200)->json_has('/quiz_session/session_id')->tx->res->json;
 
-ok( (grep { $_->{code} eq 'quiz' } $json->{modules}->@* ) ? 1 : 0, 'has quiz' );
-ok( (grep { $_->{code} eq 'tweets' } $json->{modules}->@* ) ? 0 : 1, 'has not tweets' );
+ok((grep { $_->{code} eq 'quiz' } $json->{modules}->@*)   ? 1 : 0, 'has quiz');
+ok((grep { $_->{code} eq 'tweets' } $json->{modules}->@*) ? 0 : 1, 'has not tweets');
 
 #json_has('/modules/quiz')->json_hasnt('/modules/tweets');
 is trace_popall(), 'clientes_quiz_session:loaded', 'clientes_quiz_session was just loaded';
@@ -156,7 +166,7 @@ subtest_buffered 'group de questoes boolean' => sub {
         {'x-api-key' => $session},
         form => {
             session_id => $cadastro->{quiz_session}{session_id},
-            $field_ref => (join ',', $options->[0]{index}, $options->[-1]{index}),
+            $field_ref => $options->[0]{index},
         }
     )->status_is(200)->json_has('/quiz_session')->tx->res->json;
 
@@ -166,11 +176,48 @@ subtest_buffered 'group de questoes boolean' => sub {
     is $first_msg->{type},    'displaytext',      'just a text';
     is $first_msg->{content}, 'displaytext flow', 'context of text';
 
-    is $input_msg->{type},    'button',                    'is a button';
-    is $input_msg->{content}, 'btn1',                      'button has content';
-    is $input_msg->{action},  'botao_tela_modo_camuflado', 'action for button is botao_tela_modo_camuflado';
+    is $input_msg->{content},            'btn_responder_zero',        'button has content';
+    is $input_msg->{action},             'botao_tela_modo_camuflado', 'action for button is botao_tela_modo_camuflado';
+    is $input_msg->{type},               'button',                    'is a button';
+    is $input_msg->{ending_action_text}, 'Modo camuflado ativado',    'text ok';
+    is $input_msg->{ending_cancel_text}, 'Tutorial cancelado',        'text cancel';
+    is $input_msg->{label},              'Visualizar',                'text label';
 
-    # apertando o botao "botao_tela_modo_camuflado"
+    $cliente->discard_changes;
+    is $cliente->modo_anonimo_ativo, 0, 'modo_anonimo_ativo=false';
+
+    # apertando o botao "botao_tela_modo_camuflado" = 0
+    $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
+    $json      = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {
+            session_id => $cadastro->{quiz_session}{session_id},
+            $field_ref => 0,
+        }
+    )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+    $cliente->discard_changes;
+    is $cliente->modo_anonimo_ativo, 1, 'modo_anonimo_ativo=TRUE';
+    ok $cliente->modo_anonimo_atualizado_em, 'modo_anonimo_atualizado_em is date';
+
+    is $cliente->modo_camuflado_ativo, 0, 'modo_camuflado_ativo=FALSE';
+    ok $cliente->modo_camuflado_atualizado_em, 'modo_camuflado_atualizado_em is date';
+
+    $first_msg = $json->{quiz_session}{current_msgs}[0];
+    $input_msg = $json->{quiz_session}{current_msgs}[-1];
+
+    is $first_msg->{type},    'displaytext',         'just a text';
+    is $first_msg->{content}, 'btn_camuflado1=PASS', 'expected pass';
+
+    is $input_msg->{type},    'button',                    'is a button';
+    is $input_msg->{content}, 'btn_responder_com1',        'button has content';
+    is $input_msg->{action},  'botao_tela_modo_camuflado', 'button action camuflado again';
+    ok $input_msg->{ending_action_text}, 'has ending_action_text';
+    ok $input_msg->{ending_cancel_text}, 'has ending_cancel_text';
+    ok $input_msg->{label},              'has label';
+
+    # apertando o botao "botao_tela_modo_camuflado" = 1
     $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
     $json      = $t->post_ok(
         '/me/quiz',
@@ -180,9 +227,22 @@ subtest_buffered 'group de questoes boolean' => sub {
             $field_ref => 1,
         }
     )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+    $first_msg = $json->{quiz_session}{current_msgs}[0];
     $input_msg = $json->{quiz_session}{current_msgs}[-1];
+
+    is $first_msg->{type},    'displaytext',          'just a text';
+    is $first_msg->{content}, 'btn_camuflado2=PASS2', 'expected pass2';
+
+    $cliente->discard_changes;
+    is $cliente->modo_anonimo_ativo, 1, 'modo_anonimo_ativo=TRUE';
+    ok $cliente->modo_anonimo_atualizado_em, 'modo_anonimo_atualizado_em is date';
+
+    is $cliente->modo_camuflado_ativo, 1, 'modo_camuflado_ativo=TRUE';
+    ok $cliente->modo_camuflado_atualizado_em, 'modo_camuflado_atualizado_em is date';
+
     is $input_msg->{type},    'button', 'is a button';
-    is $input_msg->{content}, 'btn2',   'button has content';
+    is $input_msg->{content}, 'final',  'button has content';
     is $input_msg->{action},  'none',   'button action is none [btn-fim]';
 
     my $prev_msgs = $t->get_ok(
@@ -198,7 +258,7 @@ subtest_buffered 'group de questoes boolean' => sub {
             ok $prev->{display_response}, 'has display_response';
         }
     }
-    is scalar @$prev_msgs, 9, '9 prev questions';
+    is scalar @$prev_msgs, 11, '11 prev questions';
 
     # apertando o botao botao_tela_socorro
     $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
@@ -218,8 +278,5 @@ $cadastro = $t->get_ok(
     '/me',
     {'x-api-key' => $session}
 )->status_is(200)->json_is('/quiz_session', undef)->tx->res->json;
-
-use DDP;
-p $cadastro;
 
 done_testing();

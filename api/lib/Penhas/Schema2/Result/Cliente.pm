@@ -61,11 +61,7 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
-  "senha_falsa_sha256",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
   "ja_foi_vitima_de_violencia",
-  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
-  "esta_em_situcao_de_violencia",
   { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
   "senha_sha256",
   { data_type => "varchar", is_nullable => 0, size => 200 },
@@ -82,12 +78,6 @@ __PACKAGE__->add_columns(
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
-  },
-  "esta_em_situcao_de_violencia_atualizado_em",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
   },
   "ja_foi_vitima_de_violencia_atualizado_em",
   {
@@ -117,6 +107,18 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", default_value => "OK", is_nullable => 1, size => 20 },
   "qtde_ligar_para_policia",
   { data_type => "integer", default_value => 0, is_nullable => 0 },
+  "modo_anonimo_atualizado_em",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
+  "modo_camuflado_atualizado_em",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
@@ -159,8 +161,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-22 21:12:35
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ftfs90jHQBp4OhkiGkyUVA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-26 13:57:37
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Z4Ap8WvvKrCVuRYm1hhg4g
 
 __PACKAGE__->has_many(
     "tweets",
@@ -207,10 +209,35 @@ sub access_modules_str {
 }
 
 sub has_module {
-    my $self = shift;
+    my $self   = shift;
     my $module = shift || confess 'missing module name';
 
     return $self->access_modules_str() =~ /,$module,/;
+}
+
+sub cliente_modo_camuflado_toggle {
+    my ($self, %opts) = @_;
+    my $active = $opts{active};
+
+    $self->update(
+        {
+            modo_camuflado_ativo => $active ? 1 : 0,
+            modo_camuflado_atualizado_em => \'NOW()',
+        }
+    );
+}
+
+sub cliente_modo_anonimo_toggle {
+    my ($self, %opts) = @_;
+    my $active = $opts{active};
+
+    $self->update(
+        {
+            modo_anonimo_ativo         => $active ? 1 : 0,
+            modo_anonimo_atualizado_em => \'NOW()',
+        }
+    );
+
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

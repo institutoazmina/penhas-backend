@@ -460,9 +460,10 @@ sub _render_question {
 sub process_quiz_session {
     my ($c, %opts) = @_;
 
-    my $user    = $opts{user}          or croak 'missing user';
-    my $session = $opts{session}       or croak 'missing session';
-    my $params  = delete $opts{params} or croak 'missing params';
+    my $user     = $opts{user}          or croak 'missing user';
+    my $user_obj = $opts{user_obj}      or croak 'missing user_obj';
+    my $session  = $opts{session}       or croak 'missing session';
+    my $params   = delete $opts{params} or croak 'missing params';
 
     log_info("process_quiz_session " . to_json($params));
 
@@ -472,6 +473,7 @@ sub process_quiz_session {
 
     my @preprend_msg;
 
+    my $set_modo_camuflado;
     my $update_user_skills;
     my $have_new_responses;
     log_info("testing reverse... order of messages.." . to_json($current_msgs));
@@ -598,9 +600,14 @@ sub process_quiz_session {
                     }
                 }
                 else {
-                    $responses->{$code} = $msg->{action};
-                    $msg->{display_response} = $msg->{label};
+                    $responses->{$code}             = $val;
+                    $responses->{$code . '_action'} = $msg->{action};
+                    $msg->{display_response}        = $msg->{label};
                     $have_new_responses++;
+
+                    if ($msg->{action} eq 'botao_tela_modo_camuflado') {
+                        $set_modo_camuflado = $val;
+                    }
 
                     if ($stash->{is_eof} || $msg->{_end_chat}) {
                         $stash->{is_finished} = 1;
@@ -649,6 +656,14 @@ sub process_quiz_session {
         # chegou ate aqui, sem dar crash, vamos atualizar os skills do usuario
         if (defined $update_user_skills->{set}) {
             $c->cliente_set_skill(user => $user, skills => [keys $update_user_skills->{set}->%*]);
+        }
+
+        if (defined $set_modo_camuflado) {
+
+            # se for 1, eh pra ativar
+            # sefor 0, nao ativa, mas precisa manter ligar o do mesmo jeito anonimo
+            $user_obj->cliente_modo_camuflado_toggle(active => $set_modo_camuflado eq '1' ? 1 : 0);
+            $user_obj->cliente_modo_anonimo_toggle(active => 1);
         }
 
     }

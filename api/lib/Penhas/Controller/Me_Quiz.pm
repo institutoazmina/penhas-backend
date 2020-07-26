@@ -21,7 +21,8 @@ sub process {
 
     $c->render_later, return 1 if $params->{timeout};
 
-    my $user = $c->stash('user');
+    my $user     = $c->stash('user');
+    my $user_obj = $c->stash('user_obj');
 
     my $quiz_session = $c->user_get_quiz_session(user => $user);
 
@@ -38,10 +39,11 @@ sub process {
             );
         }
 
-        $c->process_quiz_session(user => $user, session => $quiz_session, params => $params);
+        $c->process_quiz_session(user => $user, user_obj => $user_obj, session => $quiz_session, params => $params);
         $extra{quiz_session} = $c->stash('quiz_session');
 
-        use JSON;$c->log->info(to_json($extra{quiz_session}));
+        use JSON;
+        $c->log->info(to_json($extra{quiz_session}));
 
     }
     else {
