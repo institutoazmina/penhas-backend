@@ -272,6 +272,13 @@ subtest_buffered 'group de questoes boolean' => sub {
     )->status_is(200)->json_is('/quiz_session/finished', 1)
       ->json_is('/quiz_session/end_screen', "freetext=$choose_rand")->tx->res->json;
 
+    # teste do profile
+    $t->get_ok(
+        '/me',
+        {'x-api-key' => $session}
+    )->status_is(200, 'profile is ok')->json_is('/modo_camuflado_ativo', 1, 'modo_camuflado_ativo is 1')
+      ->json_is('/modo_anonimo_ativo', 1, 'modo_anonimo_ativo is 1');
+
 };
 
 $cadastro = $t->get_ok(
