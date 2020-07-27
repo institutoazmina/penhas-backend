@@ -482,7 +482,7 @@ do {
     $t->get_ok(
         '/me/audios/' . $event_id,
         {'x-api-key' => $session}
-    )->status_is(400)->json_has('/error', 'invalid')->json_has('/message', 'event_id not found');
+    )->status_is(400)->json_has('/error', 'invalid')->json_has('/message', 'evento não encontrado');
 
 
 };

@@ -184,7 +184,7 @@ sub cliente_delete_events_audio {
     $c->reply_invalid_param('event_id', 'invalid') unless is_uuid_v4($event_id);
 
     my $event = $c->cliente_list_events_audio(%opts);
-    $c->reply_invalid_param('event_id', 'invalid not found') unless $event;
+    $c->reply_invalid_param('event_id', 'evento não encontrado') unless $event;
 
     $event->update(
         {
@@ -203,7 +203,7 @@ sub cliente_detail_events_audio {
     $c->reply_invalid_param('event_id', 'invalid') unless is_uuid_v4($event_id);
 
     my $event = $c->cliente_list_events_audio(%opts);
-    $c->reply_invalid_param('event_id', 'invalid not found') unless $event;
+    $c->reply_invalid_param('event_id', 'evento não encontrado') unless $event;
 
     my $audios = $event->cliente_audios->search_rs(
         {
