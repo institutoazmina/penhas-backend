@@ -512,7 +512,7 @@ sub cliente_list_guardioes {
 
         my @rows = $by_status->{$type}->@*;
 
-        next if @rows == 0 && $type =~ /^(expired_for_not_use|refused)$/;
+        next if @rows == 0 && $type =~ /^(pending|expired_for_not_use|refused)$/;
 
         push @guards, {
             meta => $config,
