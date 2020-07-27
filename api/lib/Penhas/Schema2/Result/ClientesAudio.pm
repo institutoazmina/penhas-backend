@@ -78,8 +78,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-27 02:14:20
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:GCpKKrLwLhmtC1OthIhODw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-27 10:05:37
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TIESruwwQ9AG+xatz5TUlQ
 
 # ALTER TABLE clientes_audios ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 # ALTER TABLE clientes_audios ADD FOREIGN KEY (media_upload_id) REFERENCES media_upload(id) ON DELETE CASCADE ON UPDATE cascade;

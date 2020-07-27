@@ -92,6 +92,7 @@ sub register {
 
     my $me_audios_object = $me_audios->under(':event_id');
     $me_audios_object->get()->to(action => 'audio_events_detail');
+    $me_audios_object->delete()->to(action => 'audio_events_delete');
 
     # /timeline/
     my $timeline = $authenticated->under('/timeline')->to(controller => 'Timeline', action => 'assert_user_perms');

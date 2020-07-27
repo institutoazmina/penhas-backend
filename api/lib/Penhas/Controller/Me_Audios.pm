@@ -83,4 +83,15 @@ sub audio_events_detail {
     );
 }
 
+sub audio_events_delete {
+    my $c = shift;
+
+    $c->cliente_delete_events_audio(
+        event_id => $c->stash('event_id'),
+        user_obj => $c->stash('user_obj'),
+    );
+
+    return $c->rendered(204);
+}
+
 1;

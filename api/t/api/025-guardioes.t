@@ -474,6 +474,16 @@ do {
       ->json_is('/audios/1/audio_duration', '18s',            'row 0 duration')
       ->json_is('/audios/1/bytes',          '276KiB',         'row 1 bytes ok');
 
+    $t->delete_ok(
+        '/me/audios/' . $event_id,
+        {'x-api-key' => $session}
+    )->status_is(204);
+
+    $t->get_ok(
+        '/me/audios/' . $event_id,
+        {'x-api-key' => $session}
+    )->status_is(400)->json_has('/error', 'invalid')->json_has('/message', 'event_id not found');
+
 
 };
 

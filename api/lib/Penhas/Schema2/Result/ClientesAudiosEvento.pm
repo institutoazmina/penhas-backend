@@ -62,6 +62,12 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "deleted_at",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
 );
 __PACKAGE__->set_primary_key("event_id");
 __PACKAGE__->belongs_to(
@@ -72,8 +78,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-27 02:14:20
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yxeYFXIbtF3La1550lUfyw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-27 10:05:37
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wvwEZkuN1LataoIgsue+YA
 
 # ALTER TABLE clientes_audios_eventos ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

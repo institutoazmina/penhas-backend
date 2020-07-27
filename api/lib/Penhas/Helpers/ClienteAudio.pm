@@ -18,6 +18,7 @@ sub setup {
     $self->helper('cliente_list_audio'          => sub { &cliente_list_audio(@_) });
     $self->helper('cliente_list_events_audio'   => sub { &cliente_list_events_audio(@_) });
     $self->helper('cliente_detail_events_audio' => sub { &cliente_detail_events_audio(@_) });
+    $self->helper('cliente_delete_events_audio' => sub { &cliente_delete_events_audio(@_) });
 
 }
 
@@ -137,7 +138,8 @@ sub cliente_list_events_audio {
 
     my $filtered_rs = $user_obj->clientes_audios_eventos->search_rs(
         {
-            'me.status' => {in => [qw/free_access blocked_access free_access_by_admin/]},
+            'me.status'     => {in => [qw/free_access blocked_access free_access_by_admin/]},
+            'me.deleted_at' => undef,
             (defined $event_id ? ('me.event_id' => $event_id) : ()),
         },
         {
@@ -173,6 +175,26 @@ sub cliente_list_events_audio {
     };
 }
 
+sub cliente_delete_events_audio {
+    my ($c, %opts) = @_;
+
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+    my $event_id = $opts{event_id} or confess 'missing event_id';
+
+    $c->reply_invalid_param('event_id', 'invalid') unless is_uuid_v4($event_id);
+
+    my $event = $c->cliente_list_events_audio(%opts);
+    $c->reply_invalid_param('event_id', 'invalid not found') unless $event;
+
+    $event->update(
+        {
+            deleted_at => \'NOW()',
+        }
+    );
+
+    return 1;
+}
+
 sub cliente_detail_events_audio {
     my ($c, %opts) = @_;
     my $user_obj = $opts{user_obj} or confess 'missing user_obj';
@@ -181,7 +203,7 @@ sub cliente_detail_events_audio {
     $c->reply_invalid_param('event_id', 'invalid') unless is_uuid_v4($event_id);
 
     my $event = $c->cliente_list_events_audio(%opts);
-    $c->reply_invalid_param('event_id', 'invalid') unless $event;
+    $c->reply_invalid_param('event_id', 'invalid not found') unless $event;
 
     my $audios = $event->cliente_audios->search_rs(
         {
