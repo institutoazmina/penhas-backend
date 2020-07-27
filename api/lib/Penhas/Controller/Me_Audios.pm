@@ -27,7 +27,7 @@ sub audio_upload {
 
     my $media_upload = Penhas::Controller::Me_Media::upload($c);
 
-    $valid->{waveform} = $c->stash('waveform');
+    $valid->{waveform}       = $c->stash('waveform');
     $valid->{audio_duration} = $c->stash('audio_duration');
 
     my $current_time = DateTime::Format::Pg->parse_datetime($valid->{current_time});
@@ -62,15 +62,25 @@ sub audio_upload {
 sub audio_events_list {
     my $c = shift;
 
-    my $ret = $c->cliente_list_events_audio(
-        user_obj     => $c->stash('user_obj')
-    );
+    my $ret = $c->cliente_list_events_audio(user_obj => $c->stash('user_obj'));
 
     return $c->render(
         json   => $ret,
         status => 200,
     );
 
+}
+
+sub audio_events_detail {
+    my $c = shift;
+
+    return $c->render(
+        json => $c->cliente_detail_events_audio(
+            event_id => $c->stash('event_id'),
+            user_obj => $c->stash('user_obj'),
+        ),
+        status => 200,
+    );
 }
 
 1;

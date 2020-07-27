@@ -39,12 +39,6 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 0,
   },
-  "requested_by_user_at",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
   "media_upload_id",
   { data_type => "varchar", is_foreign_key => 1, is_nullable => 0, size => 200 },
   "event_id",
@@ -62,6 +56,12 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "first_downloaded_at",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -78,11 +78,19 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-23 05:24:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Lf2s74ceIoaIuZwbE7xALQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-27 02:14:20
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:GCpKKrLwLhmtC1OthIhODw
 
 # ALTER TABLE clientes_audios ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 # ALTER TABLE clientes_audios ADD FOREIGN KEY (media_upload_id) REFERENCES media_upload(id) ON DELETE CASCADE ON UPDATE cascade;
+
+__PACKAGE__->belongs_to(
+  "clientes_audio_evento",
+  "Penhas::Schema2::Result::ClientesAudiosEvento",
+  { event_id => "event_id" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+);
+
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

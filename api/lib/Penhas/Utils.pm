@@ -37,6 +37,8 @@ state $text_xslate = Text::Xslate->new(
   get_media_filepath
 
   is_uuid_v4
+
+  time_seconds_fmt
 );
 
 
@@ -149,7 +151,14 @@ sub get_media_filepath {
 }
 
 sub is_uuid_v4 {
-    $_[0] =~/^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i ? 1 : 0;
+    $_[0] =~ /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i ? 1 : 0;
+}
+
+sub time_seconds_fmt {
+
+    # nao mover isso pro começo, esse modulo se desliga sozinho no final do bloco
+    use integer;
+    return sprintf('%dm%02ds', $_[0] / 60 % 60, $_[0] % 60);
 }
 
 1;

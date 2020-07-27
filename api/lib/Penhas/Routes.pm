@@ -84,9 +84,14 @@ sub register {
     $me_guardioes->under('/alert')->post()->to(action => 'alert_guards');
 
     # POST /me/audios
+    # GET /me/audios
+    # GET /me/audios/:event_id
     my $me_audios = $me->under('/audios')->to(controller => 'Me_Audios', action => 'assert_user_perms');
     $me_audios->post()->to(action => 'audio_upload');
     $me_audios->get()->to(action => 'audio_events_list');
+
+    my $me_audios_object = $me_audios->under(':event_id');
+    $me_audios_object->get()->to(action => 'audio_events_detail');
 
     # /timeline/
     my $timeline = $authenticated->under('/timeline')->to(controller => 'Timeline', action => 'assert_user_perms');

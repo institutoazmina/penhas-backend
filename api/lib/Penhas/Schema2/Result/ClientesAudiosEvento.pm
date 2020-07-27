@@ -56,6 +56,12 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 0,
   },
+  "requested_by_user_at",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
 );
 __PACKAGE__->set_primary_key("event_id");
 __PACKAGE__->belongs_to(
@@ -66,10 +72,17 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-24 13:16:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:x7m8Lq2fp+LwYFK7EWj/kQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-27 02:14:20
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yxeYFXIbtF3La1550lUfyw
 
 # ALTER TABLE clientes_audios_eventos ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
+
+__PACKAGE__->has_many(
+  "cliente_audios",
+  "Penhas::Schema2::Result::ClientesAudio",
+  { "foreign.event_id" => "self.event_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

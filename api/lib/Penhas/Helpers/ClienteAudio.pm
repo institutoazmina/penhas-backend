@@ -5,17 +5,20 @@ use utf8;
 use JSON;
 use Penhas::Logger;
 use Number::Phone::Lib;
-use Penhas::Utils qw/random_string_from is_test/;
+use Penhas::Utils qw/random_string_from is_test time_seconds_fmt is_uuid_v4/;
 use Digest::MD5 qw/md5_hex/;
 use Scope::OnExit;
-
+use Mojo::Util qw/humanize_bytes/;
+use POSIX qw/ceil/;
 
 sub setup {
     my $self = shift;
 
-    $self->helper('cliente_new_audio'         => sub { &cliente_new_audio(@_) });
-    $self->helper('cliente_list_audio'        => sub { &cliente_list_audio(@_) });
-    $self->helper('cliente_list_events_audio' => sub { &cliente_list_events_audio(@_) });
+    $self->helper('cliente_new_audio'           => sub { &cliente_new_audio(@_) });
+    $self->helper('cliente_list_audio'          => sub { &cliente_list_audio(@_) });
+    $self->helper('cliente_list_events_audio'   => sub { &cliente_list_events_audio(@_) });
+    $self->helper('cliente_detail_events_audio' => sub { &cliente_detail_events_audio(@_) });
+
 }
 
 sub cliente_new_audio {
@@ -30,6 +33,7 @@ sub cliente_new_audio {
     }
 
     $opts{event_id} = lc $opts{event_id};
+    $c->reply_invalid_param('event_id', 'invalid') unless is_uuid_v4($opts{event_id});
 
     my ($locked, $lock_key) = $c->kv->lock_and_wait('audio:event_id' . $opts{event_id});
     on_scope_exit { $c->kv->redis->del($lock_key) };
@@ -127,25 +131,86 @@ sub _format_audio_row {
 sub cliente_list_events_audio {
     my ($c, %opts) = @_;
     my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+    my $event_id = $opts{event_id};
 
     $user_obj->clientes_audios_eventos->tick_audios_eventos_status();
 
     my $filtered_rs = $user_obj->clientes_audios_eventos->search_rs(
         {
             'me.status' => {in => [qw/free_access blocked_access free_access_by_admin/]},
+            (defined $event_id ? ('me.event_id' => $event_id) : ()),
         },
-        {order_by => [{'-desc' => 'me.last_cliente_created_at'}, {'-desc' => 'me.created_at'}]}
+        {
+            order_by => [{'-desc' => 'me.last_cliente_created_at'}, {'-desc' => 'me.created_at'}],
+            rows     => 500                                                                          # just int case
+        }
     );
 
     my @rows;
     while (my $r = $filtered_rs->next) {
-        push @rows, {$r->columns};
+
+        return $r if defined $event_id;
+        push @rows, {
+            data => {
+                event_id                => $r->event_id(),
+                audio_duration          => time_seconds_fmt($r->audio_duration()),
+                last_cliente_created_at => $r->last_cliente_created_at->datetime(),
+                total_bytes             => humanize_bytes($r->total_bytes()),
+            },
+
+            meta => {
+                requested_by_user => $r->requested_by_user                                ? 1 : 0,
+                request_granted   => $r->status eq 'free_access_by_admin'                 ? 1 : 0,
+                download_granted  => $r->status =~ /^(free_access|free_access_by_admin)$/ ? 1 : 0,
+            },
+
+        };
     }
+    return undef if defined $event_id;
 
     return {
         rows => \@rows,
     };
+}
 
+sub cliente_detail_events_audio {
+    my ($c, %opts) = @_;
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+    my $event_id = $opts{event_id} or confess 'missing event_id';
+
+    $c->reply_invalid_param('event_id', 'invalid') unless is_uuid_v4($event_id);
+
+    my $event = $c->cliente_list_events_audio(%opts);
+    $c->reply_invalid_param('event_id', 'invalid') unless $event;
+
+    my $audios = $event->cliente_audios->search_rs(
+        {
+            'me.duplicated_upload' => 0,
+        },
+        {
+            join       => {'media_upload'},
+            '+columns' => {'media_upload_bytes' => 'media_upload.file_size'},
+            order_by   => [
+                {'-asc' => 'me.event_sequence'},
+            ]
+        }
+    );
+
+    my @audios;
+    while (my $r = $audios->next) {
+        push @audios, {
+            id                 => $r->id(),
+            audio_duration     => ceil($r->audio_duration()) . 's',
+            cliente_created_at => $r->cliente_created_at->datetime(),
+            bytes              => humanize_bytes($r->get_column('media_upload_bytes')),
+            waveform           => $r->waveform_base64(),
+        };
+    }
+
+    return {
+        event_id => $event_id,
+        audios   => \@audios,
+    };
 }
 
 

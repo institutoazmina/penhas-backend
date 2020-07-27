@@ -455,7 +455,26 @@ do {
     $t->get_ok(
         '/me/audios',
         {'x-api-key' => $session}
-    )->status_is(200);
+    )->status_is(200)->json_is('/rows/0/data/audio_duration', '0m33s', 'time is human 33 seconds long')
+      ->json_is('/rows/0/data/event_id', $event_id, 'event_id is right')
+      ->json_like('/rows/0/data/last_cliente_created_at', qr/$current_date/, 'last created_at looks ok')
+      ->json_is('/rows/0/data/total_bytes',       '503KiB', 'bytes in human')
+      ->json_is('/rows/0/meta/download_granted',  '1',      'can be downloaded')
+      ->json_is('/rows/0/meta/requested_by_user', '0',      'is not requested_by_user')
+      ->json_is('/rows/0/meta/request_granted',   '0',      'therefore request_granted is false');
+
+    $t->get_ok(
+        '/me/audios/' . $event_id,
+        {'x-api-key' => $session}
+    )->status_is(200)->json_has('/audios/0/waveform', 'has waveform')->json_has('/audios/0/bytes', 'row 0 has bytes')
+      ->json_is('/audios/0/id',             $audio_1->id,     'row 0 is the right id')
+      ->json_is('/audios/1/id',             $audio_2_dup->id, 'row 1 is the right id')
+      ->json_is('/audios/2',                undef,            'row 2 does not exists')
+      ->json_is('/audios/0/audio_duration', '16s',            'row 0 duration')
+      ->json_is('/audios/1/audio_duration', '18s',            'row 0 duration')
+      ->json_is('/audios/1/bytes',          '276KiB',         'row 1 bytes ok');
+
+
 };
 
 done_testing();
