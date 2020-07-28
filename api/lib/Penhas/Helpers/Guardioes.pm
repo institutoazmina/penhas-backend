@@ -475,21 +475,22 @@ sub cliente_list_guardioes {
     my $config_map = {
         accepted => {
             header         => 'Guardiões',
-            description    => 'Guardiões que recebem seus pedidos de socorro.',
+            description    => 'Guardiões ativos que recebem seus pedidos de socorro.',
             delete_warning => '',
             can_resend     => 0,
             layout         => 'accepted',
         },
         pending => {
             header         => 'Pendentes',
-            description    => 'Guardiões que ainda não aceitaram seu convite.',
+            description    => 'Convites que ainda não foram aceitos ou recusados.',
             delete_warning => '',
             can_resend     => 0,
             layout         => 'pending',
         },
         expired_for_not_use => {
-            header         => 'Convites expirados',
-            description    => 'Convites não podem mais serem aceitos aceitos, convite novamente',
+            header => 'Convites expirados',
+            description =>
+              'Estes convites não estão mais válidos para uso. Use o botão 🔄 para renviar ou 🗑️ para cancelar o convite definitivamente.',
             delete_warning => '',
             can_resend     => 1,
             layout         => 'pending',
@@ -497,9 +498,9 @@ sub cliente_list_guardioes {
         refused => {
             header => 'Convites recusados',
             description =>
-              'Convite recusado! O guardião ainda pode aceitar o convite usando o mesmo link. Use o botão 🗑️ para cancelar o convite.',
+              'Os convites recusados ainda podem serem aceitos usando o mesmo link. Use o botão 🗑️ para cancelar o convite.',
             delete_warning =>
-              'Após apagar um convite recusado, você não poderá convidar este número por até 7 dias.',
+              'Após apagar um convite recusado, você não poderá convidar mesmo celular por até 7 dias.',
             can_resend => 0,
             layout     => 'pending',
         },
