@@ -472,37 +472,34 @@ sub cliente_list_guardioes {
         push $by_status->{$r->status()}->@*, $r;
     }
 
+    my %defaults   = (can_delete => 1, can_edit => 1, can_resend => 0, delete_warning => '', layout => 'pending',);
     my $config_map = {
         accepted => {
-            header         => 'Guardiões',
-            description    => 'Guardiões ativos que recebem seus pedidos de socorro.',
-            delete_warning => '',
-            can_resend     => 0,
-            layout         => 'accepted',
+            %defaults,
+            header      => 'Guardiões',
+            description => 'Guardiões ativos que recebem seus pedidos de socorro.',
+            layout      => 'accepted',
         },
         pending => {
-            header         => 'Pendentes',
-            description    => 'Convites que ainda não foram aceitos ou recusados.',
-            delete_warning => '',
-            can_resend     => 0,
-            layout         => 'pending',
+            %defaults,
+            header      => 'Pendentes',
+            description => 'Convites que ainda não foram aceitos ou recusados.',
         },
         expired_for_not_use => {
+            %defaults,
             header => 'Convites expirados',
             description =>
               'Estes convites não estão mais válidos para uso. Use o botão 🔄 para renviar ou 🗑️ para cancelar o convite definitivamente.',
-            delete_warning => '',
-            can_resend     => 1,
-            layout         => 'pending',
+            can_resend => 1,
+            can_edit   => 0,
         },
         refused => {
+            %defaults,
             header => 'Convites recusados',
             description =>
               'Os convites recusados ainda podem serem aceitos usando o mesmo link. Use o botão 🗑️ para cancelar o convite.',
             delete_warning =>
               'Após apagar um convite recusado, você não poderá convidar mesmo celular por até 7 dias.',
-            can_resend => 0,
-            layout     => 'pending',
         },
     };
     my @guards;
