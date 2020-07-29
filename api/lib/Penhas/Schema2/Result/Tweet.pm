@@ -53,7 +53,12 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
   },
   "cliente_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "ultimo_comentario_id",
   { data_type => "varchar", is_nullable => 1, size => 20 },
   "media_ids",
@@ -74,25 +79,25 @@ __PACKAGE__->add_columns(
   },
 );
 __PACKAGE__->set_primary_key("id");
-#>>>
-
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-28 05:38:58
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ESdwQSLHRGl1qmo+EFEMkg
-
-
 __PACKAGE__->belongs_to(
   "cliente",
   "Penhas::Schema2::Result::Cliente",
   { id => "cliente_id" },
-  { is_deferrable => 0, on_delete => "NO ACTION", on_update => "NO ACTION" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
-
 __PACKAGE__->has_many(
-  "tweet_likes",
+  "tweets_likes",
   "Penhas::Schema2::Result::TweetLikes",
   { "foreign.tweet_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
+#>>>
+
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-29 17:35:55
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:bNYWrSNJeAbc9U+xE8W7KA
+
+# alter table tweets modify column cliente_id  int(11) unsigned  not null;
+# ALTER TABLE tweets ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

@@ -25,7 +25,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "event_id",
-  { data_type => "char", is_nullable => 0, size => 36 },
+  { data_type => "char", is_nullable => 0, size => 200 },
   "audio_duration",
   { data_type => "double precision", is_nullable => 0 },
   "updated_at",
@@ -78,8 +78,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-27 10:05:37
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wvwEZkuN1LataoIgsue+YA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-29 17:18:57
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:JjbdROi98z2v4JBIg3T0gg
 
 # ALTER TABLE clientes_audios_eventos ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

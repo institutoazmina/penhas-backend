@@ -159,23 +159,28 @@ __PACKAGE__->has_many(
   { "foreign.cliente_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
+__PACKAGE__->has_many(
+  "tweets",
+  "Penhas::Schema2::Result::Tweet",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "tweets_likes",
+  "Penhas::Schema2::Result::TweetLikes",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-26 13:57:37
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Z4Ap8WvvKrCVuRYm1hhg4g
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-29 17:35:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WMvwB6E5M/WVdHJwXTAnWA
 
-__PACKAGE__->has_many(
-    "tweets",
-    "Penhas::Schema2::Result::Tweet",
-    {"foreign.cliente_id" => "self.id"},
-    {cascade_copy         => 0, cascade_delete => 0},
-);
 use Carp qw/confess/;
 
 use Moose;
 use MooseX::NonMoose;
 use MooseX::MarkAsMethods autoclean => 1;
-
 
 sub is_female {
     my $self = shift;
