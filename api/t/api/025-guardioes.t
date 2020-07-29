@@ -492,7 +492,6 @@ do {
     is $audio_2_dup->played_count, '1', '1 time downloaded';
     is trace_popall(), 'download', 'download is working';
 
-    trace_popall();
     # repeat for test cache
     $t->get_ok(
         '/me/audios/' . $event_id . '/download',
@@ -507,6 +506,8 @@ do {
         {'x-api-key' => $session},
         form => {audio_sequences => '2,1'}
     )->status_is(200);
+    is trace_popall(), 'download,ffmpeg-concat', 'ffmpeg concat is working';
+
 
     $audio_2_dup->discard_changes;
     is $audio_2_dup->played_count, '3', '3 times downloaded';

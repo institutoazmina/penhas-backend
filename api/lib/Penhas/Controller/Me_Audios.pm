@@ -237,8 +237,6 @@ sub _concat_audio_files {
     my @files = $opts{files}->@*;
     die 'missing @files' unless scalar @files;
 
-    use DDP;
-    p @files;
     foreach my $filename (@files) {
 
         if (!-e $filename) {
@@ -273,6 +271,7 @@ sub _concat_audio_files {
     else {
         log_info("running concat $files_concated to $outfile");
 
+
         my @ffmpeg = ();
         push @ffmpeg, qw(ffmpeg -i);
         push @ffmpeg, 'concat:' . $files_concated;
@@ -296,6 +295,8 @@ sub _concat_audio_files {
                 status => 500,
             );
         }
+
+        log_trace('ffmpeg-concat');
 
         $c->reply->file($outfile);
     }
