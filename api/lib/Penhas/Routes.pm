@@ -57,6 +57,10 @@ sub register {
 
     # POST /me/call-police-pressed
     $me->under('/call-police-pressed')->post()->to(action => 'inc_call_police_counter');
+    # POST /me/modo-anonimo-toggle
+    $me->under('/modo-anonimo-toggle')->post()->to(action => 'route_cliente_modo_camuflado_toggle');
+    # POST /me/modo-camuflado-toggle
+    $me->under('/modo-camuflado-toggle')->post()->to(action => 'route_cliente_modo_anonimo_toggle');
 
     # /me/quiz
     my $me_quiz = $me->under('/quiz')->to(controller => 'Me_Quiz', action => 'assert_user_perms');

@@ -198,6 +198,40 @@ subtest_buffered 'Contador ligacao policia' => sub {
     is $directus->{qtde_ligar_para_policia}, 1, 'qtde_ligar_para_policia increased';
 };
 
+subtest_buffered 'Modos' => sub {
+
+    $t->post_ok(
+        '/me/modo-anonimo-toggle',
+        {'x-api-key' => $session},
+        form => {active => 1}
+    )->status_is(204);
+    $t->post_ok(
+        '/me/modo-camuflado-toggle',
+        {'x-api-key' => $session},
+        form => {active => 1}
+    )->status_is(204);
+
+    $directus = get_cliente_by_email($random_email);
+    is $directus->{modo_anonimo_ativo},   1, 'modo_anonimo_ativo 1';
+    is $directus->{modo_camuflado_ativo}, 1, 'modo_camuflado_ativo 1';
+
+    $t->post_ok(
+        '/me/modo-anonimo-toggle',
+        {'x-api-key' => $session},
+        form => {active => 0}
+    )->status_is(204);
+    $t->post_ok(
+        '/me/modo-camuflado-toggle',
+        {'x-api-key' => $session},
+        form => {active => 0}
+    )->status_is(204);
+
+    $directus = get_cliente_by_email($random_email);
+    is $directus->{modo_anonimo_ativo},   0, 'modo_anonimo_ativo 0';
+    is $directus->{modo_camuflado_ativo}, 0, 'modo_camuflado_ativo 0';
+};
+
+
 subtest_buffered 'Reset de senha' => sub {
 
     is(get_forget_password_row($directus->{id}), undef, 'no rows');
