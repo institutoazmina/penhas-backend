@@ -487,6 +487,8 @@ do {
         {'x-api-key' => $session},
         form => {audio_sequences => '2'}
     )->status_is(200);
+    $audio_2_dup->discard_changes;
+    is $audio_2_dup->played_count, '1', '1 time downloaded';
 
     # repeat for test cache
     $t->get_ok(
@@ -501,6 +503,9 @@ do {
         {'x-api-key' => $session},
         form => {audio_sequences => '2,1'}
     )->status_is(200);
+
+    $audio_2_dup->discard_changes;
+    is $audio_2_dup->played_count, '3', '3 times downloaded';
 
     $t->delete_ok(
         '/me/audios/' . $event_id,
