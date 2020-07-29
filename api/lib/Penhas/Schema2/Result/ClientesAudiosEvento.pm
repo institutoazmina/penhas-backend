@@ -84,11 +84,16 @@ __PACKAGE__->belongs_to(
 # ALTER TABLE clientes_audios_eventos ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 
 __PACKAGE__->has_many(
-  "cliente_audios",
-  "Penhas::Schema2::Result::ClientesAudio",
-  { "foreign.event_id" => "self.event_id" },
-  { cascade_copy => 0, cascade_delete => 0 },
+    "cliente_audios",
+    "Penhas::Schema2::Result::ClientesAudio",
+    {"foreign.event_id" => "self.event_id"},
+    {cascade_copy       => 0, cascade_delete => 0},
 );
+
+sub fake_event_id {
+    my (undef, $event_id) = split /\:/, shift->event_id();
+    return $event_id;
+}
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

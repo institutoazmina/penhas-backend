@@ -407,10 +407,11 @@ do {
 
     is $audio_1->audio_duration, '15.883', 'duration is right';
 
-    ok(my $event = $schema2->resultset('ClientesAudiosEvento')->find($event_id), 'event row found');
+    ok(my $event = $schema2->resultset('ClientesAudiosEvento')->find($cliente_id . ':' . $event_id), 'event row found');
     is $audio_1->cliente_id, $cliente_id, 'row is the same client_id';
     is $event->cliente_id,   $cliente_id, 'event row is the same client_id as audio';
     is $event->audio_duration, '15.883', 'duration is ok';
+    ok $event->total_bytes > 200000 && $event->total_bytes < 300000, 'bytes sum is about right';
 
     my $audio_2_response = $t->post_ok(
         '/me/audios',
@@ -426,7 +427,7 @@ do {
 
     $event->discard_changes;
     is $event->audio_duration, 15.883 + 17.369, 'duration is ok';
-    is $event->total_bytes, 515461, 'bytes sum is right';
+    ok $event->total_bytes > 400000 && $event->total_bytes < 800000, 'bytes sum is about right';
 
     # duplica o envio do arquivo para verificar que o evento fica ainda OK
     my $audio_2_response_dup = $t->post_ok(
@@ -450,7 +451,7 @@ do {
 
     $event->discard_changes;
     is $event->audio_duration, 15.883 + 17.369, 'duration is ok';
-    is $event->total_bytes, 515461, 'bytes sum is right';
+    ok $event->total_bytes > 400000 && $event->total_bytes < 800000, 'bytes sum is about right';
 
     $t->get_ok(
         '/me/audios',
@@ -458,10 +459,10 @@ do {
     )->status_is(200)->json_is('/rows/0/data/audio_duration', '0m33s', 'time is human 33 seconds long')
       ->json_is('/rows/0/data/event_id', $event_id, 'event_id is right')
       ->json_like('/rows/0/data/last_cliente_created_at', qr/$current_date/, 'last created_at looks ok')
-      ->json_is('/rows/0/data/total_bytes',       '503KiB', 'bytes in human')
-      ->json_is('/rows/0/meta/download_granted',  '1',      'can be downloaded')
-      ->json_is('/rows/0/meta/requested_by_user', '0',      'is not requested_by_user')
-      ->json_is('/rows/0/meta/request_granted',   '0',      'therefore request_granted is false');
+      ->json_like('/rows/0/data/total_bytes',             qr/KiB/,           'bytes in human')
+      ->json_is('/rows/0/meta/download_granted',  '1', 'can be downloaded')
+      ->json_is('/rows/0/meta/requested_by_user', '0', 'is not requested_by_user')
+      ->json_is('/rows/0/meta/request_granted',   '0', 'therefore request_granted is false');
 
     $t->get_ok(
         '/me/audios/' . $event_id,
@@ -469,10 +470,37 @@ do {
     )->status_is(200)->json_has('/audios/0/waveform', 'has waveform')->json_has('/audios/0/bytes', 'row 0 has bytes')
       ->json_is('/audios/0/id',             $audio_1->id,     'row 0 is the right id')
       ->json_is('/audios/1/id',             $audio_2_dup->id, 'row 1 is the right id')
+      ->json_is('/audios/0/event_sequence', 1,                'row 0 is the right sequence')
+      ->json_is('/audios/1/event_sequence', 2,                'row 1 is the right sequence')
       ->json_is('/audios/2',                undef,            'row 2 does not exists')
       ->json_is('/audios/0/audio_duration', '16s',            'row 0 duration')
       ->json_is('/audios/1/audio_duration', '18s',            'row 0 duration')
-      ->json_is('/audios/1/bytes',          '276KiB',         'row 1 bytes ok');
+      ->json_like('/audios/1/bytes', qr/KiB/, 'row 1 bytes ok');
+
+    $audio_1->media_upload->update(
+        {s3_path => $ENV{PUBLIC_API_URL} . '/.tests-assets/t-test-data/gs-16b-1c-44100hz.aac'});
+    $audio_2_dup->media_upload->update(
+        {s3_path => $ENV{PUBLIC_API_URL} . '/.tests-assets/t-test-data/second-audio-aac.aac'});
+
+    $t->get_ok(
+        '/me/audios/' . $event_id . '/download',
+        {'x-api-key' => $session},
+        form => {audio_sequences => '2'}
+    )->status_is(200);
+
+    # repeat for test cache
+    $t->get_ok(
+        '/me/audios/' . $event_id . '/download',
+        {'x-api-key' => $session},
+        form => {audio_sequences => '2'}
+    )->status_is(200);
+
+    # repeat for test concat
+    $t->get_ok(
+        '/me/audios/' . $event_id . '/download',
+        {'x-api-key' => $session},
+        form => {audio_sequences => '2,1'}
+    )->status_is(200);
 
     $t->delete_ok(
         '/me/audios/' . $event_id,

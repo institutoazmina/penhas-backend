@@ -133,7 +133,7 @@ subtype IntList, as Str, where {
     return 0 if length $str > 2000;
 
     # até aprox 332 numeros max
-    return $str =~ /^[0-9]{1,6}(?>,[0-9]{1,6})*$/ ? 1 : 0;
+    return $str =~ /^[0-9]{1,6}(?>,[0-9]{1,6})*$/o ? 1 : 0;
 }, message {"$_[0] is not a valid IntList"};
 
 coerce IntList, from Str, via {

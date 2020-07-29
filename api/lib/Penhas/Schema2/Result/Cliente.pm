@@ -221,7 +221,7 @@ sub cliente_modo_camuflado_toggle {
 
     $self->update(
         {
-            modo_camuflado_ativo => $active ? 1 : 0,
+            modo_camuflado_ativo         => $active ? 1 : 0,
             modo_camuflado_atualizado_em => \'NOW()',
         }
     );
@@ -238,6 +238,11 @@ sub cliente_modo_anonimo_toggle {
         }
     );
 
+}
+
+# retorna o string para ser usada em FK composta
+sub id_composed_fk {
+    return shift()->id . ':' . shift;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

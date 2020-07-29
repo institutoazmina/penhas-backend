@@ -86,6 +86,14 @@ sub get_schema {
 
     $ENV{MEDIA_ERR_DIR} = '/tmp' unless -d $ENV{MEDIA_ERR_DIR};
 
+    $ENV{TMP_AUDIO_DIR} = '/tmp' unless -d $ENV{TMP_AUDIO_DIR};
+
+    if ($ENV{TMP_AUDIO_DIR} =~ q|^/tmp|) {
+        $ENV{TMP_AUDIO_DIR} = '/tmp/audios';
+        mkdir $ENV{TMP_AUDIO_DIR} unless -d $ENV{TMP_AUDIO_DIR};
+    }
+
+
     undef $Penhas::Logger::instance;
 
     $schema_instance = $schema;
