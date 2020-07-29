@@ -482,6 +482,7 @@ do {
     $audio_2_dup->media_upload->update(
         {s3_path => $ENV{PUBLIC_API_URL} . '/.tests-assets/t-test-data/second-audio-aac.aac'});
 
+    trace_popall();
     $t->get_ok(
         '/me/audios/' . $event_id . '/download',
         {'x-api-key' => $session},
@@ -489,13 +490,16 @@ do {
     )->status_is(200);
     $audio_2_dup->discard_changes;
     is $audio_2_dup->played_count, '1', '1 time downloaded';
+    is trace_popall(), 'download', 'download is working';
 
+    trace_popall();
     # repeat for test cache
     $t->get_ok(
         '/me/audios/' . $event_id . '/download',
         {'x-api-key' => $session},
         form => {audio_sequences => '2'}
     )->status_is(200);
+    is trace_popall(), 'cached', 'cache is working';
 
     # repeat for test concat
     $t->get_ok(

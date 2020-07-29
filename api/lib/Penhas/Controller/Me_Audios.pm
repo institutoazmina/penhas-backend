@@ -155,6 +155,7 @@ sub audio_download {
                 return !$tx->res->is_error && $tx->res->code == 200;
             },
             init => sub {
+                log_trace('download');
                 return $c->ua->get_p($row->get_column('media_upload_s3path'));
             },
             id => $row->id
@@ -218,6 +219,7 @@ sub audio_download {
         );
     }
     else {
+        log_trace('cached');
         slog_debug('all files were downloaded already, running ffmpeg to concat...');
 
         # faz o concat (ou não) e segue com o download
