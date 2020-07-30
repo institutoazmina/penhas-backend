@@ -98,6 +98,17 @@ sub audio_events_delete {
     return $c->rendered(204);
 }
 
+sub audio_request_access {
+    my $c = shift;
+
+    my $ret = $c->cliente_request_audio_access(
+        event_id => $c->stash('event_id'),
+        user_obj => $c->stash('user_obj'),
+    );
+
+    return $c->render(json => $ret);
+}
+
 sub audio_download {
     my $c = shift;
 
@@ -116,6 +127,13 @@ sub audio_download {
         user_obj       => $c->stash('user_obj'),
         as_resultclass => 1,
     );
+
+    die {
+        error   => 'audio_blocked_access',
+        message => "Você não pode fazer o download deste evento. Entre em contato com o administrador.",
+        status  => 400,
+    } unless $audios->{event}->is_download_granted();
+
 
     my @downloads_rows;
     if (@audio_sequences) {

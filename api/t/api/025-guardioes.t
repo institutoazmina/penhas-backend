@@ -512,6 +512,35 @@ do {
     $audio_2_dup->discard_changes;
     is $audio_2_dup->played_count, '3', '3 times downloaded';
 
+    $event->update({status => 'blocked_access'});
+    $t->get_ok(
+        '/me/audios/' . $event_id . '/download',
+        {'x-api-key' => $session},
+        form => {audio_sequences => 'all'}
+    )->status_is(400)->json_is('/error', 'audio_blocked_access');
+
+    $t->post_ok(
+        '/me/audios/' . $event_id . '/request-access',
+        {'x-api-key' => $session},
+    )->status_is(200)->json_is('/success', '1');
+
+    $event->discard_changes;
+    ok $event->requested_by_user_at, 'has requested_by_user_at';
+    is $event->requested_by_user, 1, 'requested_by_user = 1';
+
+    $t->get_ok(
+        '/me/audios/' . $event_id . '/download',
+        {'x-api-key' => $session},
+        form => {audio_sequences => 'all'}
+    )->status_is(400)->json_is('/error', 'audio_blocked_access', 'still blocked');
+
+    $event->update({status => 'free_access_by_admin'});
+    $t->get_ok(
+        '/me/audios/' . $event_id . '/download',
+        {'x-api-key' => $session},
+        form => {audio_sequences => 'all'}
+    )->status_is(200);
+
     $t->delete_ok(
         '/me/audios/' . $event_id,
         {'x-api-key' => $session}

@@ -98,6 +98,7 @@ sub register {
     $me_audios_object->get()->to(action => 'audio_events_detail');
     $me_audios_object->delete()->to(action => 'audio_events_delete');
     $me_audios_object->route('download')->get()->to(action => 'audio_download');
+    $me_audios_object->route('request-access')->post()->to(action => 'audio_request_access');
 
     # /timeline/
     my $timeline = $authenticated->under('/timeline')->to(controller => 'Timeline', action => 'assert_user_perms');

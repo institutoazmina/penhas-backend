@@ -95,5 +95,10 @@ sub fake_event_id {
     return $event_id;
 }
 
+sub is_download_granted {
+    my ($self) = @_;
+    return $self->status() =~ /^(free_access|free_access_by_admin)$/ ? 1 : 0;
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

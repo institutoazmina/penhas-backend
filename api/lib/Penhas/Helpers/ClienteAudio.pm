@@ -14,12 +14,14 @@ use POSIX qw/ceil/;
 sub setup {
     my $self = shift;
 
-    $self->helper('cliente_new_audio'           => sub { &cliente_new_audio(@_) });
-    $self->helper('cliente_list_audio'          => sub { &cliente_list_audio(@_) });
-    $self->helper('cliente_list_events_audio'   => sub { &cliente_list_events_audio(@_) });
-    $self->helper('cliente_detail_events_audio' => sub { &cliente_detail_events_audio(@_) });
-    $self->helper('cliente_delete_events_audio' => sub { &cliente_delete_events_audio(@_) });
-    $self->helper('cliente_audio_play_inc'      => sub { &cliente_audio_play_inc(@_) });
+    $self->helper('cliente_new_audio'            => sub { &cliente_new_audio(@_) });
+    $self->helper('cliente_list_audio'           => sub { &cliente_list_audio(@_) });
+    $self->helper('cliente_list_events_audio'    => sub { &cliente_list_events_audio(@_) });
+    $self->helper('cliente_detail_events_audio'  => sub { &cliente_detail_events_audio(@_) });
+    $self->helper('cliente_delete_events_audio'  => sub { &cliente_delete_events_audio(@_) });
+    $self->helper('cliente_audio_play_inc'       => sub { &cliente_audio_play_inc(@_) });
+    $self->helper('cliente_request_audio_access' => sub { &cliente_request_audio_access(@_) });
+
 
 }
 
@@ -155,9 +157,9 @@ sub cliente_list_events_audio {
             },
 
             meta => {
-                requested_by_user => $r->requested_by_user                                ? 1 : 0,
-                request_granted   => $r->status eq 'free_access_by_admin'                 ? 1 : 0,
-                download_granted  => $r->status =~ /^(free_access|free_access_by_admin)$/ ? 1 : 0,
+                requested_by_user => $r->requested_by_user                ? 1 : 0,
+                request_granted   => $r->status eq 'free_access_by_admin' ? 1 : 0,
+                download_granted  => $r->is_download_granted()            ? 1 : 0,
             },
 
         };
@@ -188,6 +190,31 @@ sub cliente_delete_events_audio {
 
     return 1;
 }
+
+sub cliente_request_audio_access {
+    my ($c, %opts) = @_;
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+    my $event_id = $opts{event_id} or confess 'missing event_id';
+
+    $c->reply_invalid_param('event_id', 'invalid') unless is_uuid_v4($event_id);
+
+    my $event = $c->cliente_list_events_audio(%opts);
+    $c->reply_invalid_param('event_id', 'evento não encontrado') unless $event;
+
+    $event->update(
+        {
+            requested_by_user    => 1,
+            requested_by_user_at => \'NOW()',
+        }
+    );
+
+    my $message = 'Enviaremos uma mensagem quando o arquivo estiver disponível';
+    return {
+        message => $message,
+        success => 1,
+    };
+}
+
 
 sub cliente_detail_events_audio {
     my ($c, %opts) = @_;
@@ -243,6 +270,7 @@ sub cliente_detail_events_audio {
     return {
         event_id => $event_id,
         audios   => \@audios,
+        ($as_resultclass ? (event => $event) : ()),
     };
 }
 
