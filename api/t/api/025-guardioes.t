@@ -534,12 +534,31 @@ do {
         form => {audio_sequences => 'all'}
     )->status_is(400)->json_is('/error', 'audio_blocked_access', 'still blocked');
 
+    $t->get_ok(
+        '/me/audios',
+        {'x-api-key' => $session}
+    )->status_is(200)->json_is('/rows/0/data/audio_duration', '0m33s', 'time is human 33 seconds long')
+      ->json_is('/rows/0/data/event_id', $event_id, 'event_id is right')
+      ->json_is('/rows/0/meta/download_granted',  '0', 'can be downloaded')
+      ->json_is('/rows/0/meta/requested_by_user', '1', 'is requested_by_user')
+      ->json_is('/rows/0/meta/request_granted',   '0', 'request_granted is false');
+
     $event->update({status => 'free_access_by_admin'});
     $t->get_ok(
         '/me/audios/' . $event_id . '/download',
         {'x-api-key' => $session},
         form => {audio_sequences => 'all'}
     )->status_is(200);
+
+    $t->get_ok(
+        '/me/audios',
+        {'x-api-key' => $session}
+    )->status_is(200)->json_is('/rows/0/data/audio_duration', '0m33s', 'time is human 33 seconds long')
+      ->json_is('/rows/0/data/event_id', $event_id, 'event_id is right')
+      ->json_is('/rows/0/meta/download_granted',  '1', 'can be downloaded')
+      ->json_is('/rows/0/meta/requested_by_user', '1', 'is requested_by_user')
+      ->json_is('/rows/0/meta/request_granted',   '1', 'and request_granted is true');
+
 
     $t->delete_ok(
         '/me/audios/' . $event_id,
