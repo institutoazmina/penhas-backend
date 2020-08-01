@@ -116,6 +116,9 @@ sub guardiao_update_by_token {
             }
         );
         $row->discard_changes({prefetch => 'cliente'});
+
+        $row->cliente->recalc_qtde_guardioes_ativos();
+        
     }
     elsif ($action eq 'refuse' && $row->status ne 'refused') {
         $row->update(
@@ -139,6 +142,8 @@ sub guardiao_update_by_token {
             }
         );
         $row->discard_changes({prefetch => 'cliente'});
+
+        $row->cliente->recalc_qtde_guardioes_ativos();
     }
 
     return $row;
@@ -341,6 +346,8 @@ sub cliente_delete_guardioes {
             deleted_at => \'NOW()',
         }
     ) if $row->status ne 'removed_by_user';
+
+    $user_obj->recalc_qtde_guardioes_ativos();
 
     return 1;
 }

@@ -119,6 +119,8 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "qtde_guardioes_ativos",
+  { data_type => "integer", default_value => 0, is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
@@ -173,8 +175,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-29 17:35:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WMvwB6E5M/WVdHJwXTAnWA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-01 15:13:00
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9JyNmIl/AOUF9GIS0XsWIg
 
 use Carp qw/confess/;
 
@@ -248,6 +250,14 @@ sub cliente_modo_anonimo_toggle {
 # retorna o string para ser usada em FK composta
 sub id_composed_fk {
     return shift()->id . ':' . shift;
+}
+
+sub recalc_qtde_guardioes_ativos {
+    my ($self) = @_;
+
+    return $self->update({
+        qtde_guardioes_ativos => \["(select count(1) from clientes_guardioes cg where cg.cliente_id = ? and cg.status= 'accepted')", [$self->id()]]
+    });  
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

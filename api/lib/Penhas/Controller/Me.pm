@@ -66,8 +66,9 @@ sub find {
 
             ($user->{modo_anonimo_ativo} ? (anonymous_avatar_url => $ENV{AVATAR_ANONIMO_URL}) : ()),
 
-            modo_camuflado_ativo => $user->{modo_camuflado_ativo} ? 1 : 0,
-            modo_anonimo_ativo   => $user->{modo_anonimo_ativo}   ? 1 : 0,
+            modo_camuflado_ativo  => $user->{modo_camuflado_ativo} ? 1 : 0,
+            modo_anonimo_ativo    => $user->{modo_anonimo_ativo}   ? 1 : 0,
+            qtde_guardioes_ativos => $user->{qtde_guardioes_ativos},  
 
             modules => $modules,
             %extra
