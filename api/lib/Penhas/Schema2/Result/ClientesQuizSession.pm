@@ -53,8 +53,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-03 07:23:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mdsLEhq/G8xHwMctQRwWgA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-03 07:27:07
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zfnugg1cW8ehujeMsG9jbQ
 
 # ALTER TABLE clientes_quiz_session ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

@@ -19,7 +19,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "cliente_id",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "token",
   { data_type => "varchar", is_nullable => 0, size => 200 },
   "valid_until",
@@ -48,8 +48,10 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-12 05:30:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RMtxauv+fKysO0rEv3Fokg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-03 07:25:38
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WBjO3mZmasJsBwYHqtjgRw
+
+# ALTER TABLE clientes_quiz_session ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
