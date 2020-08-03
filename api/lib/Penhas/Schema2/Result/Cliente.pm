@@ -162,6 +162,12 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "clientes_quiz_sessions",
+  "Penhas::Schema2::Result::ClientesQuizSession",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "tweets",
   "Penhas::Schema2::Result::Tweet",
   { "foreign.cliente_id" => "self.id" },
@@ -175,8 +181,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-01 15:13:00
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9JyNmIl/AOUF9GIS0XsWIg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-03 07:23:57
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:39Ohmupn5NgCWjBjGRDX+A
 
 use Carp qw/confess/;
 
