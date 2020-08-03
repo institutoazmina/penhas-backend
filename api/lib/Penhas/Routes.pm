@@ -6,14 +6,14 @@ sub register {
 
     # PUBLIC ENDPOINTS
     # POST /signup
-    $r->route('/signup')->post()->to(controller => 'SignUp', action => 'post');
+    $r->route('signup')->post()->to(controller => 'SignUp', action => 'post');
 
     # POST /login
-    $r->route('/login')->post()->to(controller => 'Login', action => 'post');
+    $r->route('login')->post()->to(controller => 'Login', action => 'post');
 
     # POST /reset-password
-    $r->route('/reset-password/request-new')->post()->to(controller => 'ResetPassword', action => 'request_new');
-    $r->route('/reset-password/write-new')->post()->to(controller => 'ResetPassword', action => 'write_new');
+    $r->route('reset-password/request-new')->post()->to(controller => 'ResetPassword', action => 'request_new');
+    $r->route('reset-password/write-new')->post()->to(controller => 'ResetPassword', action => 'write_new');
 
     # GET /news-redirect
     $r->route('news-redirect')->get()->to(controller => 'News', action => 'redirect');
@@ -21,10 +21,17 @@ sub register {
     # GET /get-proxy
     $r->route('get-proxy')->get()->to(controller => 'MediaDownload', action => 'public_get_proxy');
 
+    # GET /pontos-de-apoio-dados-auxiliares
+    $r->route('pontos-de-apoio-dados-auxiliares')->get()
+      ->to(controller => 'PontoApoio', action => 'ponto_apoio_auxiliary_data');
+
+    # GET /pontos-de-apoio
+    $r->route('pontos-de-apoio')->get()->to(controller => 'PontoApoio', action => 'ponto_apoio_auxiliary_data');
+
     # Convite de guardiões
     # GET /guardiao?token=
     # POST /guardiao?token=&action=
-    my $guardioes = $r->under('/web/guardiao')->to(controller => 'Guardiao', action => 'apply_rps');
+    my $guardioes = $r->under('web/guardiao')->to(controller => 'Guardiao', action => 'apply_rps');
     $guardioes->get()->to(action => 'get');
     $guardioes->post()->to(action => 'post');
 
@@ -46,37 +53,43 @@ sub register {
     my $authenticated = $r->under()->to(controller => 'JWT', action => 'check_user_jwt');
 
     # GET /filter-tags
-    $authenticated->under('/filter-tags')->get()->to(controller => 'Tags', action => 'filter_tags');
+    $authenticated->under('filter-tags')->get()->to(controller => 'Tags', action => 'filter_tags');
 
     # POST /logout
-    $authenticated->under('/logout')->post()->to(controller => 'Logout', action => 'post');
+    $authenticated->under('logout')->post()->to(controller => 'Logout', action => 'post');
+
+    # POST /sugerir-pontos-de-apoio
+    $authenticated->route('sugerir-pontos-de-apoio')->post()
+      ->to(controller => 'PontoApoio', action => 'ponto_apoio_suggest');
 
     # GET /me
-    my $me = $authenticated->under('/me')->to(controller => 'Me', action => 'check_and_load');
+    my $me = $authenticated->under('me')->to(controller => 'Me', action => 'check_and_load');
     $me->get()->to(action => 'find');
 
     # POST /me/call-police-pressed
-    $me->under('/call-police-pressed')->post()->to(action => 'inc_call_police_counter');
+    $me->under('call-police-pressed')->post()->to(action => 'inc_call_police_counter');
+
     # POST /me/modo-anonimo-toggle
-    $me->under('/modo-anonimo-toggle')->post()->to(action => 'route_cliente_modo_camuflado_toggle');
+    $me->under('modo-anonimo-toggle')->post()->to(action => 'route_cliente_modo_camuflado_toggle');
+
     # POST /me/modo-camuflado-toggle
-    $me->under('/modo-camuflado-toggle')->post()->to(action => 'route_cliente_modo_anonimo_toggle');
+    $me->under('modo-camuflado-toggle')->post()->to(action => 'route_cliente_modo_anonimo_toggle');
 
     # /me/quiz
-    my $me_quiz = $me->under('/quiz')->to(controller => 'Me_Quiz', action => 'assert_user_perms');
+    my $me_quiz = $me->under('quiz')->to(controller => 'Me_Quiz', action => 'assert_user_perms');
     $me_quiz->post()->to(action => 'process');
 
     # /me/media
-    my $me_media = $me->under('/media')->to(controller => 'Me_Media', action => 'assert_user_perms');
+    my $me_media = $me->under('media')->to(controller => 'Me_Media', action => 'assert_user_perms');
     $me_media->post()->to(action => 'upload');
 
     # /me/tweets
-    my $me_tweets = $me->under('/tweets')->to(controller => 'Me_Tweets', action => 'assert_user_perms');
+    my $me_tweets = $me->under('tweets')->to(controller => 'Me_Tweets', action => 'assert_user_perms');
     $me_tweets->post()->to(action => 'add');
     $me_tweets->delete()->to(action => 'delete');
 
     # /me/guardioes
-    my $me_guardioes = $me->under('/guardioes')->to(controller => 'Me_Guardioes', action => 'assert_user_perms');
+    my $me_guardioes = $me->under('guardioes')->to(controller => 'Me_Guardioes', action => 'assert_user_perms');
     $me_guardioes->post()->to(action => 'upsert');
     $me_guardioes->get()->to(action => 'list');
 
@@ -85,12 +98,12 @@ sub register {
     $me_guardioes_object->put()->to(action => 'edit');
 
     # POST /me/guardioes/alert
-    $me_guardioes->under('/alert')->post()->to(action => 'alert_guards');
+    $me_guardioes->under('alert')->post()->to(action => 'alert_guards');
 
     # POST /me/audios
     # GET /me/audios
     # GET /me/audios/:event_id
-    my $me_audios = $me->under('/audios')->to(controller => 'Me_Audios', action => 'assert_user_perms');
+    my $me_audios = $me->under('audios')->to(controller => 'Me_Audios', action => 'assert_user_perms');
     $me_audios->post()->to(action => 'audio_upload');
     $me_audios->get()->to(action => 'audio_events_list');
 
@@ -101,7 +114,7 @@ sub register {
     $me_audios_object->route('request-access')->post()->to(action => 'audio_request_access');
 
     # /timeline/
-    my $timeline = $authenticated->under('/timeline')->to(controller => 'Timeline', action => 'assert_user_perms');
+    my $timeline = $authenticated->under('timeline')->to(controller => 'Timeline', action => 'assert_user_perms');
     $timeline->get()->to(action => 'list');
 
     # /timeline/:id
@@ -112,9 +125,8 @@ sub register {
 
     # /media-download
     my $media_download
-      = $authenticated->under('/media-download')->to(controller => 'MediaDownload', action => 'assert_user_perms');
+      = $authenticated->under('media-download')->to(controller => 'MediaDownload', action => 'assert_user_perms');
     $media_download->get()->to(action => 'logged_in_get_media');
-
 
 }
 
