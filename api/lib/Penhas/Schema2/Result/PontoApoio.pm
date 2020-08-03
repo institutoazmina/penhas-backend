@@ -140,12 +140,14 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", default_value => "-", is_nullable => 0, size => 3 },
   "telefone_correto",
   { data_type => "varchar", default_value => "-", is_nullable => 0, size => 3 },
+  "cliente_id",
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-01 15:13:00
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6gdLP8cDE75ByLg0mXrKsQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-03 07:47:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:F9tfH31/jtOlY5pwg4GlJA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
