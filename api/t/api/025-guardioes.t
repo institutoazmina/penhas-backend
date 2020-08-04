@@ -153,6 +153,11 @@ do {
         is $id, $id2, 'same invite';
 
         $t->put_ok(
+            join('', '/me/guardioes/', $id2, '?nome'),
+            {'x-api-key' => $session},
+        )->status_is(400, 'edit name missing name');
+
+        $t->put_ok(
             join('', '/me/guardioes/', $id2),
             {'x-api-key' => $session},
             form => {nome => 'imasuguni'}
@@ -538,10 +543,10 @@ do {
         '/me/audios',
         {'x-api-key' => $session}
     )->status_is(200)->json_is('/rows/0/data/audio_duration', '0m33s', 'time is human 33 seconds long')
-      ->json_is('/rows/0/data/event_id', $event_id, 'event_id is right')
-      ->json_is('/rows/0/meta/download_granted',  '0', 'can be downloaded')
-      ->json_is('/rows/0/meta/requested_by_user', '1', 'is requested_by_user')
-      ->json_is('/rows/0/meta/request_granted',   '0', 'request_granted is false');
+      ->json_is('/rows/0/data/event_id',          $event_id, 'event_id is right')
+      ->json_is('/rows/0/meta/download_granted',  '0',       'can be downloaded')
+      ->json_is('/rows/0/meta/requested_by_user', '1',       'is requested_by_user')
+      ->json_is('/rows/0/meta/request_granted',   '0',       'request_granted is false');
 
     $event->update({status => 'free_access_by_admin'});
     $t->get_ok(
@@ -554,10 +559,10 @@ do {
         '/me/audios',
         {'x-api-key' => $session}
     )->status_is(200)->json_is('/rows/0/data/audio_duration', '0m33s', 'time is human 33 seconds long')
-      ->json_is('/rows/0/data/event_id', $event_id, 'event_id is right')
-      ->json_is('/rows/0/meta/download_granted',  '1', 'can be downloaded')
-      ->json_is('/rows/0/meta/requested_by_user', '1', 'is requested_by_user')
-      ->json_is('/rows/0/meta/request_granted',   '1', 'and request_granted is true');
+      ->json_is('/rows/0/data/event_id',          $event_id, 'event_id is right')
+      ->json_is('/rows/0/meta/download_granted',  '1',       'can be downloaded')
+      ->json_is('/rows/0/meta/requested_by_user', '1',       'is requested_by_user')
+      ->json_is('/rows/0/meta/request_granted',   '1',       'and request_granted is true');
 
 
     $t->delete_ok(

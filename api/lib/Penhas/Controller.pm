@@ -42,7 +42,7 @@ sub reply_invalid_param {
     my ($c, $message, $error, $field, $reason) = @_;
 
     die {
-        error => $error || 'form_error',
+        error   => $error || 'form_error',
         message => "$message",
         (defined $field ? (field => $field, reason => $reason || 'invalid') : ()),
         status => 400,
@@ -153,7 +153,7 @@ sub _reply_exception {
             $c->app->log->info('Exception treated: ' . $an_error->{message});
 
             return $c->render(
-                json => {error => 'generic_exception', message => $an_error->{message}},
+                json   => {error => 'generic_exception', message => $an_error->{message}},
                 status => $an_error->{error_code} || 500,
             );
         }
@@ -200,20 +200,21 @@ sub validate_request_params {
         }
 
         if (!defined $val && $me->{required} && !($me->{undef_is_valid} && !defined $val)) {
-            die {error => 'form_error', field => $key, reason => 'is_required', %def_message, status => 400};
+            die {error => 'form_error', field => $key, reason => 'is_required', x => 1, %def_message, status => 400};
         }
 
         if (
                defined $val
             && $val eq ''
-            && (   $me->{empty_is_invalid}
+            && (  !$me->{empty_is_valid}
+                || $me->{empty_is_invalid}
                 || $type eq 'Bool'
                 || $type eq 'Int'
                 || $type eq 'Num'
                 || ref $type eq 'MooseX::Types::TypeDecorator')
           )
         {
-            die {error => 'form_error', field => $key, reason => 'is_required', %def_message, status => 400};
+            die {error => 'form_error', field => $key, reason => 'is_required', x => 2, %def_message, status => 400};
         }
 
         $tested->{$key} = $val;
