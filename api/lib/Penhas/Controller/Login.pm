@@ -127,9 +127,11 @@ sub post {
     });
 
     # invalida todas as outras sessions
-    $c->schema2->resultset('ClientesActiveSession')->search(
-        {cliente_id => $directus_id},
-    )->delete;
+    if ($ENV{DELETE_PREVIOUS_SESSIONS}){
+        $c->schema2->resultset('ClientesActiveSession')->search(
+            {cliente_id => $directus_id},
+        )->delete;
+    }
 
     my $session = $c->schema2->resultset('ClientesActiveSession')->create(
         {cliente_id => $directus_id},
