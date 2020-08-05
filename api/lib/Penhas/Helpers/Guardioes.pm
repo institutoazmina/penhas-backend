@@ -118,7 +118,7 @@ sub guardiao_update_by_token {
         $row->discard_changes({prefetch => 'cliente'});
 
         $row->cliente->recalc_qtde_guardioes_ativos();
-        
+
     }
     elsif ($action eq 'refuse' && $row->status ne 'refused') {
         $row->update(
@@ -483,9 +483,11 @@ sub cliente_list_guardioes {
     my $config_map = {
         accepted => {
             %defaults,
-            header      => 'Guardiões',
-            description => 'Guardiões ativos que recebem seus pedidos de socorro.',
+            header      => 'Guardiãs',
+            description => 'Guardiãs ativas que recebem seus pedidos de socorro.',
             layout      => 'accepted',
+            delete_warning =>
+              'Caso você apague o guardião, ele não receberá mais seus alertas. Tem certeza que deseja apagar?',
         },
         pending => {
             %defaults,
