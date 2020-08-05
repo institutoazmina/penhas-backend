@@ -263,7 +263,7 @@ sub recalc_qtde_guardioes_ativos {
 
     return $self->update({
         qtde_guardioes_ativos => \["(select count(1) from clientes_guardioes cg where cg.cliente_id = ? and cg.status= 'accepted')", [$self->id()]]
-    });  
+    });
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

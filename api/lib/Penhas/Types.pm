@@ -2,8 +2,9 @@ package Penhas::Types;
 use strict;
 use warnings;
 
-use MooseX::Types -declare =>
-  [qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome Raca TweetID UploadIntention IntList TimelineCategory)];
+use MooseX::Types -declare => [
+    qw(DateStr DateTimeStr MobileNumber CPF JSON CEP Genero Nome Raca TweetID UploadIntention IntList TimelineCategory Latitute Longitude)
+];
 use MooseX::Types::Moose qw(ArrayRef HashRef CodeRef Str ScalarRef);
 use MooseX::Types::Common::String qw(NonEmptySimpleStr NonEmptyStr);
 use Business::BR::CEP qw(test_cep);
@@ -159,6 +160,33 @@ subtype Nome, as Str, where {
 }, message {"$_[0] is not a valid Nome"};
 
 coerce Nome, from Str, via {
+    $_;
+};
+
+subtype Latitute, as Str, where {
+    my $str = $_;
+
+    # too long
+    return 0 if length $str > 20;
+
+    return $str =~ /^(([-+]?(([1-8]?\d(\.\d+))+|90)))$/ao ? 1 : 0;
+}, message {"$_[0] is not a valid Latitute"};
+
+coerce Latitute, from Str, via {
+    $_;
+};
+
+
+subtype Longitude, as Str, where {
+    my $str = $_;
+
+    # too long
+    return 0 if length $str > 20;
+
+    return $str =~ /^([-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?))$/ao ? 1 : 0;
+}, message {"$_[0] is not a valid Longitude"};
+
+coerce Longitude, from Str, via {
     $_;
 };
 

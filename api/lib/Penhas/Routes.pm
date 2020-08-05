@@ -22,11 +22,10 @@ sub register {
     $r->route('get-proxy')->get()->to(controller => 'MediaDownload', action => 'public_get_proxy');
 
     # GET /pontos-de-apoio-dados-auxiliares
-    $r->route('pontos-de-apoio-dados-auxiliares')->get()
-      ->to(controller => 'PontoApoio', action => 'ponto_apoio_auxiliary_data');
+    $r->route('pontos-de-apoio-dados-auxiliares')->get()->to(controller => 'PontoApoio', action => 'pa_aux_data');
 
     # GET /pontos-de-apoio
-    $r->route('pontos-de-apoio')->get()->to(controller => 'PontoApoio', action => 'ponto_apoio_auxiliary_data');
+    $r->route('pontos-de-apoio')->get()->to(controller => 'PontoApoio', action => 'pa_list');
 
     # Convite de guardiões
     # GET /guardiao?token=
@@ -60,7 +59,7 @@ sub register {
 
     # POST /sugerir-pontos-de-apoio
     $authenticated->route('sugerir-pontos-de-apoio')->post()
-      ->to(controller => 'PontoApoio', action => 'ponto_apoio_suggest');
+      ->to(controller => 'PontoApoio', action => 'pa_suggest');
 
     # GET /me
     my $me = $authenticated->under('me')->to(controller => 'Me', action => 'check_and_load');

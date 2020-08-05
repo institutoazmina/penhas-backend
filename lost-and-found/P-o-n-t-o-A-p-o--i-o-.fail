@@ -1,0 +1,343 @@
+package Penhas::Helpers::PontoApoio;
+use common::sense;
+use Carp qw/confess/;
+use utf8;
+use JSON;
+use Penhas::Logger;
+use Number::Phone::Lib;
+use Penhas::Utils qw/random_string_from is_test/;
+use Digest::MD5 qw/md5_hex/;
+use Scope::OnExit;
+
+sub setup {
+    my $self = shift;
+
+    $self->helper('ponto_apoio_list'    => sub { &ponto_apoio_list(@_) });
+    $self->helper('ponto_apoio_fields'  => sub { &ponto_apoio_fields(@_) });
+    $self->helper('ponto_apoio_suggest' => sub { &ponto_apoio_suggest(@_) });
+}
+
+
+sub _format_pa_row {
+    my ($c, $user_obj, $row) = @_;
+
+    return {
+        (map { $_ => $row->$_ } qw/id/),
+    };
+}
+
+# filtro por nota
+# filtro por projeto [ímplicito]
+# filtro por categoria
+# ordem por distancia (pegar lat long)
+# filtro por nome (generico)
+
+sub ponto_apoio_list {
+    my ($c, %opts) = @_;
+
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+
+    $user_obj->clientes_guardioes_rs->expires_pending_invites();
+    my $invites_max     = $user_obj->clientes_guardioes_rs->max_invites_count();
+    my $remaing_invites = $invites_max - $user_obj->clientes_guardioes_rs->used_invites_count();
+
+    my $filtered_rs = $user_obj->clientes_guardioes_rs->search_rs(
+        {
+            '-or' => [
+                {'me.status'     => {in   => [qw/pending accepted expired_for_not_use/]}},
+                {'me.refused_at' => {'!=' => undef}}
+            ]
+        },
+        {order_by => [qw/me.status/, {'-desc' => 'me.created_at'}]}
+    );
+
+    my $by_status = {};
+    while (my $r = $filtered_rs->next) {
+        push $by_status->{$r->status()}->@*, $r;
+    }
+
+    my %defaults   = (can_delete => 1, can_edit => 1, can_resend => 0, delete_warning => '', layout => 'pending',);
+    my $config_map = {
+        accepted => {
+            %defaults,
+            header      => 'Guardiões',
+            description => 'Guardiões ativos que recebem seus pedidos de socorro.',
+            layout      => 'accepted',
+        },
+        pending => {
+            %defaults,
+            header      => 'Pendentes',
+            description => 'Convites que ainda não foram aceitos ou recusados.',
+        },
+        expired_for_not_use => {
+            %defaults,
+            header => 'Convites expirados',
+            description =>
+              'Estes convites não estão mais válidos para uso. Use o botão 🔄 para renviar ou 🗑️ para cancelar o convite definitivamente.',
+            can_resend => 1,
+            can_edit   => 0,
+        },
+        refused => {
+            %defaults,
+            header => 'Convites recusados',
+            description =>
+              'Os convites recusados ainda podem serem aceitos usando o mesmo link. Use o botão 🗑️ para cancelar o convite.',
+            delete_warning =>
+              'Após apagar um convite recusado, você não poderá convidar mesmo celular por até 7 dias.',
+        },
+    };
+    my @guards;
+
+    for my $type (qw/accepted pending expired_for_not_use refused/) {
+
+        my $config = $config_map->{$type};
+
+        my @rows = $by_status->{$type}->@*;
+
+        next if @rows == 0 && $type =~ /^(pending|expired_for_not_use|refused)$/;
+
+        push @guards, {
+            meta => $config,
+            rows => [
+                map {
+                    +{
+                        id       => $_->id(),
+                        nome     => $_->nome(),
+                        celular  => $_->celular_formatted_as_national(),
+                        subtexto => $_->subtexto(),
+                    }
+                } @rows
+            ],
+        };
+
+
+    }
+
+    return {
+        remaing_invites => $remaing_invites,
+        invites_max     => $invites_max,
+        guards          => \@guards
+
+    };
+}
+
+sub ponto_apoio_fields {
+    my ($c, %opts) = @_;
+
+    my $is_public = defined $opts{format} && $opts{format} eq 'public';
+
+    my @config = (
+
+        ['nome' => {max_length => 255, required => 1,},],
+        [
+            'sigla' => {max_length => 10, required => 0,},
+            {
+                type_name => 'sigla',
+            }
+        ],
+        [
+            'natureza' => {max_length => 20, required => 1},
+            {
+                options => [
+                    {value => 'publico',          name => 'Público',},
+                    {value => 'privado_coletivo', name => 'Privado coletivo',},
+                    {value => 'privado_ongo',     name => 'Privado ONG',},
+                ],
+            }
+        ],
+        [
+            'categoria' => {required => 1},
+            {
+                options => [
+                    map { +{value => $_->{id}, name => $_->{label}} }
+                      $c->schema2->resultset('PontoApoioCategoria')->search(
+                        {
+                            status => 'prod',
+                        },
+                        {
+                            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                            order_by     => ['label'],
+                            columns      => [qw/id label/],
+                        }
+                    )->all()
+
+                ]
+            }
+        ],
+        ['descricao'     => {required => 0, max_length => 9999,},],
+        ['eh_presencial' => {required => 0, type       => 'Bool',},],
+        ['eh_online'     => {required => 0, type       => 'Bool',},],
+        [
+            'cep' => {max_length => 8, required => 1},
+            {
+                type_name => 'cep',
+                regexp    => '/^\d{8}$/'
+            }
+        ],
+        ['tipo_logradouro'   => {max_length => 20,  required => 1},],
+        ['nome_logradouro'   => {max_length => 255, required => 1},],
+        ['numero_sem_numero' => {required   => 1,   type     => 'Bool',},],
+        ['numero'            => {required   => 0,   type     => 'Int',},],
+        ['complemento'       => {max_length => 255, required => 0},],
+        ['bairro'            => {max_length => 255, required => 1},],
+        ['municipio'         => {max_length => 255, required => 1},],
+        [
+            'uf' => {max_length => 2, required => 1},
+            {
+                options => [
+                    sort { $a->{value} cmp $b->{value} } (
+                        {value => 'RO', name => 'Rondônia (RO)'},
+                        {value => 'AC', name => 'Acre (AC)'},
+                        {value => 'AM', name => 'Amazonas (AM)'},
+                        {value => 'RR', name => 'Roraima (RR)'},
+                        {value => 'PA', name => 'Pará (PA)'},
+                        {value => 'AP', name => 'Amapá (AP)'},
+                        {value => 'TO', name => 'Tocantins (TO)'},
+                        {value => 'MA', name => 'Maranhão (MA)'},
+                        {value => 'PI', name => 'Piauí (PI)'},
+                        {value => 'CE', name => 'Ceará (CE)'},
+                        {value => 'RN', name => 'Rio Grande do Norte (RN)'},
+                        {value => 'PB', name => 'Paraíba (PB)'},
+                        {value => 'PE', name => 'Pernambuco (PE)'},
+                        {value => 'AL', name => 'Alagoas (AL)'},
+                        {value => 'SE', name => 'Sergipe (SE)'},
+                        {value => 'BA', name => 'Bahia (BA)'},
+                        {value => 'MG', name => 'Minas Gerais (MG)'},
+                        {value => 'ES', name => 'Espírito Santo (ES)'},
+                        {value => 'RJ', name => 'Rio de Janeiro (RJ)'},
+                        {value => 'SP', name => 'São Paulo (SP)'},
+                        {value => 'PR', name => 'Paraná (PR)'},
+                        {value => 'SC', name => 'Santa Catarina (SC)'},
+                        {value => 'RS', name => 'Rio Grande do Sul  (RS)(*)'},
+                        {value => 'MS', name => 'Mato Grosso do Sul (MS)'},
+                        {value => 'MT', name => 'Mato Grosso (MT)'},
+                        {value => 'GO', name => 'Goiás (GO)'},
+                        {value => 'DF', name => 'Distrito Federal (DF)'}
+                    )
+                ],
+            }
+        ],
+        ['ddd'       => {required => 0, max_length => 2}, {regexp => '/^\d{2}$/',   type_name => 'ddd'}],
+        ['telefone1' => {required => 0, max_length => 9}, {regexp => '/^\d{8,9}$/', type_name => 'phonenumber'}],
+        ['telefone2' => {required => 0, max_length => 9}, {regexp => '/^\d{8,9}$/', type_name => 'phonenumber'}],
+        [
+            'email' => {max_length => 255, required => 1,},
+            regexp =>
+              q{/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/},
+            type_name => 'email'
+        ],
+        ['eh_24h' => {required => 1, type => 'Bool',},],
+        [
+            'horario_inicio' => {max_length => 5, required => 0},
+            {regexp => '/^((?:(?:0|1)\d|2[0-3])):([0-5]\d)$/', type_name => 'time'}
+        ],
+        [
+            'horario_fim' => {max_length => 5, required => 0},
+            {regexp => '/^((?:(?:0|1)\d|2[0-3])):([0-5]\d)$/', type_name => 'time'}
+        ],
+        [
+            'dias_funcionamento' => {max_length => 25, required => 0},
+            {
+                options => [
+                    {value => 'dias_uteis',             name => 'Dias úteis',},
+                    {value => 'fds',                    name => 'Fim de semana',},
+                    {value => 'dias_uteis_fds_plantao', name => 'Dias úteis com plantão aos fins de semanas',},
+                    {value => 'todos_os_dias',          name => 'Todos os dias',},
+                ],
+            }
+        ],
+        ['funcionamento_pandemia' => {required => 0, type => 'Bool',},],
+        ['observacao_pandemia'    => {required => 0},],
+    );
+
+    my $ret;
+
+    my %names = (
+        telefone1              => 'Telefone 1',
+        telefone2              => 'Telefone 2',
+        cep                    => 'CEP',
+        ddd                    => 'Código DDD (2 dígitos)',
+        descricao              => 'Descrição',
+        municipio              => 'Município',
+        numero                 => 'Número',
+        uf                     => 'Estado',
+        numero_sem_numero      => 'Sem número',
+        dias_funcionamento     => 'Dias de funcionamento',
+        eh_24h                 => 'Atendimento é 24h?',
+        eh_online              => 'Tem atendimento online?',
+        horario_inicio         => 'Horário início',
+        horario_fim            => 'Horário fim',
+        email                  => 'E-mail',
+        eh_presencial          => 'Tem atendimento presencial?',
+        funcionamento_pandemia => 'Tem atendimento durante a pandemia?',
+        observacao_pandemia    => 'Descreva o atendimento durante a pandemia'
+    );
+    foreach my $item (@config) {
+
+        $item->[1]{type}     = 'Str' unless exists $item->[1]{type};
+        $item->[1]{required} = 0     unless exists $item->[1]{required};
+
+        if ($is_public) {
+            my %tmp = defined $item->[2] ? $item->[2]->%* : ();
+
+            push $ret->@*, {
+                code => $item->[0],
+                name => (exists $names{$item->[0]} ? $names{$item->[0]} : &_gen_name_from_code($item->[0])),
+                $item->[1]->%*,
+                %tmp,
+            };
+        }
+        else {
+            $item->[1]{empty_is_invalid} = 0;
+            push $ret->@*, $item->[0], $item->[1];
+        }
+    }
+
+    return $ret;
+}
+
+sub _gen_name_from_code {
+    my ($code) = @_;
+
+    $code =~ s/_/ /;
+    $code = join ' ', map { ucfirst($_) } split ' ', $code;
+
+    return $code;
+}
+
+
+sub ponto_apoio_suggest {
+    my ($c, %opts) = @_;
+
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+
+    my $fields = $opts{fields};
+
+    $fields->{cliente_id}  = $user_obj->id;
+    $fields->{test_status} = is_test() ? 'test' : 'prod';
+    $fields->{created_on}  = \'now()';
+
+    my $cat_id
+      = $c->schema2->resultset('PontoApoioCategoria')->search({id => $fields->{categoria}})->get_column('id')->next();
+
+    $c->reply_invalid_param(
+        "categoria não existe",
+        'categoria_invalid'
+    ) unless $cat_id;
+
+    my $projeto =
+      = $c->schema2->resultset('PontoApoioProjeto')->search({'-and' => [\[" lower( label) like '\%penhas\%'"]]})
+      ->get_column('id')->next();
+
+    confess 'missing Penhas Projeto' unless defined $projeto;
+
+    $c->schema2->resultset('PontoApoio')->create($fields);
+
+    return {
+        success => 1,
+        message => 'Sua sugestão será avaliada e publicada caso aprovada.',
+    };
+}
+
+
+1;

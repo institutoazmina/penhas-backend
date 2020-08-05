@@ -8,6 +8,7 @@ use Penhas::Helpers::Quiz;
 use Penhas::Helpers::ClienteSetSkill;
 use Penhas::Helpers::Timeline;
 use Penhas::Helpers::RSS;
+use Penhas::Helpers::PontoApoio;
 use Penhas::Helpers::Guardioes;
 use Penhas::KeyValueStorage;
 use Penhas::Helpers::ClienteAudio;
@@ -23,6 +24,7 @@ sub setup {
     Penhas::Helpers::Timeline::setup($self);
     Penhas::Helpers::ClienteSetSkill::setup($self);
     Penhas::Helpers::ClienteAudio::setup($self);
+    Penhas::Helpers::PontoApoio::setup($self);
 
     Penhas::Helpers::RSS::setup($self);
 
