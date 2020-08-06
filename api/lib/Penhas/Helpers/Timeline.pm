@@ -536,7 +536,7 @@ sub _fomart_tweet {
         name             => $anonimo ? 'Anônimo' : $me->{cliente_apelido},
         created_at       => $me->{created_at},
         _tags_index      => $me->{tags_index},
-        ($anonimo ? () : (cliente_id => $me->{cliente_id})),
+        ($anonimo ? (cliente_id => 0) : (cliente_id => $me->{cliente_id})),
 
     };
 }
