@@ -168,6 +168,12 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "ponto_apoio_sugestoes",
+  "Penhas::Schema2::Result::PontoApoioSugestoe",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "tweets",
   "Penhas::Schema2::Result::Tweet",
   { "foreign.cliente_id" => "self.id" },
@@ -181,8 +187,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-03 07:27:07
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:48BzHI2OI+nA0xVo8SyjlA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-06 06:45:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:r5MK9mtZIGwmS20Ybup0ZA
 
 use Carp qw/confess/;
 

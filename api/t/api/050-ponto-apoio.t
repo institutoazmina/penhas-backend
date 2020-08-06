@@ -68,30 +68,35 @@ on_scope_exit { user_cleanup(user_id => $cliente_id); };
 
 
 do {
+    my $rand_cat = $schema2->resultset('PontoApoioCategoria')->search(
+        {
+            status => 'prod',
+        },
+        {
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+            order_by     => \'RAND()',
+            columns      => [qw/id label/],
+            rows         => 1,
+        }
+    )->get_column('id')->next();
 
-    $t->post_ok(
+    my $first_sugg = $t->post_ok(
         '/sugerir-pontos-de-apoio',
         {'x-api-key' => $session},
         form => {
-            'endereco_ou_cep'      => 'rua cupa, 255',
-            nome => 'foo',
+            'endereco_ou_cep' => 'rua cupa, 255',
+            nome              => 'foo',
 
-            'categoria' => (
-                $schema2->resultset('PontoApoioCategoria')->search(
-                    {
-                        status => 'prod',
-                    },
-                    {
-                        result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-                        order_by     => ['label'],
-                        columns      => [qw/id label/],
-                    }
-                )->get_column('id')->next()
-            ),
-            'descricao_servico'              => 'aaa'
+            'categoria'         => $rand_cat,
+            'descricao_servico' => 'aaa'
         }
-    )->status_is(200)->json_has('/message', 'tem mensagem de sucesso');
-
+    )->status_is(200)->json_has('/message', 'tem mensagem de sucesso')->json_has('/id', 'tem id durante os testes')
+      ->tx->res->json;
+    ok my $first_sugg_row = $schema2->resultset('PontoApoioSugestoe')->find($first_sugg->{id}),
+      'row PontoApoioSugestoe is added';
+    is $first_sugg_row->nome, 'foo', 'nome ok';
+    is $first_sugg_row->cliente_id, $cliente_id, 'cliente_id ok';
+    is $first_sugg_row->categoria, $rand_cat, 'cliente_id ok';
 
 =pod
 

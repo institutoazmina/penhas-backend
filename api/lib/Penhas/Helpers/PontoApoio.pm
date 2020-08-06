@@ -135,11 +135,12 @@ sub ponto_apoio_suggest {
     $fields->{created_at} = \'now()';
 
 
-    $c->schema2->resultset('PontoApoioSugestoe')->create($fields);
+    my $row = $c->schema2->resultset('PontoApoioSugestoe')->create($fields);
 
     return {
         success => 1,
         message => 'Sua sugestão será avaliada antes de ser publicada.',
+        (is_test() ? (id => $row->id) : ()),
     };
 }
 
