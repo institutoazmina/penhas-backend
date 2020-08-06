@@ -23,11 +23,13 @@ sub pa_list {
     $c->apply_request_per_second_limit(30, 60);
 
     my $valid = $c->validate_request_params(
-        latitute  => {max_length => 16, required => 1, type => Latitute},
+        latitude  => {max_length => 16, required => 1, type => Latitute},
         longitude => {max_length => 16, required => 1, type => Longitude},
     );
 
-    my $ponto_apoio_list = $c->ponto_apoio_list($valid);
+    my $ponto_apoio_list = $c->ponto_apoio_list(
+        %$valid,
+    );
 
     $c->render(
         json   => $ponto_apoio_list,

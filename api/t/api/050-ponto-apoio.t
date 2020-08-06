@@ -73,12 +73,11 @@ do {
             status => 'prod',
         },
         {
-            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-            order_by     => \'RAND()',
-            columns      => [qw/id label/],
-            rows         => 1,
+            order_by => \'RAND()',
+            columns  => [qw/id label projeto/],
+            rows     => 1,
         }
-    )->get_column('id')->next();
+    )->next();
 
     my $first_sugg = $t->post_ok(
         '/sugerir-pontos-de-apoio',
@@ -87,7 +86,7 @@ do {
             'endereco_ou_cep' => 'rua cupa, 255',
             nome              => 'foo',
 
-            'categoria'         => $rand_cat,
+            'categoria'         => $rand_cat->id,
             'descricao_servico' => 'aaa'
         }
     )->status_is(200)->json_has('/message', 'tem mensagem de sucesso')->json_has('/id', 'tem id durante os testes')
@@ -96,54 +95,98 @@ do {
       'row PontoApoioSugestoe is added';
     is $first_sugg_row->nome, 'foo', 'nome ok';
     is $first_sugg_row->cliente_id, $cliente_id, 'cliente_id ok';
-    is $first_sugg_row->categoria, $rand_cat, 'cliente_id ok';
+    is $first_sugg_row->categoria, $rand_cat->id, 'cliente_id ok';
 
-=pod
+    my $fields = {
+        'sigla'               => 'lowercase',
+        'natureza'            => 'publico',
+        'categoria'           => $rand_cat->id,
+        'descricao'           => '',
+        'eh_presencial'       => 0,
+        'eh_online'           => 1,
+        'cep'                 => '00000000',
+        'tipo_logradouro'     => 'rua',
+        'nome_logradouro'     => 'sem lugar',
+        'numero_sem_numero'   => 1,
+        'numero'              => undef,
+        'bairro'              => 'bar',
+        'municipio'           => 'foo',
+        'uf'                  => 'SP',
+        'ddd'                 => 11,
+        'telefone1'           => '953456789',
+        'telefone2'           => '12345678',
+        'email'               => 'dunno@email.com',
+        'eh_24h'              => 0,
+        'dias_funcionamento'  => 'dias_uteis',
+        'observacao_pandemia' => 'nao sei',
+        cliente_id            => $cliente_id,
+        test_status           => 'test',
+        created_on            => \'now()',
+    };
 
-    $t->post_ok(
-        '/sugerir-pontos-de-apoio',
-        {'x-api-key' => $session},
-        form => {
-            'nome'      => 'xaaaaaaaaaa',
-            'sigla'     => 'lowercase',
-            'natureza'  => 'publico',
-            'categoria' => (
-                $schema2->resultset('PontoApoioCategoria')->search(
-                    {
-                        status => 'prod',
-                    },
-                    {
-                        result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-                        order_by     => ['label'],
-                        columns      => [qw/id label/],
-                    }
-                )->get_column('id')->next()
-            ),
-            'descricao'              => '',
-            'eh_presencial'          => 0,
-            'eh_online'              => 1,
-            'cep'                    => '00000000',
-            'tipo_logradouro'        => 'rua',
-            'nome_logradouro'        => 'sem lugar',
-            'numero_sem_numero'      => 1,
-            'numero'                 => undef,
-            'complemento'            => '',
-            'bairro'                 => 'bar',
-            'municipio'              => 'foo',
-            'uf'                     => 'SP',
-            'ddd'                    => 11,
-            'telefone1'              => '953456789',
-            'telefone2'              => '12345678',
-            'email'                  => 'dunno@email.com',
-            'eh_24h'                 => 0,
-            'horario_inicio'         => '',
-            'horario_fim'            => '00:11',
-            'dias_funcionamento'     => 'dias_uteis',
-            'funcionamento_pandemia' => undef,
-            'observacao_pandemia'    => 'nao sei',
+    $schema2->resultset('PontoApoioCategoria')->search({status => 'test'})->delete;
+    my $cat1 = $schema2->resultset('PontoApoioCategoria')->create(
+        {
+            status  => 'test',
+            label   => 'cat1',
+            projeto => $rand_cat->projeto,
         }
-    )->status_is(200)->json_has('/message', 'tem mensagem de sucesso');
-=cut
+    )->id;
+    my $cat2 = $schema2->resultset('PontoApoioCategoria')->create(
+        {
+            status  => 'test',
+            label   => 'cat2',
+            projeto => $rand_cat->projeto,
+        }
+    )->id;
+    my $cat3 = $schema2->resultset('PontoApoioCategoria')->create(
+        {
+            status  => 'test',
+            label   => 'cat3',
+            projeto => $rand_cat->projeto,
+        }
+    )->id;
+
+    $schema2->resultset('PontoApoio')->search({test_status => 'test'})->delete;
+    foreach my $code (1 .. 3) {
+
+        if ($code == 1) {
+            $fields->{categoria} = $cat1;
+            $fields->{nome}      = 'trianon';
+            $fields->{latitude}  = '-23.560311';
+            $fields->{longitude} = '-46.658802';
+
+        }
+        elsif ($code == 2) {
+            $fields->{categoria} = $cat2;
+            $fields->{nome}      = 'kazu';
+            $fields->{latitude}  = '-23.571867';
+            $fields->{longitude} = '-46.645901';
+
+        }
+        elsif ($code == 3) {
+
+            $fields->{categoria} = $cat2;
+            $fields->{nome}      = 'ana rosa';
+            $fields->{latitude}  = '-23.581986';
+            $fields->{longitude} = '-46.638586';
+        }
+
+        $schema2->resultset('PontoApoio')->create($fields);
+
+    }
+
+    # "vila mariana" ~ aprox 1.02 km de "ana rosa" em linha reta considerando a curvatura da terra
+    # mas o algoritimo usado aqui só é uma aproximação do globo, com distorções nos polos e equador
+    # -23.589893, -46.633462
+
+    $t->get_ok(
+        '/pontos-de-apoio',
+        form => {
+            'latitude'  => '-23.589893',
+            'longitude' => '-46.633462',
+        }
+    )->status_is(200);
 
 };
 

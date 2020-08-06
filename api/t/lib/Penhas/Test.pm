@@ -281,20 +281,15 @@ sub user_cleanup {
 
     foreach my $table (
         qw/
-        ClientesQuizSession
         ClientesActiveSession
-        ClienteSkill
-        ClientesResetPassword
         LoginErro
-        Tweet
-        TweetLikes
         TweetsReport
         MediaUpload
         /
       )
     {
         my $rs = app->schema2->resultset($table);
-        log_info("delete from $table where cliente_id = " . (ref $user_id ? join ',', $user_id->@* : $user_id));
+        #log_info("delete from $table where cliente_id = " . (ref $user_id ? join ',', $user_id->@* : $user_id));
         $rs->search({cliente_id => $user_id})->delete;
     }
 
