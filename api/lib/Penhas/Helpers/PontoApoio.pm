@@ -40,6 +40,11 @@ sub ponto_apoio_list {
     my $longitude = $opts{longitude} or confess 'missing longitude';
     my $keywords  = trim(lc($opts{keywords}));
 
+    my $rows = $opts{rows} || 100;
+    $rows = 100 if !is_test() && ($rows > 5000 || $rows < 100);
+
+    my $offset = 0;
+
     # just in case, pra nao rolar sql injection, mas aqui já deve ter validado isso no controller
     confess '$latitude is not valid'  unless $latitude  =~ /^(([-+]?(([1-8]?\d(\.\d+))+|90)))$/ao;
     confess '$longitude is not valid' unless $longitude =~ /^([-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?))$/ao;
@@ -48,20 +53,32 @@ sub ponto_apoio_list {
     # o ideal é fazer isso tudo no postgres, com postgis, pois lá o suporte a index é bem mais simples
     # mas o chato é manter as bases sincronizadas (pelo menos lat/long+categorias+textos indexados)
     # se você é acredita que a terra é plana, pode ignorar o comentario acima, *ta tudo bem*
-    my $distance_in_km = qq| 111.111 * DEGREES(ACOS(LEAST(1.0, COS(RADIANS(me.Latitude))
+    my $distance_in_km = qq| 111.111 * DEGREES(ACOS(LEAST(1.0, COS(RADIANS(me.latitude))
      * COS(RADIANS( $latitude ))
-     * COS(RADIANS(me.Longitude - $longitude))
-     + SIN(RADIANS(me.Latitude))
+     * COS(RADIANS(me.longitude - $longitude))
+     + SIN(RADIANS(me.latitude))
      * SIN(RADIANS( $latitude ))))) AS distance_in_km|;
 
     my $rs = $c->schema2->resultset('PontoApoio')->search(
         {
-            'me.test_status' => is_test() ? 'test' : 'prod',
+            'me.test_status'             => is_test() ? 'test' : 'prod',
+            'me.ja_passou_por_moderacao' => 1,
+            'me.status'                  => 'active',
         },
         {
-            '+columns' => [{distance_in_km => \$distance_in_km}],
-            order_by   => \'distance_in_km ASC',
-            rows => 100,
+            'columns' => [
+                {distance_in_km => \$distance_in_km},
+                {categoria_nome => 'categoria.label'},
+                {categoria_cor  => 'categoria.color'},,
+                {categoria_id   => 'categoria.id'},
+                {categoria_id   => 'categoria.id'},
+                qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf/,
+            ],
+            join         => 'categoria',
+            order_by     => \'distance_in_km ASC',
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+            rows         => $rows + 1,
+            offset       => $offset,
         }
     );
 
@@ -77,13 +94,40 @@ sub ponto_apoio_list {
         );
     }
 
-    my @results = $rs->all;
+    my @rows      = $rs->all;
+    my $cur_count = scalar @rows;
+    my $has_more  = $cur_count > $rows ? 1 : 0;
+    if ($has_more) {
+        pop @rows;
+        $cur_count--;
+    }
+    foreach (@rows) {
+        $_->{avaliacao} = sprintf('%.01f', $_->{avaliacao});
+        $_->{avaliacao} =~ s/\./,/;
+        $_->{distancia} = int(delete $_->{distance_in_km}) . '';
+        $_->{categoria} = {
+            id   => delete $_->{categoria_id},
+            cor  => delete $_->{categoria_cor},
+            nome => delete $_->{categoria_nome},
+        };
+    }
 
-    use DDP; p @results;
+    my $next_page = $c->encode_jwt(
+        {
+            iss    => 'PA:NP',
+            offset => $offset + $cur_count,
+        },
+        1
+    );
+
+    use DDP;
+    p @rows;
 
     return {
-
-
+        rows             => \@rows,
+        has_more         => $has_more,
+        next_page        => $next_page,
+        avaliacao_maxima => '5',
     };
 }
 

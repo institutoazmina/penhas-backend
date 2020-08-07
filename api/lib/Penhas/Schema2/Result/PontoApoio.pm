@@ -40,7 +40,12 @@ __PACKAGE__->add_columns(
   "natureza",
   { data_type => "varchar", is_nullable => 0, size => 20 },
   "categoria",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "descricao",
   { data_type => "text", is_nullable => 1 },
   "tipo_logradouro",
@@ -144,10 +149,18 @@ __PACKAGE__->add_columns(
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->belongs_to(
+  "categoria",
+  "Penhas::Schema2::Result::PontoApoioCategoria",
+  { id => "categoria" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-03 07:47:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:F9tfH31/jtOlY5pwg4GlJA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-06 22:14:16
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0BAsFlDv1un/GhVlRvDB0A
+
+# ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id) ON DELETE CASCADE ON UPDATE cascade;
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

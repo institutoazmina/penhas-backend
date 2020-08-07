@@ -98,30 +98,32 @@ do {
     is $first_sugg_row->categoria, $rand_cat->id, 'cliente_id ok';
 
     my $fields = {
-        'sigla'               => 'lowercase',
-        'natureza'            => 'publico',
-        'categoria'           => $rand_cat->id,
-        'descricao'           => '',
-        'eh_presencial'       => 0,
-        'eh_online'           => 1,
-        'cep'                 => '00000000',
-        'tipo_logradouro'     => 'rua',
-        'nome_logradouro'     => 'sem lugar',
-        'numero_sem_numero'   => 1,
-        'numero'              => undef,
-        'bairro'              => 'bar',
-        'municipio'           => 'foo',
-        'uf'                  => 'SP',
-        'ddd'                 => 11,
-        'telefone1'           => '953456789',
-        'telefone2'           => '12345678',
-        'email'               => 'dunno@email.com',
-        'eh_24h'              => 0,
-        'dias_funcionamento'  => 'dias_uteis',
-        'observacao_pandemia' => 'nao sei',
-        cliente_id            => $cliente_id,
-        test_status           => 'test',
-        created_on            => \'now()',
+        'sigla'                 => 'lowercase',
+        'natureza'              => 'publico',
+        'categoria'             => $rand_cat->id,
+        'descricao'             => '',
+        'eh_presencial'         => 0,
+        'eh_online'             => 1,
+        'cep'                   => '00000000',
+        'tipo_logradouro'       => 'rua',
+        'nome_logradouro'       => 'sem lugar',
+        'numero_sem_numero'     => 1,
+        'numero'                => undef,
+        'bairro'                => 'bar',
+        'municipio'             => 'foo',
+        'uf'                    => 'SP',
+        'ddd'                   => 11,
+        'telefone1'             => '953456789',
+        'telefone2'             => '12345678',
+        'email'                 => 'dunno@email.com',
+        'eh_24h'                => 0,
+        'dias_funcionamento'    => 'dias_uteis',
+        'observacao_pandemia'   => 'nao sei',
+        cliente_id              => $cliente_id,
+        test_status             => 'test',
+        ja_passou_por_moderacao => '1',
+        status                  => 'active',
+        created_on              => \'now()',
     };
 
     $schema2->resultset('PontoApoioCategoria')->search({status => 'test'})->delete;
@@ -130,6 +132,7 @@ do {
             status  => 'test',
             label   => 'cat1',
             projeto => $rand_cat->projeto,
+            color   => '#FFFFFF',
         }
     )->id;
     my $cat2 = $schema2->resultset('PontoApoioCategoria')->create(
@@ -137,6 +140,7 @@ do {
             status  => 'test',
             label   => 'cat2',
             projeto => $rand_cat->projeto,
+            color   => '#FF00FF',
         }
     )->id;
     my $cat3 = $schema2->resultset('PontoApoioCategoria')->create(
@@ -186,7 +190,15 @@ do {
             'latitude'  => '-23.589893',
             'longitude' => '-46.633462',
         }
-    )->status_is(200);
+    )->status_is(200)->json_is('/rows/0/distancia', '1', 'mais proximo primeiro')
+      ->json_is('/rows/0/nome',            'ana rosa', 'nome certo')
+      ->json_is('/rows/0/categoria/cor', '#FF00FF',  'categoria cor certa')
+      ->json_has('/rows/0/latitude', 'posicao latitude esta ok')
+      ->json_is('/rows/0/longitude', -46.638586, 'posicao longitude')
+      ->json_is('/rows/1/distancia', 2,          'esta ficando menos proximo')
+      ->json_is('/rows/2/distancia', 4,          '4 km eh a distancia final          ')
+      ->json_is('/has_more', 0, 'has more is false')->json_has('/next_page', 'but still has next_page token');
+
 
 };
 
