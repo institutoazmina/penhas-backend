@@ -127,7 +127,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "avaliacao",
-  { data_type => "double precision", default_value => 0, is_nullable => 0 },
+  { data_type => "float", default_value => 0, is_nullable => 0 },
   "test_status",
   {
     data_type => "varchar",
@@ -147,6 +147,8 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", default_value => "-", is_nullable => 0, size => 3 },
   "cliente_id",
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  "qtde_avaliacao",
+  { data_type => "integer", default_value => 0, is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -157,8 +159,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-06 22:14:16
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0BAsFlDv1un/GhVlRvDB0A
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-08 23:06:16
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YpKhFQpuDR1GQnFTqndJ1A
 
 # ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id) ON DELETE CASCADE ON UPDATE cascade;
 

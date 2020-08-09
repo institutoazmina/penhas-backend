@@ -40,10 +40,18 @@ sub ponto_apoio_list {
     my $longitude = $opts{longitude} or confess 'missing longitude';
     my $keywords  = trim(lc($opts{keywords}));
 
+
+    my $offset = 0;
+    if ($opts{next_page}) {
+        my $tmp = eval { $c->decode_jwt($opts{next_page}) };
+        $c->reply_invalid_param('next_page')
+          if ($tmp->{iss} || '') ne 'PA:NP';
+        $offset = $tmp->{offset};
+    }
+
     my $rows = $opts{rows} || 100;
     $rows = 100 if !is_test() && ($rows > 5000 || $rows < 100);
 
-    my $offset = 0;
 
     # just in case, pra nao rolar sql injection, mas aqui já deve ter validado isso no controller
     confess '$latitude is not valid'  unless $latitude  =~ /^(([-+]?(([1-8]?\d(\.\d+))+|90)))$/ao;
@@ -72,7 +80,7 @@ sub ponto_apoio_list {
                 {categoria_cor  => 'categoria.color'},,
                 {categoria_id   => 'categoria.id'},
                 {categoria_id   => 'categoria.id'},
-                qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf/,
+                qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf me.qtde_avaliacao/,
             ],
             join         => 'categoria',
             order_by     => \'distance_in_km ASC',
@@ -104,6 +112,7 @@ sub ponto_apoio_list {
     foreach (@rows) {
         $_->{avaliacao} = sprintf('%.01f', $_->{avaliacao});
         $_->{avaliacao} =~ s/\./,/;
+        $_->{avaliacao} = 'n/a' if delete $_->{qtde_avaliacao} == 0;
         $_->{distancia} = int(delete $_->{distance_in_km}) . '';
         $_->{categoria} = {
             id   => delete $_->{categoria_id},

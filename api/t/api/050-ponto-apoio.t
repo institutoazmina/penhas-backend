@@ -170,10 +170,12 @@ do {
         }
         elsif ($code == 3) {
 
-            $fields->{categoria} = $cat2;
-            $fields->{nome}      = 'ana rosa';
-            $fields->{latitude}  = '-23.581986';
-            $fields->{longitude} = '-46.638586';
+            $fields->{categoria}      = $cat2;
+            $fields->{nome}           = 'ana rosa';
+            $fields->{latitude}       = '-23.581986';
+            $fields->{longitude}      = '-46.638586';
+            $fields->{qtde_avaliacao} = '10';
+            $fields->{avaliacao}      = '4.164';
         }
 
         $schema2->resultset('PontoApoio')->create($fields);
@@ -190,14 +192,48 @@ do {
             'latitude'  => '-23.589893',
             'longitude' => '-46.633462',
         }
-    )->status_is(200)->json_is('/rows/0/distancia', '1', 'mais proximo primeiro')
-      ->json_is('/rows/0/nome',            'ana rosa', 'nome certo')
-      ->json_is('/rows/0/categoria/cor', '#FF00FF',  'categoria cor certa')
-      ->json_has('/rows/0/latitude', 'posicao latitude esta ok')
-      ->json_is('/rows/0/longitude', -46.638586, 'posicao longitude')
-      ->json_is('/rows/1/distancia', 2,          'esta ficando menos proximo')
-      ->json_is('/rows/2/distancia', 4,          '4 km eh a distancia final          ')
-      ->json_is('/has_more', 0, 'has more is false')->json_has('/next_page', 'but still has next_page token');
+      )->status_is(200)    #
+      ->json_is('/rows/0/distancia',     1,          'mais proximo primeiro')
+      ->json_is('/rows/1/distancia',     2,          'esta ficando menos proximo')
+      ->json_is('/rows/2/distancia',     4,          '4 km eh a distancia final ')
+      ->json_is('/rows/0/nome',          'ana rosa', 'nome certo')                   #
+      ->json_is('/rows/0/categoria/cor', '#FF00FF',  'categoria cor certa')          #
+      ->json_is('/rows/0/latitude',      -23.581986, 'posicao latitude esta ok')     #
+      ->json_is('/rows/0/longitude',     -46.638586, 'posicao longitude')            #
+      ->json_is('/rows/0/avaliacao',     '4,2',      'ta fazendo o round certo')       #
+      ->json_is('/rows/1/avaliacao',     'n/a',      'não tem pq tem zero')         #
+      ->json_is('/rows/2/avaliacao',     'n/a',      'não tem pq tem zero')         #
+      ->json_is('/has_more',             0,          'has more is false')            #
+      ->json_is('/avaliacao_maxima',     5,          'avaliacao_maxima')             #
+      ->json_has('/next_page', 'but still has next_page token');
+
+    my $res1 = $t->get_ok(
+        '/pontos-de-apoio',
+        form => {
+            'latitude'  => '-23.589893',
+            'longitude' => '-46.633462',
+            rows        => 2,
+        }
+      )->status_is(200)                                                              #
+      ->json_is('/rows/0/distancia', 1,     'mais proximo primeiro')                 #
+      ->json_is('/rows/1/distancia', 2,     'esta ficando menos proximo')            #
+      ->json_is('/rows/2',           undef, 'nao tem terceiro item')                 #
+      ->json_is('/has_more',         1,     'has more is true')                      #
+      ->json_has('/next_page', 'but still has next_page token')->tx->res->json;
+
+    $t->get_ok(
+        '/pontos-de-apoio',
+        form => {
+            'latitude'  => '-23.589893',
+            'longitude' => '-46.633462',
+            rows        => 2,
+            next_page   => $res1->{next_page},
+        }
+      )->status_is(200)                                                              #
+      ->json_is('/rows/0/distancia', 4,     'mais longe')                            #
+      ->json_is('/rows/1',           undef, 'nao tem segundo')                       #
+      ->json_is('/has_more',         0,     'has more is false')                     #
+      ->json_has('/next_page', 'but still has next_page token')->tx->res->json;
 
 
 };

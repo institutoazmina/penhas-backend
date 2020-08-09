@@ -23,6 +23,17 @@ sub pa_list {
     $c->apply_request_per_second_limit(30, 60);
 
     my $valid = $c->validate_request_params(
+        next_page      => {max_length => 9999, required => 0, type => 'Str'},
+        rows           => {required   => 0,    type     => 'Int'},
+        location_token => {max_length => 9999, required => 0, type => 'Str'},
+    );
+
+    if ($valid->{location_token}){
+        # TODO extrair o token pra lat/long
+    }
+
+    $c->merge_validate_request_params(
+        $valid,
         latitude  => {max_length => 16, required => 1, type => Latitute},
         longitude => {max_length => 16, required => 1, type => Longitude},
     );

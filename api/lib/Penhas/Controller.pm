@@ -166,6 +166,13 @@ sub _reply_exception {
 }
 
 
+sub merge_validate_request_params {
+    my ($c, $merge, %fields) = @_;
+    my $extend = $c->validate_request_params(%fields);
+    $merge->{$_} = $extend->{$_} for keys %$extend;
+    return 1;
+}
+
 sub validate_request_params {
     my ($c, %fields) = @_;
 
