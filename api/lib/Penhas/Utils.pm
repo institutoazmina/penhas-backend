@@ -11,6 +11,7 @@ use File::Path qw(make_path);
 use Carp;
 use Time::HiRes qw//;
 use Text::Xslate;
+use POSIX ();
 
 use vars qw(@ISA @EXPORT);
 
@@ -39,6 +40,8 @@ state $text_xslate = Text::Xslate->new(
   is_uuid_v4
 
   time_seconds_fmt
+
+  trunc_to_meter
 );
 
 
@@ -159,6 +162,18 @@ sub time_seconds_fmt {
     # nao mover isso pro começo, esse modulo se desliga sozinho no final do bloco
     use integer;
     return sprintf('%dm%02ds', $_[0] / 60 % 60, $_[0] % 60);
+}
+
+sub _nearest_floor {
+    my $targ = abs(shift);
+    my @res  = map { $targ * POSIX::ceil(($_ - 0.50000000000008 * $targ) / $targ) } @_;
+
+    return wantarray ? @res : $res[0];
+}
+
+# semelhante a sprintf( '%0.5f', shift ) porem tem mais chance de cair em hit do cache
+sub trunc_to_meter ($) {
+    return &_nearest_floor(0.00009, shift);
 }
 
 1;
