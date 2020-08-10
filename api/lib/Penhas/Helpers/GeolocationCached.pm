@@ -39,7 +39,7 @@ sub _get_cached {
     my ($c, $sub, $key) = @_;
 
     my $lock_key = $c->kv->lock_and_wait("$sub:cache:$key");
-    on_scope_exit { $c->kv->unlock($lock_key) };
+    on_scope_exit { $c->kv->redis->del($lock_key) };
 
     my $cached = $c->schema2->resultset('GeoCache')->search(
         {

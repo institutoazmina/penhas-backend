@@ -34,6 +34,9 @@ sub register {
     $guardioes->get()->to(action => 'get');
     $guardioes->post()->to(action => 'post');
 
+    # GET /geocode
+    $r->route('geocode')->get()->to(controller => 'PontoApoio', action => 'public_geocode');
+
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss
     my $maintenance = $r->under('maintenance')->to(controller => 'Maintenance', action => 'check_authorization');
@@ -116,6 +119,9 @@ sub register {
 
     # POST /me/avaliar-pontos-de-apoio
     $me->under('avaliar-pontos-de-apoio')->post()->to(controller => 'PontoApoio', action => 'user_pa_rating');
+
+    # GET /me/geocode
+    $me->under('geocode')->get()->to(controller => 'PontoApoio', action => 'user_geocode');
 
     # /timeline/
     my $timeline = $authenticated->under('timeline')->to(controller => 'Timeline', action => 'assert_user_perms');

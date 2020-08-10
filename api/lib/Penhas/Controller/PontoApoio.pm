@@ -53,18 +53,23 @@ sub _pa_list {
     my $user_obj = $c->stash('user_obj');
     if ($valid->{location_token}) {
 
-        # TODO extrair o token pra lat/long
+        my $tmp = eval { $c->decode_jwt($valid->{location_token}) };
+        $c->reply_invalid_param('location_token')
+          if ($tmp->{iss} || '') ne 'LT';
+        ($valid->{latitude}, $valid->{longitude}) = split /,/, $tmp->{latlng};
     }
 
-    my $gps_required = $user_obj ? 0 : 1;
-    $c->merge_validate_request_params(
-        $valid,
-        latitude  => {max_length => 16, required => $gps_required, type => Latitute},
-        longitude => {max_length => 16, required => $gps_required, type => Longitude},
-    );
+    if (!(defined $valid->{latitude} && defined $valid->{longitude})) {
+        my $gps_required = $user_obj ? 0 : 1;
+        $c->merge_validate_request_params(
+            $valid,
+            latitude  => {max_length => 16, required => $gps_required, type => Latitute},
+            longitude => {max_length => 16, required => $gps_required, type => Longitude},
+        );
+    }
 
     # se nao tem ainda, eh pq o usuario nao mandou, entao temos que pegar via CEP
-    if (!$valid->{latitude} || !$valid->{latitude}) {
+    if (!$valid->{latitude} || !$valid->{longitude}) {
         die 'user_obj should be defined' unless $user_obj;
         $c->stash(geo_code_rps => 'geocode:' . $user_obj->id);
 
@@ -185,6 +190,69 @@ sub user_pa_rating {
     );
 
     $c->render(text => '', status => 204,);
+}
+
+sub user_geocode {
+    my $c = shift;
+
+    die 'missing user' unless $c->stash('user_obj');
+
+    # limite de requests por usuario
+    $c->stash(apply_rps_on => 'daily_geocode:' . $c->stash('user_id'));
+    $c->apply_request_per_second_limit(1000, 60 * 60 * 24);
+
+    # no maximo 20 request por hora
+    $c->stash(apply_rps_on => 'hourly_geocode:' . $c->stash('user_id'));
+    $c->apply_request_per_second_limit(200, 60 * 60);
+
+    return &_geocode($c);
+}
+
+sub public_geocode {
+    my $c = shift;
+
+    my $remote_ip = substr($c->remote_addr(), 0, 18);
+
+    $c->stash(apply_rps_on => 'daily_geocode:' . $remote_ip);
+    $c->apply_request_per_second_limit(1000, 60 * 60 * 24);
+
+    $c->stash(apply_rps_on => 'hourly_geocode:' . $remote_ip);
+    $c->apply_request_per_second_limit(200, 60 * 60);
+
+    return &_geocode($c);
+}
+
+sub _geocode {
+    my $c = shift;
+
+    my $valid = $c->validate_request_params(
+        address => {required => 0, type => 'Str', max_length => 200},
+    );
+
+    my $latlng = $c->geo_code_cached($valid->{address});
+
+    if (!$latlng) {
+        $c->reply_invalid_param('Localização não encontrada!', 'location_not_found', 'address');
+    }
+    else {
+        my $location_token = $c->encode_jwt(
+            {
+                iss    => 'LT',
+                latlng => $latlng,
+            },
+            1
+        );
+
+        my $label = $c->reverse_geo_code_cached($latlng);
+
+        $c->render(
+            json => {
+                location_token => $location_token,
+                label          => $label
+            },
+            status => 200,
+        );
+    }
 }
 
 1;

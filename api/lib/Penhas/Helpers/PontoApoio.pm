@@ -146,9 +146,6 @@ sub ponto_apoio_list {
         1
     );
 
-    use DDP;
-    p @rows;
-
     return {
         rows             => \@rows,
         has_more         => $has_more,

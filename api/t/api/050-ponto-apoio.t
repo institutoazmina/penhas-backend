@@ -63,7 +63,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
     $cliente_id = $res->{_test_only_id};
     $session    = $res->{session};
 
-    $schema2->resultset('GeoCache')->search({key => '12345-678 brasil'})->delete;
+    $schema2->resultset('GeoCache')->search({key => ['12345-678 brasil', 'r. teste', '-23.55597,-46.66266']})->delete;
     $schema2->resultset('GeoCache')->create(
         {
             key         => '12345-678 brasil',
@@ -72,6 +72,25 @@ subtest_buffered 'Cadastro com sucesso' => sub {
             valid_until => '2055-01-01',
         }
     );
+
+    # a chave -23.55597,-46.66266 eh diferente pq ta arredondando 1m
+    $schema2->resultset('GeoCache')->create(
+        {
+            key         => '-23.55597,-46.66266',
+            value       => 'Cerqueira César, São Paulo, SP, Brasil',    # começo da consolação
+            created_at  => \'NOW()',
+            valid_until => '2055-01-01',
+        }
+    );
+    $schema2->resultset('GeoCache')->create(
+        {
+            key         => 'r. teste',
+            value       => '-23.555995,-46.662665',                       # começo da consolação
+            created_at  => \'NOW()',
+            valid_until => '2055-01-01',
+        }
+    );
+
 };
 
 on_scope_exit { user_cleanup(user_id => $cliente_id); };
@@ -358,6 +377,38 @@ do {
       ->json_is('/rows/0/distancia', '0')                                  #
       ->json_is('/rows/1/distancia', '2')                                  #
       ->json_is('/rows/2/distancia', '3')                                  #
+      ->json_is('/has_more',         0);
+
+    # passando sem enviar location, tem q buscar via CEP, que vai trazer os mais proximos da consolação antes
+    my $token1 = $t->get_ok(
+        '/geocode',
+        {},
+        form => {address => 'R. Teste'}
+      )->status_is(200)                                                    #
+      ->json_is('/label', 'Cerqueira César, São Paulo, SP, Brasil')      #
+      ->json_has('/location_token', 'has token')->tx->res->json;
+
+    my $token2 = $t->get_ok(
+        '/me/geocode',
+        {'x-api-key' => $session},
+        form => {address => 'R. Teste'}
+    )->status_is(200)->tx->res->json;
+    is $token1, $token2, 'same token';
+
+    # faz o request sem usuario, passando o location_token
+    $t->get_ok(
+        '/pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            location_token => $token1->{location_token},
+        }
+      )->status_is(200)    #
+      ->json_is('/rows/0/nome',      'trianon')     #
+      ->json_is('/rows/1/nome',      'kazu')        #
+      ->json_is('/rows/2/nome',      'ana rosa')    #
+      ->json_is('/rows/0/distancia', '0')           #
+      ->json_is('/rows/1/distancia', '2')           #
+      ->json_is('/rows/2/distancia', '3')           #
       ->json_is('/has_more',         0);
 
 
