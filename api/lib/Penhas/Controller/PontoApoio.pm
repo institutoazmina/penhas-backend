@@ -255,4 +255,36 @@ sub _geocode {
     }
 }
 
+
+sub user_pa_detail {
+    my $c = shift;
+    die 'missing user' unless $c->stash('user_obj');
+
+    $c->render(
+        json => $c->ponto_apoio_detail(
+            id       => $c->stash('ponto_apoio_id'),
+            user_obj => $c->stash('user_obj')
+        ),
+        status => 200,
+    );
+}
+
+sub public_pa_detail {
+    my $c = shift;
+
+    my $remote_ip = substr($c->remote_addr(), 0, 18);
+
+    $c->stash(apply_rps_on => 'pa:' . $remote_ip);
+    $c->apply_request_per_second_limit(120, 60);
+
+    $c->stash(apply_rps_on => 'hpa:' . $remote_ip);
+    $c->apply_request_per_second_limit(1000, 60 * 60);
+
+    $c->render(
+        json   => $c->ponto_apoio_detail(id => $c->stash('ponto_apoio_id')),
+        status => 200,
+    );
+}
+
+
 1;

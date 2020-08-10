@@ -17,6 +17,7 @@ sub setup {
     $self->helper('ponto_apoio_fields'  => sub { &ponto_apoio_fields(@_) });
     $self->helper('ponto_apoio_suggest' => sub { &ponto_apoio_suggest(@_) });
     $self->helper('ponto_apoio_rating'  => sub { &ponto_apoio_rating(@_) });
+    $self->helper('ponto_apoio_detail'  => sub { &ponto_apoio_detail(@_) });
 }
 
 
@@ -298,5 +299,94 @@ sub ponto_apoio_rating {
     );
 }
 
+sub ponto_apoio_detail {
+    my ($c, %opts) = @_;
+
+    my $user_obj = $opts{user_obj};
+    my $id       = $opts{id};
+    $c->reply_invalid_param('ponto_apoio_id') if !$id || $id !~ /^\d+$/a;
+
+    my $row = $c->schema2->resultset('PontoApoio')->search(
+        {
+            'me.test_status'             => is_test() ? 'test' : 'prod',
+            'me.ja_passou_por_moderacao' => 1,
+            'me.status'                  => 'active',
+            'me.id'                      => $id,
+        },
+        {
+            'columns' => [
+                {categoria_nome => 'categoria.label'},
+                {categoria_cor  => 'categoria.color'},,
+                {categoria_id   => 'categoria.id'},
+                {categoria_id   => 'categoria.id'},
+                ($user_obj ? ({cliente_avaliacao => 'cliente_ponto_apoio_avaliacaos.avaliacao'}) : ()),
+                qw/
+                  me.id
+                  me.nome
+                  me.latitude
+                  me.longitude
+                  me.avaliacao
+                  me.cep
+                  me.tipo_logradouro
+                  me.nome_logradouro
+                  me.uf
+                  me.bairro
+                  me.qtde_avaliacao
+                  me.natureza
+                  me.descricao
+                  me.numero
+                  me.numero_sem_numero
+                  me.complemento
+                  me.ddd
+                  me.telefone1
+                  me.telefone2
+                  me.eh_24h
+                  me.horario_inicio
+                  me.horario_fim
+                  me.dias_funcionamento
+                  me.eh_presencial
+                  me.eh_online
+                  me.funcionamento_pandemia
+                  me.observacao_pandemia
+                  /,
+            ],
+            join => [
+                'categoria',
+                ($user_obj ? ('cliente_ponto_apoio_avaliacaos') : ()),
+            ],
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+        }
+    )->next;
+    $c->reply_item_not_found() unless $row;
+
+    my $cliente_avaliacao = delete $row->{cliente_avaliacao};
+
+    $row->{avaliacao} = sprintf('%.01f', $row->{avaliacao});
+    $row->{avaliacao} =~ s/\./,/;
+    $row->{avaliacao} = 'n/a' if delete $row->{qtde_avaliacao} == 0;
+    $row->{categoria} = {
+        id   => delete $row->{categoria_id},
+        cor  => delete $row->{categoria_cor},
+        nome => delete $row->{categoria_nome},
+    };
+    my $natureza_de_para = {
+        publico          => 'Público',
+        privado_coletivo => 'Privado coletivo',
+        privado_ong      => 'Privado ONG',
+    };
+    $row->{natureza} = $natureza_de_para->{$row->{natureza}} || $row->{natureza};
+
+    return {
+        ponto_apoio => $row,
+        (
+            $user_obj
+            ? (
+                cliente_avaliacao => $cliente_avaliacao,
+              )
+            : ()
+        ),
+        avaliacao_maxima => '5',
+    };
+}
 
 1;

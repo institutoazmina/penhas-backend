@@ -27,6 +27,9 @@ sub register {
     # GET /pontos-de-apoio
     $r->route('pontos-de-apoio')->get()->to(controller => 'PontoApoio', action => 'pa_list');
 
+    # GET /pontos-de-apoio/$id
+    $r->route('pontos-de-apoio/:ponto_apoio_id')->get()->to(controller => 'PontoApoio', action => 'public_pa_detail');
+
     # Convite de guardiões
     # GET /guardiao?token=
     # POST /guardiao?token=&action=
@@ -114,11 +117,17 @@ sub register {
     # POST /me/sugerir-pontos-de-apoio
     $me->under('sugerir-pontos-de-apoio')->post()->to(controller => 'PontoApoio', action => 'user_pa_suggest');
 
+    my $me_pa = $me->under('pontos-de-apoio');
+
     # GET /me/pontos-de-apoio
-    $me->under('pontos-de-apoio')->get()->to(controller => 'PontoApoio', action => 'user_pa_list');
+    $me_pa->get()->to(controller => 'PontoApoio', action => 'user_pa_list');
+
+    # GET /me/pontos-de-apoio/$id
+    $me_pa->under(':ponto_apoio_id')->get()->to(controller => 'PontoApoio', action => 'user_pa_detail');
 
     # POST /me/avaliar-pontos-de-apoio
     $me->under('avaliar-pontos-de-apoio')->post()->to(controller => 'PontoApoio', action => 'user_pa_rating');
+
 
     # GET /me/geocode
     $me->under('geocode')->get()->to(controller => 'PontoApoio', action => 'user_geocode');

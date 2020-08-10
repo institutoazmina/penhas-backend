@@ -393,7 +393,7 @@ do {
         {'x-api-key' => $session},
         form => {address => 'R. Teste'}
     )->status_is(200)->tx->res->json;
-    is $token1, $token2, 'same token';
+    is $t->app->decode_jwt($token1->{location_token}), $t->app->decode_jwt($token2->{location_token}), 'same token';
 
     # faz o request sem usuario, passando o location_token
     $t->get_ok(
@@ -410,6 +410,24 @@ do {
       ->json_is('/rows/1/distancia', '2')           #
       ->json_is('/rows/2/distancia', '3')           #
       ->json_is('/has_more',         0);
+
+    $t->get_ok(
+        '/me/pontos-de-apoio/' . $avaliar_ponto_apoio->id,
+        {'x-api-key' => $session}
+      )->status_is(200)                             #
+      ->json_is('/cliente_avaliacao', $rand_zero_to_five, 'avalicao ok')    #
+      ->json_has('/ponto_apoio')                                            #
+      ->json_has('/cliente_avaliacao');
+
+    $t->get_ok(
+        '/pontos-de-apoio/' . $avaliar_ponto_apoio->id,                     #
+      )->status_is(200)                                                     #
+      ->json_hasnt('/cliente_avaliacao')                                    #
+      ->json_has('/avaliacao_maxima')                                       #
+      ->json_is('/ponto_apoio/avaliacao', $rand_zero_to_five . ',0', 'tem nota avaliacao')        #
+      ->json_is('/ponto_apoio/cep',       '00000000',                'tem cep')                   #
+      ->json_is('/ponto_apoio/natureza',  'Público',                'tem natureza traduzida')    #
+      ->json_is('/ponto_apoio/numero',    undef,                     'sem numero');               #
 
 
 };
