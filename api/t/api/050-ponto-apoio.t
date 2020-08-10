@@ -289,11 +289,14 @@ do {
             'keywords'  => $avaliar_ponto_apoio->nome,
         }
       )->status_is(200)    #
-      ->json_is('/rows/0/cliente_avaliacao', $rand_zero_to_five)          #
-      ->json_is('/rows/0/id',                $avaliar_ponto_apoio->id)    #
-      ->json_is('/rows/1',                   undef, 'nao tem mais')       #
+      ->json_is('/rows/0/cliente_avaliacao', $rand_zero_to_five)           #
+      ->json_is('/rows/0/id',                $avaliar_ponto_apoio->id)     #
+      ->json_is('/rows/0/avaliacao',         $rand_zero_to_five . ',0')    #
+      ->json_is('/rows/1',                   undef, 'nao tem mais')        #
       ->json_is('/has_more',                 0);
 
+$avaliar_ponto_apoio->discard_changes;
+is $avaliar_ponto_apoio->qtde_avaliacao, 1, 'uma avaliação';
 
 };
 

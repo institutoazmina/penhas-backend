@@ -277,6 +277,15 @@ sub ponto_apoio_rating {
                     }
                 );
             }
+
+            my $agg = $ponto_apoio->cliente_ponto_apoio_avaliacaos->search(
+                undef,
+                {
+                    columns      => [{avaliacao => \'avg(avaliacao)', qtde_avaliacao => \'count(1)'}],
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                }
+            )->next;
+            $ponto_apoio->update($agg);
         }
     );
 }
