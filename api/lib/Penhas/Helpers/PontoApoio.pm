@@ -42,6 +42,9 @@ sub ponto_apoio_list {
     my $longitude    = $opts{longitude} or confess 'missing longitude';
     my $keywords     = trim(lc($opts{keywords} || ''));
     my $max_distance = $opts{max_distance} || 50;
+    my $categorias   = $opts{categorias};
+
+    confess '$categorias is not arrayref' if $categorias && ref $categorias ne 'ARRAY';
 
     $c->reply_invalid_param('Distância precisa ser menor que 50km', 'form_error', 'max_distance')
       if $max_distance > 50;
@@ -79,6 +82,8 @@ sub ponto_apoio_list {
             'me.test_status'             => is_test() ? 'test' : 'prod',
             'me.ja_passou_por_moderacao' => 1,
             'me.status'                  => 'active',
+
+            ($categorias ? ('me.categoria' => {in => $categorias}) : ()),
         },
         {
             'columns' => [

@@ -6,7 +6,7 @@ use DateTime;
 use Penhas::Logger;
 use Penhas::Utils qw/is_test/;
 use MooseX::Types::Email qw/EmailAddress/;
-use Penhas::Types qw/Latitute Longitude/;
+use Penhas::Types qw/Latitute Longitude IntList/;
 use Penhas::Controller::Me;
 
 use DateTime::Format::Pg;
@@ -42,6 +42,7 @@ sub _pa_list {
     my $c = shift;
 
     my $valid = $c->validate_request_params(
+        categorias     => {required   => 0,    type     => IntList},
         rows           => {required   => 0,    type     => 'Int'},
         max_distance   => {required   => 0,    type     => 'Int'},
         next_page      => {max_length => 9999, required => 0, type => 'Str'},
@@ -70,6 +71,8 @@ sub _pa_list {
 
 
     }
+
+    $valid->{categorias} = [split /,/, $valid->{categorias}] if $valid->{categorias};
 
     my $ponto_apoio_list = $c->ponto_apoio_list(
         %$valid,
