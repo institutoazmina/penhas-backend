@@ -424,10 +424,11 @@ do {
       )->status_is(200)                                                     #
       ->json_hasnt('/cliente_avaliacao')                                    #
       ->json_has('/avaliacao_maxima')                                       #
-      ->json_is('/ponto_apoio/avaliacao', $rand_zero_to_five . ',0', 'tem nota avaliacao')        #
-      ->json_is('/ponto_apoio/cep',       '00000000',                'tem cep')                   #
-      ->json_is('/ponto_apoio/natureza',  'Público',                'tem natureza traduzida')    #
-      ->json_is('/ponto_apoio/numero',    undef,                     'sem numero');               #
+      ->json_is('/ponto_apoio/avaliacao',          $rand_zero_to_five . ',0', 'tem nota avaliacao')             #
+      ->json_is('/ponto_apoio/cep',                '00000000',                'tem cep')                        #
+      ->json_is('/ponto_apoio/natureza',           'Público',                'tem natureza traduzida')         #
+      ->json_is('/ponto_apoio/dias_funcionamento', 'Dias úteis',             'tem Dia Da semana traduzido')    #
+      ->json_is('/ponto_apoio/numero', undef, 'sem numero');                                                    #
 
 
 };
