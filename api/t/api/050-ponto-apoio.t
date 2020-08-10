@@ -200,12 +200,13 @@ do {
       ->json_is('/rows/0/categoria/cor', '#FF00FF',  'categoria cor certa')          #
       ->json_is('/rows/0/latitude',      -23.581986, 'posicao latitude esta ok')     #
       ->json_is('/rows/0/longitude',     -46.638586, 'posicao longitude')            #
-      ->json_is('/rows/0/avaliacao',     '4,2',      'ta fazendo o round certo')       #
-      ->json_is('/rows/1/avaliacao',     'n/a',      'não tem pq tem zero')         #
-      ->json_is('/rows/2/avaliacao',     'n/a',      'não tem pq tem zero')         #
+      ->json_is('/rows/0/avaliacao',     '4,2',      'ta fazendo o round certo')     #
+      ->json_is('/rows/1/avaliacao',     'n/a',      'nao tem pq tem zero')          #
+      ->json_is('/rows/2/avaliacao',     'n/a',      'nao tem pq tem zero')          #
       ->json_is('/has_more',             0,          'has more is false')            #
       ->json_is('/avaliacao_maxima',     5,          'avaliacao_maxima')             #
       ->json_has('/next_page', 'but still has next_page token');
+
 
     my $res1 = $t->get_ok(
         '/pontos-de-apoio',
@@ -235,6 +236,17 @@ do {
       ->json_is('/has_more',         0,     'has more is false')                     #
       ->json_has('/next_page', 'but still has next_page token')->tx->res->json;
 
+    $t->get_ok(
+        '/pontos-de-apoio',
+        form => {
+            'latitude'  => '-23.589893',
+            'longitude' => '-46.633462',
+            keywords    => 'kaz',
+        }
+      )->status_is(200)                                                              #
+      ->json_is('/rows/0/nome', 'kazu', 'kazu eh o resultado pra busca')             #
+      ->json_is('/rows/1',      undef,  'nao tem mais')                              #
+      ->json_is('/has_more',    0);
 
 };
 

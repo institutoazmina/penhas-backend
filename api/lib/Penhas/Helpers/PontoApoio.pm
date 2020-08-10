@@ -38,7 +38,7 @@ sub ponto_apoio_list {
 
     my $latitude  = $opts{latitude}  or confess 'missing latitude';
     my $longitude = $opts{longitude} or confess 'missing longitude';
-    my $keywords  = trim(lc($opts{keywords}));
+    my $keywords  = trim(lc($opts{keywords} || ''));
 
 
     my $offset = 0;
