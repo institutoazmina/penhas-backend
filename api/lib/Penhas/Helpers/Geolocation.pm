@@ -10,7 +10,7 @@ use Mojo::Util qw/url_escape/;
 sub setup {
     my $self = shift;
 
-    $self->helper('reverse_geo_code' => sub { &reverse_geo_code(@_) });
+    $self->helper('reverse_geo_code' => sub { &reverse_geo_code(@_) } );
     $self->helper('geo_code'         => sub { &geo_code(@_) });
 }
 
