@@ -69,10 +69,10 @@ sub upload {
             message => 'Arquivo muito grande, precisa ser menor que 5 Megabytes',
         };
     }
-    elsif ($is_audio_upload && $upload->size > 10_000_000) {
+    elsif ($is_audio_upload && $upload->size > 15_000_000) {
         die {
             error   => 'media_too_big',
-            message => 'Arquivo muito grande, precisa ser menor que 10 Megabytes',
+            message => 'Arquivo muito grande, precisa ser menor que 15 Megabytes',
         };
     }
 

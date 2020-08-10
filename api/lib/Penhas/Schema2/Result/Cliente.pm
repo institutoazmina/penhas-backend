@@ -225,7 +225,16 @@ sub _build_access_modules {
 }
 
 sub access_modules_as_config {
-    my $meta = {modo_seguranca => {numero => '000',}, tweets => {max_length => 2200,},};
+    my $meta = {
+        modo_seguranca => {
+            numero              => '000',
+            audio_each_duration => '30',
+            audio_full_duration => '900',
+        },
+        tweets => {
+            max_length => 2200,
+        },
+    };
     return [map { +{code => $_, meta => $meta->{$_} || {}} } keys $_[0]->access_modules->%*];
 }
 
@@ -273,9 +282,14 @@ sub id_composed_fk {
 sub recalc_qtde_guardioes_ativos {
     my ($self) = @_;
 
-    return $self->update({
-        qtde_guardioes_ativos => \["(select count(1) from clientes_guardioes cg where cg.cliente_id = ? and cg.status= 'accepted')", [$self->id()]]
-    });
+    return $self->update(
+        {
+            qtde_guardioes_ativos => \[
+                "(select count(1) from clientes_guardioes cg where cg.cliente_id = ? and cg.status= 'accepted')",
+                [$self->id()]
+            ]
+        }
+    );
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
