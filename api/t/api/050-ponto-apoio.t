@@ -212,12 +212,25 @@ do {
       ->json_is('/next_page',            undef,      'next_page is empty');
 
 
+    $t->get_ok(
+        '/pontos-de-apoio',
+        form => {
+            'latitude'     => '-23.589893',
+            'longitude'    => '-46.633462',
+            'max_distance' => 1
+        }
+      )->status_is(200)                                                              #
+      ->json_is('/rows/0/distancia', 1,     'mais proximo primeiro')                 #
+      ->json_is('/rows/1',           undef, 'fora do range de distancia')            #
+      ->json_is('/has_more',         0,     'has more is false');
+
+
     my $res1 = $t->get_ok(
         '/pontos-de-apoio',
         form => {
             'latitude'  => '-23.589893',
             'longitude' => '-46.633462',
-            rows        => 2,
+            'rows'      => 2,
         }
       )->status_is(200)                                                              #
       ->json_is('/rows/0/distancia', 1,     'mais proximo primeiro')                 #
@@ -231,8 +244,8 @@ do {
         form => {
             'latitude'  => '-23.589893',
             'longitude' => '-46.633462',
-            rows        => 2,
-            next_page   => $res1->{next_page},
+            'rows'      => 2,
+            'next_page' => $res1->{next_page},
         }
       )->status_is(200)                                                              #
       ->json_is('/rows/0/distancia', 4,     'mais longe')                            #
@@ -295,8 +308,8 @@ do {
       ->json_is('/rows/1',                   undef, 'nao tem mais')        #
       ->json_is('/has_more',                 0);
 
-$avaliar_ponto_apoio->discard_changes;
-is $avaliar_ponto_apoio->qtde_avaliacao, 1, 'uma avaliação';
+    $avaliar_ponto_apoio->discard_changes;
+    is $avaliar_ponto_apoio->qtde_avaliacao, 1, 'uma avaliação';
 
 };
 

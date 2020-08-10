@@ -37,11 +37,16 @@ sub _format_pa_row {
 sub ponto_apoio_list {
     my ($c, %opts) = @_;
 
-    my $user_obj  = $opts{user_obj};
-    my $latitude  = $opts{latitude} or confess 'missing latitude';
-    my $longitude = $opts{longitude} or confess 'missing longitude';
-    my $keywords  = trim(lc($opts{keywords} || ''));
+    my $user_obj     = $opts{user_obj};
+    my $latitude     = $opts{latitude} or confess 'missing latitude';
+    my $longitude    = $opts{longitude} or confess 'missing longitude';
+    my $keywords     = trim(lc($opts{keywords} || ''));
+    my $max_distance = $opts{max_distance} || 50;
 
+    $c->reply_invalid_param('Distância precisa ser menor que 50km', 'form_error', 'max_distance')
+      if $max_distance > 50;
+    $c->reply_invalid_param('Distância precisa ser maior que 1km', 'form_error', 'max_distance')
+      if $max_distance < 1;
 
     my $offset = 0;
     if ($opts{next_page}) {
@@ -89,6 +94,7 @@ sub ponto_apoio_list {
                 'categoria',
                 ($user_obj ? ('cliente_ponto_apoio_avaliacaos') : ()),
             ],
+            having       => [\['distance_in_km < ?', $max_distance + 1]],
             order_by     => \'distance_in_km ASC',
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
             rows         => $rows + 1,

@@ -43,6 +43,7 @@ sub _pa_list {
 
     my $valid = $c->validate_request_params(
         rows           => {required   => 0,    type     => 'Int'},
+        max_distance   => {required   => 0,    type     => 'Int'},
         next_page      => {max_length => 9999, required => 0, type => 'Str'},
         location_token => {max_length => 9999, required => 0, type => 'Str'},
         keywords       => {max_length => 200,  required => 0, type => 'Str'},
