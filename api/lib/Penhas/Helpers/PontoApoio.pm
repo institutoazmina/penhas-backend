@@ -38,7 +38,7 @@ sub ponto_apoio_list {
 
     my $latitude  = $opts{latitude}  or confess 'missing latitude';
     my $longitude = $opts{longitude} or confess 'missing longitude';
-    my $keywords  = trim(lc($opts{keywords} || ''));
+    my $keywords = trim(lc($opts{keywords} || ''));
 
 
     my $offset = 0;
@@ -135,7 +135,7 @@ sub ponto_apoio_list {
     return {
         rows             => \@rows,
         has_more         => $has_more,
-        next_page        => $next_page,
+        next_page        => $has_more ? $next_page : undef,
         avaliacao_maxima => '5',
     };
 }

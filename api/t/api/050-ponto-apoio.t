@@ -205,7 +205,7 @@ do {
       ->json_is('/rows/2/avaliacao',     'n/a',      'nao tem pq tem zero')          #
       ->json_is('/has_more',             0,          'has more is false')            #
       ->json_is('/avaliacao_maxima',     5,          'avaliacao_maxima')             #
-      ->json_has('/next_page', 'but still has next_page token');
+      ->json_is('/next_page',            undef,      'next_page is empty');
 
 
     my $res1 = $t->get_ok(
