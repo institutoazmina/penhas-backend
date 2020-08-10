@@ -376,6 +376,16 @@ sub ponto_apoio_detail {
     };
     $row->{natureza} = $natureza_de_para->{$row->{natureza}} || $row->{natureza};
 
+
+    my $dow_de_para = {
+        dias_uteis             => 'Dias úteis',
+        fds                    => 'Fim de semana',
+        dias_uteis_fds_plantao => 'Dias úteis com plantão aos fins de semanas',
+        todos_os_dias          => 'Todos os dias'
+    };
+    $row->{dias_funcionamento} = $dow_de_para->{$row->{dias_funcionamento}} || $row->{dias_funcionamento};
+
+
     return {
         ponto_apoio => $row,
         (
