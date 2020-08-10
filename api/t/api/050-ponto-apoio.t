@@ -62,6 +62,16 @@ subtest_buffered 'Cadastro com sucesso' => sub {
 
     $cliente_id = $res->{_test_only_id};
     $session    = $res->{session};
+
+    $schema2->resultset('GeoCache')->search({key => '12345-678 brasil'})->delete;
+    $schema2->resultset('GeoCache')->create(
+        {
+            key         => '12345-678 brasil',
+            value       => '-23.555995,-46.662665',    # começo da consolação
+            created_at  => \'NOW()',
+            valid_until => '2055-01-01',
+        }
+    );
 };
 
 on_scope_exit { user_cleanup(user_id => $cliente_id); };
@@ -335,6 +345,21 @@ do {
 
     $avaliar_ponto_apoio->discard_changes;
     is $avaliar_ponto_apoio->qtde_avaliacao, 1, 'uma avaliação';
+
+    # passando sem enviar location, tem q buscar via CEP, que vai trazer os mais proximos da consolação antes
+    $t->get_ok(
+        '/me/pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {}
+      )->status_is(200)                                                    #
+      ->json_is('/rows/0/nome',      'trianon')                            #
+      ->json_is('/rows/1/nome',      'kazu')                               #
+      ->json_is('/rows/2/nome',      'ana rosa')                           #
+      ->json_is('/rows/0/distancia', '0')                                  #
+      ->json_is('/rows/1/distancia', '2')                                  #
+      ->json_is('/rows/2/distancia', '3')                                  #
+      ->json_is('/has_more',         0);
+
 
 };
 

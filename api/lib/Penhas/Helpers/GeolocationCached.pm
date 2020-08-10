@@ -39,7 +39,7 @@ sub _get_cached {
     my ($c, $sub, $key) = @_;
 
     my $lock_key = $c->kv->lock_and_wait("$sub:cache:$key");
-    on_scope_exit { kv->unlock($lock_key) };
+    on_scope_exit { $c->kv->unlock($lock_key) };
 
     my $cached = $c->schema2->resultset('GeoCache')->search(
         {
@@ -49,6 +49,13 @@ sub _get_cached {
         {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
     )->next;
     return $cached->{value} if $cached;
+
+    if ($c->stash('geo_code_rps_key')) {
+
+        # max de 100 requets sem cache por dia (no ip, ou no usuario)
+        $c->stash(apply_rps_on => $c->stash('geo_code_rps_key'));
+        $c->apply_request_per_second_limit(100, 86400);
+    }
 
     my $ttl    = 2592000;                # 30 dias
     my $result = $c->$sub($key) || '';

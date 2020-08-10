@@ -292,5 +292,12 @@ sub recalc_qtde_guardioes_ativos {
     );
 }
 
+sub cep_formmated {
+    my ($self) = @_;
+    my $cep = $self->cep;
+    $cep =~ s/(.{5})(.{3})/$1-$2/;
+    return $cep;
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

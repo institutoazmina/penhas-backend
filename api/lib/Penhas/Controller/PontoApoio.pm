@@ -66,10 +66,21 @@ sub _pa_list {
     # se nao tem ainda, eh pq o usuario nao mandou, entao temos que pegar via CEP
     if (!$valid->{latitude} || !$valid->{latitude}) {
         die 'user_obj should be defined' unless $user_obj;
+        $c->stash(geo_code_rps => 'geocode:' . $user_obj->id);
 
-        # TOOD extrair lat/long via CEP do usuario
+        my $cep = $user_obj->cep_formmated;
+        $c->reply_invalid_param('CEP da conta não é válido!', 'no-cep') if !$cep || $cep !~ /^\d{5}-\d{3}$/;
 
+        my $latlng = $c->geo_code_cached($cep . ' brasil');
 
+        $c->reply_invalid_param(
+            sprintf(
+                'Não foi possível encontrar sua localização através do CEP %s, tente novamente mais tarde ou ative a localização',
+                $cep
+            ),
+            'no-gps'
+        ) unless $latlng;
+        ($valid->{latitude}, $valid->{longitude}) = split /,/, $latlng;
     }
 
     $valid->{categorias} = [split /,/, $valid->{categorias}] if $valid->{categorias};
