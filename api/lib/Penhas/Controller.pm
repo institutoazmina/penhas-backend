@@ -42,8 +42,8 @@ sub reply_invalid_param {
     my ($c, $message, $error, $field, $reason) = @_;
 
     die {
-        error   => $error || 'form_error',
         message => "$message",
+        error   => $error || 'form_error',
         (defined $field ? (field => $field, reason => $reason || 'invalid') : ()),
         status => 400,
     };

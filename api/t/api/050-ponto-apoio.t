@@ -80,7 +80,7 @@ do {
     )->next();
 
     my $first_sugg = $t->post_ok(
-        '/sugerir-pontos-de-apoio',
+        '/me/sugerir-pontos-de-apoio',
         {'x-api-key' => $session},
         form => {
             'endereco_ou_cep' => 'rua cupa, 255',
@@ -152,6 +152,7 @@ do {
     )->id;
 
     $schema2->resultset('PontoApoio')->search({test_status => 'test'})->delete;
+    my $avaliar_ponto_apoio;
     foreach my $code (1 .. 3) {
 
         if ($code == 1) {
@@ -178,8 +179,11 @@ do {
             $fields->{avaliacao}      = '4.164';
         }
 
-        $schema2->resultset('PontoApoio')->create($fields);
+        my $tmp = $schema2->resultset('PontoApoio')->create($fields);
 
+        if ($code == 3) {
+            $avaliar_ponto_apoio = $tmp;
+        }
     }
 
     # "vila mariana" ~ aprox 1.02 km de "ana rosa" em linha reta considerando a curvatura da terra
@@ -241,12 +245,55 @@ do {
         form => {
             'latitude'  => '-23.589893',
             'longitude' => '-46.633462',
-            keywords    => 'kaz',
+            'keywords'  => 'kaz',
         }
       )->status_is(200)                                                              #
       ->json_is('/rows/0/nome', 'kazu', 'kazu eh o resultado pra busca')             #
       ->json_is('/rows/1',      undef,  'nao tem mais')                              #
       ->json_is('/has_more',    0);
+
+    my $rand_zero_to_five = int(rand(6));
+    $t->post_ok(
+        '/me/avaliar-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'ponto_apoio_id' => $avaliar_ponto_apoio->id,
+            'rating'         => $rand_zero_to_five
+        }
+    )->status_is(204);
+
+    $t->post_ok(
+        '/me/avaliar-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'ponto_apoio_id' => $avaliar_ponto_apoio->id,
+            'rating'         => 6
+        }
+    )->status_is(400)->json_is('/field', 'rating');
+
+    $t->post_ok(
+        '/me/avaliar-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'ponto_apoio_id' => $avaliar_ponto_apoio->id * 555000,
+            'rating'         => 5
+        }
+    )->status_is(400)->json_is('/field', 'ponto_apoio_id');
+
+    $t->get_ok(
+        '/me/pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'latitude'  => '-23.589893',
+            'longitude' => '-46.633462',
+            'keywords'  => $avaliar_ponto_apoio->nome,
+        }
+      )->status_is(200)    #
+      ->json_is('/rows/0/cliente_avaliacao', $rand_zero_to_five)          #
+      ->json_is('/rows/0/id',                $avaliar_ponto_apoio->id)    #
+      ->json_is('/rows/1',                   undef, 'nao tem mais')       #
+      ->json_is('/has_more',                 0);
+
 
 };
 

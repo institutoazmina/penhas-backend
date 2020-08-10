@@ -57,10 +57,6 @@ sub register {
     # POST /logout
     $authenticated->under('logout')->post()->to(controller => 'Logout', action => 'post');
 
-    # POST /sugerir-pontos-de-apoio
-    $authenticated->route('sugerir-pontos-de-apoio')->post()
-      ->to(controller => 'PontoApoio', action => 'pa_suggest');
-
     # GET /me
     my $me = $authenticated->under('me')->to(controller => 'Me', action => 'check_and_load');
     $me->get()->to(action => 'find');
@@ -111,6 +107,15 @@ sub register {
     $me_audios_object->delete()->to(action => 'audio_events_delete');
     $me_audios_object->route('download')->get()->to(action => 'audio_download');
     $me_audios_object->route('request-access')->post()->to(action => 'audio_request_access');
+
+    # POST /me/sugerir-pontos-de-apoio
+    $me->under('sugerir-pontos-de-apoio')->post()->to(controller => 'PontoApoio', action => 'user_pa_suggest');
+
+    # GET /me/pontos-de-apoio
+    $me->under('pontos-de-apoio')->get()->to(controller => 'PontoApoio', action => 'user_pa_list');
+
+    # POST /me/avaliar-pontos-de-apoio
+    $me->under('avaliar-pontos-de-apoio')->post()->to(controller => 'PontoApoio', action => 'user_pa_rating');
 
     # /timeline/
     my $timeline = $authenticated->under('timeline')->to(controller => 'Timeline', action => 'assert_user_perms');

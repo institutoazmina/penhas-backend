@@ -16,6 +16,7 @@ sub setup {
     $self->helper('ponto_apoio_list'    => sub { &ponto_apoio_list(@_) });
     $self->helper('ponto_apoio_fields'  => sub { &ponto_apoio_fields(@_) });
     $self->helper('ponto_apoio_suggest' => sub { &ponto_apoio_suggest(@_) });
+    $self->helper('ponto_apoio_rating'  => sub { &ponto_apoio_rating(@_) });
 }
 
 
@@ -36,9 +37,10 @@ sub _format_pa_row {
 sub ponto_apoio_list {
     my ($c, %opts) = @_;
 
-    my $latitude  = $opts{latitude}  or confess 'missing latitude';
+    my $user_obj  = $opts{user_obj};
+    my $latitude  = $opts{latitude} or confess 'missing latitude';
     my $longitude = $opts{longitude} or confess 'missing longitude';
-    my $keywords = trim(lc($opts{keywords} || ''));
+    my $keywords  = trim(lc($opts{keywords} || ''));
 
 
     my $offset = 0;
@@ -80,9 +82,13 @@ sub ponto_apoio_list {
                 {categoria_cor  => 'categoria.color'},,
                 {categoria_id   => 'categoria.id'},
                 {categoria_id   => 'categoria.id'},
+                ($user_obj ? ({cliente_avaliacao => 'cliente_ponto_apoio_avaliacaos.avaliacao'}) : ()),
                 qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf me.qtde_avaliacao/,
             ],
-            join         => 'categoria',
+            join => [
+                'categoria',
+                ($user_obj ? ('cliente_ponto_apoio_avaliacaos') : ()),
+            ],
             order_by     => \'distance_in_km ASC',
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
             rows         => $rows + 1,
@@ -238,6 +244,41 @@ sub ponto_apoio_suggest {
         message => 'Sua sugestão será avaliada antes de ser publicada.',
         (is_test() ? (id => $row->id) : ()),
     };
+}
+
+sub ponto_apoio_rating {
+    my ($c, %opts) = @_;
+
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+
+    my $ponto_apoio_id = $opts{ponto_apoio_id};
+    my $rating         = $opts{rating};
+
+    my $remove = $opts{remove} ? $opts{remove} : 0;
+
+    $c->reply_invalid_param('precisa ser entre 0 e 5', 'form_error', 'rating') if $rating > 5 || $rating < 0;
+
+    my $ponto_apoio = $c->schema2->resultset('PontoApoio')->find($ponto_apoio_id);
+    $c->reply_invalid_param('ponto de apoio não encontrado', 'form_error', 'ponto_apoio_id') unless $ponto_apoio;
+
+    $c->schema2->txn_do(
+        sub {
+            my $filtered = $user_obj->cliente_ponto_apoio_avaliacaos->search(
+                {
+                    ponto_apoio_id => $ponto_apoio_id,
+                }
+            );
+            $filtered->delete;
+            if (!$remove) {
+                $filtered->create(
+                    {
+                        avaliacao  => $rating,
+                        created_at => \'NOW()',
+                    }
+                );
+            }
+        }
+    );
 }
 
 

@@ -157,10 +157,16 @@ __PACKAGE__->belongs_to(
   { id => "categoria" },
   { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
+__PACKAGE__->has_many(
+  "cliente_ponto_apoio_avaliacaos",
+  "Penhas::Schema2::Result::ClientePontoApoioAvaliacao",
+  { "foreign.ponto_apoio_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-08 23:06:16
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YpKhFQpuDR1GQnFTqndJ1A
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-09 21:29:08
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ofmaaSVd+lmuFZUtLPlY6A
 
 # ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id) ON DELETE CASCADE ON UPDATE cascade;
 
