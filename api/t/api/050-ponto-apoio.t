@@ -449,6 +449,17 @@ do {
       ->json_is('/ponto_apoio/numero',             undef,                     'sem numero');                    #
 
 
+    $t->post_ok(
+        '/me/avaliar-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'ponto_apoio_id' => $avaliar_ponto_apoio->id,
+            'remove'         => 1
+        }
+    )->status_is(204);
+    $avaliar_ponto_apoio->discard_changes;
+    is $avaliar_ponto_apoio->qtde_avaliacao, 0, 'nao te mais avaliacao';
+
 };
 
 done_testing();

@@ -180,10 +180,15 @@ sub user_pa_rating {
 
     my $valid = $c->validate_request_params(
         remove         => {required => 0, type => 'Str', max_length => 1},
-        rating         => {required => 1, type => 'Int', max_length => 2},
         ponto_apoio_id => {required => 1, type => 'Int'},
     );
 
+    if (!$valid->{remove}) {
+        $c->merge_validate_request_params(
+            $valid,
+            rating => {required => 1, type => 'Int', max_length => 2},
+        );
+    }
     $c->ponto_apoio_rating(
         %$valid,
         user_obj => $c->stash('user_obj'),

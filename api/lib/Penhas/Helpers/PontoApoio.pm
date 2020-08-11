@@ -265,7 +265,10 @@ sub ponto_apoio_rating {
 
     my $remove = $opts{remove} ? $opts{remove} : 0;
 
-    $c->reply_invalid_param('precisa ser entre 0 e 5', 'form_error', 'rating') if $rating > 5 || $rating < 0;
+    if (!$remove) {
+        $c->reply_invalid_param('precisa ser entre 0 e 5', 'form_error', 'rating')
+          if !$rating || $rating > 5 || $rating < 0;
+    }
 
     my $ponto_apoio = $c->schema2->resultset('PontoApoio')->find($ponto_apoio_id);
     $c->reply_invalid_param('ponto de apoio não encontrado', 'form_error', 'ponto_apoio_id') unless $ponto_apoio;
@@ -290,7 +293,7 @@ sub ponto_apoio_rating {
             my $agg = $ponto_apoio->cliente_ponto_apoio_avaliacaos->search(
                 undef,
                 {
-                    columns      => [{avaliacao => \'avg(avaliacao)', qtde_avaliacao => \'count(1)'}],
+                    columns      => [{avaliacao => \'coalesce( avg(avaliacao), 0)', qtde_avaliacao => \'count(1)'}],
                     result_class => 'DBIx::Class::ResultClass::HashRefInflator',
                 }
             )->next;
