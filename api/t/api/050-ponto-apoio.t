@@ -428,7 +428,7 @@ do {
       ->json_is('/ponto_apoio/cep',                '00000000',                'tem cep')                        #
       ->json_is('/ponto_apoio/natureza',           'Público',                'tem natureza traduzida')         #
       ->json_is('/ponto_apoio/dias_funcionamento', 'Dias úteis',             'tem Dia Da semana traduzido')    #
-      ->json_is('/ponto_apoio/numero', undef, 'sem numero');                                                    #
+      ->json_is('/ponto_apoio/numero',             undef,                     'sem numero');                    #
 
 
 };
