@@ -63,7 +63,8 @@ subtest_buffered 'Cadastro com sucesso' => sub {
     $cliente_id = $res->{_test_only_id};
     $session    = $res->{session};
 
-    $schema2->resultset('GeoCache')->search({key => ['12345-678 brasil', 'r. teste', '-23.55597,-46.66266']})->delete;
+    $schema2->resultset('GeoCache')->search({key => ['12345-678 brasil', 'r. teste', '-23.55597,-46.66266', 'r. foo']})
+      ->delete;
     $schema2->resultset('GeoCache')->create(
         {
             key         => '12345-678 brasil',
@@ -86,6 +87,15 @@ subtest_buffered 'Cadastro com sucesso' => sub {
         {
             key         => 'r. teste',
             value       => '-23.555995,-46.662665',                       # começo da consolação
+            created_at  => \'NOW()',
+            valid_until => '2055-01-01',
+        }
+    );
+
+    $schema2->resultset('GeoCache')->create(
+        {
+            key         => 'r. foo',
+            value       => '',                                            # caso de 404
             created_at  => \'NOW()',
             valid_until => '2055-01-01',
         }
@@ -387,6 +397,14 @@ do {
       )->status_is(200)                                                    #
       ->json_is('/label', 'Cerqueira César, São Paulo, SP, Brasil')      #
       ->json_has('/location_token', 'has token')->tx->res->json;
+
+    $t->get_ok(
+        '/geocode',
+        {},
+        form => {address => 'R. Foo'}
+      )->status_is(400)                                                    #
+      ->json_has('/error')                                                 #
+      ->json_hasnt('/location_token');
 
     my $token2 = $t->get_ok(
         '/me/geocode',
