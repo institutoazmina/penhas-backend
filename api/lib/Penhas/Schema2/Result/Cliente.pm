@@ -150,6 +150,18 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "clientes_active_sessions",
+  "Penhas::Schema2::Result::ClientesActiveSession",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "clientes_app_activities",
+  "Penhas::Schema2::Result::ClientesAppActivity",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "clientes_audios",
   "Penhas::Schema2::Result::ClientesAudio",
   { "foreign.cliente_id" => "self.id" },
@@ -174,6 +186,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "login_erros",
+  "Penhas::Schema2::Result::LoginErro",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "login_logs",
+  "Penhas::Schema2::Result::LoginLog",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "media_uploads",
+  "Penhas::Schema2::Result::MediaUpload",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "ponto_apoio_sugestoes",
   "Penhas::Schema2::Result::PontoApoioSugestoe",
   { "foreign.cliente_id" => "self.id" },
@@ -191,10 +221,16 @@ __PACKAGE__->has_many(
   { "foreign.cliente_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
+__PACKAGE__->has_many(
+  "tweets_reports",
+  "Penhas::Schema2::Result::TweetsReport",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-09 21:29:08
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wjFnJW926INvn7NSeXuomQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-12 06:59:40
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NQBVcO+4ZlIvbd8MBT1pYQ
 
 use Carp qw/confess/;
 

@@ -21,7 +21,12 @@ __PACKAGE__->add_columns(
   "remote_ip",
   { data_type => "varchar", is_nullable => 0, size => 200 },
   "cliente_id",
-  { data_type => "integer", is_nullable => 1 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
   "app_version",
   { data_type => "varchar", is_nullable => 1, size => 200 },
   "created_at",
@@ -32,11 +37,23 @@ __PACKAGE__->add_columns(
   },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->belongs_to(
+  "cliente",
+  "Penhas::Schema2::Result::Cliente",
+  { id => "cliente_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "CASCADE",
+    on_update     => "CASCADE",
+  },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-05-13 06:09:16
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NuQeFMt8tOaViWF8YOhYUw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-12 06:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ABHuMgEIBzr0vfsSq16Xmg
 
+# ALTER TABLE login_logs ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

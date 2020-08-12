@@ -267,7 +267,7 @@ sub ponto_apoio_rating {
 
     if (!$remove) {
         $c->reply_invalid_param('precisa ser entre 0 e 5', 'form_error', 'rating')
-          if !$rating || $rating > 5 || $rating < 0;
+          if !defined $rating || $rating > 5 || $rating < 0;
     }
 
     my $ponto_apoio = $c->schema2->resultset('PontoApoio')->find($ponto_apoio_id);

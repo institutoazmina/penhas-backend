@@ -22,7 +22,12 @@ __PACKAGE__->add_columns(
   "s3_path",
   { data_type => "text", is_nullable => 0 },
   "cliente_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "intention",
   { data_type => "varchar", is_nullable => 0, size => 200 },
   "created_at",
@@ -37,6 +42,12 @@ __PACKAGE__->add_columns(
   { data_type => "integer", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->belongs_to(
+  "cliente",
+  "Penhas::Schema2::Result::Cliente",
+  { id => "cliente_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
 __PACKAGE__->has_many(
   "clientes_audios",
   "Penhas::Schema2::Result::ClientesAudio",
@@ -45,9 +56,10 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-20 22:34:40
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:x2VQL3HBak7Zjf31cO4qxA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-12 06:59:40
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9AfZAiyq+7UKGdyiB0NTlQ
 
+# ALTER TABLE media_upload ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;
