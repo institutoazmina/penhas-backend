@@ -55,7 +55,9 @@ sub news_indexer {
     my $ua = Mojo::UserAgent->new;
 
     slog_info('Downloading %s...', $news->{hyperlink});
-    my $response = $ua->get($news->{hyperlink})->result;
+    my $response = $ua->get($news->{hyperlink}, {
+        'User-Agent' => 'Indexador Feed RSS azmina.com.br'
+    })->result;
 
     my $dom = $response->dom;
     if ($response->code != 200) {
