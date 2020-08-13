@@ -54,6 +54,7 @@ sub news_indexer {
 
     my $ua = Mojo::UserAgent->new;
 
+    $ENV{MOJO_INSECURE} = 1;
     slog_info('Downloading %s...', $news->{hyperlink});
     my $response = $ua->get($news->{hyperlink}, {
         'User-Agent' => 'Indexador Feed RSS azmina.com.br'
