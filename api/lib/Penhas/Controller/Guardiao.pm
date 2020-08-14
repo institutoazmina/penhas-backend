@@ -30,12 +30,7 @@ sub apply_rps {
                 )->all()
             ]
         );
-    use DDP; p $accept;
     }
-        my $xot = $c->stash('faqs');
-        use DDP; p $xot;
-
-
     return 1;
 }
 
