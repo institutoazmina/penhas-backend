@@ -231,7 +231,7 @@ sub cliente_upsert_guardioes {
     if ($recent_refused) {
         $c->reply_invalid_param(
             sprintf(
-                'O número %s recusou seu convite em %s. Você só poderá convida-lo novamente após 7 dias.',
+                "O número %s recusou seu convite em %s. Você só poderá convida-lo novamente após 7 dias. $already_sent_msg",
                 $celular_national,
                 $recent_refused->refused_at->dmy('/'),
 
@@ -272,9 +272,6 @@ sub cliente_upsert_guardioes {
     $filtered_rs->search(
         {
             status => 'expired_for_not_use',
-        },
-        {
-            'columns' => [qw/id/],
         }
     )->update({deleted_at => \'NOW()'});
 
@@ -469,7 +466,8 @@ sub cliente_list_guardioes {
             '-or' => [
                 {'me.status'     => {in   => [qw/pending accepted expired_for_not_use/]}},
                 {'me.refused_at' => {'!=' => undef}}
-            ]
+            ],
+            'me.deleted_at'=>undef,
         },
         {order_by => [qw/me.status/, {'-desc' => 'me.created_at'}]}
     );
