@@ -58,7 +58,7 @@ sub send_sms {
 
     my $success = $r->{'PublishResult'}{'MessageId'};
     if (!$success) {
-        $log->update({sns_message_id => 'failed: ' . $r->error()});
+        $log->update({sns_message_id => 'failed: ' . $sns->error()});
         return $job->fail($r->error());
     }
     $log->update({sns_message_id => $success});
