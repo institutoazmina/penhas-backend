@@ -42,8 +42,8 @@ body {
 }
 
 main {
-    width: 560px;
-    min-width: 560px;
+    max-width: 560px;
+    min-width: 320px;
     margin: 0 auto;
     text-align: left;
 }
@@ -55,8 +55,8 @@ main {
 }
 
 .bem-vindo-nome {
- font-size: 2em;
- line-height: 2em;
+ font-size: 1.5em;
+ line-height: 1.5em;
 }
 
 .divgradient {
