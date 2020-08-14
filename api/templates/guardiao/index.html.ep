@@ -1,157 +1,93 @@
+<main role="main">
 
-<div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+    <img src="/web-assets/penhas-logo.svg" alt="Logo PenhaS" class="penhas_logo">
 
-
-<main role="main" class="inner cover">
-
-<img src="/web-assets/penhas-logo.svg" class="penhas_logo">
-
-% if (my $error = stash ('error') ) {
-<div class="alert alert-danger" role="alert">
-  <%= $error->{message} %>
-</div>
-% }
-
-<div class="divgradient">
-% if ((my $guardiao = stash ('guardiao') ) && (my $cliente = stash ('cliente') )) {
-
-<form method="post" action="/web/guardiao">
-
-<input type="hidden" name="token" value="<%= stash ('token') %>" / >
-
-    <span class="bem-vindo-nome">Olá, <%= $guardiao->{nome} %>!</span>
-
-    %if ( $guardiao->{is_pending} ) {
-    <p class="lead">Você foi convidado por <%= $cliente->{apelido} %> para se tornar uma guardiã.</p>
-
-    <p class="lead">
-
-      <button name="action" value="accept" class="btn btn-lg btn-secondary">Aceitar convite</button>
-     </p>
-    <p class="lead">
-          <button name="action" value="refuse" class="btn btn-lg btn-danger">Recusar convite</button>
-    </p>
-
+    % if (my $error = stash ('error') ) {
+    <div class="alert alert-danger" role="alert">
+      <%== $error->{message} %>
+    </div>
     % }
 
-    %if ( $guardiao->{is_expired} ) {
-    <p class="lead">Este convite já foi expirou, peça um novo convite para a <%= $cliente->{apelido} %>.</p>
+    <div class="divgradient">
+    % if ((my $guardiao = stash ('guardiao') ) && (my $cliente = stash ('cliente') )) {
+
+    <form method="post" action="/web/guardiao">
+
+    <input type="hidden" name="token" value="<%== stash ('token') %>" / >
+
+        <span class="bem-vindo-nome">Olá, <%== $guardiao->{nome} %>!</span>
+
+        %if ( $guardiao->{is_pending} ) {
+        <p class="lead">Você foi convidado por <%== $cliente->{apelido} %> para se tornar uma guardiã.</p>
+
+        <p class="lead">
+
+          <button name="action" value="accept" class="btn btn-lg btn-secondary">Aceitar convite</button>
+         </p>
+        <p class="lead">
+              <button name="action" value="refuse" class="btn btn-lg btn-danger">Recusar convite</button>
+        </p>
+
+        % }
+
+        %if ( $guardiao->{is_expired} ) {
+        <p class="lead">Este convite já foi expirou, peça um novo convite para a <%== $cliente->{apelido} %>.</p>
+        % }
+
+        %if ( $guardiao->{is_accepted} ) {
+        <p class="lead">Você faz parte das guardiãs da <%== $cliente->{apelido} %>!</p>
+        <p class="lead">
+
+          <button name="action" value="refuse" class="btn btn-lg btn-danger">deixar de ser guardiã</button>
+
+          </p>
+        % } elsif ( !$guardiao->{is_pending} && !$guardiao->{is_expired} ) {
+        <p class="lead">Você não faz mais parte das guardiãs da <%== $cliente->{apelido} %>, mas pode retornar usando o botão abaixo</p>
+
+        <p class="lead">
+          <button name="action" value="accept" class="btn btn-lg btn-secondary">voltar a ser guardiã</button>
+
+        </p>
+
+        % }
+
+    </form>
     % }
 
-    %if ( $guardiao->{is_accepted} ) {
-    <p class="lead">Você faz parte das guardiãs da <%= $cliente->{apelido} %>!</p>
-    <p class="lead">
-
-      <button name="action" value="refuse" class="btn btn-lg btn-danger">deixar de ser guardiã</button>
-
-      </p>
-    % } elsif ( !$guardiao->{is_pending} && !$guardiao->{is_expired} ) {
-    <p class="lead">Você não faz mais parte das guardiãs da <%= $cliente->{apelido} %>, mas pode retornar usando o botão abaixo</p>
-
-    <p class="lead">
-      <button name="action" value="accept" class="btn btn-lg btn-secondary">voltar a ser guardiã</button>
-
-    </p>
-
-    % }
-
-</form>
-% }
-<hr/>
-
+    <h4 class="h-need-help">Precisando de ajuda?</h4>
 
     <!--Accordion wrapper-->
-<div class="accordion md-accordion" id="accordionEx" role="tablist" aria-multiselectable="true">
+        <div class="accordion md-accordion" id="accordionEx" role="tablist" aria-multiselectable="true">
 
-  <!-- Accordion card -->
-  <div class="card">
+          % for my $faq (@$faqs) {
+          <!-- Accordion card -->
+          <div class="card">
 
-    <!-- Card header -->
-    <div class="card-header" role="tab" id="headingOne1">
-      <a data-toggle="collapse" data-parent="#accordionEx" href="#collapseOne1" aria-expanded="true"
-        aria-controls="collapseOne1">
-        <h5 class="mb-0">
-          O que é o app Penhas?
+            <!-- Card header -->
+            <div class="card-header" role="tab" id="heading<%== $faq->{id} %>">
+              <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx" href="#collapse<%== $faq->{id} %>"
+                aria-expanded="false" aria-controls="collapse<%== $faq->{id} %>">
+                <h5 class="mb-0">
+                  <%== $faq->{title} %>
+                </h5>
+              </a>
+            </div>
 
-        </h5>
-      </a>
-    </div>
+            <!-- Card body -->
+            <div id="collapse<%== $faq->{id} %>" class="collapse" role="tabpanel" aria-labelledby="heading<%== $faq->{id} %>"
+              data-parent="#accordionEx">
+              <div class="card-body">
+                <%== $faq->{content_html} %>
+              </div>
+            </div>
 
-    <!-- Card body -->
-    <div id="collapseOne1" class="collapse show" role="tabpanel" aria-labelledby="headingOne1"
-      data-parent="#accordionEx">
-      <div class="card-body">
-        Lorem Ip
-      </div>
-    </div>
+          </div>
+          % }
+          <!-- Accordion card -->
 
-  </div>
-  <!-- Accordion card -->
+        </div>
+        <!-- Accordion wrapper -->
 
-  <!-- Accordion card -->
-  <div class="card">
+    </div> <!-- gradient -->
 
-    <!-- Card header -->
-    <div class="card-header" role="tab" id="headingTwo2">
-      <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx" href="#collapseTwo2"
-        aria-expanded="false" aria-controls="collapseTwo2">
-        <h5 class="mb-0">
-          O que significa ser um guardião de alguém?
-        </h5>
-      </a>
-    </div>
-
-    <!-- Card body -->
-    <div id="collapseTwo2" class="collapse" role="tabpanel" aria-labelledby="headingTwo2"
-      data-parent="#accordionEx">
-      <div class="card-body">
-        Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3
-        wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum
-        eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla
-        assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred
-        nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer
-        farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus
-        labore sustainable VHS.
-      </div>
-    </div>
-
-  </div>
-  <!-- Accordion card -->
-
-  <!-- Accordion card -->
-  <div class="card">
-
-    <!-- Card header -->
-    <div class="card-header" role="tab" id="headingThree3">
-      <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx" href="#collapseThree3"
-        aria-expanded="false" aria-controls="collapseThree3">
-        <h5 class="mb-0">
-          O que fazer quando alguma mulher pede ajuda?
-        </h5>
-      </a>
-    </div>
-
-    <!-- Card body -->
-    <div id="collapseThree3" class="collapse" role="tabpanel" aria-labelledby="headingThree3"
-      data-parent="#accordionEx">
-      <div class="card-body">
-        Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3
-        wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum
-        eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla
-        assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred
-        nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer
-        farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus
-        labore sustainable VHS.
-      </div>
-    </div>
-
-  </div>
-  <!-- Accordion card -->
-
-</div>
-<!-- Accordion wrapper -->
-</div>
-
-    </main>
-
-</div>
+</main>

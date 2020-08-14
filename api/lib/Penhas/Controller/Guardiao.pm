@@ -16,6 +16,26 @@ sub apply_rps {
 
     $c->stash(template => 'guardiao/index');
 
+    my $accept = $c->req->headers->header('accept');
+    if ($c->stash('template') && $accept && $accept =~ /html/) {
+        $c->stash(
+            faqs => [
+                $c->schema2->resultset('FaqTelaGuardiao')->search(
+                    {'me.status' => 'published'},
+                    {
+                        columns      => [qw/id title content_html/],
+                        order_by     => 'sort',
+                        result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+                    }
+                )->all()
+            ]
+        );
+    use DDP; p $accept;
+    }
+        my $xot = $c->stash('faqs');
+        use DDP; p $xot;
+
+
     return 1;
 }
 

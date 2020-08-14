@@ -48,10 +48,11 @@ main {
     text-align: left;
 }
 .penhas_logo {
-  width: 174px;
-  height: 58px;
+  width: 132px;
+  height: 44px;
   object-fit: contain;
-  margin-bottom: 1em;
+  margin-bottom: 0.5em;
+  margin-top: 0.5em;
 }
 
 .bem-vindo-nome {
@@ -61,7 +62,7 @@ main {
 
 .divgradient {
     text-align: center;
-    min-height: 1100px;
+    min-height: 1500px;
     width: 100%;
     height: 100%;
     background-image: linear-gradient(180deg, #2a2e72 7%, #9f63ff 53%, #d2bbf6 96%);
@@ -72,17 +73,18 @@ main {
 }
 
 div.card-body {
-    background-color: #5b44ad;
-    font-size: 1.2em;
+    font-size: 1em;
+    background-color: rgba(255,255,255,0.1);
 }
 div.card-header h5 {
-    font-size: 1.2em;
+    font-size: 1.1em;
     font-weight: 700;
 }
 .card {
-    background-color: transparent;
+    background-color: rgba(0,0,0,0.15);
 }
-    </style>
+.h-need-help {padding-top: 2em;}
+</style>
 
   </head>
   <body class="text-center">
