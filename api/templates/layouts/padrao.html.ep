@@ -57,13 +57,14 @@ main {
 }
 
 .divgradient {
-    text-align: center;
+    text-align: left;
     /*min-height: 1500px;*/
     padding-bottom: 250px;
     width: 100%;
     height: 100%;
     background-image: linear-gradient(180deg, #2a2e72 7%, #9f63ff 53%, #d2bbf6 96%);
     padding: 2em;
+    padding-top: 0;
     border-radius: 20px;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
@@ -76,11 +77,12 @@ div.card-body {
 div.card-header h5 {
     font-size: 1.1em;
     font-weight: 700;
+     text-align: center;
 }
 .card {
     background-color: rgba(0,0,0,0.15);
 }
-.h-need-help {padding-top: 2em;}
+.h-need-help {padding-top: 2em; text-align: center;}
 </style>
 
   </head>

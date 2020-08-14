@@ -1,5 +1,7 @@
 <main role="main">
 
+    <div class="divgradient">
+
     <img src="/web-assets/penhas-logo.svg" alt="Logo PenhaS" class="penhas_logo">
 
     % if (my $error = stash ('error') ) {
@@ -8,10 +10,9 @@
     </div>
     % }
 
-    <div class="divgradient">
     % if ((my $guardiao = stash ('guardiao') ) && (my $cliente = stash ('cliente') )) {
 
-    <form method="post" action="/web/guardiao">
+    <form method="post" action="/web/guardiao" class="text-center">
 
     <input type="hidden" name="token" value="<%== stash ('token') %>" / >
 
