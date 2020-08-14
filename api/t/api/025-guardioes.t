@@ -333,6 +333,9 @@ do {
     $t->post_ok('/web/guardiao' => form => {token => $row3->token(), action => 'accept'})->status_is(200)
       ->json_is('/guardiao/is_accepted', '1');
 
+# volta a tornar o expiraldo visivel (pois foi removido automaticamente ao reconvidar, mas vamos usa-lo pra testar a listagem)
+    $row_to_be_removed->update({deleted_at => undef});
+
     # testa GET como usuario logado
     $t->get_ok(
         join('', '/me/guardioes'),
@@ -343,13 +346,13 @@ do {
       ->json_is('/guards/1/meta/layout',     'pending',              'second row layout is pending')
       ->json_is('/guards/1/rows/0/celular',  '+1 484-291-8467',      'celular ok')
       ->json_is('/guards/1/rows/1',          undef,                  'nao tem mais dois convites pendentes')
-      ->json_is('/guards/2/meta/header',     'Convites expirados',   'Convites expirados')
+      ->json_is('/guards/2/meta/header',     'Convites expirados',   'Convites expirados X')
       ->json_is('/guards/2/rows/0/nome',     'Expiraldo Silva',      'id ok')
       ->json_is('/guards/2/meta/can_resend', '1',                    'pode reenviar no expired')
       ->json_is('/guards/2/rows/0/id',       $row_to_be_removed->id, 'id ok')
       ->json_is('/guards/3/meta/can_resend', '0',                    'nao pode reenviar no recusado')
       ->json_is('/guards/3/rows/0/id',       $row4->id,              'id ok')
-      ->json_is('/guards/3/meta/header',     'Convites recusados',   'Convites recusados');
+      ->json_is('/guards/3/meta/header',     'Convites recusados',   'Convites recusados X');
 
     $t->post_ok(
         join('', '/me/guardioes/alert'),
