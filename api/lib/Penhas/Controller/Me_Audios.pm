@@ -294,7 +294,7 @@ sub _concat_audio_files {
         my @ffmpeg = ();
         push @ffmpeg, qw(ffmpeg -i);
         push @ffmpeg, 'concat:' . $files_concated;
-        push @ffmpeg, qw(-acodec copy);
+        push @ffmpeg, qw(-acodec copy -strict -2);
         push @ffmpeg, $outfile;
 
         my $stderr = '';
