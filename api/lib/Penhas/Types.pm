@@ -9,13 +9,10 @@ use MooseX::Types::Moose qw(ArrayRef HashRef CodeRef Str ScalarRef);
 use MooseX::Types::Common::String qw(NonEmptySimpleStr NonEmptyStr);
 use Business::BR::CEP qw(test_cep);
 use Moose::Util::TypeConstraints;
-use DateTime::Format::Strptime;
+use DateTime::Format::ISO8601;
 
-# ISO_8601 apenas com ZULU
-my $parser_datetime_zulu = DateTime::Format::Strptime->new(
-    pattern  => '%FT%T%z',
-    on_error => 'croak',
-);
+# ISO_8601
+my $parser_datetime_zulu = DateTime::Format::ISO8601->new();
 
 use DateTime::Format::Pg;
 use MooseX::Types::JSON;
