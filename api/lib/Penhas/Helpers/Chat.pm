@@ -55,6 +55,8 @@ sub chat_find_users {
             'me.modo_anonimo_ativo' => '0',
             'me.status'             => 'active',
 
+            'me.genero' => {in => ['MulherTrans', 'Feminino']},    # &is_female()
+
             (
                 $ForceFilterClientes
                 ? ('me.id' => $ForceFilterClientes)

@@ -234,9 +234,8 @@ sub validate_request_params {
         }
 
         if (!$cons->check($val)) {
-            die {error => 'form_error', field => $key, reason => 'invalid', %def_message, status => 400};
+            die {error => 'form_error', field => $key, reason => 'invalid', %def_message, _val => $val, status => 400};
         }
-
     }
 
     return $tested;

@@ -64,7 +64,8 @@ sub register {
     $authenticated->under('logout')->post()->to(controller => 'Logout', action => 'post');
 
     # GET /me
-    my $me = $authenticated->under('me')->to(controller => 'Me', action => 'check_and_load');
+    my $user_loaded = $authenticated->under('')->to(controller => 'Me', action => 'check_and_load');
+    my $me          = $user_loaded->route('me');
     $me->get()->to(action => 'find');
 
     # POST /me/call-police-pressed
@@ -146,6 +147,9 @@ sub register {
     my $media_download
       = $authenticated->under('media-download')->to(controller => 'MediaDownload', action => 'assert_user_perms');
     $media_download->get()->to(action => 'logged_in_get_media');
+
+    $me->under('search-users')->get()->to(controller => 'Me_Chat', action => 'user_geocode');
+
 
 }
 

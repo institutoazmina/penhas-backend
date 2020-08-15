@@ -1,6 +1,6 @@
 package Penhas::Controller::Timeline;
 use Mojo::Base 'Penhas::Controller';
-
+use Penhas::Controller::Me;
 use DateTime;
 use Penhas::Types qw/TweetID IntList TimelineCategory/;
 
