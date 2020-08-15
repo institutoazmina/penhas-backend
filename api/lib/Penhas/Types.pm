@@ -9,6 +9,13 @@ use MooseX::Types::Moose qw(ArrayRef HashRef CodeRef Str ScalarRef);
 use MooseX::Types::Common::String qw(NonEmptySimpleStr NonEmptyStr);
 use Business::BR::CEP qw(test_cep);
 use Moose::Util::TypeConstraints;
+use DateTime::Format::Strptime;
+
+# ISO_8601 apenas com ZULU
+my $parser_datetime_zulu = DateTime::Format::Strptime->new(
+    pattern  => '%FT%T%z',
+    on_error => 'croak',
+);
 
 use DateTime::Format::Pg;
 use MooseX::Types::JSON;
@@ -35,13 +42,12 @@ coerce DateStr, from Str, via {
 };
 
 subtype DateTimeStr, as Str, where {
-    $_ =~ s/Z$//o if defined $_;
-    eval { DateTime::Format::Pg->parse_datetime($_)->datetime };
+    eval { $parser_datetime_zulu->parse_datetime($_)->datetime };
     return $@ eq '';
 }, message {"invalid date [$_]"};
 
 coerce DateTimeStr, from Str, via {
-    DateTime::Format::Pg->parse_datetime($_)->datetime;
+    $parser_datetime_zulu->parse_datetime($_)->datetime;
 };
 
 subtype MobileNumber, as Str, where {

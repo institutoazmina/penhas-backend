@@ -21,6 +21,7 @@ sub audio_upload {
         event_id           => {required => 1, type => 'Str',       max_length => 36},
         event_sequence     => {required => 1, type => 'Int',       max_length => 6},
     );
+    $valid->{$_} =~ s/Z$// for qw/cliente_created_at current_time/;
 
     $c->reply_invalid_param('event_id',       'invalid') unless is_uuid_v4($valid->{event_id});
     $c->reply_invalid_param('event_sequence', 'invalid')

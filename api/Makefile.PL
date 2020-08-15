@@ -30,6 +30,7 @@ my %WriteMakefileArgs = (
     "DBD::Pg" => 0,
     "DBD::mysql" => 0,
     "DBIx::Class::Core" => 0,
+    "DateTime::Format::Strptime" => 0,
     "DBIx::Class::InflateColumn::Serializer" => 0,
     "DBIx::Class::PassphraseColumn" => 0,
     "DBIx::Class::ResultSet" => 0,

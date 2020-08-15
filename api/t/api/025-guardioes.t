@@ -10,7 +10,7 @@ use DateTime;
 
 my $schema2 = $t->app->schema2;
 
-my $now_datetime = DateTime->now()->datetime(' ');
+my $now_datetime = DateTime->now()->datetime('T') . 'Z';
 
 AGAIN:
 my $random_cpf   = random_cpf();
@@ -402,8 +402,8 @@ do {
         '/me/audios',
         {'x-api-key' => $session},
         form => {
-            cliente_created_at => '2047-01-01T00:33:54',
-            current_time       => '2047-01-01T00:33:56',
+            cliente_created_at => '2047-01-01T00:33:54Z',
+            current_time       => '2047-01-01T00:33:56Z',
             event_id           => uc $event_id,
             event_sequence     => '1',
             media              => {file => "$RealBin/../data/gs-16b-1c-44100hz.aac"}
