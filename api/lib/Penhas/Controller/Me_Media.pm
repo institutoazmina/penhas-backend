@@ -192,7 +192,7 @@ sub upload {
         my @ffmpeg = ();
         push @ffmpeg, qw(ffmpeg -i);
         push @ffmpeg, $media;
-        push @ffmpeg, qw(-acodec aac -ab 128k -y -loglevel debug -movflags +faststart -f mp4);
+        push @ffmpeg, qw(-acodec aac -strict -2 -ab 128k -y -loglevel debug -movflags +faststart -f mp4);
         push @ffmpeg, $fhout->filename;
 
         my $stderr = '';
