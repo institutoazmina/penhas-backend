@@ -152,6 +152,7 @@ sub cliente_list_events_audio {
             data => {
                 event_id                => $r->fake_event_id(),
                 audio_duration          => time_seconds_fmt($r->audio_duration()),
+                audio_duration_secs     => $r->audio_duration(),
                 last_cliente_created_at => $r->last_cliente_created_at->datetime(),
                 total_bytes             => humanize_bytes($r->total_bytes()),
             },
