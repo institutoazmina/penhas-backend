@@ -43,7 +43,7 @@ get_schema->resultset('CpfCache')->find_or_create(
     }
 );
 
-my ($cliente_id, $session);
+my ($cliente_id, $session, $cliente);
 subtest_buffered 'Cadastro com sucesso' => sub {
     my $res = $t->post_ok(
         '/signup',
@@ -55,27 +55,32 @@ subtest_buffered 'Cadastro com sucesso' => sub {
             cep           => '12345678',
             dt_nasc       => '1994-01-31',
             @other_fields,
-            genero => rand() > 0.5 ? 'Feminino' : 'MulherTrans',
+            genero      => rand() > 0.5 ? 'Feminino' : 'MulherTrans',
             nome_social => 'foo bar',
         },
     )->status_is(200)->tx->res->json;
 
     $cliente_id = $res->{_test_only_id};
     $session    = $res->{session};
+    $cliente    = $schema2->resultset('Cliente')->find($cliente_id);
 };
 
 on_scope_exit { user_cleanup(user_id => $cliente_id); };
 
 
 do {
-
+    is $cliente->clientes_app_activities->count, 0, 'no clientes_app_activities';
     $t->get_ok(
         '/me',
-        {
-            'x-api-key'=>$session
-        }
-      )->status_is(200, 'da um get pra marcar o ');
+        {'x-api-key' => $session}
+    )->status_is(200, 'da um get pra marcar o clientes_app_activities');
+    is $cliente->clientes_app_activities->count, 1, 'clientes_app_activities exists';
 
+    $Penhas::Helpers::Chat::ForceFilterClientes = [$cliente_id];
+    $t->get_ok(
+        '/search-users',
+        {'x-api-key' => $session}
+    )->status_is(200, 'listando usuarios');
 
 };
 

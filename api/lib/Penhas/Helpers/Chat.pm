@@ -5,6 +5,7 @@ use utf8;
 use JSON;
 use Penhas::Logger;
 use Penhas::Utils qw/is_test/;
+use Mojo::Util qw/trim/;
 use Scope::OnExit;
 our $ForceFilterClientes;
 

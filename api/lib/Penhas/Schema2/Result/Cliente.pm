@@ -243,6 +243,8 @@ use Carp qw/confess/;
 use Moose;
 use MooseX::NonMoose;
 use MooseX::MarkAsMethods autoclean => 1;
+use Scope::OnExit;
+use Penhas::KeyValueStorage;
 
 sub is_female {
     my $self = shift;
@@ -339,6 +341,35 @@ sub cep_formmated {
     my $cep = $self->cep;
     $cep =~ s/(.{5})(.{3})/$1-$2/;
     return $cep;
+}
+
+sub update_activity {
+    my ($self, $is_timeline) = @_;
+
+    my $key = "ua" . ($is_timeline ? 't:' : ':') . $self->id;
+
+    my $kv = Penhas::KeyValueStorage->instance;
+
+    # atualiza de 5 em 5min o banco
+    my $recent_activities = $kv->redis->get($ENV{REDIS_NS} . $key);
+    return if $recent_activities;
+    $kv->redis->setex($ENV{REDIS_NS} . $key, 60 * 5, 1);
+
+    my $lock = "update_activity:user:" . $self->id;
+    $kv->lock_and_wait($lock);
+    on_scope_exit { $kv->unlock($lock) };
+
+    my $column  = $is_timeline ? 'last_tm_activity' : 'last_activity';
+    my $changes = $self->clientes_app_activities->update({$column => \'now()'});
+    if ($changes eq '0E0') {
+        $self->clientes_app_activities->create(
+            {
+                last_activity    => \'now()',
+                last_tm_activity => \'now()',
+            }
+        );
+    }
+
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

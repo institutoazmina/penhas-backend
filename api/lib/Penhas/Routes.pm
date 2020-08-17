@@ -148,7 +148,8 @@ sub register {
       = $authenticated->under('media-download')->to(controller => 'MediaDownload', action => 'assert_user_perms');
     $media_download->get()->to(action => 'logged_in_get_media');
 
-    $me->under('search-users')->get()->to(controller => 'Me_Chat', action => 'user_geocode');
+    # GET /search-users
+    $user_loaded->under('search-users')->get()->to(controller => 'Me_Chat', action => 'me_chat_find_users');
 
 
 }
