@@ -186,13 +186,13 @@ sub upload {
         log_info("converting audio upload...");
 
         # Convertendo o arquivo para AAC para funcionar no Android e no iPhone.
-        # e normaliza em 128 kbps aac_he_v2 [standardized 2006]
+        # e normaliza em 96 kbps aac_he_v2 [standardized 2006]
         my $fhout = File::Temp->new(UNLINK => 1, SUFFIX => ".aac", OPEN => 0);
 
         my @ffmpeg = ();
         push @ffmpeg, qw(ffmpeg -i);
         push @ffmpeg, $media;
-        push @ffmpeg, qw(-acodec aac -strict -2 -ab 128k -y -loglevel debug -movflags +faststart -f mp4);
+        push @ffmpeg, qw(-acodec aac -strict -2 -ab 96k -y -loglevel debug -movflags +faststart -f mp4);
         push @ffmpeg, $fhout->filename;
 
         my $stderr = '';
@@ -272,7 +272,7 @@ sub _extract_waveform {
     my @ffmpeg = ();
     push @ffmpeg, qw(ffmpeg -i);
     push @ffmpeg, $media;
-    push @ffmpeg, '-filter_complex', 'compand,showwavespic=s=420x80:colors=#9f63ff';
+    push @ffmpeg, '-filter_complex', 'compand,showwavespic=s=420x80';# :colors=#9f63ff
     push @ffmpeg, qw(-c:v png -f image2 -frames:v 1 -y  -loglevel debug);
     push @ffmpeg, $tmp->filename;
 
