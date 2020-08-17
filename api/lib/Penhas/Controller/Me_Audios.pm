@@ -316,7 +316,7 @@ sub _concat_audio_files {
         }
 
         log_trace('ffmpeg-concat');
-
+        $c->res->headers->content_type('audio/aac');
         $c->reply->file($outfile);
     }
 }
