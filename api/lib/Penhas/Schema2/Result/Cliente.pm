@@ -359,8 +359,18 @@ sub update_activity {
     $kv->lock_and_wait($lock);
     on_scope_exit { $kv->unlock($lock) };
 
-    my $column  = $is_timeline ? 'last_tm_activity' : 'last_activity';
-    my $changes = $self->clientes_app_activities->update({$column => \'now()'});
+    my $changes = $self->clientes_app_activities->update(
+        {
+            (
+                $is_timeline
+                ? (
+                    last_tm_activity => \'now()',
+                  )
+                : ()
+            ),
+            last_activity => \'now()',
+        }
+    );
     if ($changes eq '0E0') {
         $self->clientes_app_activities->create(
             {
