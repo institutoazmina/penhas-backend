@@ -75,12 +75,10 @@ sub post {
             goto LOGON;
         }
         else {
-
-            my $total_errors = 1 + $c->directus->sum_login_errors(cliente_id => $directus_id);
+            my $total_errors = 1 + $c->schema2->sum_login_errors(cliente_id => $directus_id);
             my $now          = DateTime->now->datetime(' ');
-            $c->directus->create(
-                table => 'login_erros',
-                form  => {
+            $c->schema2->resultset('LoginErro')->create(
+                {
                     cliente_id => $directus_id,
                     remote_ip  => $remote_ip,
                     created_at => $now,

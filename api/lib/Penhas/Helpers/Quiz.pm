@@ -32,7 +32,7 @@ sub setup {
 
             return 1 if $c->stash('questionnaires');
 
-            my $questionnaires = $c->directus->search(
+            my $questionnaires = $c->directusx->search(
                 table => 'questionnaires',
                 form  => {
                     (
@@ -44,7 +44,23 @@ sub setup {
                     fields => '*,quiz_configs.modified_on'
                 }
             );
+            use DDP; p $questionnaires;
+=pod
+            my $questionnaires = $c->schema2->resultset('Questionnaire')->search(
+                {
+                    (
+                        $ENV{FILTER_QUESTIONNAIRE_IDS}
+                        ? ('me.id' => {in => [split ',', $ENV{FILTER_QUESTIONNAIRE_IDS}]})
+                        : ('me.active' => '1')
+                    ),
 
+                },{
+                    columns => {},
+                    join => 'quiz_configs
+                }
+                    fields => '*,quiz_configs.modified_on'
+            );
+=cut
 
             foreach my $q (@{$questionnaires->{data}}) {
                 my $md5 = md5_hex($q->{modified_on} . join ',', map { $_->{modified_on} } $q->{quiz_configs}->@*);
@@ -72,14 +88,25 @@ sub setup {
                     $cachekey,
                     86400 * 7,    # 7 days
                     sub {
-                        return $c->directus->search(
-                            table => 'quiz_config',
-                            form  => {
-                                'status'                       => 'published',
-                                'filter[questionnaire_id][eq]' => $id,
-                                'sort'                         => 'sort,id'
-                            }
-                        )->{data};
+                        return [
+                            map {
+                                $_->{yesnogroup} and $_->{yesnogroup} = from_json($_->{yesnogroup});
+                                $_->{intro}      and $_->{intro}      = from_json($_->{intro});
+                                $_
+                            } $c->schema2->resultset('QuizConfig')->search(
+                                {
+                                    'status'           => 'published',
+                                    'questionnaire_id' => $id,
+
+                                },
+                                {
+
+                                    order_by     => ['sort', 'id'],
+                                    result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+                                }
+                            )->all
+                        ];
+
                     }
                 )
             };
@@ -759,14 +786,17 @@ sub _init_questionnaire_stash {
 
         }
         elsif ($qc->{type} eq 'skillset') {
-            my $skills = $c->directus->search(
-                table => 'skills',
-                form  => {
-                    'status' => 'published',
-                    'sort'   => 'sort,id',
-                }
-            );
-
+            my $skills = [
+                $c->schema2->resultset('Skill')->search(
+                    {
+                        'status' => 'published',
+                    },
+                    {
+                        order_by     => ['sort', 'id'],
+                        result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+                    }
+                )->all
+            ];
             my $ref = {
                 type       => 'multiplechoices',
                 content    => $qc->{question},
@@ -777,7 +807,7 @@ sub _init_questionnaire_stash {
             };
 
             my $counter = 0;
-            foreach my $skill ($skills->{data}->@*) {
+            foreach my $skill ($skills->@*) {
                 $ref->{_skills}{$counter} = $skill->{id};
                 push @{$ref->{options}}, {
                     display => $skill->{skill},

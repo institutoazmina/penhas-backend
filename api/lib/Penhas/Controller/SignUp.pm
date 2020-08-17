@@ -42,9 +42,6 @@ sub post {
             senha       => {max_length => 200, required => 1, type => 'Str', min_length => 6},
         );
 
-        use DDP;
-        p $params->{genero};
-
         # nome_social quando o genero é trans ou Outro
         if ($params->{genero} =~ /trans|outro/i) {
             $c->validate_request_params(
@@ -94,7 +91,7 @@ sub post {
     }
 
     # banir temporariamente quem tentar varias vezes com cpf invalido
-    if ($c->sum_cpf_errors(remote_ip => $remote_ip) > $max_errors_in_24h ) {
+    if ($c->sum_cpf_errors(remote_ip => $remote_ip) > $max_errors_in_24h) {
         die {
             error   => 'too_many_requests',
             message => 'Você fez muitos acessos recentemente. Aguarde e tente novamente.',
@@ -166,9 +163,8 @@ sub post {
         );
     }
 
-    my $row = $c->directus->create(
-        table => 'clientes',
-        form  => {
+    my $row = $c->schema2->resultset('Cliente')->create(
+        {
             email         => $email,
             nome_completo => $params->{nome_completo},    # deixa do jeito que o usuario digitou
             cpf_hash      => $cpf_hash,
@@ -179,10 +175,11 @@ sub post {
             senha_sha256 => sha256_hex($params->{senha}),
 
             (map { $_ => $params->{$_} || '' } qw/genero apelido raca nome_social genero_outro/),
-            status => 'active'
+            status     => 'active',
+            created_on => \'NOW()',
         }
     );
-    my $directus_id = $row->{data}{id};
+    my $directus_id = $row->id;
     die '$directus_id not defined' unless $directus_id;
 
     my $session = $c->schema2->resultset('ClientesActiveSession')->create(
@@ -220,19 +217,19 @@ sub _inc_cpf_invalid_count {
 
     my $cpf_hash = sha256_hex($cpf);
 
+    my $rs = $c->schema2->resultset('CpfErro');
+
     # contar quantas vezes o IP ja errou no ultimo dia
-    my $item = $c->directus->search_one(
-        table => 'cpf_erros',
-        form  => {
-            'filter[reset_at][gt]' => DateTime->now->datetime(' '),
-            'filter[cpf_hash][eq]' => $cpf_hash,
+    my $item = $rs->search(
+        {
+            'reset_at' => {'>' => DateTime->now->datetime(' ')},
+            'cpf_hash' => $cpf_hash,
         }
-    );
+    )->next;
 
     if (!$item) {
-        $c->directus->create(
-            table => 'cpf_erros',
-            form  => {
+        $rs->create(
+            {
                 cpf_hash  => $cpf_hash,
                 cpf_start => substr($cpf, 0, 4),
                 remote_ip => $remote_ip,
@@ -244,11 +241,9 @@ sub _inc_cpf_invalid_count {
     else {
         # sobe o contador, pode acontecer de sobreescrever ja que nao tem lock
         # mas não mais do que 3x por minuto por causa do apply_request_per_second_limit
-        $c->directus->update(
-            table => 'cpf_erros',
-            id    => $item->{id},
-            form  => {
-                count => $item->{count} + 1,
+        $item->update(
+            {
+                count => \'count + 1',
             }
         );
 

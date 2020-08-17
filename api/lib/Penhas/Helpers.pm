@@ -108,7 +108,7 @@ sub setup {
 
     $self->helper('reply_invalid_param' => sub { Penhas::Controller::reply_invalid_param(@_) });
 
-    $self->helper(directus => sub { Penhas::Directus->instance });
+    $self->helper(directusx => sub { Penhas::Directus->instance });
 
 }
 

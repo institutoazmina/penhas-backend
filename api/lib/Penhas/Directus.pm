@@ -32,6 +32,9 @@ sub _build_ua {
 
 sub create {
     my ($self, %opts) = @_;
+    $a = caller(1);
+    use DDP;
+    p $a;
 
     my $collection_name = $opts{table} or croak 'missing table';
 
@@ -49,30 +52,14 @@ sub create {
     return $res;
 }
 
-sub update {
-    my ($self, %opts) = @_;
-
-    my $collection_name = $opts{table} or croak 'missing table';
-    my $item_id         = $opts{id}    or croak 'missing id';
-
-    my $tx = &exec_tx_with_retry(
-        sub {
-            $self->ua->patch(
-                $self->url_for("items/$collection_name/$item_id"),
-                {%{$self->default_headers()}, 'content-type' => 'application/json'},
-                json => $opts{form}
-            );
-        }
-    );
-
-    return 1 if $tx->res->code == 204;
-    my $res = $tx->res->json or die sprintf 'Response Body is not a json: %s', $tx->res->body;
-
-    return $res;
-}
-
 sub search {
     my ($self, %opts) = @_;
+    $a = caller(1);
+    use DDP;
+    p $a;
+    $a = caller(2);
+    use DDP;
+    p $a;
 
     my $collection_name = $opts{table} or croak 'missing table';
 
@@ -91,29 +78,5 @@ sub search {
     return $res;
 }
 
-sub search_one {
-    my $res = shift->search(@_);
-
-    return $res->{data}[0];
-}
-
-sub sum_login_errors {
-    my ($self, %opts) = @_;
-
-    my $rows = $self->search(
-        table => 'login_erros',
-        form  => {
-            'filter[created_at][gt]' => DateTime->now->add(minutes => -60)->datetime(' '),
-            'filter[cliente_id][eq]' => ($opts{cliente_id} or croak 'missing cliente_id'),
-        }
-    );
-
-    my $total = 0;
-    foreach my $row (@{$rows->{data}}) {
-        $total += 1;
-    }
-
-    return $total;
-}
 
 1;

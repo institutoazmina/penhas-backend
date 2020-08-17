@@ -20,16 +20,11 @@ $cliente->update(
 
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '4,5';
 
-my $quiz_sessions = app->directus->search(
-    table => 'clientes_quiz_session',
-    form  => {
-        'filter[cliente_id][eq]' => $user_id,
+app->schema2->resultset('ClientesQuizSession')->search(
+    {
+        'cliente_id' => $user_id,
     }
-);
-
-foreach ($quiz_sessions->{data}->@*) {
-    app->schema2->resultset('ClientesQuizSession')->search({id => $_->{id}})->delete;
-}
+)->delete;
 
 my $cadastro = $t->get_ok(
     '/me',
@@ -101,15 +96,12 @@ subtest_buffered 'Seguindo fluxo ate o final usando caminho Y' => sub {
         }
     )->status_is(200)->json_has('/quiz_session')->tx->res->json;
 
-    my $db_session = app->directus->search_one(
-        table => 'clientes_quiz_session',
-        form  => {
-            'filter[id][eq]' => $cadastro->{quiz_session}{session_id},
-
+    my $db_session = app->schema2->resultset('ClientesQuizSession')->search(
+        {
+            'id' => $cadastro->{quiz_session}{session_id},
         }
-    );
-
-    is $db_session->{responses}{freetext}, $choose_rand, 'responses is updated with random text';
+    )->next;
+    is(from_json($db_session->responses)->{freetext}, $choose_rand, 'responses is updated with random text');
 };
 
 subtest_buffered 'group de questoes boolean' => sub {

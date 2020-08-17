@@ -16,14 +16,17 @@ sub load_object {
     my $c = shift;
 
     die 'missing tweet_id' unless $c->param('tweet_id');
-    my $tweet = $c->directus->search_one(
-        table => 'tweets',
-        form  => {
-            'filter[id][eq]'                      => $c->param('tweet_id'),
-            'filter[status][eq]'                  => 'published',
-            'filter[cliente_id.login_status][eq]' => 'OK',
+    my $tweet = $c->schema2->resultset('Tweet')->search(
+        {
+            'me.id'          => $c->param('tweet_id'),
+            'me.status'      => 'published',
+            'cliente.status' => 'active',
+        },
+        {
+            join         => 'cliente',
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
-    );
+    )->next;
 
     $c->reply_item_not_found() unless $tweet;
     $c->stash('tweet' => $tweet);
@@ -104,7 +107,7 @@ sub list {
 
     my $tweets = $c->list_tweets(
         %$params,
-        user => $c->stash('user'),
+        user     => $c->stash('user'),
         user_obj => $c->stash('user_obj'),
     );
 

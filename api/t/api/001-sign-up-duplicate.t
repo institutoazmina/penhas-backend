@@ -268,6 +268,7 @@ subtest_buffered 'Reset de senha' => sub {
         }
     )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha');
 
+use DDP; p $forget;
     $t->post_ok(
         '/reset-password/write-new',
         form => {
@@ -277,7 +278,7 @@ subtest_buffered 'Reset de senha' => sub {
             senha       => 'abc12345678',
             app_version => '...',
         }
-    )->status_is(200)->json_is('/continue', '1');
+    )->status_is(200, 'ok 1')->json_is('/continue', '1', 'suc 2');
 
     $t->post_ok(
         '/reset-password/write-new',
@@ -288,7 +289,8 @@ subtest_buffered 'Reset de senha' => sub {
             senha       => 'abc12345678',
             app_version => '...',
         }
-    )->status_is(200)->json_is('/success', '1');
+    )->status_is(200, 'ok 2')->json_is('/success', '1', 'suc 2');
+
 
     $t->post_ok(
         '/reset-password/write-new',

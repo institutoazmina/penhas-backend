@@ -253,32 +253,23 @@ sub report_tweet {
     kv->lock_and_wait($lock);
     on_scope_exit { kv->unlock($lock) };
 
-    my $report = $c->directus->create(
-        table => 'tweets_reports',
-        form  => {
+    my $report = $c->schema2->resultset('TweetsReport')->create(
+        {
             reason      => $reason,
             cliente_id  => $user->{id},
             reported_id => $reported_id,
             created_at  => DateTime->now->datetime(' '),
         }
     );
-    die 'id missing' unless $report->{data}{id};
+    die 'id missing' unless $report->id;
 
-    my $current = $c->directus->search_one(
-        table => 'tweets',
-        form  => {
-            form => {
-                'filter[id][eq]' => $reported_id,
-            }
+    $c->schema2->resultset('Tweet')->search(
+        {
+            'id' => $reported_id,
         }
-    );
-    $c->directus->update(
-        table => 'tweets',
-        id    => $current->{id},
-        form  => {qtde_reportado => $current->{qtde_reportado} + 1}
-    ) if $current;
+    )->update({qtde_reportado => \'qtde_reportado + 1'});
 
-    return $report->{data};
+    return {id => $report->id};
 }
 
 sub list_tweets {
@@ -389,13 +380,13 @@ sub list_tweets {
         ],
         result_class => 'DBIx::Class::ResultClass::HashRefInflator'
     };
-    log_info(dumper([$cond, $attr]));
+
+    #log_info(dumper([$cond, $attr]));
     my @rows     = $c->schema2->resultset('Tweet')->search($cond, $attr)->all;
     my $has_more = scalar @rows > $rows ? 1 : 0;
-    log_info(dumper([@rows]));
 
-    use DDP;
-    p $has_more;
+#    log_info(dumper([@rows]));
+
     pop @rows if $has_more;
 
     my $remote_addr = $c->remote_addr;
@@ -477,15 +468,16 @@ sub list_tweets {
             $has_more = 1 if delete $next_page->{set_has_more_true};
         }
 
-        log_info('next page . ' . dumper($next_page));
+        #log_info('next page . ' . dumper($next_page));
 
         $next_page = $c->encode_jwt($next_page, 1);
     }
 
     # restaura pra 'all'
     $category = 'all' if $category eq 'all_but_news';
-    log_info('$category . ' . $$category);
-    log_info('tweets . ' . dumper(\@tweets));
+
+    #log_info('$category . ' . $$category);
+    #log_info('tweets . ' . dumper(\@tweets));
 
     return {
         tweets   => \@tweets,
@@ -585,7 +577,7 @@ sub _get_proxy_image_url {
 
     my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . encode_utf8($url)), 0, 12);
 
-    return $ENV{PUBLIC_API_URL} . "get-proxy/?h=$hash&href=" . url_escape( encode_utf8($url) );
+    return $ENV{PUBLIC_API_URL} . "get-proxy/?h=$hash&href=" . url_escape(encode_utf8($url));
 }
 
 sub add_tweets_highlights {
@@ -783,7 +775,8 @@ sub add_tweets_news {
         pop @news if $has_more;
 
         $opts{next_page}{set_has_more_true} = $has_more;
-        log_info("news array . " . dumper(\@news));
+
+        #log_info("news array . " . dumper(\@news));
     }
     else {
         my $expected_rows = int(scalar @list / 3);
@@ -815,7 +808,7 @@ sub add_tweets_news {
         $opts{next_page}{vitrine_order}     = $last_vitrine_order;
 
 
-        log_info("vitrine array . " . dumper(\@vitrine));
+        #log_info("vitrine array . " . dumper(\@vitrine));
     }
 
 

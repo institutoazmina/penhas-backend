@@ -34,7 +34,7 @@ sub request_new {
 
     # procura o cliente pelo email
     my $schema = $c->schema;
-    my $found  = $c->directus->search_one(table => 'clientes', form => {'filter[email][eq]' => $email});
+    my $found = $c->schema2->resultset('Cliente')->search({'email' => $email}, {columns => ['id', 'cpf_prefix']})->next;
     if (!$found) {
         die {
             error   => 'email_not_found',
@@ -43,7 +43,7 @@ sub request_new {
             reason  => 'invalid',
         };
     }
-    my $directus_id = $found->{id};
+    my $directus_id = $found->id;
 
     # valido por 1 hora
     my $ttl_seconds = 60 * 60;
@@ -52,15 +52,14 @@ sub request_new {
 
     # contar se ja existe um envio recente para o mesmo email
     # se restar pelo menos 6% do tempo restante, nao envia outro email
-    my $item = $c->directus->search_one(
-        table => 'clientes_reset_password',
-        form  => {
-            'filter[created_at][gt]' => DateTime->now->add(seconds => $min_ttl_retry)->datetime(' '),
-            'filter[cliente_id][eq]' => $directus_id,
+    my $item = $c->schema2->resultset('ClientesResetPassword')->search(
+        {
+            'created_at' => {'>' => DateTime->now->add(seconds => $min_ttl_retry)->datetime(' ')},
+            'cliente_id' => $directus_id,
         }
-    );
+    )->next;
     if ($item) {
-        my $valid_until = DateTime::Format::Pg->parse_datetime($item->{valid_until})->epoch;
+        my $valid_until = $item->valid_until;
 
         return $c->render(
             json => {
@@ -75,9 +74,8 @@ sub request_new {
         );
     }
 
-    $item = $c->directus->create(
-        table => 'clientes_reset_password',
-        form  => {
+    $item = $c->schema2->resultset('ClientesResetPassword')->create(
+        {
             created_at             => DateTime->now->datetime(' '),
             requested_by_remote_ip => $remote_ip,
             cliente_id             => $directus_id,
@@ -85,7 +83,7 @@ sub request_new {
             valid_until            => DateTime->now->add(seconds => $ttl_seconds)->datetime(' '),
         }
     );
-    die 'clientes_reset_password id missing' unless $item->{data}{id};
+    die 'clientes_reset_password id missing' unless $item->id;
 
     my $email_db = $c->schema->resultset('EmaildbQueue')->create(
         {
@@ -96,11 +94,11 @@ sub request_new {
             variables => encode_json(
                 {
                     nome_completo => $found->{nome_completo},
-                    code          => $item->{data}{token},
+                    code          => $item->token,
                     remote_ip     => $remote_ip,
                     app_version   => $params->{app_version},
                     email         => $email,
-                    cpf           => substr($found->{cpf_prefix}, 0, 3)
+                    cpf           => substr($found->cpf_prefix, 0, 3)
                 }
             ),
         }
@@ -148,21 +146,20 @@ sub write_new {
 
     # procura o cliente pelo email
     my $schema = $c->schema;
-    my $found  = $c->directus->search_one(table => 'clientes', form => {'filter[email][eq]' => $email});
+    my $found  = $c->schema2->resultset('Cliente')->search({'email' => $email})->next;
     if (!$found) {
         goto INVALID_TOKEN;
     }
-    my $directus_id = $found->{id};
+    my $directus_id = $found->id;
 
-    my $item = $c->directus->search_one(
-        table => 'clientes_reset_password',
-        form  => {
-            'filter[valid_until][gt]' => DateTime->now->datetime(' '),
-            'filter[cliente_id][eq]'  => $directus_id,
-            'filter[token][eq]'       => $token,
-            'filter[used_at][empty]'  => 1,
+    my $item = $c->schema2->resultset('ClientesResetPassword')->search(
+        {
+            'valid_until' => {'>=' => DateTime->now->datetime(' ')},
+            'cliente_id'  => $directus_id,
+            'token'       => $token,
+            'used_at'     => undef,
         }
-    );
+    )->next;
 
     if ($item && $dry) {
 
@@ -173,23 +170,22 @@ sub write_new {
     }
     elsif ($item) {
 
-        $c->directus->update(
-            table => 'clientes_reset_password',
-            id    => $item->{id},
-            form  => {
-                'used_at'           => DateTime->now->datetime(' '),
-                'used_by_remote_ip' => $remote_ip,
+        $c->schema2->txn_do(
+            sub {
+                $item->update(
+                    {
+                        'used_at'           => DateTime->now->datetime(' '),
+                        'used_by_remote_ip' => $remote_ip,
+                    }
+                );
+
+                $item->cliente->update(
+                    {
+                        senha_sha256 => sha256_hex($params->{senha}),
+                    }
+                );
             }
         );
-
-        $c->directus->update(
-            table => 'clientes',
-            id    => $directus_id,
-            form  => {
-                senha_sha256 => sha256_hex($params->{senha}),
-            }
-        );
-
         return $c->render(
             json   => {success => 1},
             status => 200,

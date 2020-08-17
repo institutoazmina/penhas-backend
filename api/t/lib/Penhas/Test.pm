@@ -134,7 +134,7 @@ sub t             {$t}
 
 sub app { $t->app }
 
-sub get_schema { $t->app->schema }
+sub get_schema  { $t->app->schema }
 sub get_schema2 { $t->app->schema2 }
 
 sub resultset { get_schema->resultset(@_) }
@@ -174,42 +174,31 @@ sub cpf_already_exists {
 
     my $cpf_hash = sha256_hex($cpf);
 
-    my $res = app->directus->search_one(
-        table => 'clientes',
-        form  => {'filter[cpf_hash][eq]' => $cpf_hash,}
-    );
-    use DDP;
-    p $res;
-
-    return $res;
+    return app->schema2->resultset('Cliente')->search({cpf_hash => $cpf_hash,})->count;
 }
 
 sub get_cliente_by_email {
 
-    my $res = app->directus->search_one(
-        table => 'clientes',
-        form  => {
+    my $res = app->schema2->resultset('Cliente')->search(
+        {
 
-            'filter[email][eq]' => shift,
-
-
-        }
-    );
+            'email' => shift,
+        },
+        {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
+    )->next;
 
     return $res;
 }
 
 sub get_forget_password_row {
+    my $id = shift or die 'missing id';
 
-    my $res = app->directus->search_one(
-        table => 'clientes_reset_password',
-        form  => {
-
-            'filter[cliente_id][eq]' => shift,
-
-
-        }
-    );
+    my $res = app->schema2->resultset('ClientesResetPassword')->search(
+        {
+            'cliente_id' => $id,
+        },
+        {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
+    )->next;
 
     return $res;
 }
@@ -289,6 +278,7 @@ sub user_cleanup {
       )
     {
         my $rs = app->schema2->resultset($table);
+
         #log_info("delete from $table where cliente_id = " . (ref $user_id ? join ',', $user_id->@* : $user_id));
         $rs->search({cliente_id => $user_id})->delete;
     }

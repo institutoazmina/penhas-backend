@@ -186,6 +186,12 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "clientes_reset_passwords",
+  "Penhas::Schema2::Result::ClientesResetPassword",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "login_erros",
   "Penhas::Schema2::Result::LoginErro",
   { "foreign.cliente_id" => "self.id" },
@@ -229,8 +235,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-12 06:59:40
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NQBVcO+4ZlIvbd8MBT1pYQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-16 23:41:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:T4XPVCHdWpqlRVdWU36fMg
 
 use Carp qw/confess/;
 
