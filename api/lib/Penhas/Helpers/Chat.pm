@@ -65,9 +65,11 @@ sub chat_find_users {
             ),
         },
         {
-            join => ['clientes_app_activities'],
-            columns =>
-              ['me.id', 'me.apelido', {activity => \"DATEDIFF( clientes_app_activities.last_tm_activity, now() )"}],
+            join    => ['clientes_app_activities'],
+            columns => [
+                'me.id', 'me.apelido',
+                {activity => \"TIMESTAMPDIFF( MINUTE, clientes_app_activities.last_tm_activity, now() )"}
+            ],
             order_by     => \'clientes_app_activities.last_tm_activity DESC',
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
             rows         => $rows + 1,
@@ -95,8 +97,13 @@ sub chat_find_users {
     }
 
     foreach (@rows) {
-        $_->{activity} = $activity_labels{$_->{activity}} || 'há muito tempo';
-
+        if ($_->{activity} < 5) {
+            $_->{activity} = 'online';
+        }
+        else {
+            # divide por 1440 pra transformar de minuto em dias
+            $_->{activity} = $activity_labels{int($_->{activity} / 1440)} || 'há muito tempo';
+        }
     }
 
     my $next_page = $c->encode_jwt(

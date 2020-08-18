@@ -151,6 +151,9 @@ sub register {
     # GET /search-users
     $user_loaded->under('search-users')->get()->to(controller => 'Me_Chat', action => 'me_chat_find_users');
 
+    # GET /chats
+    $me->under('chats')->get()->to(controller => 'Me_Chat', action => 'me_chat_sessions');
+
 
 }
 

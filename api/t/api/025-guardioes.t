@@ -419,7 +419,7 @@ do {
     is $audio_1->cliente_id, $cliente_id, 'row is the same client_id';
     is $event->cliente_id,   $cliente_id, 'event row is the same client_id as audio';
     is $event->audio_duration, '15.883', 'duration is ok';
-    ok $event->total_bytes > 200000 && $event->total_bytes < 300000, 'bytes sum is about right';
+    ok $event->total_bytes > 160000 && $event->total_bytes < 240000, "bytes sum is about right ${\$event->total_bytes}";
 
     my $audio_2_response = $t->post_ok(
         '/me/audios',
