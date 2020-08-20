@@ -10,6 +10,7 @@ use MojoX::InsistentPromise;
 use Digest::SHA qw(sha1_hex);
 use Encode;
 use IPC::Run3;
+use Scope::OnExit;
 
 sub audio_upload {
     my $c = shift;
@@ -274,8 +275,10 @@ sub _concat_audio_files {
         }
     }
 
-    my $files_concated = join '|', @files;
-    my $outfile        = $ENV{TMP_AUDIO_DIR} . '/' . (sha1_hex(encode_utf8($files_concated)) . '.aac');
+    my $files_concated = join ' ', @files;
+    my $outfile_base   = $ENV{TMP_AUDIO_DIR} . '/' . (sha1_hex(encode_utf8($files_concated)));
+    my $outfile        = $outfile_base . '.aac';
+    my $outfile_txt    = $outfile_base . '.txt';
 
     if (-e $outfile) {
 
@@ -290,10 +293,16 @@ sub _concat_audio_files {
     else {
         log_info("running concat $files_concated to $outfile");
 
+        open my $fh, '>', $outfile_txt or die "cannot open $outfile_txt $!";
+        foreach my $filename (@files) {
+            print $fh "file $filename\n";
+        }
+        close $fh or die "cannot close $outfile_txt $!";
+        on_scope_exit { unlink($outfile_txt); }
 
         my @ffmpeg = ();
-        push @ffmpeg, qw(ffmpeg -i);
-        push @ffmpeg, 'concat:' . $files_concated;
+        push @ffmpeg, qw(ffmpeg -f concat -i);
+        push @ffmpeg, $outfile_txt;
         push @ffmpeg, qw(-acodec copy -strict -2 -movflags +faststart);
         push @ffmpeg, $outfile;
 
