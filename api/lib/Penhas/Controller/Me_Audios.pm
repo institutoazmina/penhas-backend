@@ -11,6 +11,7 @@ use Digest::SHA qw(sha1_hex);
 use Encode;
 use IPC::Run3;
 use Scope::OnExit;
+use File::Basename qw/basename/;
 
 sub audio_upload {
     my $c = shift;
@@ -295,14 +296,15 @@ sub _concat_audio_files {
 
         open my $fh, '>', $outfile_txt or die "cannot open $outfile_txt $!";
         foreach my $filename (@files) {
-            print $fh "file $filename\n";
+            my $basename = basename($filename);
+            print $fh "file $basename\n";
         }
         close $fh or die "cannot close $outfile_txt $!";
-        on_scope_exit { unlink($outfile_txt); }
+        on_scope_exit { unlink($outfile_txt) };
 
         my @ffmpeg = ();
-        push @ffmpeg, qw(ffmpeg -f concat -i);
-        push @ffmpeg, $outfile_txt;
+        push @ffmpeg, qw(ffmpeg -f concat);
+        push @ffmpeg, qw(-i), $outfile_txt;
         push @ffmpeg, qw(-acodec copy -strict -2 -movflags +faststart);
         push @ffmpeg, $outfile;
 
@@ -311,7 +313,7 @@ sub _concat_audio_files {
 
         eval { run3 \@ffmpeg, \undef, \$stdout, \$stderr; };
 
-        if ($@ || -z $files_concated) {
+        if ($@ || -s $outfile < 3) {
             log_error("concat audio FAILED: $@ - $stderr $stdout");
 
             $c->render(
