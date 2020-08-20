@@ -43,6 +43,8 @@ get_schema->resultset('CpfCache')->find_or_create(
     }
 );
 
+&reset_db();
+
 my ($cliente_id, $session);
 subtest_buffered 'Cadastro com sucesso' => sub {
     my $res = $t->post_ok(
@@ -137,7 +139,7 @@ do {
     is $first_sugg_row->categoria, $rand_cat->id, 'cliente_id ok';
 
     my $fields = {
-        'sigla'                 => 'lowercase',
+        'sigla'                 => 'UPPER',
         'natureza'              => 'publico',
         'categoria'             => $rand_cat->id,
         'descricao'             => '',
@@ -165,7 +167,6 @@ do {
         created_on              => \'now()',
     };
 
-    $schema2->resultset('PontoApoioCategoria')->search({status => 'test'})->delete;
     my $cat1 = $schema2->resultset('PontoApoioCategoria')->create(
         {
             status  => 'test',
@@ -190,7 +191,6 @@ do {
         }
     )->id;
 
-    $schema2->resultset('PontoApoio')->search({test_status => 'test'})->delete;
     my $avaliar_ponto_apoio;
     foreach my $code (1 .. 3) {
 
@@ -474,4 +474,11 @@ do {
 
 done_testing();
 
+&reset_db();
 exit;
+
+sub reset_db {
+    $schema2->resultset('PontoApoio')->search({test_status => 'test'})->delete;
+    $schema2->resultset('PontoApoioCategoria')->search({status => 'test'})->delete;
+
+}
