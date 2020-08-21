@@ -340,6 +340,7 @@ sub cep_formmated {
 sub update_activity {
     my ($self, $is_timeline) = @_;
 
+    return if $ENV{SUPPRESS_USER_ACTIVITY};
     my $key = "ua" . ($is_timeline ? 't:' : ':') . $self->id;
 
     my $kv = Penhas::KeyValueStorage->instance;

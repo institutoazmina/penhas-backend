@@ -157,6 +157,9 @@ do {
     $t->get_ok('/me', {'x-api-key' => $session2})->status_is(200, 'clientes_app_activities 2');
     $t->get_ok('/me', {'x-api-key' => $session3})->status_is(200, 'clientes_app_activities 3');
 
+    # pra nao atrapalhar o resto dos testes
+    $ENV{SUPPRESS_USER_ACTIVITY} = 1;
+
     $t->get_ok(
         '/search-users',
         {'x-api-key' => $session},
@@ -167,13 +170,29 @@ do {
       ->json_hasnt('/rows/2', '2 rows')                               #
       ->json_has('/next_page', 'has next_page')                       #;
       ->json_is('/has_more', '1');                                    #;
+    my $next_page = last_tx_json->{next_page};
+    db_transaction2 {
+        $cliente->update({genero => 'Homem'});
+        $t->get_ok(
+            '/search-users',
+            {'x-api-key' => $session}
+        )->status_is(400, 'homem nao pode listar')->json_is('/error', 'form_error');
+
+        $t->get_ok(
+            '/search-users',
+            {'x-api-key' => $session2},
+            form => {rows => 2, next_page => $next_page},
+          )->status_is(200, 'listando usuarios')    #
+          ->json_hasnt('/rows/0', 'nao tem ninguem pq homem nao deve aparecer na lista')    #
+          ->json_is('/has_more', 0, 'has more false');
+    };
     $t->get_ok(
         '/search-users',
         {'x-api-key' => $session},
-        form => {rows => 2, next_page => last_tx_json->{next_page}},
-      )->status_is(200, 'listando usuarios')                          #
-      ->json_is('/rows/0/cliente_id', $cliente_id, 'id ok cli 1')     #
-      ->json_hasnt('/rows/1', '1 rows')                               #
+        form => {rows => 2, next_page => $next_page},
+      )->status_is(200, 'listando usuarios')                                                #
+      ->json_is('/rows/0/cliente_id', $cliente_id, 'id ok cli 1')                           #
+      ->json_hasnt('/rows/1', '1 rows')                                                     #
       ->json_is('/has_more', 0, 'has more false');
 
 
