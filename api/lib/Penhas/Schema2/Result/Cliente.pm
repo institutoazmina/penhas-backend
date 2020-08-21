@@ -186,12 +186,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
-  "clientes_reset_passwords",
-  "Penhas::Schema2::Result::ClientesResetPassword",
-  { "foreign.cliente_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-__PACKAGE__->has_many(
   "login_erros",
   "Penhas::Schema2::Result::LoginErro",
   { "foreign.cliente_id" => "self.id" },
@@ -235,8 +229,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-16 23:41:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:T4XPVCHdWpqlRVdWU36fMg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-20 18:21:53
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:g5v02zGf7RdCNlN8YICDYA
 
 use Carp qw/confess/;
 
@@ -300,7 +294,7 @@ sub cliente_modo_camuflado_toggle {
     $self->update(
         {
             modo_camuflado_ativo         => $active ? 1 : 0,
-            modo_camuflado_atualizado_em => \'NOW()',
+            modo_camuflado_atualizado_em => \'NOW(4)',
         }
     );
 }
@@ -312,7 +306,7 @@ sub cliente_modo_anonimo_toggle {
     $self->update(
         {
             modo_anonimo_ativo         => $active ? 1 : 0,
-            modo_anonimo_atualizado_em => \'NOW()',
+            modo_anonimo_atualizado_em => \'NOW(4)',
         }
     );
 
@@ -364,18 +358,18 @@ sub update_activity {
             (
                 $is_timeline
                 ? (
-                    last_tm_activity => \'now()',
+                    last_tm_activity => \'now(6)',    # MariaDB only now with precision
                   )
                 : ()
             ),
-            last_activity => \'now()',
+            last_activity => \'now(6)',
         }
     );
     if ($changes eq '0E0') {
         $self->clientes_app_activities->create(
             {
-                last_activity    => \'now()',
-                last_tm_activity => \'now()',
+                last_activity    => \'now(6)',
+                last_tm_activity => \'now(6)',
             }
         );
     }

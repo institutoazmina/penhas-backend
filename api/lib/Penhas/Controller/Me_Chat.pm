@@ -27,8 +27,8 @@ sub me_chat_find_users {
       unless $user_obj->access_modules_str =~ /,chat_privado,/;
 
     my $ret = $c->chat_find_users(
+        %$valid,
         user_obj => $c->stash('user_obj'),
-
     );
 
     return $c->render(

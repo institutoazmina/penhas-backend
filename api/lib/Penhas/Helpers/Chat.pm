@@ -51,26 +51,28 @@ sub chat_find_users {
         $offset = $tmp->{offset};
     }
 
-    my $rs = $c->schema2->resultset('Cliente')->search(
+    my $rs = $c->schema2->resultset('ClientesAppActivity')->search(
         {
-            'me.modo_anonimo_ativo' => '0',
-            'me.status'             => 'active',
+            'cliente.modo_anonimo_ativo' => '0',
+            'cliente.status'             => 'active',
 
-            'me.genero' => {in => ['MulherTrans', 'Feminino']},    # &is_female()
+            'cliente.genero' => {in => ['MulherTrans', 'Feminino']},    # &is_female()
 
             (
                 $ForceFilterClientes
-                ? ('me.id' => $ForceFilterClientes)
+                ? ('me.cliente_id' => $ForceFilterClientes)
                 : ()
             ),
         },
         {
-            join    => ['clientes_app_activities'],
+            join    => ['cliente'],
             columns => [
-                'me.id', 'me.apelido',
-                {activity => \"TIMESTAMPDIFF( MINUTE, clientes_app_activities.last_tm_activity, now() )"}
+                {cliente_id => 'cliente.id'},
+                {apelido    => 'cliente.apelido'},
+                {activity   => \"TIMESTAMPDIFF( MINUTE, me.last_tm_activity, now() )"},
+                'last_tm_activity'
             ],
-            order_by     => \'clientes_app_activities.last_tm_activity DESC',
+            order_by     => \'me.last_tm_activity DESC',
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
             rows         => $rows + 1,
             offset       => $offset,
@@ -81,8 +83,8 @@ sub chat_find_users {
         $rs = $rs->search(
             {
                 '-or' => [
-                    \['lower(me.nome_completo) like ?', "$nome%"],
-                    \['lower(me.apelido) like ?',       "$nome%"],
+                    \['lower(cliente.nome_completo) like ?', "$nome%"],
+                    \['lower(cliente.apelido) like ?',       "$nome%"],
                 ],
             }
         );

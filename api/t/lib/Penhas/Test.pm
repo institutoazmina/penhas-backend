@@ -286,4 +286,7 @@ sub user_cleanup {
     app->schema2->resultset('Cliente')->search({id => $user_id})->delete;
 }
 
+sub last_tx_json {
+    test_instance->tx->res->json;
+}
 1;
