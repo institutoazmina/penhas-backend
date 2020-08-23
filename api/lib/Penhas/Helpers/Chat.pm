@@ -65,14 +65,16 @@ sub chat_find_users {
             ),
         },
         {
-            join    => ['cliente'],
+            join    => [{'cliente' => {'cliente_skills' => 'skill'}}],
             columns => [
-                {cliente_id => 'cliente.id'},
+                {cliente_id => 'me.cliente_id'},
                 {apelido    => 'cliente.apelido'},
                 {activity   => \"TIMESTAMPDIFF( MINUTE, me.last_tm_activity, now() )"},
-                'last_tm_activity'
+                {skills     => \q|JSON_ARRAYAGG(skill.skill)|},
+                'me.last_tm_activity',
             ],
             order_by     => \'me.last_tm_activity DESC',
+            group_by     => \'me.id',
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
             rows         => $rows + 1,
             offset       => $offset,
@@ -99,6 +101,12 @@ sub chat_find_users {
     }
 
     foreach (@rows) {
+        if ($_->{skills}) {
+            $_->{skills} = from_json($_->{skills});
+        }
+        else {
+            $_->{skills} = [];
+        }
         if ($_->{activity} < 5) {
             $_->{activity} = 'online';
         }

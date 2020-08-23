@@ -51,4 +51,8 @@ sub me_chat_sessions {
     ...;
 }
 
+sub me_load_profile {
+
+}
+
 1;

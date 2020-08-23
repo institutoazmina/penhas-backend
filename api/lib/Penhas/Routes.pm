@@ -154,6 +154,9 @@ sub register {
     # GET /chats
     $me->under('chats')->get()->to(controller => 'Me_Chat', action => 'me_chat_sessions');
 
+    # GET /profile
+    $me->under('profile')->get()->to(controller => 'Me_Chat', action => 'me_load_profile');
+
 
 }
 

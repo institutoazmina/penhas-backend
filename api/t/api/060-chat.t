@@ -136,23 +136,31 @@ subtest_buffered 'Cadastro2 com sucesso' => sub {
 on_scope_exit { user_cleanup(user_id => [$cliente_id, $cliente_id2, $cliente_id3,]); };
 
 
+my $skill1 = $schema2->resultset('Skill')->next;
+my $skill2 = $schema2->resultset('Skill')->search({id => {'!=' => $skill1->id}})->next;
+
+ok $skill1, 'skill1 is defined';
+ok $skill2, 'skill2 is defined';
+
 do {
-    is $cliente->clientes_app_activities->count, 0, 'no clientes_app_activities';
+    is $cliente->clientes_app_activity, undef, 'no clientes_app_activities';
     $t->get_ok(
         '/me',
         {'x-api-key' => $session}
     )->status_is(200, 'da um get pra marcar o clientes_app_activities');
-    is $cliente->clientes_app_activities->count, 1, 'clientes_app_activities exists';
+    ok $cliente->clientes_app_activity, 'clientes_app_activities exists';
+
+    test_instance->app->cliente_set_skill(user => {id => $cliente->id}, skills => [$skill1->id, $skill2->id]);
 
     $Penhas::Helpers::Chat::ForceFilterClientes = [$cliente_id, $cliente_id2, $cliente_id3];
     $t->get_ok(
         '/search-users',
         {'x-api-key' => $session}
       )->status_is(200, 'listando usuarios')    #
-      ->json_is('/rows/0/apelido', 'cliente A', 'nome ok')    #
-      ->json_is('/rows/0/activity', 'online')                 #
-      ->json_is('/rows/0/cliente_id', $cliente_id, 'id ok')   #
-      ->json_hasnt('/rows/1', '1 row');                       #;
+      ->json_is('/rows/0/apelido',    'cliente A', 'nome ok')    #
+      ->json_is('/rows/0/activity',   'online')                  #
+      ->json_is('/rows/0/cliente_id', $cliente_id, 'id ok')      #
+      ->json_hasnt('/rows/1', '1 row');                          #;
 
     $t->get_ok('/me', {'x-api-key' => $session2})->status_is(200, 'clientes_app_activities 2');
     $t->get_ok('/me', {'x-api-key' => $session3})->status_is(200, 'clientes_app_activities 3');
@@ -164,7 +172,7 @@ do {
         '/search-users',
         {'x-api-key' => $session},
         form => {rows => 2}
-      )->status_is(200, 'listando usuarios')                  #
+      )->status_is(200, 'listando usuarios')                     #
       ->json_is('/rows/0/cliente_id', $cliente_id3, 'id ok cli 3')    #
       ->json_is('/rows/1/cliente_id', $cliente_id2, 'id ok cli 2')    #
       ->json_hasnt('/rows/2', '2 rows')                               #

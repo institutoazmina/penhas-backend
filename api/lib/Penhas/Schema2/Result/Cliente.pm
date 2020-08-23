@@ -155,8 +155,8 @@ __PACKAGE__->has_many(
   { "foreign.cliente_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
-__PACKAGE__->has_many(
-  "clientes_app_activities",
+__PACKAGE__->might_have(
+  "clientes_app_activity",
   "Penhas::Schema2::Result::ClientesAppActivity",
   { "foreign.cliente_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
@@ -229,8 +229,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-20 18:21:53
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:g5v02zGf7RdCNlN8YICDYA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-23 12:47:38
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:eU8jHH+bxKQWuQmTZWlIRw
 
 use Carp qw/confess/;
 
@@ -354,27 +354,30 @@ sub update_activity {
     $kv->lock_and_wait($lock);
     on_scope_exit { $kv->unlock($lock) };
 
-    my $changes = $self->clientes_app_activities->update(
-        {
-            (
-                $is_timeline
-                ? (
-                    last_tm_activity => \'now(6)',    # MariaDB only now with precision
-                  )
-                : ()
-            ),
-            last_activity => \'now(6)',
-        }
-    );
-    if ($changes eq '0E0') {
-        $self->clientes_app_activities->create(
+    my $activity = $self->clientes_app_activity;
+    if ($activity) {
+        $activity->update(
+            {
+                (
+                    $is_timeline
+                    ? (
+                        last_tm_activity => \'now(6)',    # MariaDB only now with precision
+                      )
+                    : ()
+                ),
+                last_activity => \'now(6)',
+            }
+        );
+    }
+    else {
+        $self->create_related(
+            'clientes_app_activity',
             {
                 last_activity    => \'now(6)',
                 last_tm_activity => \'now(6)',
             }
         );
     }
-
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
