@@ -143,6 +143,8 @@ my $skill2 = $schema2->resultset('Skill')->search({id => {'!=' => $skill1->id}})
 ok $skill1, 'skill1 is defined';
 ok $skill2, 'skill2 is defined';
 
+my $skills_in_order = join ', ', sort { $a cmp $b } $skill1->skill, $skill2->skill;
+
 do {
     is $cliente->clientes_app_activity, undef, 'no clientes_app_activities';
     $t->get_ok(
@@ -202,7 +204,8 @@ do {
       )->status_is(200, 'listando usuarios')                                                #
       ->json_is('/rows/0/cliente_id', $cliente_id, 'id ok cli 1')                           #
       ->json_hasnt('/rows/1', '1 rows')                                                     #
-      ->json_is('/has_more', 0, 'has more false');
+      ->json_is('/has_more',      0,                'has more false')                       #
+      ->json_is('/rows/0/skills', $skills_in_order, 'skills ok');
 
     $t->get_ok(
         '/search-users',
@@ -218,9 +221,40 @@ do {
         {'x-api-key' => $session},
         form => {name => 'cliEnte c'},
       )->status_is(200, 'filtro por nome/apelido')                                          #
-      ->json_is('/rows/0/apelido',    'cliente C', 'apelido ok')                            #
-      ->json_is('/rows/0/cliente_id', $cliente_id3,   'id ok');
+      ->json_is('/rows/0/apelido',    'cliente C',  'apelido ok')                           #
+      ->json_is('/rows/0/cliente_id', $cliente_id3, 'id ok');
 
+    db_transaction2 {
+        $cliente2->update({genero => 'Homem', apelido => 'cliente bbb'});
+        $t->get_ok(
+            '/profile',
+            {'x-api-key' => $session2},
+            form => {cliente_id => $cliente_id},
+        )->status_is(400, 'homen nao pode abrir profile');
+    };
+
+    $t->get_ok(
+        '/profile',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id3},
+      )->status_is(200, 'abrir profile')    #
+      ->json_is('/profile/apelido',    'cliente C',  'apelido ok')                       #
+      ->json_is('/profile/cliente_id', $cliente_id3, 'id ok')                            #
+      ->json_is('/profile/minibio',    '',           'minibio empty instead of null')    #
+      ->json_is('/profile/skills',     '', 'sem skills')->json_is('/is_myself', '0', 'nao eh o mesmo usuario');
+
+    $cliente->update({minibio => 'abc foo', avatar_url => 'avatar.url'});
+    $t->get_ok(
+        '/profile',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id},
+      )->status_is(200, 'abrir profile')                                                 #
+      ->json_is('/profile/apelido',    'cliente A',      'apelido ok')                   #
+      ->json_is('/profile/cliente_id', $cliente_id,      'id ok')                        #
+      ->json_is('/profile/minibio',    'abc foo',        'minibio ok')                   #
+      ->json_is('/profile/avatar_url', 'avatar.url',     'avatar ok')                    #
+      ->json_is('/profile/skills',     $skills_in_order, 'skills match')                 #
+      ->json_is('/is_myself',          '1',              'sou o mesmo usuario');
 
 };
 

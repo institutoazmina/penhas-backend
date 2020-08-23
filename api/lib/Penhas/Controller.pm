@@ -52,7 +52,8 @@ sub reply_invalid_param {
 sub reply_item_not_found {
     my $c = shift;
 
-    die {error => 'Item not found', message => 'Item não existe', status => 404,};
+    die {error => 'item_not_found',
+        message => 'O objeto requisitado não existe ou você não tem permissão para acessa-lo.', status => 404,};
 }
 
 sub reply_forbidden {
@@ -99,7 +100,7 @@ sub _reply_exception {
 
             $an_error->{message} = $campos_nao_foram_preenchidos unless exists $an_error->{message};
             return $c->respond_to_if_web(
-                json => {json => $an_error, status => $status,},
+                json => {json     => $an_error, status => $status,},
                 html => {template => 'guardiao/index', error => $an_error, status => 200}
             );
         }
