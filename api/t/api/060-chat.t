@@ -102,7 +102,8 @@ subtest_buffered 'Cadastro2 com sucesso' => sub {
             cep           => '12345678',
             dt_nasc       => '1994-01-31',
             @other_fields,
-            genero => 'Feminino', apelido => 'cliente B',
+            genero  => 'Feminino',
+            apelido => 'cliente B',
 
         },
     )->status_is(200)->tx->res->json;
@@ -202,6 +203,23 @@ do {
       ->json_is('/rows/0/cliente_id', $cliente_id, 'id ok cli 1')                           #
       ->json_hasnt('/rows/1', '1 rows')                                                     #
       ->json_is('/has_more', 0, 'has more false');
+
+    $t->get_ok(
+        '/search-users',
+        {'x-api-key' => $session},
+        form => {name => 'a'},
+      )->status_is(400, 'filtro por nome')                                                  #
+      ->json_is('/error',  'form_error')                                                    #
+      ->json_is('/field',  'name')                                                          #
+      ->json_is('/reason', 'invalid_min_length');
+
+    $t->get_ok(
+        '/search-users',
+        {'x-api-key' => $session},
+        form => {name => 'cliEnte c'},
+      )->status_is(200, 'filtro por nome/apelido')                                          #
+      ->json_is('/rows/0/apelido',    'cliente C', 'apelido ok')                            #
+      ->json_is('/rows/0/cliente_id', $cliente_id3,   'id ok');
 
 
 };

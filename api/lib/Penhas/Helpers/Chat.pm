@@ -56,11 +56,11 @@ sub chat_find_users {
             'cliente.modo_anonimo_ativo' => '0',
             'cliente.status'             => 'active',
 
-            'cliente.genero' => {in => ['MulherTrans', 'Feminino']},    # &is_female()
+            'cliente.genero' => {in => ['MulherTrans', 'Feminino']},    # equivalente ao &is_female()
 
             (
                 $ForceFilterClientes
-                ? ('me.cliente_id' => $ForceFilterClientes)
+                ? ('me.cliente_id' => {'in' => $ForceFilterClientes})
                 : ()
             ),
         },
@@ -101,8 +101,8 @@ sub chat_find_users {
     }
 
     foreach (@rows) {
-        if ($_->{skills}) {
-            $_->{skills} = from_json($_->{skills});
+        if (ref $_->{skills}) {
+            $_->{skills} = from_json([grep { defined($_) } $_->{skills}]);
         }
         else {
             $_->{skills} = [];
