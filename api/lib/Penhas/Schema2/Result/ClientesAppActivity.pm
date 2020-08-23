@@ -54,6 +54,7 @@ __PACKAGE__->belongs_to(
 # ALTER TABLE clientes_app_activity ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 # alter table  clientes_app_activity modify column last_tm_activity datetime(6);
 # alter table  clientes_app_activity modify column last_activity datetime(6);
+# CREATE INDEX idx_last_tm_activity_desc ON clientes_app_activity (last_tm_activity  desc);
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;
