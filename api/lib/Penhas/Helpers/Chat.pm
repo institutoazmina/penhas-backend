@@ -60,6 +60,8 @@ sub chat_find_users {
     my $rows     = $opts{rows} || 10;
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
+    my $skills = $opts{skills} ? [split /\,/, $opts{skills}] : undef;
+
     my $nome = trim(lc($opts{name} || ''));
 
     my $offset = 0;
@@ -106,6 +108,19 @@ sub chat_find_users {
             }
         );
     }
+    if ($skills) {
+
+        # fazendo dessa forma, tem uma feature (ou não)
+        # os skills retornandos na lista sao os mesmos do filtro
+        # (e os outros que o usuario colcou nao vem)
+        $rs = $rs->search(
+            {
+                '-or' => [
+                    map { \['skill.id = ?', $_] } $skills->@*,
+                ],
+            }
+        );
+    }
 
     my @rows      = $rs->all;
     my $cur_count = scalar @rows;
@@ -115,9 +130,10 @@ sub chat_find_users {
         $cur_count--;
     }
 
+
     foreach (@rows) {
-        my $skills = $_->{skills} ? from_json($_->{skills}) : undef;
-        $_->{skills} = join ', ', sort { $a cmp $b } grep {defined} $skills->@* if $skills;
+        my $user_skills = $_->{skills} ? $_->{skills} =~ /^\[/ ? from_json($_->{skills}) : [$_->{skills}] : undef;
+        $_->{skills} = join ', ', sort { $a cmp $b } grep {defined} $user_skills->@* if $user_skills;
 
         $_->{avatar_url} ||= $ENV{AVATAR_PADRAO_URL};
 
@@ -354,8 +370,6 @@ sub chat_open_session {
                                                                      # Rijndael (AES) com 256 bits
             }
         );
-        use DDP;
-        p $existing;
         $existing = {id => $existing->id};
     }
 

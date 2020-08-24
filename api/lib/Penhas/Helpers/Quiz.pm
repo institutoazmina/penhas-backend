@@ -44,7 +44,7 @@ sub setup {
                     fields => '*,quiz_configs.modified_on'
                 }
             );
-            use DDP; p $questionnaires;
+            #use DDP; p $questionnaires;
 =pod
             my $questionnaires = $c->schema2->resultset('Questionnaire')->search(
                 {

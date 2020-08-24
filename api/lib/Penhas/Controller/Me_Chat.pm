@@ -1,6 +1,6 @@
 package Penhas::Controller::Me_Chat;
 use Mojo::Base 'Penhas::Controller';
-
+use Penhas::Types qw/IntList/;
 use DateTime;
 
 sub assert_user_perms {
@@ -18,6 +18,7 @@ sub me_chat_find_users {
 
     my $valid = $c->validate_request_params(
         rows      => {required => 0, type => 'Int'},
+        skills    => {required => 0, type => IntList},
         next_page => {required => 0, type => 'Str', max_length => 9999},
         name      => {required => 0, type => 'Str', max_length => 100, min_length => 2},
     );

@@ -138,10 +138,12 @@ on_scope_exit { user_cleanup(user_id => [$cliente_id, $cliente_id2, $cliente_id3
 
 
 my $skill1 = $schema2->resultset('Skill')->next;
-my $skill2 = $schema2->resultset('Skill')->search({id => {'!=' => $skill1->id}})->next;
+my $skill2 = $schema2->resultset('Skill')->search({id => {'!='     => $skill1->id}})->next;
+my $skill3 = $schema2->resultset('Skill')->search({id => {'not in' => [$skill1->id, $skill2->id]}})->next;
 
 ok $skill1, 'skill1 is defined';
 ok $skill2, 'skill2 is defined';
+ok $skill3, 'skill3 is defined';
 
 my $skills_in_order = join ', ', sort { $a cmp $b } $skill1->skill, $skill2->skill;
 
@@ -154,7 +156,7 @@ do {
     )->status_is(200, 'da um get pra marcar o clientes_app_activities');
     ok $cliente->clientes_app_activity, 'clientes_app_activities exists';
 
-    test_instance->app->cliente_set_skill(user => {id => $cliente->id}, skills => [$skill1->id, $skill2->id]);
+    $t->app->cliente_set_skill(user => {id => $cliente->id}, skills => [$skill1->id, $skill2->id]);
 
     $Penhas::Helpers::Chat::ForceFilterClientes = [$cliente_id, $cliente_id2, $cliente_id3];
     $t->get_ok(
@@ -224,6 +226,39 @@ do {
       )->status_is(200, 'filtro por nome/apelido')                                          #
       ->json_is('/rows/0/apelido',    'cliente C',  'apelido ok')                           #
       ->json_is('/rows/0/cliente_id', $cliente_id3, 'id ok');
+
+    $t->app->cliente_set_skill(user => {id => $cliente_id2}, skills => [$skill1->id]);
+
+    $t->get_ok(
+        '/search-users',
+        {'x-api-key' => $session},
+        form => {skills => join(',', $skill2->id, $skill1->id)}
+      )->status_is(200, 'listando usuario com skills (OR)')                                 #
+      ->json_is('/rows/0/cliente_id', $cliente_id2, 'first is last active user with skill1')    #
+      ->json_is('/rows/1/cliente_id', $cliente_id,  'then myself')                              #
+      ->json_hasnt('/rows/2', '2 rows only')                                                    #
+      ->json_has('/next_page', undef, 'no next_page')                                           #;
+      ->json_is('/has_more', '0');                                                              #;
+
+    $t->get_ok(
+        '/search-users',
+        {'x-api-key' => $session},
+        form => {skills => $skill2->id}
+      )->status_is(200, 'listando usuario com skills (OR)')                                     #
+      ->json_is('/rows/0/cliente_id', $cliente_id, 'apenas o cliente 1 tem a skill2')           #
+      ->json_hasnt('/rows/1', '1 row only')                                                     #
+      ->json_has('/next_page', undef, 'no next_page')                                           #;
+      ->json_is('/has_more', '0');                                                              #;
+
+    $t->get_ok(
+        '/search-users',
+        {'x-api-key' => $session},
+        form => {skills => $skill3->id}
+      )->status_is(200, 'listando usuario com skills (OR)')                                     #
+      ->json_hasnt('/rows/0', 'no rows match skill 3')                                          #
+      ->json_has('/next_page', undef, 'no next_page')                                           #;
+      ->json_is('/has_more', '0');                                                              #;
+
 
     db_transaction2 {
         $cliente2->update({genero => 'Homem', apelido => 'cliente bbb'});
