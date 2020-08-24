@@ -32,45 +32,23 @@ sub setup {
 
             return 1 if $c->stash('questionnaires');
 
-            my $questionnaires = $c->directusx->search(
-                table => 'questionnaires',
-                form  => {
-                    (
-                        $ENV{FILTER_QUESTIONNAIRE_IDS}
-                        ? ('filter[id][in]' => $ENV{FILTER_QUESTIONNAIRE_IDS})
-                        : ('filter[active][eq]' => '1')
-                    ),
-
-                    fields => '*,quiz_configs.modified_on'
-                }
-            );
-            #use DDP; p $questionnaires;
-=pod
-            my $questionnaires = $c->schema2->resultset('Questionnaire')->search(
-                {
-                    (
-                        $ENV{FILTER_QUESTIONNAIRE_IDS}
-                        ? ('me.id' => {in => [split ',', $ENV{FILTER_QUESTIONNAIRE_IDS}]})
-                        : ('me.active' => '1')
-                    ),
-
-                },{
-                    columns => {},
-                    join => 'quiz_configs
-                }
-                    fields => '*,quiz_configs.modified_on'
-            );
-=cut
-
-            foreach my $q (@{$questionnaires->{data}}) {
-                my $md5 = md5_hex($q->{modified_on} . join ',', map { $_->{modified_on} } $q->{quiz_configs}->@*);
-
+            my $questionnaires = [
+                $c->schema2->resultset('Questionnaire')->search(
+                    {
+                        (
+                            $ENV{FILTER_QUESTIONNAIRE_IDS}
+                            ? ('me.id' => {in => [split ',', $ENV{FILTER_QUESTIONNAIRE_IDS}]})
+                            : ('me.active' => '1')
+                        ),
+                    },
+                    {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
+                )->all
+            ];
+            foreach my $q (@{$questionnaires}) {
                 $q->{quiz_config}
-                  = $c->load_quiz_config(questionnaire_id => $q->{id}, modified_hash => $md5);
+                  = $c->load_quiz_config(questionnaire_id => $q->{id}, cachekey => $q->{modified_on});
             }
-
-            $c->stash(questionnaires => $questionnaires->{data});
-
+            $c->stash(questionnaires => $questionnaires);
         }
     );
 
@@ -78,11 +56,11 @@ sub setup {
         'load_quiz_config' => sub {
             my ($c, %opts) = @_;
 
-            my $id        = $opts{questionnaire_id};
-            my $cachehash = $opts{modified_hash};
-            my $kv        = Penhas::KeyValueStorage->instance;
+            my $id       = $opts{questionnaire_id};
+            my $cachekey = $opts{cachekey};
+            my $kv       = Penhas::KeyValueStorage->instance;
 
-            my $cachekey = "QuizConfig:$id:$cachehash";
+            my $cachekey = "QuizConfig:$id:$cachekey";
             Readonly::Array my @config => @{
                 $kv->redis_get_cached_or_execute(
                     $cachekey,

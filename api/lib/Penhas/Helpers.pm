@@ -1,7 +1,6 @@
 package Penhas::Helpers;
 use Mojo::Base -base;
 use Penhas::SchemaConnected;
-use Penhas::Directus;
 use Penhas::Controller;
 use Penhas::Helpers::CPF;
 use Penhas::Helpers::Quiz;
@@ -104,9 +103,6 @@ sub setup {
     $self->helper('user_not_found'  => sub { Penhas::Controller::reply_not_found(@_, type => 'user_not_found') });
 
     $self->helper('reply_invalid_param' => sub { Penhas::Controller::reply_invalid_param(@_) });
-
-    $self->helper(directusx => sub { Penhas::Directus->instance });
-
 }
 
 sub sum_cpf_errors {
