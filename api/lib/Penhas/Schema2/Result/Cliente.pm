@@ -261,10 +261,10 @@ sub _build_access_modules {
     my @modules;
     if ($self->is_female) {
         push @modules,
-          qw/tweets chat_privado chat_suporte noticias modo_camuflado modo_anonimo pontos_de_apoio modo_seguranca/;
+          qw/tweets chat_privado chat_suporte pontos_de_apoio modo_seguranca/;
     }
     else {
-        push @modules, qw/chat_suporte noticias pontos_de_apoio/;
+        push @modules, qw/chat_suporte pontos_de_apoio/;
     }
 
     return {map { ($_ => {}) } @modules};
