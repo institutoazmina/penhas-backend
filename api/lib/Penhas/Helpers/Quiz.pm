@@ -57,10 +57,9 @@ sub setup {
             my ($c, %opts) = @_;
 
             my $id       = $opts{questionnaire_id};
-            my $cachekey = $opts{cachekey};
             my $kv       = Penhas::KeyValueStorage->instance;
+            my $cachekey = "QuizConfig:$id:" . $opts{cachekey};
 
-            my $cachekey = "QuizConfig:$id:$cachekey";
             Readonly::Array my @config => @{
                 $kv->redis_get_cached_or_execute(
                     $cachekey,
