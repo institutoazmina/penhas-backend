@@ -146,6 +146,7 @@ ok $skill2, 'skill2 is defined';
 my $skills_in_order = join ', ', sort { $a cmp $b } $skill1->skill, $skill2->skill;
 
 do {
+
     is $cliente->clientes_app_activity, undef, 'no clientes_app_activities';
     $t->get_ok(
         '/me',
@@ -255,6 +256,56 @@ do {
       ->json_is('/profile/avatar_url', 'avatar.url',     'avatar ok')                    #
       ->json_is('/profile/skills',     $skills_in_order, 'skills match')                 #
       ->json_is('/is_myself',          '1',              'sou o mesmo usuario');
+
+
+    $t->post_ok(
+        '/me/chats/session',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id},
+    )->status_is(400, 'sem conversa de maluco');
+
+    my $room1 = $t->post_ok(
+        '/me/chats/session',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id2},
+      )->status_is(200, 'abre sala como cliente 1 com o cliente 2')    #
+      ->json_like('/_test_only_id', qr/^\d+$/, 'id is defined')        #
+      ->tx->res->json;
+
+    my $room2 = $t->post_ok(
+        '/me/chats/session',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id3},
+    )->status_is(200, 'abre sala como cliente 1 com o cliente 3')->tx->res->json;
+    isnt($room2->{_test_only_id}, $room1->{_test_only_id}, 'id is not the same room');
+
+    my $room2_other_side = $t->post_ok(
+        '/me/chats/session',
+        {'x-api-key' => $session3},
+        form => {cliente_id => $cliente_id},
+      )->status_is(200, 'abre sala como cliente 3 com o cliente 1')    #
+      ->json_is('/_test_only_id', $room2->{_test_only_id}, 'same room id');
+
+    my $room2_same_room = $t->post_ok(
+        '/me/chats/session',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id3},
+    )->status_is(200, 'abre sala como cliente 1 com o cliente 3 deve pegar a mesma sala')
+      ->json_is('/_test_only_id', $room2->{_test_only_id}, 'is the same room as before')->tx->res->json;
+
+    $t->get_ok(
+        '/me/chats',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id3},
+      )->status_is(200, 'lista as conversas')    #
+      ->json_is('/rows/0/other_apelido',      'cliente C')    #
+      ->json_is('/rows/0/last_message_is_me', '1')            #
+      ->json_is('/rows/0/other_activity',     'online')       #
+      ->json_is('/rows/1/other_apelido',      'cliente B')    #
+      ->json_is('/rows/1/last_message_is_me', '1')            #
+      ->json_is('/rows/1/other_activity',     'online')       #
+      ->json_is('/has_more',                  '0')            #
+      ->json_is('/next_page',                 undef, 'tem next_page mesmo sendo undef');
 
 };
 

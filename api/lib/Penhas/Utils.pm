@@ -42,6 +42,8 @@ state $text_xslate = Text::Xslate->new(
   time_seconds_fmt
 
   trunc_to_meter
+
+  pg_timestamp2iso_8601
 );
 
 
@@ -65,7 +67,7 @@ sub exec_tx_with_retry {
     my $tx = $some_tx->();
 
     if ($tx->error) {
-        my $err         = $tx->error;
+        my $err = $tx->error;
         my $description = sprintf "Request %s %s code: %s response: %s", $tx->req->method,
           $tx->req->url->to_string, $err->{code}, $tx->res->body;
 
@@ -174,6 +176,16 @@ sub _nearest_floor {
 # semelhante a sprintf( '%0.5f', shift ) porem tem mais chance de cair em hit do cache
 sub trunc_to_meter ($) {
     return &_nearest_floor(0.00009, shift);
+}
+
+sub pg_timestamp2iso_8601 {
+    my ($timestamp) = @_;
+
+    $timestamp =~ s/ /T/;
+    $timestamp =~ s/\..+$//;
+
+    $timestamp .= 'Z';
+    return $timestamp;
 }
 
 1;

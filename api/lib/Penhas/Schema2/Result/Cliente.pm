@@ -121,6 +121,8 @@ __PACKAGE__->add_columns(
   },
   "qtde_guardioes_ativos",
   { data_type => "integer", default_value => 0, is_nullable => 0 },
+  "salt_key",
+  { data_type => "char", is_nullable => 0, size => 10 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
@@ -186,6 +188,12 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "clientes_reset_passwords",
+  "Penhas::Schema2::Result::ClientesResetPassword",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "login_erros",
   "Penhas::Schema2::Result::LoginErro",
   { "foreign.cliente_id" => "self.id" },
@@ -229,8 +237,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-23 12:47:38
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:eU8jHH+bxKQWuQmTZWlIRw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-23 21:54:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tPlWr/hWQSQzPE2CcVYcrQ
 
 use Carp qw/confess/;
 

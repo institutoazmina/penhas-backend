@@ -7,7 +7,8 @@ use Digest::SHA qw/sha256_hex/;
 use Penhas::Logger;
 use Penhas::Utils qw/random_string random_string_from is_test cpf_hash_with_salt/;
 use Scope::OnExit;
-
+use Convert::Z85;
+use Crypt::PRNG qw(random_bytes);
 use Penhas::Types qw/CEP CPF DateStr Genero Nome Raca/;
 use MooseX::Types::Email qw/EmailAddress/;
 use Text::Unaccent::PurePerl qw(unac_string);
@@ -177,6 +178,7 @@ sub post {
             (map { $_ => $params->{$_} || '' } qw/genero apelido raca nome_social genero_outro/),
             status     => 'active',
             created_on => \'NOW()',
+            salt_key   => encode_z85(random_bytes(8)),    # 8 bytes, que viram 10 chars em base85
         }
     );
     my $directus_id = $row->id;

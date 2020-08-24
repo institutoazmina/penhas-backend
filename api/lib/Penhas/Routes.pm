@@ -151,11 +151,15 @@ sub register {
     # GET /search-users
     $user_loaded->under('search-users')->get()->to(controller => 'Me_Chat', action => 'me_chat_find_users');
 
-    # GET /me/chats
-    $me->under('chats')->get()->to(controller => 'Me_Chat', action => 'me_chat_sessions');
-
     # GET /profile
     $user_loaded->under('profile')->get()->to(controller => 'Me_Chat', action => 'me_load_profile');
+
+    # GET /me/chats
+    my $me_chat = $me->under('chats');
+    $me_chat->get()->to(controller => 'Me_Chat', action => 'me_chat_sessions');
+
+    # POST /me/chats/session?cliente_id=XXX
+    $me_chat->under('session')->post()->to(controller => 'Me_Chat', action => 'me_open_session');
 
 
 }

@@ -5,20 +5,23 @@ BEGIN;
 
 create table chat_session (
     id serial not null primary key,
-    salt varchar(10) not null,
+    session_key char(30) not null,
     participants int[] not null,
+    session_started_by int not null,
     created_at timestamp without time zone default now(),
-    last_message_at timestamp without time zone default now()
+    last_message_at timestamp without time zone default now(),
+    last_message_by int not null
 );
+CREATE INDEX ix_session_by_participants ON chat_session USING GIN(participants);
 
-create table chat_messages (
+create table chat_message (
+    id bigserial not null primary key,
     created_at timestamp without time zone default now(),
-    chat_session int not null references chat_session(id),
-    message_id uuid not null,
+    chat_session_id int not null references chat_session(id),
     cliente_id int not null,
-    message varchar not null,
-    primary key (created_at,chat_session,message_id)
+    message varchar not null
 );
+create index ix_messages_by_time on chat_message (chat_session_id, created_at desc);
 
 
 COMMIT;

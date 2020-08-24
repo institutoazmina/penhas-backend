@@ -18,10 +18,12 @@ __PACKAGE__->add_columns(
     is_nullable       => 0,
     sequence          => "chat_session_id_seq",
   },
-  "salt",
-  { data_type => "varchar", is_nullable => 0, size => 10 },
+  "session_key",
+  { data_type => "char", is_nullable => 0, size => 10 },
   "participants",
   { data_type => "integer[]", is_nullable => 0 },
+  "session_started_by",
+  { data_type => "integer", is_nullable => 0 },
   "created_at",
   {
     data_type     => "timestamp",
@@ -36,18 +38,20 @@ __PACKAGE__->add_columns(
     is_nullable   => 1,
     original      => { default_value => \"now()" },
   },
+  "last_message_by",
+  { data_type => "integer", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
   "chat_messages",
   "Penhas::Schema::Result::ChatMessage",
-  { "foreign.chat_session" => "self.id" },
+  { "foreign.chat_session_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-17 10:23:34
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Fz0UseCIoGOkw3p7N568uA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-23 16:10:29
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kpiTGgsN+HsNGVl5PsGxcg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

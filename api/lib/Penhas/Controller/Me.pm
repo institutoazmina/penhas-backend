@@ -1,6 +1,6 @@
 package Penhas::Controller::Me;
 use Mojo::Base 'Penhas::Controller';
-
+use Carp;
 use DateTime;
 use JSON;
 
@@ -8,6 +8,7 @@ sub check_and_load {
     my $c = shift;
 
     die 'missing user_id' unless $c->stash('user_id');
+    return 1 if $c->stash('user_obj');
 
     my $user = $c->schema2->resultset('Cliente')->search(
         {
@@ -69,8 +70,8 @@ sub find {
 
             ($user->{modo_anonimo_ativo} ? (anonymous_avatar_url => $ENV{AVATAR_ANONIMO_URL}) : ()),
 
-            modo_camuflado_ativo => $user->{modo_camuflado_ativo} ? 1 : 0,
-            modo_anonimo_ativo   => $user->{modo_anonimo_ativo}   ? 1 : 0,
+            modo_camuflado_ativo  => $user->{modo_camuflado_ativo} ? 1 : 0,
+            modo_anonimo_ativo    => $user->{modo_anonimo_ativo}   ? 1 : 0,
             qtde_guardioes_ativos => $user->{qtde_guardioes_ativos},
 
             modules => $modules,

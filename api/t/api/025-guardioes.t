@@ -270,7 +270,7 @@ do {
     $t->get_ok(
         '/web/guardiao',
         form => {token => $row_to_be_removed->token()}
-    )->status_is(404)->json_is('/error', 'Item not found');
+    )->status_is(404)->json_is('/error', 'item_not_found');
 
     # token com hash invalido
     $t->get_ok(

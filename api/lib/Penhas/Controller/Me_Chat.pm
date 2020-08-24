@@ -47,7 +47,41 @@ sub me_chat_sessions {
         next_page => {required => 0, type => 'Str', max_length => 9999},
     );
 
-    ...;
+    my $ret = $c->chat_list_sessions(
+        %$valid,
+        user_obj => $c->stash('user_obj'),
+    );
+
+    return $c->render(
+        json   => $ret,
+        status => 200,
+    );
+}
+
+sub me_open_session {
+    my $c = shift;
+
+    my $user_obj = $c->stash('user_obj');
+
+    my $valid = $c->validate_request_params(
+        cliente_id => {required => 1, type => 'Str', max_length => 12},
+    );
+    if ($valid->{cliente_id} ne 'support') {
+        $c->merge_validate_request_params(
+            $valid,
+            cliente_id => {required => 1, type => 'Int'},
+        );
+    }
+
+    my $ret = $c->chat_open_session(
+        %$valid,
+        user_obj => $c->stash('user_obj'),
+    );
+
+    return $c->render(
+        json   => $ret,
+        status => 200,
+    );
 }
 
 sub me_load_profile {

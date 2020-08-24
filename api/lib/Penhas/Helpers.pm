@@ -39,9 +39,6 @@ sub setup {
     $self->helper(schema2        => \&Penhas::SchemaConnected::get_schema2);
     $self->helper(sum_cpf_errors => \&sum_cpf_errors);
 
-
-
-    $self->plugin('ParamLogger', filter => [qw(password senha)]);
     $self->helper(
         respond_to_if_web => sub {
             my $c = shift;
