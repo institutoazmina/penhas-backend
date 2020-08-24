@@ -45,7 +45,6 @@ sub _cliente_activity_rs {
     my $c = shift;
     $c->schema2->resultset('ClientesAppActivity')->search(
         {
-            'cliente.modo_anonimo_ativo' => '0',
             'cliente.status'             => 'active',
 
             'cliente.genero' => {in => ['MulherTrans', 'Feminino']},    # equivalente ao &is_female()
@@ -74,6 +73,7 @@ sub chat_find_users {
 
     my $rs = &_cliente_activity_rs($c)->search(
         {
+            'cliente.modo_anonimo_ativo' => '0',
             (
                 $ForceFilterClientes
                 ? ('me.cliente_id' => {'in' => $ForceFilterClientes})
@@ -310,7 +310,7 @@ sub chat_open_session {
 
     $c->reply_invalid_param(
         'Não pode abrir uma sala contigo mesmo!',
-        'cannot_message_self'
+        'cannot_message_yourself'
     ) if $user_obj->id == $to_cliente_id;
 
     my $to_cliente = $c->schema2->resultset('Cliente')->search(

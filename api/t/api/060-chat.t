@@ -297,7 +297,7 @@ do {
         '/me/chats/session',
         {'x-api-key' => $session},
         form => {cliente_id => $cliente_id},
-    )->status_is(400, 'sem conversa de maluco');
+    )->status_is(400, 'sem conversa de maluco')->json_is('/error','cannot_message_yourself');
 
     my $room1 = $t->post_ok(
         '/me/chats/session',
