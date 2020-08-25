@@ -88,7 +88,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
     $schema2->resultset('GeoCache')->create(
         {
             key         => 'r. teste',
-            value       => '-23.555995,-46.662665',                       # começo da consolação
+            value       => '-23.555995,-46.662665',                     # começo da consolação
             created_at  => \'NOW()',
             valid_until => '2055-01-01',
         }
@@ -97,7 +97,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
     $schema2->resultset('GeoCache')->create(
         {
             key         => 'r. foo',
-            value       => '',                                            # caso de 404
+            value       => '',                                          # caso de 404
             created_at  => \'NOW()',
             valid_until => '2055-01-01',
         }
@@ -108,6 +108,9 @@ subtest_buffered 'Cadastro com sucesso' => sub {
 on_scope_exit { user_cleanup(user_id => $cliente_id); };
 
 
+my $ponto_apoio1;
+my $ponto_apoio2;
+my $ponto_apoio3;
 do {
     my $rand_cat = $schema2->resultset('PontoApoioCategoria')->search(
         {
@@ -134,9 +137,9 @@ do {
       ->tx->res->json;
     ok my $first_sugg_row = $schema2->resultset('PontoApoioSugestoe')->find($first_sugg->{id}),
       'row PontoApoioSugestoe is added';
-    is $first_sugg_row->nome, 'foo', 'nome ok';
+    is $first_sugg_row->nome,       'foo', 'nome ok';
     is $first_sugg_row->cliente_id, $cliente_id, 'cliente_id ok';
-    is $first_sugg_row->categoria, $rand_cat->id, 'cliente_id ok';
+    is $first_sugg_row->categoria,  $rand_cat->id, 'cliente_id ok';
 
     my $fields = {
         'sigla'                 => 'UPPER',
@@ -158,7 +161,7 @@ do {
         'telefone2'             => '12345678',
         'email'                 => 'dunno@email.com',
         'eh_24h'                => 0,
-        'dias_funcionamento'    => 'dias_uteis',
+        'dias_funcionamento'    => 'fds',
         'observacao_pandemia'   => 'nao sei',
         cliente_id              => $cliente_id,
         test_status             => 'test',
@@ -207,6 +210,8 @@ do {
             $fields->{latitude}  = '-23.571867';
             $fields->{longitude} = '-46.645901';
 
+            $fields->{dias_funcionamento} = 'dias_uteis_fds_plantao';
+
         }
         elsif ($code == 3) {
 
@@ -217,14 +222,19 @@ do {
             $fields->{longitude}      = '-46.638586';
             $fields->{qtde_avaliacao} = '10';
             $fields->{avaliacao}      = '4.164';
+
+            $fields->{eh_24h}             = 1;
+            $fields->{dias_funcionamento} = 'dias_uteis';
         }
 
         my $tmp = $schema2->resultset('PontoApoio')->create($fields);
 
-        if ($code == 3) {
-            $avaliar_ponto_apoio = $tmp;
-        }
+        $ponto_apoio1 = $tmp if $code == 1;
+        $ponto_apoio2 = $tmp if $code == 2;
+        $ponto_apoio3 = $tmp if $code == 3;
     }
+
+    $avaliar_ponto_apoio = $ponto_apoio3;
 
     # "vila mariana" ~ aprox 1.02 km de "ana rosa" em linha reta considerando a curvatura da terra
     # mas o algoritimo usado aqui só é uma aproximação do globo, com distorções nos polos e equador
@@ -288,6 +298,54 @@ do {
       ->json_is('/rows/1',      undef,     'apenas 1 registro na cat1')              #
       ->json_is('/has_more',    0,         'has more is false');
 
+    $t->get_ok(
+        '/pontos-de-apoio',
+        form => {
+            'latitude'  => '-23.589893',
+            'longitude' => '-46.633462',
+            'eh_24h'    => '1',
+        }
+      )->status_is(200)                                                              #
+      ->json_is('/rows/0/id', $ponto_apoio3->id, 'filtro eh_24h')                    #
+      ->json_is('/rows/1',    undef,             'só tem 1 linha')                   #
+      ->json_is('/has_more',  0,                 'has more is false');
+
+    $t->get_ok(
+        '/pontos-de-apoio',
+        form => {
+            'latitude'  => '-23.589893',
+            'longitude' => '-46.633462',
+            'eh_24h'    => '0',
+        }
+      )->status_is(200)                                                              #
+      ->json_is('/rows/2',   undef, 'dois nao sao 24h')                              #
+      ->json_is('/has_more', 0,     'has more is false');
+
+    $t->get_ok(
+        '/pontos-de-apoio',
+        form => {
+            'latitude'  => '-23.589893',
+            'longitude' => '-46.633462',
+
+            'dias_funcionamento' => 'fds',
+        }
+      )->status_is(200)                                                              #
+      ->json_is('/rows/0/id', $ponto_apoio1->id, 'apenas um eh FDS')                 #
+      ->json_is('/rows/1',    undef,             'só tem 1 linha')                   #
+      ->json_is('/has_more',  0,                 'has more is false');
+
+    $t->get_ok(
+        '/pontos-de-apoio',
+        form => {
+            'latitude'  => '-23.589893',
+            'longitude' => '-46.633462',
+
+            'dias_funcionamento' => 'dias_uteis_fds_plantao',
+        }
+      )->status_is(200)                                                              #
+      ->json_is('/rows/0/id', $ponto_apoio2->id, 'apenas um eh dias_uteis_fds_plantao')                 #
+      ->json_is('/rows/1',    undef,             'só tem 1 linha')                   #
+      ->json_is('/has_more',  0,                 'has more is false');
 
     my $res1 = $t->get_ok(
         '/pontos-de-apoio',
@@ -395,7 +453,7 @@ do {
         {},
         form => {address => 'R. Teste'}
       )->status_is(200)                                                    #
-      ->json_is('/label', 'Cerqueira César, São Paulo, SP, Brasil')      #
+      ->json_is('/label', 'Cerqueira César, São Paulo, SP, Brasil')        #
       ->json_has('/location_token', 'has token')->tx->res->json;
 
     $t->get_ok(
@@ -440,12 +498,12 @@ do {
     $t->get_ok(
         '/pontos-de-apoio/' . $avaliar_ponto_apoio->id,                     #
       )->status_is(200)                                                     #
-      ->json_hasnt('/cliente_avaliacao')                                    #
-      ->json_has('/avaliacao_maxima')                                       #
+      ->json_hasnt('/cliente_avaliacao')                                                                        #
+      ->json_has('/avaliacao_maxima')                                                                           #
       ->json_is('/ponto_apoio/avaliacao',          $rand_zero_to_five . ',0', 'tem nota avaliacao')             #
       ->json_is('/ponto_apoio/cep',                '00000000',                'tem cep')                        #
-      ->json_is('/ponto_apoio/natureza',           'Público',                'tem natureza traduzida')         #
-      ->json_is('/ponto_apoio/dias_funcionamento', 'Dias úteis',             'tem Dia Da semana traduzido')    #
+      ->json_is('/ponto_apoio/natureza',           'Público',                 'tem natureza traduzida')         #
+      ->json_is('/ponto_apoio/dias_funcionamento', 'Dias úteis',              'tem Dia Da semana traduzido')    #
       ->json_is('/ponto_apoio/numero',             undef,                     'sem numero');                    #
 
 

@@ -190,7 +190,6 @@ sub validate_request_params {
             $tested->{$key} = undef;
             next;
         }
-        $val = '' if !defined $val;
 
         my %def_message = (message => $campos_nao_foram_preenchidos . ' (' . $key . ')');
         if (defined($val) && (exists $me->{min_length} || exists $me->{max_length})) {
