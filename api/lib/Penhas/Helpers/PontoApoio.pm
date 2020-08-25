@@ -39,11 +39,14 @@ sub ponto_apoio_list {
     my ($c, %opts) = @_;
 
     my $user_obj     = $opts{user_obj};
-    my $latitude     = $opts{latitude} or confess 'missing latitude';
+    my $latitude     = $opts{latitude}  or confess 'missing latitude';
     my $longitude    = $opts{longitude} or confess 'missing longitude';
     my $keywords     = trim(lc($opts{keywords} || ''));
     my $max_distance = $opts{max_distance} || 50;
     my $categorias   = $opts{categorias};
+
+    my $eh_24h             = $opts{eh_24h};
+    my $dias_funcionamento = $opts{dias_funcionamento};
 
     confess '$categorias is not arrayref' if $categorias && ref $categorias ne 'ARRAY';
 
@@ -119,6 +122,9 @@ sub ponto_apoio_list {
             }
         );
     }
+
+    $rs = $rs->search({'eh_24h'             => $eh_24h ? 1 : 0})     if defined $eh_24h;
+    $rs = $rs->search({'dias_funcionamento' => $dias_funcionamento}) if $dias_funcionamento;
 
     my @rows      = $rs->all;
     my $cur_count = scalar @rows;

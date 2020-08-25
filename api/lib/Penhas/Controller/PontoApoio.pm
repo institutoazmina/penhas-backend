@@ -48,6 +48,9 @@ sub _pa_list {
         next_page      => {max_length => 9999, required => 0, type => 'Str'},
         location_token => {max_length => 9999, required => 0, type => 'Str'},
         keywords       => {max_length => 200,  required => 0, type => 'Str'},
+
+        eh_24h             => {required => 0, type => 'Bool', undef_if_missing => 1},
+        dias_funcionamento => {required => 0, type => 'Str',  max_length       => 99},
     );
 
     my $user_obj = $c->stash('user_obj');
@@ -137,6 +140,12 @@ sub pa_aux_data {
                         columns      => [qw/id label/],
                     }
                 )->all()
+            ],
+            dias_funcionamento => [
+                {value => 'dias_uteis',             label => 'Dias úteis'},
+                {value => 'fds',                    label => 'Fim de semana'},
+                {value => 'dias_uteis_fds_plantao', label => 'Dias úteis com plantão aos fins de semanas'},
+                {value => 'todos_os_dias',          label => 'Todos os dias'},
             ],
             fields => $c->ponto_apoio_fields(format => 'public'),
         },
