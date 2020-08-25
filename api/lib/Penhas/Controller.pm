@@ -52,8 +52,10 @@ sub reply_invalid_param {
 sub reply_item_not_found {
     my $c = shift;
 
-    die {error => 'item_not_found',
-        message => 'O objeto requisitado não existe ou você não tem permissão para acessa-lo.', status => 404,};
+    die {
+        error   => 'item_not_found',
+        message => 'O objeto requisitado não existe ou você não tem permissão para acessa-lo.', status => 404,
+    };
 }
 
 sub reply_forbidden {
@@ -184,7 +186,11 @@ sub validate_request_params {
         my $type = $me->{type};
 
         my $val = $params->{$key};
-        $val = '' if !defined $val && $me->{empty_if_undef};
+        if (!defined $val && $me->{undef_if_missing}) {
+            $tested->{$key} = undef;
+            next;
+        }
+        $val = '' if !defined $val;
 
         my %def_message = (message => $campos_nao_foram_preenchidos . ' (' . $key . ')');
         if (defined($val) && (exists $me->{min_length} || exists $me->{max_length})) {
