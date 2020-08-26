@@ -13,7 +13,7 @@ use Crypt::PRNG qw(random_bytes);
 use Convert::Z85;
 
 our $ForceFilterClientes;
-
+my $reload_app_err_msg = 'Recarregue o app, conversa não pode ser aberta.';
 our %activity_labels = (
     0  => 'há pouco tempo',
     1  => 'há poucos dias',
@@ -39,13 +39,14 @@ sub setup {
     $self->helper('chat_profile_user'  => sub { &chat_profile_user(@_) });
     $self->helper('chat_list_sessions' => sub { &chat_list_sessions(@_) });
     $self->helper('chat_open_session'  => sub { &chat_open_session(@_) });
+    $self->helper('chat_send_message'  => sub { &chat_send_message(@_) });
 }
 
 sub _cliente_activity_rs {
     my $c = shift;
     $c->schema2->resultset('ClientesAppActivity')->search(
         {
-            'cliente.status'             => 'active',
+            'cliente.status' => 'active',
 
             'cliente.genero' => {in => ['MulherTrans', 'Feminino']},    # equivalente ao &is_female()
         }
@@ -278,7 +279,7 @@ sub chat_list_sessions {
         next unless $other;    # nao existe mais, banido, ou vc/ele bloqueou, etc...
 
         push @chats, {
-            chat_auth          => &_sign_chat_auth($c, $room->{id}),
+            chat_auth          => &_sign_chat_auth($c, id => $room->{id}, uid => $user_obj->id),
             last_message_is_me => $room->{last_message_by} == $myself ? 1 : 0,
             last_message_at    => &pg_timestamp2iso_8601($room->{last_message_at}),
             other_activity     => &_activity_mins_to_label($other->{activity}),
@@ -374,7 +375,7 @@ sub chat_open_session {
     }
 
     return {
-        chat_auth => &_sign_chat_auth($c, $existing->{id}),
+        chat_auth => &_sign_chat_auth($c, id => $existing->{id}, uid => $user_obj->id),
         is_test()
         ? (
             _test_only_id => $existing->{id},
@@ -384,26 +385,96 @@ sub chat_open_session {
 }
 
 
-sub x {
-
-#    my $cipher = Crypt::CBC->new(
-#        -key    => $key,
-#        -cipher => 'Rijndael',
-#        -header => 'salt',
-#    );
-
-}
-
 sub _sign_chat_auth {
-    my ($c, $id) = @_;
+    my ($c, %opts) = @_;
     return $c->encode_jwt(
         {
             iss => 'U:C',
-            id  => $id,
+            id  => $opts{id},
+            u   => $opts{uid},
             exp => time() + 7200,
         },
         1
     );
 }
 
+sub chat_send_message {
+    my ($c, %opts) = @_;
+
+    my $user_obj  = $opts{user_obj}  or confess 'missing user_obj';
+    my $chat_auth = $opts{chat_auth} or confess 'missing chat_auth';
+    my $message   = $opts{message}   or confess 'missing message';
+
+    $chat_auth = eval { $c->decode_jwt($chat_auth) };
+    $c->reply_invalid_param($reload_app_err_msg, 'chat_auth_invalid')
+      if ($chat_auth->{iss} || '') ne 'U:C';
+
+    # se o token nao eh desse usuario, nao pode carregar a sala
+    $c->reply_invalid_param(
+        $reload_app_err_msg,
+        'chat_auth_invalid_user'
+    ) if ($chat_auth->{u} || 0) != $user_obj->id;
+
+    slog_info('user_id %d chat_send_message chat_id %d', $user_obj->id, $chat_auth->{id});
+
+    # carrega a session, que é equivalente a sala, e tem a chave das mensagens
+    my $session = $c->schema->resultset('ChatSession')->search(
+        {id      => $chat_auth->{id}},
+        {columns => [qw/id session_started_by participants session_key/]}
+    )->next;
+    $c->reply_invalid_param(
+        $reload_app_err_msg,
+        'chat_session_not_found'
+    ) unless $session;
+
+    # procura o dono da sala, que é quem começou a sala, que tem a outra parte da chave
+    my $chat_owner = $c->schema2->resultset('Cliente')->search(
+        {id => $session->session_started_by},
+        {
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+            columns      => [qw/id salt_key/],
+        }
+    )->next;
+    $c->reply_invalid_param(
+        $reload_app_err_msg,
+        'chat_owner_not_found'
+    ) unless $chat_owner;
+
+    # just in case, a pessoa precisa participar da sala pra ler as mensagens
+    $c->reply_invalid_param(
+        $reload_app_err_msg,
+        'chat_not_participant'
+    ) unless grep { $_ == $user_obj->id } $session->participants->@*;
+
+    # inicia o AES usando as duas chaves como origem
+    my $cipher = Crypt::CBC->new(
+        -key    => decode_z85($chat_owner->{salt_key}) . decode_z85($session->{session_key}),
+        -cipher => 'Rijndael',
+        -header => 'salt',
+    );
+    my $chat_message;
+    $c->schema->txn_do(
+        sub {
+            # todas as mensagens salvando termiando com #
+            # para na hora que fizer o decrypt verificar a integridade da chave
+            $chat_message = $session->chat_messages->create(
+                {
+                    cliente_id => $user_obj->id,
+                    message    => encode_z85($cipher->encrypt($message . '#'))
+                }
+            );
+
+            $session->update(
+                {
+                    last_message_by => $user_obj->id,
+                    last_message_at => \'now()',
+                }
+            );
+
+        }
+    );
+    die '$chat_message is not defined' unless $chat_message;
+
+    return {id => $chat_message->id};
+}
 1;

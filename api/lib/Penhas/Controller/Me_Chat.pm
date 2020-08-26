@@ -85,6 +85,28 @@ sub me_open_session {
     );
 }
 
+sub me_send_message {
+    my $c = shift;
+
+    my $user_obj = $c->stash('user_obj');
+
+    my $valid = $c->validate_request_params(
+        chat_auth => {required => 1, type => 'Str', max_length => 9999},
+        message   => {required => 1, type => 'Str', max_length => 9999},
+    );
+
+    my $ret = $c->chat_send_message(
+        %$valid,
+        user_obj => $c->stash('user_obj'),
+    );
+
+    return $c->render(
+        json   => $ret,
+        status => 200,
+    );
+}
+
+
 sub me_load_profile {
     my $c = shift;
 

@@ -297,7 +297,7 @@ do {
         '/me/chats/session',
         {'x-api-key' => $session},
         form => {cliente_id => $cliente_id},
-    )->status_is(400, 'sem conversa de maluco')->json_is('/error','cannot_message_yourself');
+    )->status_is(400, 'sem conversa de maluco')->json_is('/error', 'cannot_message_yourself');
 
     my $room1 = $t->post_ok(
         '/me/chats/session',
@@ -325,22 +325,35 @@ do {
         '/me/chats/session',
         {'x-api-key' => $session},
         form => {cliente_id => $cliente_id3},
-    )->status_is(200, 'abre sala como cliente 1 com o cliente 3 deve pegar a mesma sala')
+      )->status_is(200, 'abre sala como cliente 1 com o cliente 3 deve pegar a mesma sala')    #
+      ->json_has('/chat_auth', 'tem chat_auth')                                                #
       ->json_is('/_test_only_id', $room2->{_test_only_id}, 'is the same room as before')->tx->res->json;
 
     $t->get_ok(
         '/me/chats',
         {'x-api-key' => $session},
         form => {cliente_id => $cliente_id3},
-      )->status_is(200, 'lista as conversas')    #
-      ->json_is('/rows/0/other_apelido',      'cliente C')    #
-      ->json_is('/rows/0/last_message_is_me', '1')            #
-      ->json_is('/rows/0/other_activity',     'online')       #
-      ->json_is('/rows/1/other_apelido',      'cliente B')    #
-      ->json_is('/rows/1/last_message_is_me', '1')            #
-      ->json_is('/rows/1/other_activity',     'online')       #
-      ->json_is('/has_more',                  '0')            #
-      ->json_is('/next_page',                 undef, 'tem next_page mesmo sendo undef');
+      )->status_is(200, 'lista as conversas')                                                  #
+      ->json_is('/rows/0/other_apelido',      'cliente C')                                     #
+      ->json_is('/rows/0/last_message_is_me', '1')                                             #
+      ->json_is('/rows/0/other_activity',     'online')                                        #
+      ->json_is('/rows/1/other_apelido',      'cliente B')                                     #
+      ->json_is('/rows/1/last_message_is_me', '1')                                             #
+      ->json_is('/rows/1/other_activity',     'online')                                        #
+      ->json_has('/rows/1/chat_auth', 'has chat_auth')                                         #
+      ->json_has('/rows/0/chat_auth', 'has chat_auth')                                         #
+      ->json_is('/has_more', '0')                                                              #
+      ->json_is('/next_page', undef, 'tem next_page mesmo sendo undef');
+
+    $t->post_ok(
+        '/me/chats/message',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth => $room2_same_room->{chat_auth},
+            message   => 'hello from cliente 1'
+        },
+      )->status_is(200, 'mandando mensagem')                                                   #
+      ->json_has('/id', 'we got an id!');
 
 };
 

@@ -37,7 +37,7 @@ sub startup {
     # Plugins.
     $self->plugin('JWT', secret => $secret);
 
-    $self->plugin('ParamLogger', filter => [qw(password)]);
+    $self->plugin('ParamLogger', filter => [qw(password senha message)]);
 
     # servir a /public (templates de email e arquivos static)
     $self->plugin('RenderFile');
