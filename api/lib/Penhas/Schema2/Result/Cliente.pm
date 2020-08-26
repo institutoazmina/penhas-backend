@@ -97,14 +97,6 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 200 },
   "upload_status",
   { data_type => "varchar", default_value => "ok", is_nullable => 1, size => 20 },
-  "panic_status_last_blocked_at",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
-  "panic_status",
-  { data_type => "varchar", default_value => "OK", is_nullable => 1, size => 20 },
   "qtde_ligar_para_policia",
   { data_type => "integer", default_value => 0, is_nullable => 0 },
   "modo_anonimo_atualizado_em",
@@ -237,8 +229,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-23 21:54:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tPlWr/hWQSQzPE2CcVYcrQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-26 15:01:16
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DN/UKGkghVPJ4zUMciqMvg
 
 use Carp qw/confess/;
 
