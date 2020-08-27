@@ -132,6 +132,12 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "cliente_bloqueios",
+  "Penhas::Schema2::Result::ClienteBloqueio",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "cliente_ponto_apoio_avaliacaos",
   "Penhas::Schema2::Result::ClientePontoApoioAvaliacao",
   { "foreign.cliente_id" => "self.id" },
@@ -229,8 +235,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-26 15:01:16
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DN/UKGkghVPJ4zUMciqMvg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-27 14:51:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YVZYkatvN+b9nRM5ypa6ag
 
 use Carp qw/confess/;
 

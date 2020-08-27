@@ -19,7 +19,12 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "cliente_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "blocked_cliente_id",
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "created_at",
@@ -30,10 +35,18 @@ __PACKAGE__->add_columns(
   },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->belongs_to(
+  "cliente",
+  "Penhas::Schema2::Result::Cliente",
+  { id => "cliente_id" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-26 15:01:16
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:AAycJwsgbAGri//lXm7aEA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-27 14:51:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:GRqNDxew0baBPZbazK0tVQ
+
+# ALTER TABLE cliente_bloqueios ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

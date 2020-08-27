@@ -452,14 +452,55 @@ sub _load_chat_room {
         -header => 'salt',
     );
 
-    return ($cipher, $session, $user_obj);
+    my ($other_id) = grep { $_ != $user_obj->id } $session->participants->@*;
+
+    my $other = $c->schema2->resultset('Cliente')->search(
+        {
+            'cliente_bloqueios.blocked_cliente_id' => [undef, $user_obj->id],
+            'me.id'                                => $other_id
+        },
+        {
+            join    => 'cliente_bloqueios',
+            columns => [
+                {cliente_id => 'me.id'},
+                {apelido    => 'me.apelido'},
+                {avatar_url => 'me.avatar_url'},
+                {blocked_me => 'cliente_bloqueios.blocked_cliente_id'},
+            ],
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+        }
+    )->next;
+    if (!$other) {
+        $other = {
+            blocked_me => 0,
+            cliente_id => $other_id,
+            apelido    => 'Usuário removido',
+            avatar_url => $ENV{AVATAR_PADRAO_URL}
+        };
+    }
+    else {
+        $other->{blocked_me} = $other->{blocked_me} ? 1 : 0;
+        $other->{avatar_url} ||= $ENV{AVATAR_PADRAO_URL};
+    }
+
+
+    my $blocked = delete $other->{blocked_me};
+    my $meta    = {
+        can_send_message => $blocked ? 0 : 1,
+        can_block        => 1,
+    };
+
+    return ($cipher, $session, $user_obj, $other, $meta);
 }
 
 sub chat_send_message {
     my ($c, %opts) = @_;
 
-    my ($cipher, $session, $user_obj) = &_load_chat_room($c, %opts);
+    my ($cipher, $session, $user_obj, $other, $meta) = &_load_chat_room($c, %opts);
     my $message = defined $opts{message} ? $opts{message} : confess 'missing message';
+
+    $c->reply_invalid_param('Você não pode enviar mensagens nesta conversa.', 'blocked')
+      unless $meta->{can_send_message};
 
     slog_info('user_id %d chat_send_message chat_id %d', $user_obj->id, $session->id);
 
@@ -475,7 +516,6 @@ sub chat_send_message {
     };
 
     # se nao conseguir o lock, beleza... pelo menos tentou, mas nao precisa descartar se passou os 15s locked
-
     my $chat_message;
     $c->schema->txn_do(
         sub {
@@ -499,13 +539,16 @@ sub chat_send_message {
     );
     die '$chat_message is not defined' unless $chat_message;
 
-    return {id => $chat_message->id};
+    return {
+        id => $chat_message->id,
+
+    };
 }
 
 sub chat_list_message {
     my ($c, %opts) = @_;
 
-    my ($cipher, $session, $user_obj) = &_load_chat_room($c, %opts);
+    my ($cipher, $session, $user_obj, $other, $meta) = &_load_chat_room($c, %opts);
     my $rows = $opts{rows} || 10;
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
@@ -569,11 +612,10 @@ sub chat_list_message {
 
     }
 
-    my ($other_id) = grep { $_ != $myself } $session->participants->@*;
 
     return {
-        messages     => \@messages,
-        other_avatar => $other_id,
+        messages => \@messages,
+        other    => $other,
         (
             !$page->{before}
             ? (
@@ -602,10 +644,7 @@ sub chat_list_message {
               )
             : ()
         ),
-        meta => {
-            can_send_message => 1,
-            can_block        => 1,
-        },
+        meta => $meta,
     };
 }
 
