@@ -486,6 +486,7 @@ do {
       ->json_hasnt('/older', 'no older pagination')                                            #
       ->json_has('/newer', 'newer pagination');
     $newer = last_tx_json()->{newer};
+    ok $t->app->decode_jwt($newer)->{after}, 'after is definded';
 
     $t->get_ok(
         '/me/chats-messages',
@@ -499,6 +500,8 @@ do {
       ->json_is('/has_more', '0', 'no more messages')                                          #
       ->json_hasnt('/older', 'no older pagination')                                            #
       ->json_has('/newer', 'newer pagination');
+$newer = last_tx_json()->{newer};
+    ok $t->app->decode_jwt($newer)->{after}, 'after is definded';
 
 };
 

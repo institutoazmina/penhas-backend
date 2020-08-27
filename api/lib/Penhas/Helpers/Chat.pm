@@ -580,7 +580,8 @@ sub chat_list_message {
                 newer => $c->encode_jwt(
                     {
                         iss   => 'U:X',
-                        after => $row_first,
+                        after => $row_first
+                          || $page->{after},    # se nao encontrou nenhuma linha, usa o mesmo timestamp do anterior
                     },
                     1
                 ),
