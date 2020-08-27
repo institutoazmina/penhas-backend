@@ -131,4 +131,26 @@ sub me_load_profile {
     );
 }
 
+sub me_list_message {
+    my $c = shift;
+
+    my $user_obj = $c->stash('user_obj');
+
+    my $valid = $c->validate_request_params(
+        chat_auth  => {required => 1, type => 'Str', max_length => 9999},
+        pagination => {required => 0, type => 'Str', max_length => 9999},
+        rows       => {required => 0, type => 'Int'},
+    );
+
+    my $ret = $c->chat_list_message(
+        %$valid,
+        user_obj => $c->stash('user_obj'),
+    );
+
+    return $c->render(
+        json   => $ret,
+        status => 200,
+    );
+}
+
 1;

@@ -294,13 +294,13 @@ do {
 
 
     $t->post_ok(
-        '/me/chats/session',
+        '/me/chats-session',
         {'x-api-key' => $session},
         form => {cliente_id => $cliente_id},
     )->status_is(400, 'sem conversa de maluco')->json_is('/error', 'cannot_message_yourself');
 
     my $room1 = $t->post_ok(
-        '/me/chats/session',
+        '/me/chats-session',
         {'x-api-key' => $session},
         form => {cliente_id => $cliente_id2},
       )->status_is(200, 'abre sala como cliente 1 com o cliente 2')    #
@@ -308,21 +308,21 @@ do {
       ->tx->res->json;
 
     my $room2 = $t->post_ok(
-        '/me/chats/session',
+        '/me/chats-session',
         {'x-api-key' => $session},
         form => {cliente_id => $cliente_id3},
     )->status_is(200, 'abre sala como cliente 1 com o cliente 3')->tx->res->json;
     isnt($room2->{_test_only_id}, $room1->{_test_only_id}, 'id is not the same room');
 
     my $room2_other_side = $t->post_ok(
-        '/me/chats/session',
+        '/me/chats-session',
         {'x-api-key' => $session3},
         form => {cliente_id => $cliente_id},
       )->status_is(200, 'abre sala como cliente 3 com o cliente 1')    #
-      ->json_is('/_test_only_id', $room2->{_test_only_id}, 'same room id');
+      ->json_is('/_test_only_id', $room2->{_test_only_id}, 'same room id')->tx->res->json;
 
     my $room2_same_room = $t->post_ok(
-        '/me/chats/session',
+        '/me/chats-session',
         {'x-api-key' => $session},
         form => {cliente_id => $cliente_id3},
       )->status_is(200, 'abre sala como cliente 1 com o cliente 3 deve pegar a mesma sala')    #
@@ -345,15 +345,160 @@ do {
       ->json_is('/has_more', '0')                                                              #
       ->json_is('/next_page', undef, 'tem next_page mesmo sendo undef');
 
+    my $hello_from_cli1 = 'hello from cliente 1! ' . rand;
     $t->post_ok(
-        '/me/chats/message',
+        '/me/chats-messages',
         {'x-api-key' => $session},
         form => {
             chat_auth => $room2_same_room->{chat_auth},
-            message   => 'hello from cliente 1'
+            message   => $hello_from_cli1
         },
       )->status_is(200, 'mandando mensagem')                                                   #
       ->json_has('/id', 'we got an id!');
+    $t->post_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth => $room2_same_room->{chat_auth},
+            message   => '0'
+        },
+      )->status_is(200, 'mandando mensagem com valor 0')                                       #
+      ->json_has('/id', 'we got an id!');
+
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth => $room2_same_room->{chat_auth},
+        },
+      )->status_is(200, 'listando mensagens')                                                  #
+      ->json_is('/messages/0/message', '0',              'message is zero')                    #
+      ->json_is('/messages/1/message', $hello_from_cli1, 'hello is there')                     #
+      ->json_is('/messages/0/is_me',   '1',              'is myself')                          #
+      ->json_is('/messages/1/is_me',   '1',              'is myself');
+
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth => $room2_same_room->{chat_auth},
+        },
+      )->status_is(400, 'nao pode listar msg usando o token de outro usuario')                 #
+      ->json_is('/error', 'chat_auth_invalid_user');
+
+
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth => $room2_other_side->{chat_auth},
+        },
+      )->status_is(200, 'listando mensagens')                                                  #
+      ->json_is('/messages/0/message', '0',              'message is zero')                    #
+      ->json_is('/messages/1/message', $hello_from_cli1, 'hello is there')                     #
+      ->json_is('/messages/0/is_me',   '0',              'is NOT myself')                      #
+      ->json_is('/messages/1/is_me',   '0',              'is NOT myself')                      #
+      ->json_is('/has_more',           '0',              'nao tem mais msg');
+
+    $t->post_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth => $room2_other_side->{chat_auth},
+            message   => '0'
+        },
+      )->status_is(400, 'nao pode mandar msg do lado errado tbm')                              #
+      ->json_is('/error', 'chat_auth_invalid_user');
+
+    $t->post_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth => $room2_other_side->{chat_auth},
+            message   => 'working'
+        },
+      )->status_is(200, 'mandando mensagem usuario 3')                                         #
+      ->json_has('/id', 'we got an id!');
+
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth => $room2_other_side->{chat_auth},
+            rows      => 2,
+        },
+      )->status_is(200, 'teste paginacao')                                                     #
+      ->json_is('/messages/0/message', 'working', 'last msg is the first')                     #
+      ->json_is('/messages/0/is_me',   '1',       'is me')                                     #
+      ->json_is('/messages/1/message', '0',       'other msg')                                 #
+      ->json_is('/messages/1/is_me',   '0',       'is not myself')                             #
+      ->json_is('/has_more',           '1',       'has more messages')                         #
+      ->json_has('/older', 'has older pagination')                                             #
+      ->json_has('/newer', 'has newer pagination');
+
+    my $older = last_tx_json()->{older};
+    my $newer = last_tx_json()->{newer};
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth  => $room2_other_side->{chat_auth},
+            pagination => $older,
+        },
+      )->status_is(200, 'teste paginacao')                                                     #
+      ->json_is('/messages/0/message', $hello_from_cli1, 'expected message')                   #
+      ->json_is('/messages/1',         undef,            'no older msg')                       #
+      ->json_is('/has_more',           '0',              'no more messages')                   #
+      ->json_hasnt('/older', 'no older pagination')                                            #
+      ->json_hasnt('/newer', 'no newer pagination');
+
+    $t->post_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth => $room2->{chat_auth},
+            message   => 'hey!'
+        },
+      )->status_is(200, 'mandando mensagem nova')                                              #
+      ->json_has('/id', 'we got an id!');
+    $t->post_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth => $room2->{chat_auth},
+            message   => 'me responde!'
+        },
+      )->status_is(200, 'mandando mensagem nova')                                              #
+      ->json_has('/id', 'we got an id!');
+
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth  => $room2_other_side->{chat_auth},
+            pagination => $newer,
+        },
+      )->status_is(200, 'teste paginacao (puxando novidades)')                                 #
+      ->json_is('/messages/0/message', 'me responde!', 'expected message')                     #
+      ->json_is('/messages/1/message', 'hey!',         'expected message')                     #
+      ->json_is('/messages/2',         undef,          'no older msg')                         #
+      ->json_is('/has_more',           '0',            'no more messages')                     #
+      ->json_hasnt('/older', 'no older pagination')                                            #
+      ->json_has('/newer', 'newer pagination');
+    $newer = last_tx_json()->{newer};
+
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth  => $room2_other_side->{chat_auth},
+            pagination => $newer,
+        },
+      )->status_is(200, 'teste paginacao (puxando novidades, mas nao tem mais)')               #
+      ->json_is('/messages', [],  'no msg')                                                    #
+      ->json_is('/has_more', '0', 'no more messages')                                          #
+      ->json_hasnt('/older', 'no older pagination')                                            #
+      ->json_has('/newer', 'newer pagination');
 
 };
 

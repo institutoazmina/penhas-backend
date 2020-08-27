@@ -158,11 +158,14 @@ sub register {
     my $me_chat = $me->under('chats');
     $me_chat->get()->to(controller => 'Me_Chat', action => 'me_chat_sessions');
 
-    # POST /me/chats/session?cliente_id=XXX
-    $me_chat->route('session')->post()->to(controller => 'Me_Chat', action => 'me_open_session');
+    # POST /me/chats-session
+    $me->route('chats-session')->post()->to(controller => 'Me_Chat', action => 'me_open_session');
 
-    # POST /me/chats/message?cliente_id=XXX
-    $me_chat->route('message')->post()->to(controller => 'Me_Chat', action => 'me_send_message');
+    # POST /me/chats-messages
+    $me->route('chats-messages')->post()->to(controller => 'Me_Chat', action => 'me_send_message');
+
+    # GET /me/chats-messages
+    $me->route('chats-messages')->get()->to(controller => 'Me_Chat', action => 'me_list_message');
 
 
 }

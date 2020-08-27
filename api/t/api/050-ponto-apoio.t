@@ -343,8 +343,8 @@ do {
             'dias_funcionamento' => 'dias_uteis_fds_plantao',
         }
       )->status_is(200)                                                              #
-      ->json_is('/rows/0/id', $ponto_apoio2->id, 'apenas um eh dias_uteis_fds_plantao')                 #
-      ->json_is('/rows/1',    undef,             'só tem 1 linha')                   #
+      ->json_is('/rows/0/id', $ponto_apoio2->id, 'apenas um eh dias_uteis_fds_plantao')    #
+      ->json_is('/rows/1',    undef,             'só tem 1 linha')                         #
       ->json_is('/has_more',  0,                 'has more is false');
 
     my $res1 = $t->get_ok(
@@ -354,11 +354,11 @@ do {
             'longitude' => '-46.633462',
             'rows'      => 2,
         }
-      )->status_is(200)                                                              #
-      ->json_is('/rows/0/distancia', 1,     'mais proximo primeiro')                 #
-      ->json_is('/rows/1/distancia', 2,     'esta ficando menos proximo')            #
-      ->json_is('/rows/2',           undef, 'nao tem terceiro item')                 #
-      ->json_is('/has_more',         1,     'has more is true')                      #
+      )->status_is(200)                                                                    #
+      ->json_is('/rows/0/distancia', 1,     'mais proximo primeiro')                       #
+      ->json_is('/rows/1/distancia', 2,     'esta ficando menos proximo')                  #
+      ->json_is('/rows/2',           undef, 'nao tem terceiro item')                       #
+      ->json_is('/has_more',         1,     'has more is true')                            #
       ->json_has('/next_page', 'but still has next_page token')->tx->res->json;
 
     $t->get_ok(
@@ -369,10 +369,10 @@ do {
             'rows'      => 2,
             'next_page' => $res1->{next_page},
         }
-      )->status_is(200)                                                              #
-      ->json_is('/rows/0/distancia', 4,     'mais longe')                            #
-      ->json_is('/rows/1',           undef, 'nao tem segundo')                       #
-      ->json_is('/has_more',         0,     'has more is false')                     #
+      )->status_is(200)                                                                    #
+      ->json_is('/rows/0/distancia', 4,     'mais longe')                                  #
+      ->json_is('/rows/1',           undef, 'nao tem segundo')                             #
+      ->json_is('/has_more',         0,     'has more is false')                           #
       ->json_has('/next_page', 'but still has next_page token')->tx->res->json;
 
     $t->get_ok(
@@ -382,9 +382,9 @@ do {
             'longitude' => '-46.633462',
             'keywords'  => 'kaz',
         }
-      )->status_is(200)                                                              #
-      ->json_is('/rows/0/nome', 'kazu', 'kazu eh o resultado pra busca')             #
-      ->json_is('/rows/1',      undef,  'nao tem mais')                              #
+      )->status_is(200)                                                                    #
+      ->json_is('/rows/0/nome', 'kazu', 'kazu eh o resultado pra busca')                   #
+      ->json_is('/rows/1',      undef,  'nao tem mais')                                    #
       ->json_is('/has_more',    0);
 
     my $rand_zero_to_five = int(rand(6));

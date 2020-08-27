@@ -40,6 +40,8 @@ sub setup {
     $self->helper('chat_list_sessions' => sub { &chat_list_sessions(@_) });
     $self->helper('chat_open_session'  => sub { &chat_open_session(@_) });
     $self->helper('chat_send_message'  => sub { &chat_send_message(@_) });
+    $self->helper('chat_list_message'  => sub { &chat_list_message(@_) });
+
 }
 
 sub _cliente_activity_rs {
@@ -398,12 +400,11 @@ sub _sign_chat_auth {
     );
 }
 
-sub chat_send_message {
+sub _load_chat_room {
     my ($c, %opts) = @_;
 
     my $user_obj  = $opts{user_obj}  or confess 'missing user_obj';
     my $chat_auth = $opts{chat_auth} or confess 'missing chat_auth';
-    my $message   = $opts{message}   or confess 'missing message';
 
     $chat_auth = eval { $c->decode_jwt($chat_auth) };
     $c->reply_invalid_param($reload_app_err_msg, 'chat_auth_invalid')
@@ -414,8 +415,6 @@ sub chat_send_message {
         $reload_app_err_msg,
         'chat_auth_invalid_user'
     ) if ($chat_auth->{u} || 0) != $user_obj->id;
-
-    slog_info('user_id %d chat_send_message chat_id %d', $user_obj->id, $chat_auth->{id});
 
     # carrega a session, que é equivalente a sala, e tem a chave das mensagens
     my $session = $c->schema->resultset('ChatSession')->search(
@@ -452,6 +451,31 @@ sub chat_send_message {
         -cipher => 'Rijndael',
         -header => 'salt',
     );
+
+    return ($cipher, $session, $user_obj);
+}
+
+sub chat_send_message {
+    my ($c, %opts) = @_;
+
+    my ($cipher, $session, $user_obj) = &_load_chat_room($c, %opts);
+    my $message = defined $opts{message} ? $opts{message} : confess 'missing message';
+
+    slog_info('user_id %d chat_send_message chat_id %d', $user_obj->id, $session->id);
+
+    # faz um lock, pra nao ter como ter duas mensagens com o exatamente o mesmo tempo
+    # assim evita complicar a paginacao
+    my @participants_in_order = $session->participants->@*;
+    my ($locked1, $lock_key1) = $c->kv->lock_and_wait('new_chat:cliente_id' . $participants_in_order[0]);
+    my ($locked2, $lock_key2) = $c->kv->lock_and_wait('new_chat:cliente_id' . $participants_in_order[1]);
+
+    on_scope_exit {
+        $c->kv->redis->del($lock_key1);
+        $c->kv->redis->del($lock_key2)
+    };
+
+    # se nao conseguir o lock, beleza... pelo menos tentou, mas nao precisa descartar se passou os 15s locked
+
     my $chat_message;
     $c->schema->txn_do(
         sub {
@@ -477,4 +501,111 @@ sub chat_send_message {
 
     return {id => $chat_message->id};
 }
+
+sub chat_list_message {
+    my ($c, %opts) = @_;
+
+    my ($cipher, $session, $user_obj) = &_load_chat_room($c, %opts);
+    my $rows = $opts{rows} || 10;
+    $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
+
+    my $page = $opts{pagination};
+    if ($page) {
+        $page = eval { $c->decode_jwt($page) };
+        $c->reply_invalid_param('paginação inválida', 'pagination')
+          if ($page->{iss} || '') ne 'U:X';
+    }
+
+    my $rs = $session->chat_messages;
+    if ($page->{before}) {
+        $rs = $rs->search(
+            {'me.created_at' => {'<' => $page->{before}}},
+            {
+                order_by => \'me.created_at DESC',
+            }
+        );
+    }
+    else {
+        $rs = $rs->search(
+            {
+                ($page->{after} ? ('me.created_at' => {'>' => $page->{after}}) : ()),
+            },
+            {
+                order_by => \'me.created_at DESC',
+            }
+        );
+    }
+
+    $rs = $rs->search(
+        undef,
+        {
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+            rows         => $rows + 1,
+        }
+    );
+
+    my @rows      = $rs->all;
+    my $cur_count = scalar @rows;
+    my $has_more  = $cur_count > $rows ? 1 : 0;
+    if ($has_more) {
+        pop @rows;
+        $cur_count--;
+    }
+
+    my $row_first = $rows[0]  ? $rows[0]{created_at}  : undef;
+    my $row_last  = $rows[-1] ? $rows[-1]{created_at} : undef;
+
+    my @messages;
+    my $myself = $user_obj->id;
+    foreach my $row (@rows) {
+        my $message = $cipher->decrypt(decode_z85($row->{message}));
+        $message = '[erro ao descriptografar mensagem]' unless $message =~ s/#$//;
+        push @messages, {
+            id      => $row->{id},
+            message => $message . '',
+            is_me   => $myself == $row->{cliente_id} ? 1 : 0,
+            time    => $row->{created_at}
+        };
+
+    }
+
+    my ($other_id) = grep { $_ != $myself } $session->participants->@*;
+
+    return {
+        messages     => \@messages,
+        other_avatar => $other_id,
+        (
+            !$page->{before}
+            ? (
+                newer => $c->encode_jwt(
+                    {
+                        iss   => 'U:X',
+                        after => $row_first,
+                    },
+                    1
+                ),
+              )
+            : ()
+        ),
+        has_more => $has_more,
+        (
+            $has_more
+            ? (
+                older => $c->encode_jwt(
+                    {
+                        iss    => 'U:X',
+                        before => $row_last,
+                    },
+                    1
+                ),
+              )
+            : ()
+        ),
+        meta => {
+            can_send_message => 1,
+            can_block        => 1,
+        },
+    };
+}
+
 1;
