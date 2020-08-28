@@ -338,6 +338,7 @@ sub ponto_apoio_detail {
                   me.cep
                   me.tipo_logradouro
                   me.nome_logradouro
+                  me.municipio
                   me.uf
                   me.bairro
                   me.qtde_avaliacao
