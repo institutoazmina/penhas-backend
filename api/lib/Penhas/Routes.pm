@@ -167,6 +167,9 @@ sub register {
     # GET /me/chats-messages
     $me->route('chats-messages')->get()->to(controller => 'Me_Chat', action => 'me_list_message');
 
+    # GET /me/manage-blocks
+    $me->route('manage-blocks')->get()->to(controller => 'Me_Chat', action => 'me_manage_blocks');
+
 
 }
 

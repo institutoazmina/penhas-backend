@@ -153,4 +153,24 @@ sub me_list_message {
     );
 }
 
+sub me_manage_blocks {
+    my $c = shift;
+    my $user_obj = $c->stash('user_obj');
+
+    my $valid = $c->validate_request_params(
+        cliente_id => {required => 1, type => 'Int'},
+        block      => {required => 1, type => 'Bool'},
+    );
+
+    my $ret = $c->chat_manage_block(
+        %$valid,
+        user_obj => $c->stash('user_obj'),
+    );
+
+    return $c->render(
+        json   => $ret,
+        status => 200,
+    );
+}
+
 1;

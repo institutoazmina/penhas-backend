@@ -41,6 +41,8 @@ sub setup {
     $self->helper('chat_open_session'  => sub { &chat_open_session(@_) });
     $self->helper('chat_send_message'  => sub { &chat_send_message(@_) });
     $self->helper('chat_list_message'  => sub { &chat_list_message(@_) });
+    $self->helper('chat_manage_block'  => sub { &chat_manage_block(@_) });
+
 
 }
 
@@ -612,7 +614,6 @@ sub chat_list_message {
 
     }
 
-
     return {
         messages => \@messages,
         other    => $other,
@@ -646,6 +647,22 @@ sub chat_list_message {
         ),
         meta => $meta,
     };
+}
+
+sub chat_manage_block {
+    my ($c, %opts) = @_;
+
+    my $user_obj      = $opts{user_obj}   or confess 'missing user_obj';
+    my $to_cliente_id = $opts{cliente_id} or confess 'missing cliente_id';
+    my $block         = $opts{block};
+
+    $c->reply_invalid_param(
+        'Não pode bloquear você mesmo!',
+        'cannot_block_yourself'
+    ) if $user_obj->id == $to_cliente_id;
+
+
+    return 1;
 }
 
 1;

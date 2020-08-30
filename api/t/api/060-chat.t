@@ -500,8 +500,20 @@ do {
       ->json_is('/has_more', '0', 'no more messages')                                          #
       ->json_hasnt('/older', 'no older pagination')                                            #
       ->json_has('/newer', 'newer pagination');
-$newer = last_tx_json()->{newer};
+    $newer = last_tx_json()->{newer};
     ok $t->app->decode_jwt($newer)->{after}, 'after is definded';
+
+    # BLOCKS
+    $t->get_ok(
+        '/me/manage-blocks',
+        {'x-api-key' => $session2},
+        form => {
+            cliente_id => $cliente_id2,
+            block      => 0,
+        }
+      )->status_is(400, 'cannot block yourself')    #
+      ->json_is('/error', 'cannot_block_yourself');
+
 
 };
 
