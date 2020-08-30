@@ -587,12 +587,13 @@ do {
         }
     )->status_is(204, 'block updated (unblock)');
 
+    my $random_message = 'latest message' . rand;
     $t->post_ok(
         '/me/chats-messages',
         {'x-api-key' => $session3},
         form => {
             chat_auth => $room2_other_side->{chat_auth},
-            message   => 'new message'
+            message   => $random_message
         },
     )->status_is(200, 'pode mandar novamente');
 
@@ -602,12 +603,21 @@ do {
         form => {
             chat_auth => $room2_other_side->{chat_auth},
         },
-      )->status_is(200, 'vendo historico')                                                     #
-      ->json_is('/meta/can_send_message', 1, 'sim pq eu dei block')                            #
-      ->json_is('/meta/did_blocked',      0, 'não está blocked')                                   #
+      )->status_is(200, 'vendo historico')    #
+      ->json_is('/meta/can_send_message', 1, 'sim pq eu dei block')          #
+      ->json_is('/meta/did_blocked',      0, 'não está blocked')             #
       ->json_is('/meta/is_blockable',     1, 'pq o chat é entre pessoas');
 
-
+    $t->post_ok(
+        '/me/chats-session',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id3, prefetch => 1},
+      )->status_is(200, 'abrindo a sala e puxando as ultimas msg sozinho')    #
+      ->json_has('/chat_auth',     'tem chat_auth')                           #
+      ->json_has('/prefetch/meta', 'tem prefetch/meta')                       #
+      ->json_is('/prefetch/messages/0/message', $random_message,         'ultima msg ok')
+      ->json_is('/prefetch/messages/0/is_me',   0,                       'ultima msg eh do cliente 3')
+      ->json_is('/_test_only_id',               $room2->{_test_only_id}, 'is the same room as before');
 
 };
 

@@ -66,6 +66,7 @@ sub me_open_session {
 
     my $valid = $c->validate_request_params(
         cliente_id => {required => 1, type => 'Str', max_length => 12},
+        prefetch   => {required => 0, type => 'Bool'},
     );
     if ($valid->{cliente_id} ne 'support') {
         $c->merge_validate_request_params(
@@ -78,6 +79,7 @@ sub me_open_session {
         %$valid,
         user_obj => $c->stash('user_obj'),
     );
+
 
     return $c->render(
         json   => $ret,

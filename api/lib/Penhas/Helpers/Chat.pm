@@ -378,13 +378,21 @@ sub chat_open_session {
         $existing = {id => $existing->id};
     }
 
+    my $chat_auth = &_sign_chat_auth($c, id => $existing->{id}, uid => $user_obj->id);
+
     return {
-        chat_auth => &_sign_chat_auth($c, id => $existing->{id}, uid => $user_obj->id),
-        is_test()
-        ? (
-            _test_only_id => $existing->{id},
-          )
-        : ()
+        chat_auth => $chat_auth,
+        (
+            $opts{prefetch}
+            ? (
+                prefetch => $c->chat_list_message(
+                    chat_auth => $chat_auth,
+                    user_obj  => $user_obj,
+                ),
+              )
+            : ()
+        ),
+        is_test() ? (_test_only_id => $existing->{id},) : ()
     };
 }
 
