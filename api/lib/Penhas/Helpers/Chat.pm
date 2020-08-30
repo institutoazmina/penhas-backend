@@ -498,10 +498,10 @@ sub _load_chat_room {
 
     my $blocked = delete $other->{blocked_me};
     my $meta    = {
-        can_send_message   => $blocked     ? 0 : $did_blocked ? 0 : 1,
-        did_blocked        => $did_blocked ? 1 : 0,
-        is_blockable       => 1,    # usuarios sempre sao is_blockable, apenas o azmina nao eh
-        last_msg_etag => md5_hex($session->get_column('last_message_at')),
+        can_send_message => $blocked     ? 0 : $did_blocked ? 0 : 1,
+        did_blocked      => $did_blocked ? 1 : 0,
+        is_blockable     => 1,    # usuarios sempre sao is_blockable, apenas o azmina nao eh
+        last_msg_etag    => md5_hex($session->get_column('last_message_at')),
     };
 
     return ($cipher, $session, $user_obj, $other, $meta);
@@ -538,36 +538,43 @@ sub chat_send_message {
     # se nao conseguir o lock, beleza... pelo menos tentou, mas nao precisa descartar se passou os 15s locked
     my $chat_message;
     my $prev_last_msg_at;
+    my $last_msg_at;
     $c->schema->txn_do(
         sub {
             # pega o ultimo horario antes da nossa msg
-            $prev_last_msg_at = $c->schema->resultset('ChatSession')->search(
+            my $db_info = $c->schema->resultset('ChatSession')->search(
                 {id => $session->id},
-            )->get_column('last_message_at')->next;
+                {
+                    columns      => ['me.last_message_at', {db_now => \'now()::timestamp without time zone'}],
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                }
+            )->next;
+            $prev_last_msg_at = $db_info->{last_message_at};
+            $last_msg_at      = $db_info->{db_now} or die 'missing db_now';
 
             # todas as mensagens salvando termiando com #
             # para na hora que fizer o decrypt verificar a integridade da chave
             $chat_message = $session->chat_messages->create(
                 {
                     cliente_id => $user_obj->id,
-                    message    => encode_z85($cipher->encrypt($message . '#'))
+                    message    => encode_z85($cipher->encrypt($message . '#')),
+                    created_at => $last_msg_at,
                 }
             );
 
             $session->update(
                 {
                     last_message_by => $user_obj->id,
-                    last_message_at => \'now()',
+                    last_message_at => $last_msg_at,
                 }
             );
-
         }
     );
     die '$chat_message is not defined' unless $chat_message;
-
     return {
         id                 => $chat_message->id,
         prev_last_msg_etag => md5_hex($prev_last_msg_at),
+        last_msg_etag      => md5_hex($last_msg_at),
     };
 }
 

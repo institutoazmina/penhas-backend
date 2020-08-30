@@ -598,8 +598,9 @@ do {
             message   => $random_message
         },
       )->status_is(200, 'pode mandar novamente')    #
-      ->json_is('/prev_last_msg_etag', $last_etag, 'ultima etag bate com a listagem');
-
+      ->json_is('/prev_last_msg_etag', $last_etag, 'ultima etag bate com a listagem')
+      ->json_has('/last_msg_etag', 'tem last_msg_etag');
+    my $really_last_msg = last_tx_json->{last_msg_etag};
     $t->get_ok(
         '/me/chats-messages',
         {'x-api-key' => $session3},
@@ -610,7 +611,8 @@ do {
       ->json_is('/meta/can_send_message', 1, 'sim pq eu dei block')         #
       ->json_is('/meta/did_blocked',      0, 'não está blocked')            #
       ->json_is('/meta/is_blockable',     1, 'pq o chat é entre pessoas')
-      ->json_unlike('/meta/last_msg_etag', qr/$last_etag/, 'etag mudou pq teve nova msg');
+      ->json_unlike('/meta/last_msg_etag', qr/$last_etag/, 'etag mudou pq teve nova msg')
+      ->json_is('/meta/last_msg_etag', $really_last_msg, 'ultima msg');
 
     $t->post_ok(
         '/me/chats-session',
