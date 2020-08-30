@@ -7,6 +7,7 @@ use Mojo::URL;
 use Crypt::PRNG qw(random_string random_string_from);
 use Encode qw/encode_utf8/;
 use Digest::SHA qw/sha256_hex/;
+use Digest::MD5 qw/md5_hex/;
 use File::Path qw(make_path);
 use Carp;
 use Time::HiRes qw//;
@@ -44,6 +45,7 @@ state $text_xslate = Text::Xslate->new(
   trunc_to_meter
 
   pg_timestamp2iso_8601
+  db_epoch_to_etag
 );
 
 
@@ -186,6 +188,15 @@ sub pg_timestamp2iso_8601 {
 
     $timestamp .= 'Z';
     return $timestamp;
+}
+
+sub db_epoch_to_etag {
+    my ($timestamp) = @_;
+
+    die "$timestamp is not in expected format"
+      unless $timestamp =~ /^2\d{3}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}(\.\d{1,8})?$/;
+
+    return substr(md5_hex($timestamp), 0, 6) . '';
 }
 
 1;

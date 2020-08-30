@@ -4,14 +4,13 @@ use Carp qw/confess/;
 use utf8;
 use JSON;
 use Penhas::Logger;
-use Penhas::Utils qw/is_test pg_timestamp2iso_8601/;
+use Penhas::Utils qw/is_test pg_timestamp2iso_8601 db_epoch_to_etag/;
 use Mojo::Util qw/trim/;
 use Scope::OnExit;
 use Crypt::CBC;
 use Crypt::Rijndael;    # AES
 use Crypt::PRNG qw(random_bytes);
 use Convert::Z85;
-use Digest::MD5 qw/md5_hex/;
 
 our $ForceFilterClientes;
 my $reload_app_err_msg = 'Recarregue o app, conversa não pode ser aberta.';
@@ -501,7 +500,7 @@ sub _load_chat_room {
         can_send_message => $blocked     ? 0 : $did_blocked ? 0 : 1,
         did_blocked      => $did_blocked ? 1 : 0,
         is_blockable     => 1,    # usuarios sempre sao is_blockable, apenas o azmina nao eh
-        last_msg_etag    => md5_hex($session->get_column('last_message_at')),
+        last_msg_etag    => db_epoch_to_etag($session->get_column('last_message_at')),
     };
 
     return ($cipher, $session, $user_obj, $other, $meta);
@@ -573,8 +572,8 @@ sub chat_send_message {
     die '$chat_message is not defined' unless $chat_message;
     return {
         id                 => $chat_message->id,
-        prev_last_msg_etag => md5_hex($prev_last_msg_at),
-        last_msg_etag      => md5_hex($last_msg_at),
+        prev_last_msg_etag => db_epoch_to_etag($prev_last_msg_at),
+        last_msg_etag      => db_epoch_to_etag($last_msg_at),
     };
 }
 
