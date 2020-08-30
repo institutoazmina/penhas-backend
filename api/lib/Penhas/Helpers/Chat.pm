@@ -485,11 +485,13 @@ sub _load_chat_room {
         $other->{avatar_url} ||= $ENV{AVATAR_PADRAO_URL};
     }
 
+    my $did_blocked = $user_obj->cliente_bloqueios->search({blocked_cliente_id => $other->{cliente_id}})->count;
 
     my $blocked = delete $other->{blocked_me};
     my $meta    = {
-        can_send_message => $blocked ? 0 : 1,
-        can_block        => 1,
+        can_send_message => $blocked     ? 0 : $did_blocked ? 0 : 1,
+        did_blocked      => $did_blocked ? 1 : 0,
+        is_blockable     => 1,    # usuarios sempre sao is_blockable, apenas o azmina nao eh
     };
 
     return ($cipher, $session, $user_obj, $other, $meta);
@@ -501,13 +503,14 @@ sub chat_send_message {
     my ($cipher, $session, $user_obj, $other, $meta) = &_load_chat_room($c, %opts);
     my $message = defined $opts{message} ? $opts{message} : confess 'missing message';
 
-    $c->reply_invalid_param('Você não pode enviar mensagens nesta conversa.', 'blocked')
-      unless $meta->{can_send_message};
-
     $c->reply_invalid_param(
         'Para enviar mensagens nesta conversa, desbloquei o outro usuário.',
         'remove_block_to_send_message'
-    ) if $user_obj->cliente_bloqueios->search({blocked_cliente_id => $other->{cliente_id}})->count > 0;
+    ) if $meta->{did_blocked};
+
+    $c->reply_invalid_param('Você não pode enviar mensagens nesta conversa.', 'blocked')
+      unless $meta->{can_send_message};
+
 
     slog_info('user_id %d chat_send_message chat_id %d', $user_obj->id, $session->id);
 

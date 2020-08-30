@@ -567,6 +567,47 @@ do {
       )->status_is(400, 'nao pode mandar msg pq bloqueou o outro')                             #
       ->json_is('/error', 'remove_block_to_send_message');
 
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth => $room2_other_side->{chat_auth},
+        },
+      )->status_is(200, 'vendo historico')                                                     #
+      ->json_is('/meta/can_send_message', 0, 'nao pq eu dei block')                            #
+      ->json_is('/meta/did_blocked',      1, 'está blocked')                                   #
+      ->json_is('/meta/is_blockable',     1, 'pq o chat é entre pessoas');
+
+    $t->get_ok(
+        '/me/manage-blocks',
+        {'x-api-key' => $session3},
+        form => {
+            cliente_id => $cliente_id,
+            block      => '0',
+        }
+    )->status_is(204, 'block updated (unblock)');
+
+    $t->post_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth => $room2_other_side->{chat_auth},
+            message   => 'new message'
+        },
+    )->status_is(200, 'pode mandar novamente');
+
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth => $room2_other_side->{chat_auth},
+        },
+      )->status_is(200, 'vendo historico')                                                     #
+      ->json_is('/meta/can_send_message', 1, 'sim pq eu dei block')                            #
+      ->json_is('/meta/did_blocked',      0, 'não está blocked')                                   #
+      ->json_is('/meta/is_blockable',     1, 'pq o chat é entre pessoas');
+
+
 
 };
 
