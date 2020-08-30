@@ -576,7 +576,9 @@ do {
       )->status_is(200, 'vendo historico')                                                     #
       ->json_is('/meta/can_send_message', 0, 'nao pq eu dei block')                            #
       ->json_is('/meta/did_blocked',      1, 'está blocked')                                   #
-      ->json_is('/meta/is_blockable',     1, 'pq o chat é entre pessoas');
+      ->json_is('/meta/is_blockable',     1, 'pq o chat é entre pessoas')
+      ->json_has('/meta/last_msg_etag', 'tem last_msg_etag');
+    my $last_etag = last_tx_json->{meta}{last_msg_etag};
 
     $t->get_ok(
         '/me/manage-blocks',
@@ -595,7 +597,8 @@ do {
             chat_auth => $room2_other_side->{chat_auth},
             message   => $random_message
         },
-    )->status_is(200, 'pode mandar novamente');
+      )->status_is(200, 'pode mandar novamente')    #
+      ->json_is('/prev_last_msg_etag', $last_etag, 'ultima etag bate com a listagem');
 
     $t->get_ok(
         '/me/chats-messages',
@@ -603,10 +606,11 @@ do {
         form => {
             chat_auth => $room2_other_side->{chat_auth},
         },
-      )->status_is(200, 'vendo historico')    #
-      ->json_is('/meta/can_send_message', 1, 'sim pq eu dei block')          #
-      ->json_is('/meta/did_blocked',      0, 'não está blocked')             #
-      ->json_is('/meta/is_blockable',     1, 'pq o chat é entre pessoas');
+      )->status_is(200, 'vendo historico')          #
+      ->json_is('/meta/can_send_message', 1, 'sim pq eu dei block')         #
+      ->json_is('/meta/did_blocked',      0, 'não está blocked')            #
+      ->json_is('/meta/is_blockable',     1, 'pq o chat é entre pessoas')
+      ->json_unlike('/meta/last_msg_etag', qr/$last_etag/, 'etag mudou pq teve nova msg');
 
     $t->post_ok(
         '/me/chats-session',

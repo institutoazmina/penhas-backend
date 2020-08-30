@@ -11,6 +11,7 @@ use Crypt::CBC;
 use Crypt::Rijndael;    # AES
 use Crypt::PRNG qw(random_bytes);
 use Convert::Z85;
+use Digest::MD5 qw/md5_hex/;
 
 our $ForceFilterClientes;
 my $reload_app_err_msg = 'Recarregue o app, conversa não pode ser aberta.';
@@ -429,7 +430,7 @@ sub _load_chat_room {
     # carrega a session, que é equivalente a sala, e tem a chave das mensagens
     my $session = $c->schema->resultset('ChatSession')->search(
         {id      => $chat_auth->{id}},
-        {columns => [qw/id session_started_by participants session_key/]}
+        {columns => [qw/id session_started_by participants session_key last_message_at/]}
     )->next;
     $c->reply_invalid_param(
         $reload_app_err_msg,
@@ -497,9 +498,10 @@ sub _load_chat_room {
 
     my $blocked = delete $other->{blocked_me};
     my $meta    = {
-        can_send_message => $blocked     ? 0 : $did_blocked ? 0 : 1,
-        did_blocked      => $did_blocked ? 1 : 0,
-        is_blockable     => 1,    # usuarios sempre sao is_blockable, apenas o azmina nao eh
+        can_send_message   => $blocked     ? 0 : $did_blocked ? 0 : 1,
+        did_blocked        => $did_blocked ? 1 : 0,
+        is_blockable       => 1,    # usuarios sempre sao is_blockable, apenas o azmina nao eh
+        last_msg_etag => md5_hex($session->get_column('last_message_at')),
     };
 
     return ($cipher, $session, $user_obj, $other, $meta);
@@ -535,8 +537,14 @@ sub chat_send_message {
 
     # se nao conseguir o lock, beleza... pelo menos tentou, mas nao precisa descartar se passou os 15s locked
     my $chat_message;
+    my $prev_last_msg_at;
     $c->schema->txn_do(
         sub {
+            # pega o ultimo horario antes da nossa msg
+            $prev_last_msg_at = $c->schema->resultset('ChatSession')->search(
+                {id => $session->id},
+            )->get_column('last_message_at')->next;
+
             # todas as mensagens salvando termiando com #
             # para na hora que fizer o decrypt verificar a integridade da chave
             $chat_message = $session->chat_messages->create(
@@ -558,8 +566,8 @@ sub chat_send_message {
     die '$chat_message is not defined' unless $chat_message;
 
     return {
-        id => $chat_message->id,
-
+        id                 => $chat_message->id,
+        prev_last_msg_etag => md5_hex($prev_last_msg_at),
     };
 }
 
