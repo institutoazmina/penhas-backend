@@ -504,6 +504,11 @@ sub chat_send_message {
     $c->reply_invalid_param('Você não pode enviar mensagens nesta conversa.', 'blocked')
       unless $meta->{can_send_message};
 
+    $c->reply_invalid_param(
+        'Para enviar mensagens nesta conversa, desbloquei o outro usuário.',
+        'remove_block_to_send_message'
+    ) if $user_obj->cliente_bloqueios->search({blocked_cliente_id => $other->{cliente_id}})->count > 0;
+
     slog_info('user_id %d chat_send_message chat_id %d', $user_obj->id, $session->id);
 
     # faz um lock, pra nao ter como ter duas mensagens com o exatamente o mesmo tempo
@@ -660,6 +665,25 @@ sub chat_manage_block {
         'Não pode bloquear você mesmo!',
         'cannot_block_yourself'
     ) if $user_obj->id == $to_cliente_id;
+
+    my $rs = $user_obj->cliente_bloqueios->search(
+        {
+            blocked_cliente_id => $to_cliente_id,
+        }
+    );
+
+    $c->schema2->txn_do(
+        sub {
+            $rs->delete;
+            if ($block) {
+                $rs->create(
+                    {
+                        created_at => \'now()',
+                    }
+                );
+            }
+        }
+    );
 
 
     return 1;

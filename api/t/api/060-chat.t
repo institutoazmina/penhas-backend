@@ -514,6 +514,59 @@ do {
       )->status_is(400, 'cannot block yourself')    #
       ->json_is('/error', 'cannot_block_yourself');
 
+    $t->get_ok(
+        '/me/manage-blocks',
+        {'x-api-key' => $session2},
+        form => {
+            cliente_id => $cliente_id2,
+            block      => '',
+        }
+      )->status_is(400, 'block must be 1 or 0')     #
+      ->json_is('/error',  'form_error')            #
+      ->json_is('/field',  'block')                 #
+      ->json_is('/reason', 'is_required');
+
+    # cliente 3 bloqueia o cliente 1
+    $t->get_ok(
+        '/me/manage-blocks',
+        {'x-api-key' => $session3},
+        form => {
+            cliente_id => $cliente_id,
+            block      => '1',
+        }
+    )->status_is(204, 'block updated');
+
+    # ainda possível abrir a sala
+    my $room2_same_room_after_block = $t->post_ok(
+        '/me/chats-session',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id3},
+      )->status_is(200, 'abre sala como cliente 1 com o cliente 3 deve pegar a mesma sala')    #
+      ->json_has('/chat_auth', 'tem chat_auth')                                                #
+      ->json_is('/_test_only_id', $room2->{_test_only_id}, 'is the same room as before')->tx->res->json;
+
+    # cliente 1 pro cliente 3
+    $t->post_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth => $room2_same_room_after_block->{chat_auth},
+            message   => 'nan demo nai'
+        },
+      )->status_is(400, 'nao pode mandar msg pq ta blocked')                                   #
+      ->json_is('/error', 'blocked');
+
+    # cliente 3 pro cliente 1 tambem nao deve mandar, até desbloquear
+    $t->post_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth => $room2_other_side->{chat_auth},
+            message   => 'nan demo nai'
+        },
+      )->status_is(400, 'nao pode mandar msg pq bloqueou o outro')                             #
+      ->json_is('/error', 'remove_block_to_send_message');
+
 
 };
 
