@@ -358,7 +358,8 @@ sub ponto_apoio_detail {
                   me.eh_online
                   me.funcionamento_pandemia
                   me.observacao_pandemia
-                  /,
+		  me.ja_passou_por_moderacao
+		  /,
             ],
             join => [
                 'categoria',
