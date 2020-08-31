@@ -82,7 +82,7 @@ sub chat_find_users {
             (
                 $ForceFilterClientes
                 ? ('me.cliente_id' => {'in' => $ForceFilterClientes})
-                : ()
+                : ('me.cliente_id' => {'!=' => $user_obj->id})    # nao vir o proprio usuario na lista
             ),
         },
         {
