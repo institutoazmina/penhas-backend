@@ -389,8 +389,6 @@ sub _parse_celular {
     my $is_mobile = $celular->is_mobile();
     my $code      = $celular->country_code();
 
-    use DDP;
-    p $ENV{GUARDS_ALLOWED_COUNTRY_CODES};
     $c->reply_invalid_param(
         sprintf(
             'O pais (%s %s %s) não está liberado para uso. Entre em contato com o suporte.',
