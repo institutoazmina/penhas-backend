@@ -119,6 +119,18 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
 __PACKAGE__->add_unique_constraint("email", ["email"]);
+__PACKAGE__->might_have(
+  "chat_support",
+  "Penhas::Schema2::Result::ChatSupport",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "chat_support_messages",
+  "Penhas::Schema2::Result::ChatSupportMessage",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 __PACKAGE__->has_many(
   "cliente_ativacoes_panicoes",
   "Penhas::Schema2::Result::ClienteAtivacoesPanico",
@@ -235,8 +247,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-27 14:51:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YVZYkatvN+b9nRM5ypa6ag
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-31 12:07:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wrzOvc1gbA0IcFw0LXHuVA
 
 use Carp qw/confess/;
 
