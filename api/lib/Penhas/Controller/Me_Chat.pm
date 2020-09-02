@@ -80,6 +80,35 @@ sub me_open_session {
     );
 }
 
+sub me_delete_session {
+    my $c = shift;
+
+    my $user_obj = $c->stash('user_obj');
+
+    my $valid = $c->validate_request_params(
+        chat_auth => {required => 1, type => 'Str', max_length => 9999},
+    );
+
+    if ($valid->{chat_auth} !~ /\./) {
+        $c->support_clear_messages(
+            %$valid,
+            user_obj => $c->stash('user_obj'),
+        );
+    }
+    else {
+        $c->chat_delete_session(
+            %$valid,
+            user_obj => $c->stash('user_obj'),
+        );
+    }
+
+    return $c->render(
+        text   => '',
+        status => 204,
+    );
+
+}
+
 sub me_send_message {
     my $c = shift;
 

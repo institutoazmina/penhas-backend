@@ -175,8 +175,12 @@ sub register {
     # POST /me/chats-session
     $me->route('chats-session')->post()->to(controller => 'Me_Chat', action => 'me_open_session');
 
+    # DELETE /me/chats-session
+    $me->route('chats-session')->delete()->to(controller => 'Me_Chat', action => 'me_delete_session');
+
     # POST /me/chats-messages
     $me->route('chats-messages')->post()->to(controller => 'Me_Chat', action => 'me_send_message');
+
 
     # GET /me/chats-messages
     $me->route('chats-messages')->get()->to(controller => 'Me_Chat', action => 'me_list_message');

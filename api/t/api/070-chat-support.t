@@ -263,6 +263,23 @@ do {
       ->json_hasnt('/older', 'ainda tem older pq acabou a pagina')        #
       ->json_is('/has_more', 0, 'has_more false');
 
+    $t->delete_ok(
+        '/me/chats-session',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth => $cliente->support_chat_auth(),
+        }
+    )->status_is(204);
+
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth => $cliente->support_chat_auth(),
+        },
+      )->status_is(200, 'mensagens limpas')    #
+      ->json_is('/messages', [], 'sem msg');
+
 };
 
 

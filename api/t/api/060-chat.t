@@ -448,7 +448,6 @@ db_transaction {
       ->json_hasnt('/newer', 'no newer pagination');
 
     my $hey_long_msg = join ' ', ('hey!') x 100;
-    use DDP; p $hey_long_msg;
     $t->post_ok(
         '/me/chats-messages',
         {'x-api-key' => $session},
@@ -621,6 +620,25 @@ db_transaction {
       ->json_is('/prefetch/messages/0/message', $random_message,         'ultima msg ok')
       ->json_is('/prefetch/messages/0/is_me',   0,                       'ultima msg eh do cliente 3')
       ->json_is('/_test_only_id',               $room2->{_test_only_id}, 'is the same room as before');
+
+
+    $t->delete_ok(
+        '/me/chats-session',
+        {'x-api-key' => $session3},
+        form => {
+            chat_auth => $room2_other_side->{chat_auth},
+        }
+    )->status_is(204);
+
+    $t->post_ok(
+        '/me/chats-session',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id3, prefetch => 1},
+      )->status_is(200, 'abrindo a sala vai abrir uma nova pq foi removida')    #
+      ->json_has('/chat_auth',     'tem chat_auth')                             #
+      ->json_has('/prefetch/meta', 'tem prefetch/meta')                         #
+      ->json_is('/prefetch/messages', [], 'sem msgs')
+      ->json_unlike('/_test_only_id', qr/${\$room2->{_test_only_id}}/, 'is NOT the same room as before');
 
 };
 

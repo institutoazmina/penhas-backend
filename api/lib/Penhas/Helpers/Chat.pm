@@ -36,14 +36,14 @@ our %activity_labels = (
 sub setup {
     my $self = shift;
 
-    $self->helper('chat_find_users'    => sub { &chat_find_users(@_) });
-    $self->helper('chat_profile_user'  => sub { &chat_profile_user(@_) });
-    $self->helper('chat_list_sessions' => sub { &chat_list_sessions(@_) });
-    $self->helper('chat_open_session'  => sub { &chat_open_session(@_) });
-    $self->helper('chat_send_message'  => sub { &chat_send_message(@_) });
-    $self->helper('chat_list_message'  => sub { &chat_list_message(@_) });
-    $self->helper('chat_manage_block'  => sub { &chat_manage_block(@_) });
-
+    $self->helper('chat_find_users'     => sub { &chat_find_users(@_) });
+    $self->helper('chat_profile_user'   => sub { &chat_profile_user(@_) });
+    $self->helper('chat_list_sessions'  => sub { &chat_list_sessions(@_) });
+    $self->helper('chat_open_session'   => sub { &chat_open_session(@_) });
+    $self->helper('chat_send_message'   => sub { &chat_send_message(@_) });
+    $self->helper('chat_list_message'   => sub { &chat_list_message(@_) });
+    $self->helper('chat_manage_block'   => sub { &chat_manage_block(@_) });
+    $self->helper('chat_delete_session' => sub { &chat_delete_session(@_) });
 
 }
 
@@ -536,6 +536,34 @@ sub _load_chat_room {
     };
 
     return ($cipher, $session, $user_obj, $other, $meta);
+}
+
+sub chat_delete_session {
+    my ($c, %opts) = @_;
+
+    my ($cipher, $session, $user_obj, $other, $meta) = &_load_chat_room($c, %opts);
+
+    my @participants_in_order = sort { $a <=> $b } $session->participants->@*;
+    my ($locked1, $lock_key1) = $c->kv->lock_and_wait('new_chat:cliente_id' . $participants_in_order[0]);
+    my ($locked2, $lock_key2) = $c->kv->lock_and_wait('new_chat:cliente_id' . $participants_in_order[1]);
+
+    on_scope_exit {
+        $c->kv->redis->del($lock_key1);
+        $c->kv->redis->del($lock_key2)
+    };
+    $c->reply_invalid_param(
+        'Recurso está em uso, tente novamente',
+        'already_locked'
+    ) if (!$locked1 || !$locked2);
+
+    $c->schema->txn_do(
+        sub {
+            $session->chat_messages->delete;
+            $session->delete;
+        }
+    );
+
+    return 1;
 }
 
 sub chat_send_message {

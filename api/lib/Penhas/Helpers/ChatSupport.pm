@@ -18,8 +18,10 @@ my $reload_app_err_msg = 'Recarregue o app, conversa não pode ser aberta.';
 sub setup {
     my $self = shift;
 
-    $self->helper('support_send_message' => sub { &support_send_message(@_) });
-    $self->helper('support_list_message' => sub { &support_list_message(@_) });
+    $self->helper('support_send_message'   => sub { &support_send_message(@_) });
+    $self->helper('support_list_message'   => sub { &support_list_message(@_) });
+    $self->helper('support_clear_messages' => sub { &support_clear_messages(@_) });
+
 }
 
 
@@ -210,7 +212,6 @@ sub support_list_message {
 
     }
 
-use DDP; p $page->{before};
     return {
         messages => \@messages,
         other    => $other,
@@ -246,5 +247,18 @@ use DDP; p $page->{before};
     };
 }
 
+sub support_clear_messages {
+    my ($c, %opts) = @_;
+
+    my ($session, $user_obj, $other, $meta) = &_load_support_room($c, %opts);
+
+    $c->schema->txn_do(
+        sub {
+            $session->chat_support_messages->delete;
+        }
+    );
+
+    return 1;
+}
 
 1;
