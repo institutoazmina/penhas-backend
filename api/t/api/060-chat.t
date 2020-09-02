@@ -34,12 +34,7 @@ my @other_fields = (
     dry         => 0,
 );
 
-my $nome_completo = 'test ponto apoio';
-
-$t->get_ok('/pontos-de-apoio-dados-auxiliares')->status_is(200)->json_has('/categorias/0/label', 'has cat label')
-  ->json_has('/projetos/0/label',    'has proj label')->json_has('/fields/0/code', 'field has code')
-  ->json_has('/fields/0/max_length', 'field has max_length')->json_has('/fields/0/required', 'field has required');
-
+my $nome_completo = 'test chat';
 
 get_schema->resultset('CpfCache')->find_or_create(
     {
@@ -147,7 +142,7 @@ ok $skill3, 'skill3 is defined';
 
 my $skills_in_order = join ', ', sort { $a cmp $b } $skill1->skill, $skill2->skill;
 
-do {
+db_transaction {
 
     is $cliente->clientes_app_activity, undef, 'no clientes_app_activities';
     $t->get_ok(
@@ -332,7 +327,6 @@ do {
     $t->get_ok(
         '/me/chats',
         {'x-api-key' => $session},
-        form => {cliente_id => $cliente_id3},
       )->status_is(200, 'lista as conversas')                                                  #
       ->json_is('/rows/0/other_apelido',      'cliente C')                                     #
       ->json_is('/rows/0/last_message_is_me', '1')                                             #
@@ -398,7 +392,8 @@ do {
       ->json_is('/messages/1/message', $hello_from_cli1, 'hello is there')                     #
       ->json_is('/messages/0/is_me',   '0',              'is NOT myself')                      #
       ->json_is('/messages/1/is_me',   '0',              'is NOT myself')                      #
-      ->json_is('/has_more',           '0',              'nao tem mais msg');
+      ->json_is('/other/activity',     'online')                                               #
+      ->json_is('/has_more',           '0', 'nao tem mais msg');
 
     $t->post_ok(
         '/me/chats-messages',

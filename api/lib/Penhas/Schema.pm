@@ -24,7 +24,6 @@ sub get_jwt_key {
     my ($self) = @_;
 
     my $secret = delete $ENV{JWT_SECRET_KEY};
-
     die 'ENV variables not loaded' unless ++$_variables_loaded;
 
     # Se não estiverem configuradas, vamos iniciar uma.
@@ -47,7 +46,7 @@ SQL_QUERY
         );
     }
 
-    return (secret => $secret);
+    return $secret;
 }
 
 use DateTime::Format::DateParse;

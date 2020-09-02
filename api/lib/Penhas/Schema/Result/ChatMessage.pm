@@ -30,11 +30,7 @@ __PACKAGE__->add_columns(
   "cliente_id",
   { data_type => "integer", is_nullable => 0 },
   "message",
-  {
-    data_type   => "text",
-    is_nullable => 0,
-    original    => { data_type => "varchar" },
-  },
+  { data_type => "bytea", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -45,8 +41,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-23 16:10:29
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:p6hY7DYYFwA6ZW1WmkylqA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-09-02 00:26:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:t16DBWlQiG2uZJnjhLASMw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

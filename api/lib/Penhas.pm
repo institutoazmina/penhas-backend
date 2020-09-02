@@ -31,6 +31,9 @@ sub startup {
     my $schema = $self->schema;
     my $secret = $schema->get_jwt_key;
 
+    # usado pra assianr os cookies # https://docs.mojolicious.org/Mojolicious#secrets
+    $self->secrets([$secret . '4COOKIES']);
+
     # Não precisa manter conexao no processo manager
     $self->schema->storage->dbh->disconnect if not $ENV{HARNESS_ACTIVE};
 
@@ -38,6 +41,7 @@ sub startup {
     $self->plugin('JWT', secret => $secret);
 
     $self->plugin('ParamLogger', filter => [qw(password senha message)]);
+
 
     # servir a /public (templates de email e arquivos static)
     $self->plugin('RenderFile');

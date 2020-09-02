@@ -147,11 +147,11 @@ sub db_transaction (&) {
         $schema->txn_do(
             sub {
                 $code->();
-                die "rollback\n";
+                die "rollbackPG\n";
             }
         );
     };
-    die $@ unless $@ =~ m{rollback};
+    die $@ unless $@ =~ m{rollbackPG};
 }
 
 sub db_transaction2 (&) {
@@ -162,11 +162,11 @@ sub db_transaction2 (&) {
         $schema->txn_do(
             sub {
                 $code->();
-                die "rollback\n";
+                die "rollbackMDB\n";
             }
         );
     };
-    die $@ unless $@ =~ m{rollback};
+    die $@ unless $@ =~ m{rollbackMDB};
 }
 
 sub cpf_already_exists {

@@ -398,5 +398,13 @@ sub update_activity {
     }
 }
 
+sub support_chat_auth {
+    return 'S' . substr($_[0]->cpf_hash, 0, 4);
+}
+
+sub name_for_admin {
+    return $_[0]->apelido . ' (' . $_[0]->nome_completo . ')';
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

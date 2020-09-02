@@ -304,6 +304,7 @@ sub chat_list_sessions {
         rows      => \@chats,
         has_more  => $has_more,
         next_page => $has_more ? $next_page : undef,
+        support   => &_chat_support($c, user_obj => $user_obj),
     };
 }
 
@@ -365,7 +366,7 @@ sub chat_open_session {
             {
                 participants       => \@participants_in_order,
                 created_at         => \'now()',
-                last_message_at    => \'now()',
+                last_message_at    => \'clock_timestamp()',
                 last_message_by    => $user_obj->id,
                 session_started_by => $user_obj->id,
                 session_key        => encode_z85(random_bytes(8)),   # 8 bytes, que viram 10 chars,
@@ -408,6 +409,30 @@ sub _sign_chat_auth {
         },
         1
     );
+}
+
+sub _chat_support {
+    my ($c, %opts) = @_;
+    my $user_obj = $opts{user_obj};
+
+    my $session = $user_obj->chat_support;
+
+    my $ret = {
+        chat_auth        => $user_obj->support_chat_auth(),    # só pra quem consumir a API nao usar hardcoded ^^
+        other_activity   => '',
+        other_apelido    => 'Suporte PenhaS',
+        other_avatar_url => $ENV{AVATAR_SUPORTE_URL},
+    };
+    if ($session) {
+        $ret->{last_message_at}    = &pg_timestamp2iso_8601($session->get_column('last_msg_at'));
+        $ret->{last_message_is_me} = $session->last_msg_is_support ? 0 : 1;
+    }
+    else {
+        $ret->{last_message_at}    = &pg_timestamp2iso_8601($user_obj->get_column('created_on'));
+        $ret->{last_message_is_me} = 0;
+    }
+
+    return $ret;
 }
 
 sub _load_chat_room {
@@ -470,12 +495,13 @@ sub _load_chat_room {
             'me.id'                                => $other_id
         },
         {
-            join    => 'cliente_bloqueios',
+            join    => ['cliente_bloqueios', 'clientes_app_activity'],
             columns => [
                 {cliente_id => 'me.id'},
                 {apelido    => 'me.apelido'},
                 {avatar_url => 'me.avatar_url'},
                 {blocked_me => 'cliente_bloqueios.blocked_cliente_id'},
+                {activity   => \"TIMESTAMPDIFF( MINUTE, clientes_app_activity.last_activity, now() )"},
             ],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
@@ -485,12 +511,15 @@ sub _load_chat_room {
             blocked_me => 0,
             cliente_id => $other_id,
             apelido    => 'Usuário removido',
-            avatar_url => $ENV{AVATAR_PADRAO_URL}
+            avatar_url => $ENV{AVATAR_PADRAO_URL},
+            activity   => '-',
         };
     }
     else {
         $other->{blocked_me} = $other->{blocked_me} ? 1 : 0;
         $other->{avatar_url} ||= $ENV{AVATAR_PADRAO_URL};
+        $other->{activity} = &_activity_mins_to_label($other->{activity});
+
     }
 
     my $did_blocked = $user_obj->cliente_bloqueios->search({blocked_cliente_id => $other->{cliente_id}})->count;
@@ -501,6 +530,8 @@ sub _load_chat_room {
         did_blocked      => $did_blocked ? 1 : 0,
         is_blockable     => 1,    # usuarios sempre sao is_blockable, apenas o azmina nao eh
         last_msg_etag    => db_epoch_to_etag($session->get_column('last_message_at')),
+        header_message   => '',
+        header_warning   => '',
     };
 
     return ($cipher, $session, $user_obj, $other, $meta);
@@ -544,7 +575,7 @@ sub chat_send_message {
             my $db_info = $c->schema->resultset('ChatSession')->search(
                 {id => $session->id},
                 {
-                    columns      => ['me.last_message_at', {db_now => \'now()::timestamp without time zone'}],
+                    columns => ['me.last_message_at', {db_now => \'clock_timestamp()::timestamp without time zone'}],
                     result_class => 'DBIx::Class::ResultClass::HashRefInflator',
                 }
             )->next;
@@ -556,7 +587,7 @@ sub chat_send_message {
             $chat_message = $session->chat_messages->create(
                 {
                     cliente_id => $user_obj->id,
-                    message    => encode_z85($cipher->encrypt($message . '#')),
+                    message    => $cipher->encrypt($message . '#'),
                     created_at => $last_msg_at,
                 }
             );
@@ -633,7 +664,7 @@ sub chat_list_message {
     my @messages;
     my $myself = $user_obj->id;
     foreach my $row (@rows) {
-        my $message = $cipher->decrypt(decode_z85($row->{message}));
+        my $message = $cipher->decrypt($row->{message});
         $message = '[erro ao descriptografar mensagem]' unless $message =~ s/#$//;
         push @messages, {
             id      => $row->{id},

@@ -14,6 +14,7 @@ use Penhas::Helpers::ClienteAudio;
 use Penhas::Helpers::Geolocation;
 use Penhas::Helpers::GeolocationCached;
 use Penhas::Helpers::Chat;
+use Penhas::Helpers::ChatSupport;
 
 use Carp qw/croak confess/;
 
@@ -31,6 +32,7 @@ sub setup {
     Penhas::Helpers::Geolocation::setup($self);
     Penhas::Helpers::GeolocationCached::setup($self);
     Penhas::Helpers::Chat::setup($self);
+    Penhas::Helpers::ChatSupport::setup($self);
 
     state $kv = Penhas::KeyValueStorage->instance;
     $self->helper(kv             => sub {$kv});

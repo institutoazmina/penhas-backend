@@ -65,21 +65,14 @@ sub me_open_session {
     my $user_obj = $c->stash('user_obj');
 
     my $valid = $c->validate_request_params(
-        cliente_id => {required => 1, type => 'Str', max_length => 12},
+        cliente_id => {required => 1, type => 'Int'},
         prefetch   => {required => 0, type => 'Bool'},
     );
-    if ($valid->{cliente_id} ne 'support') {
-        $c->merge_validate_request_params(
-            $valid,
-            cliente_id => {required => 1, type => 'Int'},
-        );
-    }
 
     my $ret = $c->chat_open_session(
         %$valid,
         user_obj => $c->stash('user_obj'),
     );
-
 
     return $c->render(
         json   => $ret,
@@ -97,10 +90,19 @@ sub me_send_message {
         message   => {required => 1, type => 'Str', max_length => 9999},
     );
 
-    my $ret = $c->chat_send_message(
-        %$valid,
-        user_obj => $c->stash('user_obj'),
-    );
+    my $ret;
+    if ($valid->{chat_auth} !~ /\./) {
+        $ret = $c->support_send_message(
+            %$valid,
+            user_obj => $c->stash('user_obj'),
+        );
+    }
+    else {
+        $ret = $c->chat_send_message(
+            %$valid,
+            user_obj => $c->stash('user_obj'),
+        );
+    }
 
     return $c->render(
         json   => $ret,
@@ -144,10 +146,19 @@ sub me_list_message {
         rows       => {required => 0, type => 'Int'},
     );
 
-    my $ret = $c->chat_list_message(
-        %$valid,
-        user_obj => $c->stash('user_obj'),
-    );
+    my $ret;
+    if ($valid->{chat_auth} !~ /\./) {
+        $ret = $c->support_list_message(
+            %$valid,
+            user_obj => $c->stash('user_obj'),
+        );
+    }
+    else {
+        $ret = $c->chat_list_message(
+            %$valid,
+            user_obj => $c->stash('user_obj'),
+        );
+    }
 
     return $c->render(
         json   => $ret,

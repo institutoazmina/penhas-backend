@@ -40,6 +40,20 @@ sub register {
     # GET /geocode
     $r->route('geocode')->get()->to(controller => 'PontoApoio', action => 'public_geocode');
 
+    # Admin endpoints
+
+    # GET /admin/logout
+    $r->route('admin/logout')->get()->to(controller => 'Admin::Session', action => 'admin_logout');
+
+    # POST /admin/login
+    $r->route('admin/login')->post()->to(controller => 'Admin::Session', action => 'admin_login');
+
+    # /admin
+    my $admin = $r->under('admin')->to(controller => 'Admin::Session', action => 'admin_check_authorization');
+    $admin->get()->to(action => 'admin_dashboard');
+    $admin->route('users')->get->to(controller => 'Admin::Users', action => 'au_search');
+
+
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss
     my $maintenance = $r->under('maintenance')->to(controller => 'Maintenance', action => 'check_authorization');
