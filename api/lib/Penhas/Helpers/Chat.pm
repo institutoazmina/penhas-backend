@@ -678,6 +678,7 @@ sub chat_list_message {
         my $message = $cipher->decrypt($row->{message});
         if ($row->{is_compressed}) {
             $message = Compress::Zlib::memGunzip($message);
+            $message = '[erro ao descriptografar mensagem]' unless defined $message;
         }
         else {
             $message = '[erro ao descriptografar mensagem]' unless $message =~ s/#$//;
