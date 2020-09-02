@@ -82,13 +82,35 @@ sub au_search {
 
     my $total_count = $valid->{next_page} ? undef : $rs->count;
 
-    $c->render(
+    return $c->render(
         json => {
             rows        => \@rows,
             has_more    => $has_more,
             next_page   => $has_more ? $next_page : undef,
             total_count => $total_count,
         },
+        status => 200,
+    );
+}
+
+sub ua_send_message {
+    my $c     = shift;
+    my $valid = $c->validate_request_params(
+
+        cliente_id => {required => 1, type => 'Int'},
+        message    => {required => 1, type => 'Str'},
+    );
+
+    my $user_obj = $c->schema2->resultset('Cliente')->find($valid->{cliente_id}) or $c->reply_item_not_found();
+
+    my $ret = $c->support_send_message(
+        %$valid,
+        chat_auth => $user_obj->support_chat_auth(),
+        user_obj  => $user_obj,
+    );
+
+    return $c->render(
+        json   => $ret,
         status => 200,
     );
 }

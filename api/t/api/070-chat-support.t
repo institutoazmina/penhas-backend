@@ -138,6 +138,7 @@ do {
       ->json_has('/meta/last_msg_etag', 'tem os mesmos campos que o chat')    #
       ->json_is('/meta/is_blockable', 0, 'nao pq o chat é o suporte')         #
       ->json_like('/other/activity', qr/48h/, 'tem activity');
+    my $newer = last_tx_json()->{newer};
 
     $t->post_ok(
         '/me/chats-messages',
@@ -159,10 +160,50 @@ do {
 
     $t->get_ok(
         '/admin/users',
-        form =>{
-            cliente_id => $cliente_id
+        form => {cliente_id => $cliente_id}
+      )->status_is(200, 'filtro do usuario')    #
+      ->json_is('/rows/0/nome_completo', $nome_completo, 'nome ok')           #
+      ->json_is('/rows/0/id',            $cliente_id,    'id ok')             #
+      ->json_is('/has_more',             0,              'has_more false')    #
+      ->json_is('/total_count',          1,              'count ok');
+
+    my $reply_msg = 'reply from support' . rand;
+    $t->post_ok(
+        '/admin/send-message',
+        form => {
+            cliente_id => $cliente_id,
+            message    => $reply_msg,
         }
-    )->status_is(200, 'nao ta logado, 403');
+    )->status_is(
+        200,
+        'respondendo um cliente'
+    );
+
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth  => $cliente->support_chat_auth(),
+            pagination => $newer
+        },
+      )->status_is(200, 'puxando mensagens com o suporte')    #
+      ->json_is('/messages/0/is_me',   0,          'eh o suporte')        #
+      ->json_is('/messages/1/is_me',   1,          'sou eu')              #
+      ->json_is('/messages/0/message', $reply_msg, 'reply msg ok')        #
+      ->json_is('/messages/1/message', '0',        'message com zero')    #
+      ->json_has('/newer', 'tem newer');
+    $newer = last_tx_json()->{newer};
+
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth  => $cliente->support_chat_auth(),
+            pagination => $newer
+        },
+      )->status_is(200, 'puxando mensagens com o suporte')                #
+      ->json_is('/messages', [], 'nao ha msgs novas')                     #
+      ->json_has('/newer', 'ainda tem newer');
 
 
 };

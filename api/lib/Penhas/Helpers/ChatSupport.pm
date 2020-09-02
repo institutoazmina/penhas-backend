@@ -121,9 +121,11 @@ sub support_send_message {
             # para na hora que fizer o decrypt verificar a integridade da chave
             $chat_message = $session->chat_support_messages->create(
                 {
-                    cliente_id => $user_obj->id,
-                    message    => $message,
-                    created_at => $last_msg_at,
+                    cliente_id    => $user_obj->id,
+                    message       => $message,
+                    created_at    => $last_msg_at,
+                    admin_user_id => ($c->stash('looged_as_admin') ? $c->stash('admin_user')->id() : undef),
+
                 }
             );
 
@@ -199,12 +201,10 @@ sub support_list_message {
     my @messages;
     my $myself = $user_obj->id;
     foreach my $row (@rows) {
-        my $message = $row->{message};
-        $message = '[erro ao descriptografar mensagem]' unless $message =~ s/#$//;
         push @messages, {
             id      => $row->{id},
-            message => $message . '',
-            is_me   => $myself == $row->{cliente_id} ? 1 : 0,
+            message => $row->{message},
+            is_me   => $row->{admin_user_id} ? 0 : 1,
             time    => $row->{created_at}
         };
 
