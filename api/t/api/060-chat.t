@@ -447,12 +447,14 @@ db_transaction {
       ->json_hasnt('/older', 'no older pagination')                                            #
       ->json_hasnt('/newer', 'no newer pagination');
 
+    my $hey_long_msg = join ' ', ('hey!') x 100;
+    use DDP; p $hey_long_msg;
     $t->post_ok(
         '/me/chats-messages',
         {'x-api-key' => $session},
         form => {
             chat_auth => $room2->{chat_auth},
-            message   => 'hey!'
+            message   => $hey_long_msg
         },
       )->status_is(200, 'mandando mensagem nova')                                              #
       ->json_has('/id', 'we got an id!');
@@ -475,7 +477,7 @@ db_transaction {
         },
       )->status_is(200, 'teste paginacao (puxando novidades)')                                 #
       ->json_is('/messages/0/message', 'me responde!', 'expected message')                     #
-      ->json_is('/messages/1/message', 'hey!',         'expected message')                     #
+      ->json_is('/messages/1/message', $hey_long_msg,  'expected message')                     #
       ->json_is('/messages/2',         undef,          'no older msg')                         #
       ->json_is('/has_more',           '0',            'no more messages')                     #
       ->json_hasnt('/older', 'no older pagination')                                            #

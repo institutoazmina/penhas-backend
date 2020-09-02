@@ -11,6 +11,7 @@ use Crypt::CBC;
 use Crypt::Rijndael;    # AES
 use Crypt::PRNG qw(random_bytes);
 use Convert::Z85;
+use Compress::Zlib;
 
 our $ForceFilterClientes;
 my $reload_app_err_msg = 'Recarregue o app, conversa não pode ser aberta.';
@@ -582,13 +583,22 @@ sub chat_send_message {
             $prev_last_msg_at = $db_info->{last_message_at};
             $last_msg_at      = $db_info->{db_now} or die 'missing db_now';
 
+            my $is_compressed     = 0;
+            my $buffer            = $message . '#';
+            my $buffer_compressed = length($message) > 48 ? Compress::Zlib::memGzip($message) : undef;
+            if ($buffer_compressed && length($buffer_compressed) < length($buffer)) {
+                $buffer        = $buffer_compressed;
+                $is_compressed = 1;
+            }
+
             # todas as mensagens salvando termiando com #
             # para na hora que fizer o decrypt verificar a integridade da chave
             $chat_message = $session->chat_messages->create(
                 {
-                    cliente_id => $user_obj->id,
-                    message    => $cipher->encrypt($message . '#'),
-                    created_at => $last_msg_at,
+                    cliente_id    => $user_obj->id,
+                    message       => $cipher->encrypt($buffer),
+                    created_at    => $last_msg_at,
+                    is_compressed => $is_compressed,
                 }
             );
 
@@ -664,8 +674,15 @@ sub chat_list_message {
     my @messages;
     my $myself = $user_obj->id;
     foreach my $row (@rows) {
+
         my $message = $cipher->decrypt($row->{message});
-        $message = '[erro ao descriptografar mensagem]' unless $message =~ s/#$//;
+        if ($row->{is_compressed}) {
+            $message = Compress::Zlib::memGunzip($message);
+        }
+        else {
+            $message = '[erro ao descriptografar mensagem]' unless $message =~ s/#$//;
+        }
+
         push @messages, {
             id      => $row->{id},
             message => $message . '',

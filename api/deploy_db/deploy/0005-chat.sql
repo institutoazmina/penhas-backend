@@ -16,6 +16,7 @@ CREATE INDEX ix_session_by_participants ON chat_session USING GIN(participants);
 
 create table chat_message (
     id bigserial not null primary key,
+    is_compressed boolean not null default false,
     created_at timestamp without time zone default now(),
     chat_session_id int not null references chat_session(id),
     cliente_id int not null,
