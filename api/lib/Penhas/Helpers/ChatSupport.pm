@@ -210,6 +210,7 @@ sub support_list_message {
 
     }
 
+use DDP; p $page->{before};
     return {
         messages => \@messages,
         other    => $other,

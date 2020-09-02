@@ -192,6 +192,7 @@ do {
       ->json_is('/messages/0/message', $reply_msg, 'reply msg ok')        #
       ->json_is('/messages/1/message', '0',        'message com zero')    #
       ->json_has('/newer', 'tem newer');
+
     $newer = last_tx_json()->{newer};
 
     $t->get_ok(
@@ -205,6 +206,62 @@ do {
       ->json_is('/messages', [], 'nao ha msgs novas')                     #
       ->json_has('/newer', 'ainda tem newer');
 
+    for my $i (1 .. 3) {
+        $t->post_ok(
+            '/me/chats-messages',
+            {'x-api-key' => $session},
+            form => {
+                chat_auth => $cliente->support_chat_auth(),
+                message   => "Num $i"
+            },
+          )->status_is(200, "mandando mensagem com valor $i")             #
+          ->json_has('/id', 'we got an id!');
+    }
+
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth  => $cliente->support_chat_auth(),
+            pagination => $newer,
+            rows       => 2,
+        },
+      )->status_is(200, 'puxando duas novas mensagens')                   #
+      ->json_is('/messages/0/message', 'Num 3', 'msg=3')                  #
+      ->json_is('/messages/1/message', 'Num 2', 'msg=2')                  #
+      ->json_has('/newer', 'ainda vem newer')                             #
+      ->json_has('/older', 'ainda tem older')                             #
+      ->json_is('/has_more', 1, 'has_more true');
+
+    my $older = last_tx_json()->{older};
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth  => $cliente->support_chat_auth(),
+            pagination => $older,
+            rows       => 2,
+        },
+      )->status_is(200, 'puxando duas novas mensagens')                   #
+      ->json_is('/messages/0/message', 'Num 1',    'msg=1')               #
+      ->json_is('/messages/1/message', $reply_msg, 'msg do suporte')      #
+      ->json_hasnt('/newer', 'nao vem newer pq ta pagiando pra tras')     #
+      ->json_has('/older', 'ainda tem older')                             #
+      ->json_is('/has_more', 1, 'has_more true');
+    $older = last_tx_json()->{older};
+    $t->get_ok(
+        '/me/chats-messages',
+        {'x-api-key' => $session},
+        form => {
+            chat_auth  => $cliente->support_chat_auth(),
+            pagination => $older,
+            rows       => 2,
+        },
+      )->status_is(200, 'puxando athe o has_more false')                  #
+      ->json_is('/messages/0/message', '0', 'msg inicial')                #
+      ->json_hasnt('/newer', 'nao vem newer pq ta pagiando pra tras')     #
+      ->json_hasnt('/older', 'ainda tem older pq acabou a pagina')        #
+      ->json_is('/has_more', 0, 'has_more false');
 
 };
 
