@@ -113,8 +113,6 @@ subtest_buffered 'Cadastro com sucesso' => sub {
     $cliente    = $schema2->resultset('Cliente')->find($cliente_id);
 };
 
-# pra nao atrapalhar o resto dos testes
-$ENV{SUPPRESS_USER_ACTIVITY} = 1;
 $Penhas::Helpers::Chat::ForceFilterClientes = [$cliente_id];
 
 do {
@@ -124,6 +122,9 @@ do {
         {'x-api-key' => $session},
       )->status_is(200, 'lista as conversas')    #
       ->json_is('/support/chat_auth', $cliente->support_chat_auth(), 'support_chat_auth() match expected');
+
+    # pra nao atrapalhar o resto dos testes
+    $ENV{SUPPRESS_USER_ACTIVITY} = 1;
 
     $t->get_ok(
         '/me/chats-messages',
@@ -137,7 +138,7 @@ do {
       ->json_is('/meta/is_blockable',     0, 'nao pq o chat é o suporte')     #
       ->json_has('/meta/last_msg_etag', 'tem os mesmos campos que o chat')    #
       ->json_is('/meta/is_blockable', 0, 'nao pq o chat é o suporte')         #
-      ->json_like('/other/activity', qr/48h/, 'tem activity');
+      ->json_like('/other/activity', qr/48h/, 'tem texto do activity');
     my $newer = last_tx_json()->{newer};
 
     $t->post_ok(
@@ -262,7 +263,7 @@ do {
       ->json_hasnt('/newer', 'nao vem newer pq ta pagiando pra tras')     #
       ->json_hasnt('/older', 'ainda tem older pq acabou a pagina')        #
       ->json_is('/has_more', 0, 'has_more false');
-
+    my $current_date = DateTime->now->ymd('-');
     $t->get_ok(
         '/admin/user-messages',
         form => {
@@ -274,7 +275,8 @@ do {
       ->json_is('/messages/2/message', 'Num 1')                           #
       ->json_is('/messages/2/is_me',   '0', 'nao eh o admin')             #
       ->json_is('/messages/3/message', $reply_msg)                        #
-      ->json_is('/messages/3/is_me',   1, 'sou eu, o admin');
+      ->json_is('/messages/3/is_me',   1, 'sou eu, o admin')              #
+      ->json_like('/other/activity', qr/$current_date/, 'vem o horario');
 
     $t->delete_ok(
         '/me/chats-session',
