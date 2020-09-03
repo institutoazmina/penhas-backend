@@ -92,6 +92,13 @@ sub admin_check_authorization {
         admin_user      => $admin,
     );
 
+    my $accept = $c->req->headers->header('accept');
+    if ($accept && $accept =~ /html/) {
+        $c->stash(
+            layout   => 'admin',
+        );
+    }
+
     return 1;
 }
 

@@ -200,16 +200,19 @@ sub support_list_message {
     my $row_first = $rows[0]  ? $rows[0]{created_at}  : undef;
     my $row_last  = $rows[-1] ? $rows[-1]{created_at} : undef;
 
+    my $looged_as_admin = $c->stash('looged_as_admin');
     my @messages;
     my $myself = $user_obj->id;
     foreach my $row (@rows) {
+        my $is_me = $row->{admin_user_id} ? 0 : 1;
+        $is_me = $is_me ? 0 : 1 if $looged_as_admin;
+
         push @messages, {
             id      => $row->{id},
             message => $row->{message},
-            is_me   => $row->{admin_user_id} ? 0 : 1,
+            is_me   => $is_me,
             time    => $row->{created_at}
         };
-
     }
 
     return {

@@ -263,6 +263,19 @@ do {
       ->json_hasnt('/older', 'ainda tem older pq acabou a pagina')        #
       ->json_is('/has_more', 0, 'has_more false');
 
+    $t->get_ok(
+        '/admin/user-messages',
+        form => {
+            cliente_id => $cliente_id,
+        }
+      )->status_is(200, 'lista de mensagens')                             #
+      ->json_is('/messages/0/message', 'Num 3')                           #
+      ->json_is('/messages/1/message', 'Num 2')                           #
+      ->json_is('/messages/2/message', 'Num 1')                           #
+      ->json_is('/messages/2/is_me',   '0', 'nao eh o admin')             #
+      ->json_is('/messages/3/message', $reply_msg)                        #
+      ->json_is('/messages/3/is_me',   1, 'sou eu, o admin');
+
     $t->delete_ok(
         '/me/chats-session',
         {'x-api-key' => $session},

@@ -82,14 +82,25 @@ sub au_search {
 
     my $total_count = $valid->{next_page} ? undef : $rs->count;
 
-    return $c->render(
+    $c->stash(
+        template => 'list_users',
+    );
+
+    return $c->respond_to_if_web(
         json => {
+            json => {
+                rows        => \@rows,
+                has_more    => $has_more,
+                next_page   => $has_more ? $next_page : undef,
+                total_count => $total_count,
+            }
+        },
+        html => {
             rows        => \@rows,
             has_more    => $has_more,
             next_page   => $has_more ? $next_page : undef,
-            total_count => $total_count,
+            total_count => $total_count || $rs->count,
         },
-        status => 200,
     );
 }
 
@@ -112,6 +123,30 @@ sub ua_send_message {
     return $c->render(
         json   => $ret,
         status => 200,
+    );
+}
+
+sub ua_list_messages {
+    my $c     = shift;
+    my $valid = $c->validate_request_params(
+        cliente_id => {required => 1, type => 'Int'},
+    );
+
+    my $user_obj = $c->schema2->resultset('Cliente')->find($valid->{cliente_id}) or $c->reply_item_not_found();
+
+    my $ret = $c->support_list_message(
+        %$valid,
+        chat_auth => $user_obj->support_chat_auth(),
+        user_obj  => $user_obj,
+    );
+
+    $c->stash(
+        template => 'list_messages',
+    );
+
+    return $c->respond_to_if_web(
+        json => {json => $ret},
+        html => {%$ret},
     );
 }
 

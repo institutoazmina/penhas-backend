@@ -53,6 +53,7 @@ sub register {
     $admin->get()->to(action => 'admin_dashboard');
     $admin->route('users')->get->to(controller => 'Admin::Users', action => 'au_search');
     $admin->route('send-message')->post->to(controller => 'Admin::Users', action => 'ua_send_message');
+    $admin->route('user-messages')->get->to(controller => 'Admin::Users', action => 'ua_list_messages');
 
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss
