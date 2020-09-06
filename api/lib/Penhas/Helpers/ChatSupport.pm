@@ -18,12 +18,64 @@ my $reload_app_err_msg = 'Recarregue o app, conversa não pode ser aberta.';
 sub setup {
     my $self = shift;
 
+    $self->helper('support_recent_messages' => sub { &support_recent_messages(@_) });
+
     $self->helper('support_send_message'   => sub { &support_send_message(@_) });
     $self->helper('support_list_message'   => sub { &support_list_message(@_) });
     $self->helper('support_clear_messages' => sub { &support_clear_messages(@_) });
 
 }
 
+sub support_recent_messages {
+    my ($c, %opts) = @_;
+
+    my $rows = $opts{rows} || 10;
+    $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
+
+    my $offset = 0;
+    if ($opts{next_page}) {
+        my $tmp = eval { $c->decode_jwt($opts{next_page}) };
+        $c->reply_invalid_param('next_page')
+          if ($tmp->{iss} || '') ne 'AS:LS';
+        $offset = $tmp->{offset};
+    }
+
+    my $rs = $c->schema2->resultset('ChatSupport')->search(
+        {
+
+        },
+        {
+            join         => 'cliente',
+            columns      => [qw/me.id me.last_msg_at cliente.id cliente.nome_completo/],
+            order_by     => \'me.last_msg_at DESC',
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+            rows         => $rows + 1,
+            offset       => $offset,
+        }
+    );
+
+    my @rows      = $rs->all;
+    my $cur_count = scalar @rows;
+    my $has_more  = $cur_count > $rows ? 1 : 0;
+    if ($has_more) {
+        pop @rows;
+        $cur_count--;
+    }
+
+    my $next_page = $c->encode_jwt(
+        {
+            iss    => 'AS:LS',
+            offset => $offset + $cur_count,
+        },
+        1
+    );
+
+    return {
+        rows      => \@rows,
+        has_more  => $has_more,
+        next_page => $has_more ? $next_page : undef,
+    };
+}
 
 sub _load_support_room {
     my ($c, %opts) = @_;

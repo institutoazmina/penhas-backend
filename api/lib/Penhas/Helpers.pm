@@ -72,6 +72,14 @@ sub setup {
             return;
         }
     );
+
+    $self->helper(
+        accept_html => sub {
+            my $c = shift;
+            return ($c->req->headers->header('accept') || '') =~ /html/ ? 1 : 0;
+        }
+    );
+
     $self->helper(
         remote_addr => sub {
             my $c = shift;

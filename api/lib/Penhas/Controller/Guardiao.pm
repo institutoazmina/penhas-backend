@@ -16,8 +16,7 @@ sub apply_rps {
 
     $c->stash(template => 'guardiao/index');
 
-    my $accept = $c->req->headers->header('accept');
-    if ($c->stash('template') && $accept && $accept =~ /html/) {
+    if ($c->accept_html()) {
         $c->stash(
             faqs => [
                 $c->schema2->resultset('FaqTelaGuardiao')->search(

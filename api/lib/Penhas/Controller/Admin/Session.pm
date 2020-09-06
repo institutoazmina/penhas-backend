@@ -73,8 +73,7 @@ sub admin_login {
 
     $c->session->{admin_user_id} = $found_obj->id;
 
-    my $accept = $c->req->headers->header('accept');
-    if ($accept =~ /html/) {
+    if ($c->accept_html()) {
         $c->redirect_to('/admin');
         return 0;
     }
@@ -93,20 +92,24 @@ sub admin_logout {
     my $c = shift;
 
     $c->session(expires => 1);
-
-    $c->render(
-        json => {
-            ok => 1,
-        },
-        status => 200,
-    );
+    if ($c->accept_html()) {
+        $c->redirect_to('/admin/login');
+        return 0;
+    }
+    else {
+        $c->render(
+            json => {
+                ok => 1,
+            },
+            status => 200,
+        );
+    }
 }
 
 sub admin_check_authorization {
     my $c = shift;
 
-    my $accept = $c->req->headers->header('accept');
-    if ($accept && $accept =~ /html/) {
+    if ($c->accept_html()){
         $c->stash(
             layout => 'admin',
         );
@@ -134,7 +137,10 @@ sub admin_dashboard {
     $c->stash(
         layout   => 'admin',
         template => 'admin/dashboard',
+
+        last_messages => $c->support_recent_messages(),
     );
+
     $c->render(html => {});
 }
 
