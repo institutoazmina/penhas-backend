@@ -61,7 +61,17 @@ sub reply_item_not_found {
 sub reply_forbidden {
     my $c = shift;
 
-    die {error => 'permission_denied', message => 'Você não tem a permissão para este recurso.', status => 403,};
+    if ($c->stash('layout')) {
+        $c->redirect_to('/admin/login');
+        return 0;
+    }
+    else {
+        die {
+            error   => 'permission_denied',
+            message => 'Você não tem a permissão para este recurso.',
+            status  => 403,
+        };
+    }
 }
 
 sub method_not_allowed {
@@ -103,7 +113,11 @@ sub _reply_exception {
             $an_error->{message} = $campos_nao_foram_preenchidos unless exists $an_error->{message};
             return $c->respond_to_if_web(
                 json => {json     => $an_error, status => $status,},
-                html => {template => 'guardiao/index', error => $an_error, status => 200}
+                html => {
+                    template => $c->stash('template') || 'guardiao/index',
+                    %$an_error,
+                    status => 200
+                }
             );
         }
         elsif (ref $an_error eq 'REF' && ref $$an_error eq 'ARRAY' && @$$an_error == 2) {

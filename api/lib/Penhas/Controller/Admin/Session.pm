@@ -5,8 +5,24 @@ use utf8;
 use DateTime;
 use MooseX::Types::Email qw/EmailAddress/;
 
+sub admin_login_get {
+    my $c = shift;
+    $c->stash(
+        layout   => 'admin',
+        template => 'admin/login',
+        is_login => 1,
+    );
+    $c->render(html => {});
+}
+
 sub admin_login {
     my $c = shift;
+
+    $c->stash(
+        layout   => 'admin',
+        template => 'admin/login',
+        is_login => 1,
+    );
 
     my $params = $c->validate_request_params(
         email => {max_length => 200, required => 1, type => EmailAddress},
@@ -51,15 +67,26 @@ sub admin_login {
     };
 
   SUCCESS:
+
+    # 7 days
+    $c->session(expiration => 604800);
+
     $c->session->{admin_user_id} = $found_obj->id;
 
-    $c->render(
-        json => {
-            ok   => 1,
-            name => $found_obj->first_name,
-        },
-        status => 200,
-    );
+    my $accept = $c->req->headers->header('accept');
+    if ($accept =~ /html/) {
+        $c->redirect_to('/admin');
+        return 0;
+    }
+    else {
+        $c->render(
+            json => {
+                ok   => 1,
+                name => $found_obj->first_name,
+            },
+            status => 200,
+        );
+    }
 }
 
 sub admin_logout {
@@ -78,12 +105,18 @@ sub admin_logout {
 sub admin_check_authorization {
     my $c = shift;
 
-    $c->reply_forbidden() unless $c->session->{admin_user_id};
+    my $accept = $c->req->headers->header('accept');
+    if ($accept && $accept =~ /html/) {
+        $c->stash(
+            layout => 'admin',
+        );
+    }
+    return $c->reply_forbidden() unless $c->session->{admin_user_id};
 
     my $admin = $c->schema2->resultset('DirectusUser')->search(
         {id => $c->session->{admin_user_id}, status => 'active'},
     )->next;
-    $c->reply_forbidden() unless $admin;
+    return $c->reply_forbidden() unless $admin;
 
     $c->log->info(sprintf 'Logged as %s', $admin->id . ' ' . $admin->first_name);
 
@@ -92,25 +125,17 @@ sub admin_check_authorization {
         admin_user      => $admin,
     );
 
-    my $accept = $c->req->headers->header('accept');
-    if ($accept && $accept =~ /html/) {
-        $c->stash(
-            layout   => 'admin',
-        );
-    }
-
     return 1;
 }
 
 sub admin_dashboard {
     my $c = shift;
 
-    $c->render(
-        json => {
-            ok => 1,
-        },
-        status => 200,
+    $c->stash(
+        layout   => 'admin',
+        template => 'admin/dashboard',
     );
-
+    $c->render(html => {});
 }
+
 1;

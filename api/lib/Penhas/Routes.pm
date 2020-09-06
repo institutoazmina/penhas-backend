@@ -47,6 +47,7 @@ sub register {
 
     # POST /admin/login
     $r->route('admin/login')->post()->to(controller => 'Admin::Session', action => 'admin_login');
+    $r->route('admin/login')->get()->to(controller => 'Admin::Session', action => 'admin_login_get');
 
     # /admin
     my $admin = $r->under('admin')->to(controller => 'Admin::Session', action => 'admin_check_authorization');

@@ -1,0 +1,22 @@
+<div class="wrapper">
+    <link rel="stylesheet" href="/web-assets/login.css" />
+
+    <div id="formContent">
+        <form class="form-signin" method="POST">
+            <h2>Administração</h2>
+
+            % if (my $message = stash ('message')) {
+            <div class="alert alert-danger" role="alert">
+                <%== $message %>
+            </div>
+            % }
+
+            <input name="email" type="email" id="inputEmail" class="loginInput"
+                placeholder="E-mail (o mesmo usado no directus)" required value="<%== $c->req->body_params->param('email') %>">
+            <input name="senha" minlength="6" type="password" id="inputPass" class="loginInput" placeholder="Senha"
+                required>
+            <input type="submit" value="Entrar">
+        </form>
+
+    </div>
+</div>
