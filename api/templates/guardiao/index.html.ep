@@ -4,9 +4,9 @@
 
     <img src="/web-assets/penhas-logo.svg" alt="Logo PenhaS" class="penhas_logo">
 
-    % if (my $error = stash ('error') ) {
+    % if (my $message = stash ('message') ) {
     <div class="alert alert-danger" role="alert">
-      <%== $error->{message} %>
+      <%== $message %>
     </div>
     % }
 
