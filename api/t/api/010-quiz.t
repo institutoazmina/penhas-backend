@@ -268,8 +268,8 @@ subtest_buffered 'group de questoes boolean' => sub {
     $t->get_ok(
         '/me',
         {'x-api-key' => $session}
-    )->status_is(200, 'profile is ok')->json_is('/modo_camuflado_ativo', 1, 'modo_camuflado_ativo is 1')
-      ->json_is('/modo_anonimo_ativo', 1, 'modo_anonimo_ativo is 1');
+    )->status_is(200, 'profile is ok')->json_is('/user_profile/modo_camuflado_ativo', 1, 'modo_camuflado_ativo is 1')
+      ->json_is('/user_profile/modo_anonimo_ativo', 1, 'modo_anonimo_ativo is 1');
 
 };
 

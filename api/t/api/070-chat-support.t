@@ -36,7 +36,7 @@ do {
 
     $t->get_ok(
         '/admin/users',
-    )->status_is(403, 'nao ta logado, 403, se cookies');
+    )->status_is(302, 'nao ta logado, 302, sem cookies');
 
     $ENV{ADMIN_ALLOWED_ROLE_IDS} = '';
     $t->post_ok(
@@ -66,7 +66,7 @@ do {
 
     $t->get_ok(
         '/admin',
-    )->status_is(403, 'nao ta logado, 403');
+    )->status_is(302, 'nao ta logado, 302');
 
 };
 
