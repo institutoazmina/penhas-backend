@@ -6,7 +6,16 @@
     </div>
     <div class="mesgs">
         <div class="msg_history">
-            xxx
+            % if (my $older = stash('older')) {
+            <a href="/admin/user-messages?cliente_id=<%==$cliente->id()%>&rows=100&pagination=<%==$older%>"
+                class="btn btn-outline-dark btn-sm btn_load_older_messages">Carregar
+                mensagens mais antigas</a>
+            % }
+            % if (stash('has_more') == 0 && $c->req->params->param('pagination')) {
+            <div class="alert alert-warning">
+                não há mais mensagens
+            </div>
+            % }
 
             % for my $r (reverse @{$messages}) {
             % if ($r->{is_me}){
@@ -41,7 +50,15 @@
                 não há mensagens
             </div>
             % }
+            % if ($c->req->params->param('pagination') ) {
+            <div class="alert alert-warning">
+                existem mensagens mais recentes
+            </div>
+            %}
+
         </div>
+
+        % if (!$c->req->params->param('pagination')) {
         <div class="type_msg">
             <form class="form-signin" method="POST" action="/admin/send-message">
                 <input type="hidden" name="cliente_id" value="<%== $cliente->id() %>">
@@ -53,5 +70,13 @@
                 </div>
             </form>
         </div>
+        % } else {
+        <div class="type_msg load_recent_msg">
+
+            <a href="/admin/user-messages?cliente_id=<%==$cliente->id()%>" class="btn btn-outline-primary">Carregar
+                últimas mensagens</a>
+        </div>
+        %}
+
     </div>
 </div>
