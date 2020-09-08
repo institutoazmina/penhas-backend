@@ -129,7 +129,9 @@ sub ua_send_message {
 sub ua_list_messages {
     my $c     = shift;
     my $valid = $c->validate_request_params(
-        cliente_id => {required => 1, type => 'Int'},
+        cliente_id   => {required => 1, type => 'Int'},
+        rows         => {required => 0, type => 'Int'},
+        only_content => {required => 0, type => 'Bool'},
     );
 
     my $user_obj = $c->schema2->resultset('Cliente')->find($valid->{cliente_id}) or $c->reply_item_not_found();
@@ -145,12 +147,14 @@ sub ua_list_messages {
         is_chat  => 1,
     );
 
-use DDP; p $ret;
+    use DDP;
+    p $ret;
     return $c->respond_to_if_web(
         json => {json => $ret},
         html => {
             %$ret,
-            cliente => $user_obj,
+            cliente            => $user_obj,
+            pg_timestamp2human => \&pg_timestamp2human
         },
     );
 }

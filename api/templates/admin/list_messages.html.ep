@@ -7,12 +7,12 @@
     <div class="mesgs">
 
         <div class="msg_history">
-            % for my $r (@{$messages}) {
+            % for my $r (reverse @{$messages}) {
             % if ($r->{is_me}){
             <div class="outgoing_msg">
                 <div class="sent_msg">
                     <p><%== $r->{message} %></p>
-                    <span class="time_date"> <%== $r->{time} %> </span>
+                    <span class="time_date"> <%== $pg_timestamp2human->($r->{time}) %> </span>
                 </div>
             </div>
 
@@ -27,7 +27,7 @@
                 <div class="received_msg">
                     <div class="received_withd_msg">
                         <p><%== $r->{message} %></p>
-                        <span class="time_date"> <%== $r->{time} %> </span>
+                        <span class="time_date"> <%== $pg_timestamp2human->($r->{time}) %> </span>
                     </div>
                 </div>
             </div>
