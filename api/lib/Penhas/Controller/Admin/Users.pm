@@ -120,10 +120,16 @@ sub ua_send_message {
         user_obj  => $user_obj,
     );
 
-    return $c->render(
-        json   => $ret,
-        status => 200,
-    );
+    if ($c->accept_html()) {
+        $c->redirect_to('/admin/user-messages?cliente_id=' . $user_obj->id . '&rows=5');
+        return 0;
+    }
+    else {
+        return $c->render(
+            json   => $ret,
+            status => 200,
+        );
+    }
 }
 
 sub ua_list_messages {

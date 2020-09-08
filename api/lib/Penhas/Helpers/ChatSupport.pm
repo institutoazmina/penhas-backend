@@ -230,7 +230,7 @@ sub support_list_message {
 
     my ($session, $user_obj, $other, $meta) = &_load_support_room($c, %opts);
     my $rows = $opts{rows} || 10;
-    $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
+    $rows = 5 if !is_test() && ($rows > 100 || $rows < 5);
 
     my $page = $opts{pagination};
     if ($page) {

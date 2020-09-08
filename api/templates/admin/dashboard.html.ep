@@ -34,7 +34,7 @@
                     <td style="width: 12em"><%== $r->{last_msg_at_human} %></td>
                     <td style="width: 15em"><%== $r->{last_msg_by} %></td>
                     <td>
-                        <a href="/admin/user-messages?cliente_id=<%== $r->{cliente}->{id} %>&rows=100"
+                        <a href="/admin/user-messages?cliente_id=<%== $r->{cliente}->{id} %>&rows=5"
                             class="btn btn-primary btn-sm">Abrir</a>
                         <%== $r->{last_msg_preview} %>
                     </td>
