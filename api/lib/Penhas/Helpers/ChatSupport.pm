@@ -4,7 +4,7 @@ use Carp qw/confess/;
 use utf8;
 use JSON;
 use Penhas::Logger;
-use Penhas::Utils qw/is_test pg_timestamp2iso_8601 db_epoch_to_etag/;
+use Penhas::Utils qw/is_test pg_timestamp2iso_8601 db_epoch_to_etag pg_timestamp2human/;
 use Mojo::Util qw/trim/;
 use Scope::OnExit;
 use Crypt::CBC;
@@ -32,6 +32,8 @@ sub support_recent_messages {
     my $rows = $opts{rows} || 10;
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
+    my $include_answered = $opts{include_answered} || 0;
+
     my $offset = 0;
     if ($opts{next_page}) {
         my $tmp = eval { $c->decode_jwt($opts{next_page}) };
@@ -42,11 +44,20 @@ sub support_recent_messages {
 
     my $rs = $c->schema2->resultset('ChatSupport')->search(
         {
-
+            ($include_answered ? () : (last_msg_is_support => 0)),
         },
         {
-            join         => 'cliente',
-            columns      => [qw/me.id me.last_msg_at cliente.id cliente.nome_completo/],
+            join    => 'cliente',
+            columns => [
+                qw/
+                  me.id
+                  me.last_msg_at
+                  me.last_msg_preview
+                  me.last_msg_by
+                  cliente.id
+                  cliente.nome_completo
+                  /
+            ],
             order_by     => \'me.last_msg_at DESC',
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
             rows         => $rows + 1,
@@ -69,6 +80,13 @@ sub support_recent_messages {
         },
         1
     );
+
+    foreach (@rows) {
+        $_->{last_msg_at_human} = pg_timestamp2human($_->{last_msg_at});
+        $_->{last_msg_by}      ||= '';
+        $_->{last_msg_preview} ||= '';
+
+    }
 
     return {
         rows      => \@rows,
@@ -187,6 +205,14 @@ sub support_send_message {
                 {
                     last_msg_is_support => $c->stash('looged_as_admin') ? 1 : 0,
                     last_msg_at         => $last_msg_at,
+
+                    last_msg_preview => length($message) > 100 ? substr($message, 0, 100) . '…' : $message,
+                    last_msg_by      => (
+                          $c->stash('looged_as_admin')
+                        ? $c->stash('admin_user')->first_name()
+                        : $user_obj->name_for_admin()
+                    ),
+
                 }
             );
         }

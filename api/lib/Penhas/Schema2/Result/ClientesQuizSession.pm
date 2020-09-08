@@ -43,6 +43,19 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 1 },
   "responses",
   { data_type => "text", is_nullable => 1 },
+  "deleted_at",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
+  "deleted",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -53,8 +66,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-03 07:27:07
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zfnugg1cW8ehujeMsG9jbQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-09-07 22:41:55
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WeeRGa7Lw5YbqW9+hJDR0A
 
 # ALTER TABLE clientes_quiz_session ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

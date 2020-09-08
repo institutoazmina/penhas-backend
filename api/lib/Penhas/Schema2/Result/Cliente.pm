@@ -406,5 +406,9 @@ sub name_for_admin {
     return $_[0]->apelido . ' (' . $_[0]->nome_completo . ')';
 }
 
+sub avatar_url_or_default {
+    return $_[0]->avatar_url() || $ENV{AVATAR_PADRAO_URL};
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

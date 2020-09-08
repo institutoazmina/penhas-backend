@@ -109,7 +109,7 @@ sub admin_logout {
 sub admin_check_authorization {
     my $c = shift;
 
-    if ($c->accept_html()){
+    if ($c->accept_html()) {
         $c->stash(
             layout => 'admin',
         );
@@ -134,11 +134,17 @@ sub admin_check_authorization {
 sub admin_dashboard {
     my $c = shift;
 
+    my $params = $c->validate_request_params(
+        rows             => {type => 'Int'},
+        next_page        => {type => 'Str', max_length => 999},
+        include_answered => {type => 'Bool'},
+    );
+
     $c->stash(
         layout   => 'admin',
         template => 'admin/dashboard',
 
-        last_messages => $c->support_recent_messages(),
+        last_messages => $c->support_recent_messages(%$params),
     );
 
     $c->render(html => {});

@@ -141,12 +141,17 @@ sub ua_list_messages {
     );
 
     $c->stash(
-        template => 'list_messages',
+        template => 'admin/list_messages',
+        is_chat  => 1,
     );
 
+use DDP; p $ret;
     return $c->respond_to_if_web(
         json => {json => $ret},
-        html => {%$ret},
+        html => {
+            %$ret,
+            cliente => $user_obj,
+        },
     );
 }
 

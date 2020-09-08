@@ -16,6 +16,8 @@ use POSIX ();
 
 use vars qw(@ISA @EXPORT);
 
+use DateTime::Format::Pg;
+
 state $text_xslate = Text::Xslate->new(
     syntax => 'TTerse',
     module => ['Text::Xslate::Bridge::TT2Like'],
@@ -46,6 +48,7 @@ state $text_xslate = Text::Xslate->new(
 
   pg_timestamp2iso_8601
   db_epoch_to_etag
+  pg_timestamp2human
 );
 
 
@@ -187,6 +190,20 @@ sub pg_timestamp2iso_8601 {
     $timestamp =~ s/\..+$//;
 
     $timestamp .= 'Z';
+    return $timestamp;
+}
+
+sub pg_timestamp2human {
+    my ($timestamp) = @_;
+
+    return '' unless $timestamp;
+
+    my $today = DateTime->now->set_time_zone('America/Sao_Paulo')->dmy('/');
+    $timestamp = DateTime::Format::Pg->parse_datetime($timestamp . '+00')->set_time_zone('America/Sao_Paulo');
+
+    $timestamp = $timestamp->dmy('/') . ' ' . $timestamp->hms(':');
+
+    $timestamp =~ s/$today/hoje/;
     return $timestamp;
 }
 

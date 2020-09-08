@@ -44,6 +44,10 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "last_msg_preview",
+  { data_type => "varchar", is_nullable => 1, size => 200 },
+  "last_msg_by",
+  { data_type => "varchar", is_nullable => 1, size => 200 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("idx_uniq_chat_support_cliente", ["cliente_id"]);
@@ -61,8 +65,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-31 12:07:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Vf0dDfFyyRJ9GFhaYUAe4Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-09-07 22:41:55
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Jhu1Qe+FM92dz19+pDBnJA
 
 # ALTER TABLE chat_support ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 # alter table chat_support modify column created_at datetime(6);
