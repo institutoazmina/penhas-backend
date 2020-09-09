@@ -11,13 +11,14 @@
         integrity="sha512-tDXPcamuZsWWd6OsKFyH6nAqh/MjZ/5Yk88T5o+aMfygqNFPan1pLyPFAndRzmOWHKT+jSDzWpJv8krj6x1LMA=="
         crossorigin="anonymous" />
 
+    % my $version = 1;
     % if (stash('is_login')) {
-    <link rel="stylesheet" href="/web-assets/login.css" />
+    <link rel="stylesheet" href="/web-assets/login.css?v=<%==$version%>" />
     % } elsif (stash('is_chat')) {
-    <link rel="stylesheet" href="/web-assets/chat.css" />
-    <link rel="stylesheet" href="/web-assets/admin.css" />
+    <link rel="stylesheet" href="/web-assets/chat.css?v=<%==$version%>" />
+    <link rel="stylesheet" href="/web-assets/admin.css?v=<%==$version%>" />
     % } else {
-    <link rel="stylesheet" href="/web-assets/admin.css" />
+    <link rel="stylesheet" href="/web-assets/admin.css?v=<%==$version%>" />
     % }
 
     <title><%= (stash 'title') || 'Padrão' %></title>
@@ -89,9 +90,9 @@
         feather.replace()
     </script>
     % if (stash('is_chat')) {
-    <script src="/web-assets/chat.js"></script>
+    <script src="/web-assets/chat.js?v=<%==$version%>"></script>
     % }
-    <script src="/web-assets/offcanvas.js"></script>
+    <script src="/web-assets/offcanvas.js?v=<%==$version%>"></script>
 </body>
 
 </html>
