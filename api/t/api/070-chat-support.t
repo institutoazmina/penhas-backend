@@ -163,10 +163,8 @@ do {
         '/admin/users',
         form => {cliente_id => $cliente_id}
       )->status_is(200, 'filtro do usuario')    #
-      ->json_is('/rows/0/nome_completo', $nome_completo, 'nome ok')           #
-      ->json_is('/rows/0/id',            $cliente_id,    'id ok')             #
-      ->json_is('/has_more',             0,              'has_more false')    #
-      ->json_is('/total_count',          1,              'count ok');
+      ->json_is('/rows/0/nome_completo', $nome_completo, 'nome ok')    #
+      ->json_is('/rows/0/id',            $cliente_id,    'id ok');
 
     my $reply_msg = 'reply from support' . rand;
     $t->post_ok(

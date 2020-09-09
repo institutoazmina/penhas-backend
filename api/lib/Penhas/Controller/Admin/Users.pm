@@ -68,7 +68,7 @@ sub au_search {
     }
 
     my ($total_count, @rows);
-    if ($valid->{cliente_id}) {
+    if ($valid->{cliente_id} && $c->accept_html()) {
         $rs = $rs->search({'me.id' => $valid->{cliente_id}});
         $c->stash(
             template => 'admin/user_profile',
