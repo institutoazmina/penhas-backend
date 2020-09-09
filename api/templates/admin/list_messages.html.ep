@@ -1,7 +1,7 @@
 <div class="border-bottom">
     <h1 class="h2">Mensagens</h1>
 </div>
-
+<br/>
 <div id="chatMessages" class="container">
 
     <div class="profile_box">
@@ -17,7 +17,7 @@
                         <div class="mb-1 text-muted">Criou conta em
                             <%== $pg_timestamp2human->($cliente->get_column('created_on'))%> </div>
                         <p class="card-text mb-auto"><%== $cliente->minibio() || 'sem minibio'%></p>
-                        <a href="#">carregar perfil completo</a>
+                        <a href="/admin/users?cliente_id=<%==$cliente->id()%>">carregar perfil completo</a>
 
                         <strong>última vez visto em <%== $pg_timestamp2human->( $other->{activity} ) %></strong>
                     </div>

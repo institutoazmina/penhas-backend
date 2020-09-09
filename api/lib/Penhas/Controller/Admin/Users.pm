@@ -43,7 +43,9 @@ sub au_search {
                   me.apelido
                   me.nome_completo
                   me.email
-                  me.genero genero_outro status
+                  me.genero
+                  me.genero_outro
+                  me.status
                   me.qtde_guardioes_ativos
                   me.qtde_ligar_para_policia
                   me.qtde_login_senha_normal
@@ -65,13 +67,33 @@ sub au_search {
         );
     }
 
-    $rs = $rs->search({'me.id' => $valid->{cliente_id}}) if ($valid->{cliente_id});
+    my ($total_count, @rows);
+    if ($valid->{cliente_id}) {
+        $rs = $rs->search({'me.id' => $valid->{cliente_id}});
+        $c->stash(
+            template => 'admin/user_profile',
+            cliente  => $rs->next,
+            fields   => [
+                [id                      => 'ID'],
+                [nome_completo           => 'Nome Completo'],
+                [status                  => 'Status'],
+                [genero                  => 'Gênero'],
+                [genero_outro            => 'Gênero outro'],
+                [qtde_guardioes_ativos   => 'Nº Guardiãs ativas'],
+                [qtde_ligar_para_policia => 'Nº Ligações policia'],
+                [qtde_login_senha_normal => 'Nº Login'],
 
-    my $total_count = $rs->count;
+            ]
+        );
 
-    $rs = $rs->search(undef, {rows => $rows + 1, offset => $offset});
+    }
+    else {
+        $total_count = $rs->count;
 
-    my @rows      = $rs->all;
+        $rs   = $rs->search(undef, {rows => $rows + 1, offset => $offset});
+        @rows = $rs->all;
+    }
+
     my $cur_count = scalar @rows;
     my $has_more  = $cur_count > $rows ? 1 : 0;
     if ($has_more) {
@@ -97,10 +119,11 @@ sub au_search {
             }
         },
         html => {
-            rows        => \@rows,
-            has_more    => $has_more,
-            next_page   => $has_more ? $next_page : undef,
-            total_count => $total_count,
+            rows               => \@rows,
+            has_more           => $has_more,
+            next_page          => $has_more ? $next_page : undef,
+            total_count        => $total_count,
+            pg_timestamp2human => \&pg_timestamp2human
         },
     );
 }

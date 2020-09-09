@@ -1,0 +1,43 @@
+% my $cliente = stash('cliente');
+<div class="border-bottom">
+    <h1 class="h2">Perfil de <%== $cliente->{nome_completo} || 'não encontrado'%></h1>
+</div>
+<br/>
+
+% if ( $cliente ) {
+<div class="text-right">
+    <a class="btn btn-outline-dark" target="_blank"
+        href="https://elasv2-directus.appcivico.com/admin/#/_/collections/clientes/<%==$cliente->{id}%>">Abrir
+        no directus</a>
+
+    <a class="btn btn-primary" href="/admin/user-messages?cliente_id=<%==$cliente->{id}%>">chat</a>
+</div>
+
+<div class="tab-content profile-tab" id="myTabContent">
+    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+
+        % for my $item (@$fields) { next if !$cliente->{$item->[0]} && $item->[0] eq 'genero_outro';
+        <div class="row">
+            <div class="col-md-2 text-right">
+                <label><%==$item->[1]%></label>
+            </div>
+            <div class="col-md-6">
+                <p><%==$cliente->{$item->[0]}%></p>
+            </div>
+        </div>
+        % }
+
+        <div class="row">
+            <div class="col-md-2 text-right">
+                <label>último uso do app</label>
+            </div>
+            <div class="col-md-6">
+                <p><%== $pg_timestamp2human->($cliente->{activity}) %></p>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+%}

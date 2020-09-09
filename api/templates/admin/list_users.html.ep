@@ -1,9 +1,9 @@
 <div class="border-bottom">
     <h1 class="h2">Lista de usuários</h1>
 </div>
-
+<br/>
 % if ( $c->req->params->param('nome') ) {
-<h2><%== stash('total_count') %> resultados para <%== $c->req->params->param('nome') %></h2>
+<h2><%== stash('total_count') %> resultados para 「<%== $c->req->params->param('nome') %>」</h2>
 % }else{
 <h2><%== stash('total_count') %> resultados</h2>
 %}
@@ -24,13 +24,18 @@
             <tr>
                 <td style="width: 5em"><%== $r->{id} %></td>
                 <td style="width: 25em">
-                    <%== $r->{apelido} %> (<%== $r->{nome_completo} %>)
+                    <a href="/admin/users?cliente_id=<%== $r->{id} %>"><%== $r->{apelido} %> (<%== $r->{nome_completo} %>)</a>
+                    % if ($r->{status} ne 'active') {
+                        <span class="badge badge-warning"><%==$r->{status}%></span>
+                    % }
                 </td>
                 <td style="width: 25em"><%== $r->{email} %></td>
                 <td>
                     <%== $r->{genero} %>
                 </td>
                 <td class="text-right">
+                    <a href="/admin/users?cliente_id=<%== $r->{id} %>"
+                        class="btn btn-warning btn-sm">perfil</a>
                     <a href="/admin/user-messages?cliente_id=<%== $r->{id} %>&rows=5"
                         class="btn btn-primary btn-sm">chat</a>
                 </td>
