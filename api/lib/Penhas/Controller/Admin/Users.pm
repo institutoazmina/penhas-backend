@@ -8,12 +8,15 @@ use MooseX::Types::Email qw/EmailAddress/;
 
 sub au_search {
     my $c = shift;
+    $c->stash(
+        template => 'admin/list_users',
+    );
 
     my $valid = $c->validate_request_params(
         rows       => {required => 0, type => 'Int'},
         cliente_id => {required => 0, type => 'Int'},
         next_page  => {required => 0, type => 'Str'},
-        nome       => {required => 0, type => 'Str'},
+        nome       => {required => 0, type => 'Str', empty_is_valid => 1, max_length => 99},
     );
 
     my $nome = $valid->{nome};
@@ -27,13 +30,12 @@ sub au_search {
           if ($tmp->{iss} || '') ne 'AU:NP';
         $offset = $tmp->{offset};
     }
+
     my $rs = $c->schema2->resultset('Cliente')->search(
         undef,
         {
             join     => 'clientes_app_activity',
             order_by => \'last_tm_activity DESC',
-            rows     => $rows + 1,
-            offset   => $offset,
             columns  => [
                 {activity => 'clientes_app_activity.last_tm_activity'},
                 qw/
@@ -55,14 +57,19 @@ sub au_search {
         $rs = $rs->search(
             {
                 '-or' => [
-                    \['lower(cliente.nome_completo) like ?', "$nome%"],
-                    \['lower(cliente.apelido) like ?',       "$nome%"],
+                    \['lower(me.nome_completo) like ?', "$nome%"],
+                    \['lower(me.apelido) like ?',       "$nome%"],
+                    \['lower(me.email) like ?',         "$nome%"],
                 ],
             }
         );
     }
 
     $rs = $rs->search({'me.id' => $valid->{cliente_id}}) if ($valid->{cliente_id});
+
+    my $total_count = $rs->count;
+
+    $rs = $rs->search(undef, {rows => $rows + 1, offset => $offset});
 
     my @rows      = $rs->all;
     my $cur_count = scalar @rows;
@@ -80,12 +87,6 @@ sub au_search {
         1
     );
 
-    my $total_count = $valid->{next_page} ? undef : $rs->count;
-
-    $c->stash(
-        template => 'list_users',
-    );
-
     return $c->respond_to_if_web(
         json => {
             json => {
@@ -99,7 +100,7 @@ sub au_search {
             rows        => \@rows,
             has_more    => $has_more,
             next_page   => $has_more ? $next_page : undef,
-            total_count => $total_count || $rs->count,
+            total_count => $total_count,
         },
     );
 }

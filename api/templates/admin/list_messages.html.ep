@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+<div class="border-bottom">
     <h1 class="h2">Mensagens</h1>
 </div>
 
@@ -6,9 +6,8 @@
 
     <div class="profile_box">
         <div class="row mb-2">
-
-            <div class="col-md-6">
-                <div class="card flex-md-row mb-4 box-shadow h-md-250">
+            <div class="col-md-8 offset-md-2 col-xs-12 offset-xs-0">
+                <div class="card flex-md-row mb-4 box-shadow">
                     <div class="card-body d-flex flex-column align-items-start">
                         <h3 class="mb-0">
                             <span class="text-muted"><%==$cliente->apelido()%></span>
@@ -19,6 +18,8 @@
                             <%== $pg_timestamp2human->($cliente->get_column('created_on'))%> </div>
                         <p class="card-text mb-auto"><%== $cliente->minibio() || 'sem minibio'%></p>
                         <a href="#">carregar perfil completo</a>
+
+                        <strong>última vez visto em <%== $pg_timestamp2human->( $other->{activity} ) %></strong>
                     </div>
                 </div>
             </div>
@@ -27,7 +28,7 @@
 
 
     <div class="mesgs">
-        <div class="msg_history">
+        <div id="msg_history" class="msg_history">
             % if (my $older = stash('older')) {
             <a href="/admin/user-messages?cliente_id=<%==$cliente->id()%>&rows=100&pagination=<%==$older%>"
                 class="btn btn-outline-dark btn-sm btn_load_older_messages">Carregar

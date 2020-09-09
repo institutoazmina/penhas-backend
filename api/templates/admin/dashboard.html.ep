@@ -1,55 +1,56 @@
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+<div class="border-bottom">
+    <h1 class="h2">Dashboard</h1>
+</div>
 
-        <h1 class="h2">Dashboard</h1>
-    </div>
+% if ( !$c->req->params->param('next_page') ) {
+<a href="/admin/"
+    class="btn btn-outline-dark btn-sm <%== $c->req->params->param('include_answered') ? '' : 'active' %>">últimas
+    mensagens não
+    respondidas</a>
+<a href="/admin?include_answered=1"
+    class="btn btn-outline-dark btn-sm <%== $c->req->params->param('include_answered') ? 'active' : '' %>">todas as
+    mensagens</a>
+% } else {
+% if ( $c->req->params->param('include_answered') == '1' ) {
+<h2>todas as mensagens</h2>
+% }else{
+<h2>últimas mensagens não respondidas</h2>
+%}
+% }
 
-    % if ( !$c->req->params->param('next_page') ) {
-    <a href="/admin/"
-        class="btn btn-outline-dark btn-sm <%== $c->req->params->param('include_answered') ? '' : 'active' %>">não
-        respondidas</a>
-    <a href="/admin?include_answered=1"
-        class="btn btn-outline-dark btn-sm <%== $c->req->params->param('include_answered') ? 'active' : '' %>">todas</a>
-    % } else {
-    % if ( $c->req->params->param('include_answered') == '1' ) {
-    <button href="#" disabled class="btn btn-outline-primary btn-sm disabled>">todas</button>
-    % }else{
-    <button href="#" disabled class="btn btn-outline-primary btn-sm disabled>">não respondidas</button>
+<div class="table-responsive">
+    <table class="table table-striped table-sm table-hover">
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Horário última msg</th>
+                <th>Enviado por</th>
+                <th>Mensagem</th>
+            </tr>
+        </thead>
+        <tbody>
+            % for my $r (@{$last_messages->{rows}}) {
+            <tr>
+                <td style="width: 15em"><%== $r->{cliente}->{nome_completo} %></td>
+                <td style="width: 12em"><%== $r->{last_msg_at_human} %></td>
+                <td style="width: 15em"><%== $r->{last_msg_by} %></td>
+                <td>
+                    <a href="/admin/user-messages?cliente_id=<%== $r->{cliente}->{id} %>&rows=5"
+                        class="btn btn-primary btn-sm">Abrir</a>
+                    <%== $r->{last_msg_preview} %>
+                </td>
+            </tr>
+            % }
+        </tbody>
+    </table>
+
+    % if ( $c->req->params->param('next_page') ) {
+    <a href="#" class="btn btn-outline-dark btn-sm" onclick="window.history.back();window.close();">voltar</a>
     %}
+
+    % if ( $last_messages->{has_more} ) {
+    <a href="/admin/?next_page=<%== $last_messages->{next_page} %>&amp;include_answered=<%== $c->req->params->param('include_answered') ? '1' : '0' %>"
+        class="btn btn-outline-dark btn-sm">carregar
+        próxima página</a>
     % }
-    <h2>últimas mensagens</h2>
-    <div class="table-responsive">
-        <table class="table table-striped table-sm table-hover">
-            <thead>
-                <tr>
-                    <th>Cliente</th>
-                    <th>Horário última msg</th>
-                    <th>Enviado por</th>
-                    <th>Mensagem</th>
-                </tr>
-            </thead>
-            <tbody>
-                % for my $r (@{$last_messages->{rows}}) {
-                <tr>
-                    <td style="width: 15em"><%== $r->{cliente}->{nome_completo} %></td>
-                    <td style="width: 12em"><%== $r->{last_msg_at_human} %></td>
-                    <td style="width: 15em"><%== $r->{last_msg_by} %></td>
-                    <td>
-                        <a href="/admin/user-messages?cliente_id=<%== $r->{cliente}->{id} %>&rows=5"
-                            class="btn btn-primary btn-sm">Abrir</a>
-                        <%== $r->{last_msg_preview} %>
-                    </td>
-                </tr>
-                % }
-            </tbody>
-        </table>
-
-        % if ( $c->req->params->param('next_page') ) {
-        <a href="#" class="btn btn-outline-dark btn-sm" onclick="window.history.back();window.close();">voltar</a>
-        %}
-
-        % if ( $last_messages->{has_more} ) {
-        <a href="/admin/?next_page=<%== $last_messages->{next_page} %>&amp;include_answered=<%== $c->req->params->param('include_answered') ? '1' : '0' %>"
-            class="btn btn-outline-dark btn-sm">carregar
-            próxima página</a>
-        % }
-    </div>
+</div>
