@@ -205,6 +205,11 @@ subtest_buffered 'Modos' => sub {
         {'x-api-key' => $session},
         form => {active => 1}
     )->status_is(204);
+
+    $directus = get_cliente_by_email($random_email);
+    is $directus->{modo_anonimo_ativo},   1, 'modo_anonimo_ativo 1';
+    is $directus->{modo_camuflado_ativo}, 0, 'modo_camuflado_ativo 0';
+
     $t->post_ok(
         '/me/modo-camuflado-toggle',
         {'x-api-key' => $session},
@@ -220,6 +225,10 @@ subtest_buffered 'Modos' => sub {
         {'x-api-key' => $session},
         form => {active => 0}
     )->status_is(204);
+
+    $directus = get_cliente_by_email($random_email);
+    is $directus->{modo_anonimo_ativo}, 0, 'modo_anonimo_ativo 0';
+
     $t->post_ok(
         '/me/modo-camuflado-toggle',
         {'x-api-key' => $session},
@@ -268,7 +277,8 @@ subtest_buffered 'Reset de senha' => sub {
         }
     )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha');
 
-use DDP; p $forget;
+    use DDP;
+    p $forget;
     $t->post_ok(
         '/reset-password/write-new',
         form => {
