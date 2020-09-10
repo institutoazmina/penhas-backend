@@ -114,6 +114,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
 };
 
 $Penhas::Helpers::Chat::ForceFilterClientes = [$cliente_id];
+on_scope_exit { user_cleanup(user_id => [$cliente_id,]); };
 
 do {
 
