@@ -94,7 +94,6 @@ sub chat_find_users {
                 {avatar_url => 'cliente.avatar_url'},
                 {activity   => \"TIMESTAMPDIFF( MINUTE, me.last_tm_activity, now() )"},
                 {skills     => \q|JSON_ARRAYAGG(skill.skill)|},
-                'me.last_tm_activity',
             ],
             order_by     => \'me.last_tm_activity DESC',
             group_by     => \'me.id',
@@ -145,6 +144,7 @@ sub chat_find_users {
 
         $_->{activity} = &_activity_mins_to_label($_->{activity});
 
+        delete $_->{last_tm_activity}; # just in case
     }
 
     my $next_page = $c->encode_jwt(
@@ -716,7 +716,7 @@ sub chat_list_message {
             id      => $row->{id},
             message => $message . '',
             is_me   => $myself == $row->{cliente_id} ? 1 : 0,
-            time    => $row->{created_at}
+            time    => pg_timestamp2iso_8601($row->{created_at})
         };
 
     }

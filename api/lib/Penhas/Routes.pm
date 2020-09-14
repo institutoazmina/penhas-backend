@@ -76,6 +76,9 @@ sub register {
     # GET /filter-tags
     $authenticated->under('filter-tags')->get()->to(controller => 'Tags', action => 'filter_tags');
 
+    # GET /filter-skills
+    $authenticated->under('filter-skills')->get()->to(controller => 'Skills', action => 'filter_skills');
+
     # POST /logout
     $authenticated->under('logout')->post()->to(controller => 'Logout', action => 'post');
 
@@ -183,12 +186,11 @@ sub register {
     # POST /me/chats-messages
     $me->route('chats-messages')->post()->to(controller => 'Me_Chat', action => 'me_send_message');
 
-
     # GET /me/chats-messages
     $me->route('chats-messages')->get()->to(controller => 'Me_Chat', action => 'me_list_message');
 
-    # GET /me/manage-blocks
-    $me->route('manage-blocks')->get()->to(controller => 'Me_Chat', action => 'me_manage_blocks');
+    # POST /me/manage-blocks
+    $me->route('manage-blocks')->post()->to(controller => 'Me_Chat', action => 'me_manage_blocks');
 
 
 }

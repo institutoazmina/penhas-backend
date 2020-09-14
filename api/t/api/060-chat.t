@@ -132,6 +132,8 @@ subtest_buffered 'Cadastro2 com sucesso' => sub {
 on_scope_exit { user_cleanup(user_id => [$cliente_id, $cliente_id2, $cliente_id3,]); };
 
 
+$t->get_ok('/filter-skills', {'x-api-key' => $session})->status_is(200);
+
 my $skill1 = $schema2->resultset('Skill')->next;
 my $skill2 = $schema2->resultset('Skill')->search({id => {'!='     => $skill1->id}})->next;
 my $skill3 = $schema2->resultset('Skill')->search({id => {'not in' => [$skill1->id, $skill2->id]}})->next;
@@ -500,7 +502,7 @@ db_transaction {
     ok $t->app->decode_jwt($newer)->{after}, 'after is definded';
 
     # BLOCKS
-    $t->get_ok(
+    $t->post_ok(
         '/me/manage-blocks',
         {'x-api-key' => $session2},
         form => {
@@ -510,7 +512,7 @@ db_transaction {
       )->status_is(400, 'cannot block yourself')    #
       ->json_is('/error', 'cannot_block_yourself');
 
-    $t->get_ok(
+    $t->post_ok(
         '/me/manage-blocks',
         {'x-api-key' => $session2},
         form => {
@@ -523,7 +525,7 @@ db_transaction {
       ->json_is('/reason', 'is_required');
 
     # cliente 3 bloqueia o cliente 1
-    $t->get_ok(
+    $t->post_ok(
         '/me/manage-blocks',
         {'x-api-key' => $session3},
         form => {
@@ -576,7 +578,7 @@ db_transaction {
       ->json_has('/meta/last_msg_etag', 'tem last_msg_etag');
     my $last_etag = last_tx_json->{meta}{last_msg_etag};
 
-    $t->get_ok(
+    $t->post_ok(
         '/me/manage-blocks',
         {'x-api-key' => $session3},
         form => {
