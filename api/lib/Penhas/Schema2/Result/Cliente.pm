@@ -286,6 +286,9 @@ sub access_modules_as_config {
             numero              => '000',
             audio_each_duration => '30',
             audio_full_duration => '900',
+
+            audio_each_duration => '27000',
+            audio_full_duration => '27000',
         },
         tweets => {
             max_length => 2200,
