@@ -84,7 +84,7 @@ __PACKAGE__->add_columns(
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "horario_inicio",
   { data_type => "varchar", is_nullable => 1, size => 5 },
@@ -97,21 +97,21 @@ __PACKAGE__->add_columns(
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "eh_online",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "funcionamento_pandemia",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "observacao_pandemia",
   { data_type => "text", is_nullable => 1 },
@@ -135,20 +135,54 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => 20,
   },
-  "exite_delegacia",
-  { data_type => "varchar", default_value => "-", is_nullable => 0, size => 3 },
-  "delegacia_mulher",
-  { data_type => "varchar", default_value => "-", is_nullable => 0, size => 3 },
-  "endereco_correto",
-  { data_type => "varchar", default_value => "-", is_nullable => 0, size => 3 },
-  "horario_correto",
-  { data_type => "varchar", default_value => "-", is_nullable => 0, size => 3 },
-  "telefone_correto",
-  { data_type => "varchar", default_value => "-", is_nullable => 0, size => 3 },
   "cliente_id",
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "qtde_avaliacao",
   { data_type => "integer", default_value => 0, is_nullable => 0 },
+  "observacao",
+  { data_type => "text", is_nullable => 1 },
+  "horario_correto",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "delegacia_mulher",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "endereco_correto",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "telefone_correto",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "existe_delegacia",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "eh_importacao",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -163,10 +197,16 @@ __PACKAGE__->has_many(
   { "foreign.ponto_apoio_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
+__PACKAGE__->has_many(
+  "ponto_apoio2projetos",
+  "Penhas::Schema2::Result::PontoApoio2projeto",
+  { "foreign.ponto_apoio_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-23 22:00:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dr8dQPGDs51K0bOy3JuF5A
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-09-21 19:23:19
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WrWOrYNaTXNQgvZsh6ImLg
 
 # ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id);
 

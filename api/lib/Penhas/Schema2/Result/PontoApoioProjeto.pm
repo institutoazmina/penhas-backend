@@ -37,10 +37,16 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 0, size => 200 },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->has_many(
+  "ponto_apoio2projetos",
+  "Penhas::Schema2::Result::PontoApoio2projeto",
+  { "foreign.ponto_apoio_projeto_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-01 15:13:00
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Cti5tzfv11VDsLmVLYO3gg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-09-21 19:23:19
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:k+2W4ZJn/sg5E6utIFSrvg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

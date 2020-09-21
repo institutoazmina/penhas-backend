@@ -66,6 +66,7 @@ sub ponto_apoio_list {
     my $rows = $opts{rows} || 100;
     $rows = 100 if !is_test() && ($rows > 5000 || $rows < 100);
 
+    $max_distance = 999999, $rows = 1000 if !$opts{max_distance} && !$opts{rows};
 
     # just in case, pra nao rolar sql injection, mas aqui já deve ter validado isso no controller
     confess '$latitude is not valid'  unless $latitude  =~ /^(([-+]?(([1-8]?\d(\.\d+))+|90)))$/ao;
@@ -358,8 +359,8 @@ sub ponto_apoio_detail {
                   me.eh_online
                   me.funcionamento_pandemia
                   me.observacao_pandemia
-		  me.ja_passou_por_moderacao
-		  /,
+                  me.ja_passou_por_moderacao
+                  /,
             ],
             join => [
                 'categoria',

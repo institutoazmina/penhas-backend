@@ -19,15 +19,37 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "ponto_apoio_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "ponto_apoio_projeto_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->belongs_to(
+  "ponto_apoio",
+  "Penhas::Schema2::Result::PontoApoio",
+  { id => "ponto_apoio_id" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+);
+__PACKAGE__->belongs_to(
+  "ponto_apoio_projeto",
+  "Penhas::Schema2::Result::PontoApoioProjeto",
+  { id => "ponto_apoio_projeto_id" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-01 15:13:00
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pH4iROYyvfn8x7Oj1LP0nQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-09-21 19:23:19
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7dsdfY6HJpz1Vcl6RCVkJw
 
 # delete from ponto_apoio2projetos where ponto_apoio_projeto_id not in (select id from ponto_apoio_projeto);
 # delete from ponto_apoio2projetos where ponto_apoio_id not in (select id from ponto_apoio);
