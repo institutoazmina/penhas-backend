@@ -61,7 +61,7 @@ $lists->{projeto} = {
     mapa_delegacia => 2,
 };
 $lists->{categoria} = {
-    'delegacia comum'                         => 3,
+    'delegacia comum'                         => 568,
     'delegacia da mulher'                     => 5,
     'posto de atendimento em delegacia comum' => 9,
 };
@@ -157,8 +157,23 @@ while (my $row = $csv->getline($fh)) {
                 $val = $fk->{lc($val)};
             }
         }
+        elsif ($header->{type} eq 'time' && $val) {
+            $val =~ /^\d\d:\d\d$/a or die "$name na linha $i: $val nao se parece com horário\n";
+        }
+        elsif ($header->{type} eq 'email' && $val) {
+            $val =~ /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/ai
+              or die "$name na linha $i: $val nao se parece com e-mail\n";
+        }
+        elsif ($header->{type} eq '') {
 
-        $val = undef if $val eq '' && $header->{type} =~ /(int|num|bool)/;
+            # not op
+        }
+        elsif ($val) {
+            die "Missing " . $header->{type};
+
+        }
+
+        $val = undef if $val eq '' && $header->{type} =~ /(int|num|bool|time)/;
         $insert->{$name} = $val;
     }
 
@@ -168,8 +183,9 @@ while (my $row = $csv->getline($fh)) {
 
     my @columns;
     my @values;
-    while (my ($k, $v) = each %$insert) {
+    for my $k (sort keys %$insert) {
         next if $k eq 'projeto';
+        my $v = $insert->{$k};
 
         push @columns, $k;
         if (defined $v) {
@@ -183,7 +199,7 @@ while (my $row = $csv->getline($fh)) {
     }
 
     print $fh2 "insert into ponto_apoio (eh_importacao, status, " . join ', ', @columns;
-    print $fh2 ") values ('1', 'active', " . join ', ',                          @values;
+    print $fh2 ") values ('1', 'active', " . join ', ',                        @values;
     print $fh2 ");\n";
 
     print $fh2 "insert into ponto_apoio2projetos (ponto_apoio_id, ponto_apoio_projeto_id) ";
