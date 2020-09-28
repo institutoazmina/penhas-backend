@@ -39,7 +39,7 @@ sub ponto_apoio_list {
     my ($c, %opts) = @_;
 
     my $user_obj     = $opts{user_obj};
-    my $latitude     = $opts{latitude}  or confess 'missing latitude';
+    my $latitude     = $opts{latitude} or confess 'missing latitude';
     my $longitude    = $opts{longitude} or confess 'missing longitude';
     my $keywords     = trim(lc($opts{keywords} || ''));
     my $max_distance = $opts{max_distance} || 50;
@@ -65,6 +65,10 @@ sub ponto_apoio_list {
 
     my $rows = $opts{rows} || 100;
     $rows = 100 if !is_test() && ($rows > 5000 || $rows < 100);
+
+    if ($opts{as_csv}) {
+        $rows = -1;
+    }
 
     # just in case, pra nao rolar sql injection, mas aqui já deve ter validado isso no controller
     confess '$latitude is not valid'  unless $latitude  =~ /^(([-+]?(([1-8]?\d(\.\d+))+|90)))$/ao;
@@ -102,11 +106,17 @@ sub ponto_apoio_list {
                 'categoria',
                 ($user_obj ? ('cliente_ponto_apoio_avaliacaos') : ()),
             ],
-            having       => [\['distance_in_km < ?', $max_distance + 1]],
+
             order_by     => \'distance_in_km ASC',
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-            rows         => $rows + 1,
-            offset       => $offset,
+
+            (
+                $rows = -1 ? () : (
+                    having => [\['distance_in_km < ?', $max_distance + 1]],
+                    rows   => $rows + 1,
+                    offset => $offset,
+                )
+            )
         }
     );
 
@@ -127,7 +137,7 @@ sub ponto_apoio_list {
 
     my @rows      = $rs->all;
     my $cur_count = scalar @rows;
-    my $has_more  = $cur_count > $rows ? 1 : 0;
+    my $has_more  = $rows != -1 && $cur_count > $rows ? 1 : 0;
     if ($has_more) {
         pop @rows;
         $cur_count--;
