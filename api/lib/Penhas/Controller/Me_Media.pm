@@ -273,7 +273,7 @@ sub _extract_waveform {
     my @ffmpeg = ();
     push @ffmpeg, qw(ffmpeg -i);
     push @ffmpeg, $media;
-    push @ffmpeg, '-filter_complex', 'compand,showwavespic=s=420x80';# :colors=#9f63ff
+    push @ffmpeg, '-filter_complex', 'compand,showwavespic=s=420x80';       # :colors=#9f63ff
     push @ffmpeg, qw(-c:v png -f image2 -frames:v 1 -y  -loglevel debug);
     push @ffmpeg, $tmp->filename;
 
@@ -312,7 +312,7 @@ sub _extract_duration {
 
     chomp($stdout);
     if ($@ || $stdout !~ /^\d{1,5}\.\d{1,}$/a) {
-        log_error("extrating duration FAILED: $@ - $stderr $stdout");
+        log_error("extrating duration FAILED: \$\@'$@' - stderr '$stderr' stdout '$stdout'");
         die {
             error   => 'extract_duration_error',
             message => 'Erro ao ler arquivo convertido',
