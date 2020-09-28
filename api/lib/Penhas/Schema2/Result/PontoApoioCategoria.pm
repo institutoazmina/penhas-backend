@@ -35,14 +35,19 @@ __PACKAGE__->add_columns(
   },
   "label",
   { data_type => "varchar", is_nullable => 0, size => 200 },
-  "projeto",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "color",
   {
     data_type => "varchar",
     default_value => "#000000",
     is_nullable => 0,
     size => 7,
+  },
+  "projeto",
+  {
+    data_type => "integer",
+    default_value => 1,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
   },
 );
 __PACKAGE__->set_primary_key("id");
@@ -54,8 +59,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-23 22:00:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4c0SaY6lHyJ7lZGnHnV0Cw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-09-22 01:47:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Bg3kCCAL3JlEr3EnZYPDqw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
