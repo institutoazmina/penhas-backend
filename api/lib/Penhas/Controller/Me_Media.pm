@@ -51,7 +51,7 @@ sub upload {
     } if $c->stash('user')->{upload_status} eq 'only_guardiao' && $params->{intention} ne 'guardiao';
 
     my $upload = $c->param('media');
-    $c->log->info('file size is %s', $upload->size);
+    $c->log->info(sprintf 'file size is %s', $upload->size);
     if (!$upload) {
         die {
             error   => 'media_missing',
