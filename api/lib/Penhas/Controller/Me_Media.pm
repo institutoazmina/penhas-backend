@@ -310,7 +310,13 @@ sub _extract_duration {
     my $stdout = '';
     eval { run3 \@ffprobe, \undef, \$stdout, \$stderr; };
 
-    chomp($stdout);
+    if (defined $stdout) {
+        $stdout =~ s/^\s+//;
+        $stdout =~ s/\s+$//;
+    }
+    else {
+        $stdout ||= '';
+    }
     if ($@ || $stdout !~ /^\d{1,5}\.\d{1,}$/a) {
         log_error("extrating duration FAILED: \$\@'$@' - stderr '$stderr' stdout '$stdout'");
         die {
