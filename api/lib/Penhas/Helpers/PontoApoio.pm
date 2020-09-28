@@ -45,7 +45,7 @@ sub ponto_apoio_list {
     my $max_distance = $opts{max_distance} || 50;
     my $categorias   = $opts{categorias};
 
-    $opts{categorias} = $ENV{FILTER_PONTO_APOIO_CATS} if $ENV{FILTER_PONTO_APOIO_CATS};
+    $opts{categorias} = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}] if $ENV{FILTER_PONTO_APOIO_CATS};
 
     my $eh_24h             = $opts{eh_24h};
     my $dias_funcionamento = $opts{dias_funcionamento};
