@@ -51,16 +51,17 @@ sub upload {
     } if $c->stash('user')->{upload_status} eq 'only_guardiao' && $params->{intention} ne 'guardiao';
 
     my $upload = $c->param('media');
+    $c->log->info('file size is %s', $upload->size);
     if (!$upload) {
         die {
             error   => 'media_missing',
             message => 'Upload não foi enviado',
         };
     }
-    elsif ($upload->size <= 3) {
+    elsif ($upload->size <= 2) {
         die {
             error   => 'media_invalid_size',
-            message => 'Upload precisa ter mais do que 3 bytes',
+            message => 'Upload precisa ter mais do que 2 bytes',
         };
     }
     elsif (!$is_audio_upload && $upload->size > 5_000_000) {
