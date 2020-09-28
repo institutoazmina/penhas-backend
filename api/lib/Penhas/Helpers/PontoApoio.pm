@@ -43,14 +43,13 @@ sub ponto_apoio_list {
     my $longitude    = $opts{longitude} or confess 'missing longitude';
     my $keywords     = trim(lc($opts{keywords} || ''));
     my $max_distance = $opts{max_distance} || 50;
-    my $categorias   = $opts{categorias};
 
-    $opts{categorias} = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}] if $ENV{FILTER_PONTO_APOIO_CATS};
-
+    my $categorias         = $opts{categorias};
     my $eh_24h             = $opts{eh_24h};
     my $dias_funcionamento = $opts{dias_funcionamento};
 
     confess '$categorias is not arrayref' if $categorias && ref $categorias ne 'ARRAY';
+    $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}] if $ENV{FILTER_PONTO_APOIO_CATS};
 
     $c->reply_invalid_param('Distância precisa ser menor que 50km', 'form_error', 'max_distance')
       if $max_distance > 50;
