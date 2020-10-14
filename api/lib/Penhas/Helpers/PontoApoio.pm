@@ -128,6 +128,9 @@ sub ponto_apoio_list {
                     \['lower(me.nome) like ?',      "$keywords%"],
                     \['lower(me.sigla) like ?',     "$keywords%"],
                     \['lower(me.descricao) like ?', "%$keywords%"],
+                    \['lower(me.municipio) like ?', "$keywords%"],
+                    \['lower(me.bairro) like ?',    "$keywords%"],
+                    \['lower(me.uf) like ?',        "$keywords"],
                 ],
             }
         );
