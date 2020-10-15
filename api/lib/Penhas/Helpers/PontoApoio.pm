@@ -122,15 +122,18 @@ sub ponto_apoio_list {
     );
 
     if ($keywords) {
+        log_debug("keywords: $keywords");
         $rs = $rs->search(
             {
                 '-or' => [
-                    \['lower(me.nome) like ?',      "$keywords%"],
-                    \['lower(me.sigla) like ?',     "$keywords%"],
-                    \['lower(me.descricao) like ?', "%$keywords%"],
-                    \['lower(me.municipio) like ?', "$keywords%"],
-                    \['lower(me.bairro) like ?',    "$keywords%"],
-                    \['lower(me.uf) like ?',        "$keywords"],
+                    \['lower(me.nome) like ?',            "$keywords%"],
+                    \['lower(me.sigla) like ?',           "$keywords%"],
+                    \['lower(me.descricao) like ?',       "%$keywords%"],
+                    \['lower(me.municipio) like ?',       "%$keywords%"],
+                    \['lower(me.nome_logradouro) like ?', "%$keywords%"],
+                    \['lower(me.bairro) like ?',          "%$keywords%"],
+                    \['lower(me.uf) like ?',              "$keywords"],
+                    \['lower(me.cep) like ?',             "$keywords%"],
                 ],
             }
         );
@@ -171,6 +174,12 @@ sub ponto_apoio_list {
         has_more         => $has_more,
         next_page        => $has_more ? $next_page : undef,
         avaliacao_maxima => '5',
+        _debug           => {
+            max_distance => $max_distance,
+            keywords     => $keywords,
+            rows         => $rows,
+            offset       => $offset
+        }
     };
 }
 
