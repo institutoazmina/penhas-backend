@@ -53,8 +53,8 @@ sub ponto_apoio_list {
     confess '$categorias is not arrayref' if $categorias && ref $categorias ne 'ARRAY';
     $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}] if $ENV{FILTER_PONTO_APOIO_CATS};
 
-    $c->reply_invalid_param('Distância precisa ser menor que 50km', 'form_error', 'max_distance')
-      if $max_distance > 50;
+    $c->reply_invalid_param('Distância precisa ser menor que 5000km', 'form_error', 'max_distance')
+      if $max_distance > 5000;
     $c->reply_invalid_param('Distância precisa ser maior que 1km', 'form_error', 'max_distance')
       if $max_distance < 1;
 
