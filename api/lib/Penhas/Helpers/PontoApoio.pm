@@ -130,7 +130,7 @@ sub ponto_apoio_list {
     if ($keywords) {
         my $keywords_search = {
             '-or' => [
-                \['lower(me.nome) like ?',            "$keywords%"],
+                \['lower(me.nome) like ?',            "%$keywords%"],
                 \['lower(me.sigla) like ?',           "$keywords%"],
                 \['lower(me.descricao) like ?',       "%$keywords%"],
                 \['lower(me.municipio) like ?',       "%$keywords%"],
