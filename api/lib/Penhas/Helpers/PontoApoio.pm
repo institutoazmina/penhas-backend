@@ -88,41 +88,43 @@ sub ponto_apoio_list {
      + SIN(RADIANS(me.latitude))
      * SIN(RADIANS( $latitude ))))) AS distance_in_km|;
 
-    my $rs = $c->schema2->resultset('PontoApoio')->search(
-        {
-            'me.test_status'             => is_test() ? 'test' : 'prod',
-            'me.ja_passou_por_moderacao' => 1,
-            'me.status'                  => 'active',
+    my $search = {
+        'me.test_status'             => is_test() ? 'test' : 'prod',
+        'me.ja_passou_por_moderacao' => 1,
+        'me.status'                  => 'active',
 
-            ($categorias ? ('me.categoria' => {in => $categorias}) : ()),
-        },
-        {
-            'columns' => [
-                {distance_in_km => \$distance_in_km},
-                {categoria_nome => 'categoria.label'},
-                {categoria_cor  => 'categoria.color'},,
-                {categoria_id   => 'categoria.id'},
-                {categoria_id   => 'categoria.id'},
-                ($user_obj ? ({cliente_avaliacao => 'cliente_ponto_apoio_avaliacaos.avaliacao'}) : ()),
-                qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf me.qtde_avaliacao/,
-            ],
-            join => [
-                'categoria',
-                ($user_obj ? ('cliente_ponto_apoio_avaliacaos') : ()),
-            ],
+        ($categorias ? ('me.categoria' => {in => $categorias}) : ()),
+    };
+    my $attr = {
+        'columns' => [
+            {distance_in_km => \$distance_in_km},
+            {categoria_nome => 'categoria.label'},
+            {categoria_cor  => 'categoria.color'},,
+            {categoria_id   => 'categoria.id'},
+            {categoria_id   => 'categoria.id'},
+            ($user_obj ? ({cliente_avaliacao => 'cliente_ponto_apoio_avaliacaos.avaliacao'}) : ()),
+            qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf me.qtde_avaliacao/,
+        ],
+        join => [
+            'categoria',
+            ($user_obj ? ('cliente_ponto_apoio_avaliacaos') : ()),
+        ],
 
-            order_by     => \'distance_in_km ASC',
-            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+        order_by     => \'distance_in_km ASC',
+        result_class => 'DBIx::Class::ResultClass::HashRefInflator',
 
-            (
-                $rows = -1 ? () : (
-                    having => [\['distance_in_km < ?', $max_distance + 1]],
-                    rows   => $rows + 1,
-                    offset => $offset,
-                )
+        (
+            $rows = -1 ? () : (
+                having => [\['distance_in_km < ?', $max_distance + 1]],
+                rows   => $rows + 1,
+                offset => $offset,
             )
-        }
-    );
+        )
+    };
+    log_debug($c->app->dumper([$search, $attr]));
+    log_debug($c->app->dumper([rows => $rows]));
+
+    my $rs = $c->schema2->resultset('PontoApoio')->search($search, $attr);
 
     if ($keywords) {
         log_debug("keywords: $keywords");
@@ -145,6 +147,8 @@ sub ponto_apoio_list {
     $rs = $rs->search({'eh_24h'             => $eh_24h ? 1 : 0})     if defined $eh_24h;
     $rs = $rs->search({'dias_funcionamento' => $dias_funcionamento}) if $dias_funcionamento;
 
+    log_debug($c->app->dumper([rows => $rows]));
+
     my @rows      = $rs->all;
     my $cur_count = scalar @rows;
     my $has_more  = $rows != -1 && $cur_count > $rows ? 1 : 0;
@@ -163,6 +167,7 @@ sub ponto_apoio_list {
             nome => delete $_->{categoria_nome},
         };
     }
+    log_debug($c->app->dumper([rows => $rows]));
 
     my $next_page = $c->encode_jwt(
         {
