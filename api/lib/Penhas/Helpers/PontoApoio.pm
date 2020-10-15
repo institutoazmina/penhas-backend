@@ -114,7 +114,7 @@ sub ponto_apoio_list {
         result_class => 'DBIx::Class::ResultClass::HashRefInflator',
 
         (
-            $rows = -1 ? () : (
+            $rows == -1 ? () : (
                 having => [\['distance_in_km < ?', $max_distance + 1]],
                 rows   => $rows + 1,
                 offset => $offset,
@@ -126,26 +126,26 @@ sub ponto_apoio_list {
 
     my $rs = $c->schema2->resultset('PontoApoio')->search($search, $attr);
 
+    my $keywords_search;
     if ($keywords) {
+        my $keywords_search = {
+            '-or' => [
+                \['lower(me.nome) like ?',            "$keywords%"],
+                \['lower(me.sigla) like ?',           "$keywords%"],
+                \['lower(me.descricao) like ?',       "%$keywords%"],
+                \['lower(me.municipio) like ?',       "%$keywords%"],
+                \['lower(me.nome_logradouro) like ?', "%$keywords%"],
+                \['lower(me.bairro) like ?',          "%$keywords%"],
+                \['lower(me.uf) like ?',              "$keywords"],
+                \['lower(me.cep) like ?',             "$keywords%"],
+            ],
+        };
         log_debug("keywords: $keywords");
-        $rs = $rs->search(
-            {
-                '-or' => [
-                    \['lower(me.nome) like ?',            "$keywords%"],
-                    \['lower(me.sigla) like ?',           "$keywords%"],
-                    \['lower(me.descricao) like ?',       "%$keywords%"],
-                    \['lower(me.municipio) like ?',       "%$keywords%"],
-                    \['lower(me.nome_logradouro) like ?', "%$keywords%"],
-                    \['lower(me.bairro) like ?',          "%$keywords%"],
-                    \['lower(me.uf) like ?',              "$keywords"],
-                    \['lower(me.cep) like ?',             "$keywords%"],
-                ],
-            }
-        );
+        $rs = $rs->search($keywords_search);
     }
 
     $rs = $rs->search({'eh_24h'             => $eh_24h ? 1 : 0})     if defined $eh_24h;
-    $rs = $rs->search({'dias_funcionamento' => $dias_funcionamento}) if $dias_funcionamento;
+    $rs = $rs->search({'dias_funcionamento' => $dias_funcionamento}) if defined $dias_funcionamento;
 
     log_debug($c->app->dumper([rows => $rows]));
 
@@ -183,10 +183,13 @@ sub ponto_apoio_list {
         next_page        => $has_more ? $next_page : undef,
         avaliacao_maxima => '5',
         _debug           => {
-            max_distance => $max_distance,
-            keywords     => $keywords,
-            rows         => $rows,
-            offset       => $offset
+            max_distance       => $max_distance,
+            keywords           => $keywords,
+            rows               => $rows,
+            offset             => $offset,
+            eh_24h             => $eh_24h,
+            dias_funcionamento => $dias_funcionamento,
+            keywords_search    => $keywords_search,
         }
     };
 }
