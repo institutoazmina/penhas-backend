@@ -38,6 +38,8 @@ sub _format_pa_row {
 sub ponto_apoio_list {
     my ($c, %opts) = @_;
 
+    log_debug($c->app->dumper(\%opts));
+
     my $user_obj     = $opts{user_obj};
     my $latitude     = $opts{latitude} or confess 'missing latitude';
     my $longitude    = $opts{longitude} or confess 'missing longitude';
@@ -66,6 +68,7 @@ sub ponto_apoio_list {
 
     my $rows = $opts{rows} || 100;
     $rows = 100 if !is_test() && ($rows > 5000 || $rows < 100);
+    log_debug($c->app->dumper([rows => $rows]));
 
     if ($opts{as_csv}) {
         $rows = -1;
