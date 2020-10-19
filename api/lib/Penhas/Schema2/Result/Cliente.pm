@@ -282,6 +282,12 @@ sub _build_access_modules {
 
 sub access_modules_as_config {
     my $meta = {
+        chat_privado => {
+            polling_rate => '20',
+        },
+        chat_suporte => {
+            polling_rate => '20',
+        },
         modo_seguranca => {
             numero              => '000',
             audio_each_duration => '30',
@@ -293,6 +299,7 @@ sub access_modules_as_config {
         tweets => {
             max_length => 2200,
         },
+
     };
     return [map { +{code => $_, meta => $meta->{$_} || {}} } keys $_[0]->access_modules->%*];
 }
