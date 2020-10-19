@@ -198,6 +198,7 @@ sub pg_timestamp2human {
 
     return '' unless $timestamp;
 
+    $timestamp =~ s/Z$//;
     my $today = DateTime->now->set_time_zone('America/Sao_Paulo')->dmy('/');
     $timestamp = DateTime::Format::Pg->parse_datetime($timestamp . '+00')->set_time_zone('America/Sao_Paulo');
 
