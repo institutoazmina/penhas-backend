@@ -44,8 +44,9 @@ ok((grep { $_->{code} eq 'tweets' } $json->{modules}->@*) ? 0 : 1, 'has not twee
 #json_has('/modules/quiz')->json_hasnt('/modules/tweets');
 is trace_popall(), 'clientes_quiz_session:loaded', 'clientes_quiz_session was just loaded';
 
-
+my $first_session_id;
 subtest_buffered 'Testar envio de campo boolean com valor invalido + interpolation de variaveis no intro' => sub {
+    $first_session_id = $cadastro->{quiz_session}{session_id};
     my $field_ref = $cadastro->{quiz_session}{current_msgs}[-1]{ref};
     $json = $t->post_ok(
         '/me/quiz',
@@ -277,5 +278,57 @@ $cadastro = $t->get_ok(
     '/me',
     {'x-api-key' => $session}
 )->status_is(200)->json_is('/quiz_session', undef)->tx->res->json;
+
+subtest_buffered 'reiniciando o quiz' => sub {
+    my $json = $t->get_ok(
+        '/me/chats',
+        {'x-api-key' => $session},
+      )->status_is(200, 'busca session')    #
+      ->json_is(
+        '/assistant/quiz_session/session_id', $cliente->assistant_session_id(),
+        'quiz_session/session_id match expected'
+      )                                     #
+      ->json_like(
+        '/assistant/quiz_session/current_msgs/0/content', qr/não estava/,
+        'nao estava em situacao de risco'
+      )                                     #
+      ->json_is('/assistant/quiz_session/current_msgs/1/type', 'yesno', 'sim/nao')->tx->res->json;
+    $json = $json->{assistant};
+
+    # apertando o botao "reset_questionnaire" = N
+    my $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
+    is $field_ref, 'reset_questionnaire', 'botao esperado';
+    $json = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {
+            session_id => $json->{quiz_session}{session_id},
+            $field_ref => 'N',
+        }
+    )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+    my $first_msg = $json->{quiz_session}{current_msgs}[0];
+    my $input_msg = $json->{quiz_session}{current_msgs}[-1];
+
+    is $first_msg->{type},      'displaytext', 'just a text';
+    like $first_msg->{content}, qr/única/,    'unica função';
+
+    # apertando o botao "reset_questionnaire" = Y
+    $json = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {
+            session_id => $json->{quiz_session}{session_id},
+            $field_ref => 'Y',
+        }
+    )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+    my $first_msg = $json->{quiz_session}{current_msgs}[0];
+    is $first_msg->{type},    'displaytext', 'just a text';
+    is $first_msg->{content}, 'intro1',      'intro text';
+
+    like $json->{quiz_session}{session_id}, qr/^\d+$/a, 'just numbers';
+    isnt $json->{quiz_session}{session_id}, $first_session_id, 'not the same as before';
+};
 
 done_testing();

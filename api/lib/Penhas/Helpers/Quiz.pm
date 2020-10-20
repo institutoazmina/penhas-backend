@@ -14,11 +14,20 @@ use Scope::OnExit;
 # a chave do cache é composta por horarios de modificações do quiz_config e questionnaires
 use Penhas::KeyValueStorage;
 
-sub _new_displaytext {
+sub _new_displaytext_error {
     {
         type       => 'displaytext',
         content    => $_[0],
         style      => 'error',
+        _relevance => '1',
+    }
+}
+
+sub _new_displaytext_normal {
+    {
+        type       => 'displaytext',
+        content    => $_[0],
+        style      => 'normal',
         _relevance => '1',
     }
 }
@@ -121,8 +130,11 @@ sub setup {
             log_info('user has no quiz available'), return if !@available_quiz;
 
             # tem algum quiz true, entao vamos remover os que o usuario ja completou
-
-            my $rs          = $c->schema2->resultset('ClientesQuizSession');
+            my $rs = $c->schema2->resultset('ClientesQuizSession')->search(
+                {
+                    'deleted_at' => undef,
+                }
+            );
             my %is_finished = map { $_->{questionnaire_id} => 1 } $rs->search(
                 {
                     'finished_at'      => {'!=' => undef},
@@ -201,9 +213,9 @@ sub setup {
     );
 
 
-    $self->helper('load_quiz_session'    => sub { &load_quiz_session(@_) });
-    $self->helper('process_quiz_session' => sub { &process_quiz_session(@_) });
-
+    $self->helper('load_quiz_session'      => sub { &load_quiz_session(@_) });
+    $self->helper('process_quiz_session'   => sub { &process_quiz_session(@_) });
+    $self->helper('process_quiz_assistant' => sub { &process_quiz_assistant(@_) });
 
 }
 
@@ -243,7 +255,7 @@ sub load_quiz_session {
         $c->stash(
             quiz_session => {
                 session_id   => $session->{id},
-                current_msgs => [&_new_displaytext('Loop no quiz detectado, entre em contato com o suporte')],
+                current_msgs => [&_new_displaytext_error('Loop no quiz detectado, entre em contato com o suporte')],
                 prev_msgs    => $stash->{prev_msgs}
             }
         );
@@ -460,6 +472,53 @@ sub _render_question {
     return $public;
 }
 
+sub process_quiz_assistant {
+    my ($c, %opts) = @_;
+
+    my $user_obj = $opts{user_obj}      or croak 'missing user_obj';
+    my $params   = delete $opts{params} or croak 'missing params';
+
+
+    log_info("process_quiz_assistant " . to_json($params));
+
+    my $user = {$user_obj->get_columns};
+    my @preprend_msg;
+
+    if (exists $params->{reset_questionnaire}) {
+        if ($params->{reset_questionnaire} eq 'Y') {
+
+            $user_obj->reset_all_questionnaires();
+
+            my $quiz_session = $c->user_get_quiz_session(user => $user);
+            if ($quiz_session) {
+
+                $c->load_quiz_session(session => $quiz_session, user => $user);
+                return {quiz_session => $c->stash('quiz_session')};
+            }
+            else {
+                push @preprend_msg, &_new_displaytext_normal('Não há questionários para você no momento!');
+            }
+        }
+        elsif ($params->{reset_questionnaire} eq 'N') {
+
+            push @preprend_msg, &_new_displaytext_normal('Tudo bem, no momento esta é minha única função!');
+        }
+        else {
+            push @preprend_msg, &_new_displaytext_error('Valor para reset_questionnaire precisa ser Y ou N');
+        }
+    }
+    else {
+        push @preprend_msg, &_new_displaytext_error('Não entendo outros campos.');
+    }
+
+    return {
+        quiz_session => {
+            session_id   => $user_obj->assistant_session_id(),
+            current_msgs => [map { &_render_question($_, $user) } @preprend_msg],
+            prev_msgs    => undef,
+        }
+    };
+}
 
 sub process_quiz_session {
     my ($c, %opts) = @_;
@@ -511,7 +570,7 @@ sub process_quiz_session {
                         if (exists $responses->{$code}) {
                             if ($responses->{$code} !~ /^\d+/) {
                                 push @preprend_msg,
-                                  &_new_displaytext(
+                                  &_new_displaytext_error(
                                     sprintf(
                                         'Erro na configuração do quiz! code `%s` já tem um valor não númerico, logo não pode-se somar uma resposta de power2',
                                         $code
@@ -541,7 +600,7 @@ sub process_quiz_session {
                     $have_new_responses++;
                 }
                 else {
-                    push @preprend_msg, &_new_displaytext(sprintf('Campo %s deve ser Y ou N', $ref));
+                    push @preprend_msg, &_new_displaytext_error(sprintf('Campo %s deve ser Y ou N', $ref));
                 }
             }
             elsif ($msg->{type} eq 'text') {
@@ -584,7 +643,7 @@ sub process_quiz_session {
 
                 }
                 else {
-                    push @preprend_msg, &_new_displaytext(sprintf('Campo %s deve uma lista de números', $ref));
+                    push @preprend_msg, &_new_displaytext_error(sprintf('Campo %s deve uma lista de números', $ref));
                 }
 
             }
@@ -620,12 +679,12 @@ sub process_quiz_session {
 
             }
             else {
-                push @preprend_msg, &_new_displaytext(sprintf('typo %s não foi programado!', $msg->{type}));
+                push @preprend_msg, &_new_displaytext_error(sprintf('typo %s não foi programado!', $msg->{type}));
             }
 
         }
         else {
-            push @preprend_msg, &_new_displaytext(sprintf('Campo %s nao foi enviado', $ref));
+            push @preprend_msg, &_new_displaytext_error(sprintf('Campo %s nao foi enviado', $ref));
         }
 
         # vai embora, pois so devemos ter 1 resposta por vez
@@ -908,8 +967,8 @@ sub _get_error_questionnaire_stash {
     my $stash = {
         prev_msgs => [],
         pending   => [
-            &_new_displaytext('Encontramos um problema para montar o questionário!'),
-            &_new_displaytext($err . ''),
+            &_new_displaytext_error('Encontramos um problema para montar o questionário!'),
+            &_new_displaytext_error($err . ''),
             {
                 type                     => 'button',
                 content                  => 'Tente novamente mais tarde, e entre em contato caso o erro persista.',

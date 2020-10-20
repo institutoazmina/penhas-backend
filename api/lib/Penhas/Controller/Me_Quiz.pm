@@ -13,40 +13,34 @@ sub assert_user_perms {
 sub process {
     my $c = shift;
 
+    my $user     = $c->stash('user');
+    my $user_obj = $c->stash('user_obj');
+
     my $params = $c->req->params->to_hash;
     $c->validate_request_params(
-        session_id => {required => 1, type => 'Int'},
+        session_id => {required => 1, type => 'Str'},
     );
     my $session_id = delete $params->{session_id};
 
     $c->render_later, return 1 if $params->{timeout};
 
-    my $user     = $c->stash('user');
-    my $user_obj = $c->stash('user_obj');
+    if ($session_id && $session_id eq $user_obj->assistant_session_id()) {
+        my $return = $c->process_quiz_assistant(user_obj => $user_obj, params => $params);
+
+        return $c->render(
+            json   => $return,
+            status => 200,
+        );
+    }
+
+    # se nao for a chave pra assistente, precisa ser um inteiro
+    $c->validate_request_params(
+        session_id => {required => 1, type => 'Int'},
+    );
 
     my $quiz_session = $c->user_get_quiz_session(user => $user);
 
-    my %extra;
-    if ($quiz_session) {
-
-        if ($session_id != $quiz_session->{id}) {
-            return $c->render(
-                json => {
-                    error   => 'session_not_match',
-                    message => 'Sessão do quiz desta resposta não confere com a sessão atual. Reinicie o aplicativo.'
-                },
-                status => 400,
-            );
-        }
-
-        $c->process_quiz_session(user => $user, user_obj => $user_obj, session => $quiz_session, params => $params);
-        $extra{quiz_session} = $c->stash('quiz_session');
-
-        use JSON;
-        $c->log->info(to_json($extra{quiz_session}));
-
-    }
-    else {
+    if (!$quiz_session) {
         return $c->render(
             json => {
                 error   => 'quiz_not_active',
@@ -56,10 +50,28 @@ sub process {
         );
     }
 
+    if ($session_id != $quiz_session->{id}) {
+        return $c->render(
+            json => {
+                error   => 'session_not_match',
+                message => 'Sessão do quiz desta resposta não confere com a sessão atual. Reinicie o aplicativo.'
+            },
+            status => 400,
+        );
+    }
+
+    my %return;
+    $c->process_quiz_session(user => $user, user_obj => $user_obj, session => $quiz_session, params => $params);
+    $return{quiz_session} = $c->stash('quiz_session');
+
+    use JSON;
+    $c->log->info(to_json($return{quiz_session}));
+
     return $c->render(
-        json   => {%extra},
+        json   => \%return,
         status => 200,
     );
+
 }
 
 1;

@@ -445,5 +445,16 @@ sub avatar_url_or_default {
     return $_[0]->avatar_url() || $ENV{AVATAR_PADRAO_URL};
 }
 
+sub reset_all_questionnaires {
+    my ($self) = @_;
+
+    $self->clientes_quiz_sessions->search({deleted_at => undef})->update(
+        {
+            deleted    => 1,
+            deleted_at => \'NOW(4)',
+        }
+    );
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

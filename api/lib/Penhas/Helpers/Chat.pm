@@ -446,7 +446,7 @@ sub _chat_assistant {
     my $texto = '';
 
     if ($user_obj->quiz_detectou_violencia_atualizado_em) {
-        my $dia = $user_obj->quiz_detectou_violencia_atualizado_em->timezone('America/Sao_Paulo')->dmy('/');
+        my $dia = $user_obj->quiz_detectou_violencia_atualizado_em->set_time_zone('America/Sao_Paulo')->dmy('/');
 
         if ($user_obj->quiz_detectou_violencia()) {
             $texto
@@ -484,7 +484,7 @@ sub _chat_assistant {
                     type    => "yesno"
                 }
             ],
-            prev_msgs => []
+            prev_msgs => undef
         }
     };
 
