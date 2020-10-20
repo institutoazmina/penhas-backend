@@ -115,6 +115,14 @@ __PACKAGE__->add_columns(
   { data_type => "integer", default_value => 0, is_nullable => 0 },
   "salt_key",
   { data_type => "char", is_nullable => 0, size => 10 },
+  "quiz_detectou_violencia",
+  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
+  "quiz_detectou_violencia_atualizado_em",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
@@ -247,8 +255,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-31 12:07:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wrzOvc1gbA0IcFw0LXHuVA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-20 11:25:36
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:i0812Nd/0oGfmps8hTsY9A
 
 use Carp qw/confess/;
 
@@ -340,6 +348,19 @@ sub cliente_modo_anonimo_toggle {
 
 }
 
+sub quiz_detectou_violencia_toggle {
+    my ($self, %opts) = @_;
+    my $active = $opts{active};
+
+    $self->update(
+        {
+            quiz_detectou_violencia_atualizado_em => \'NOW(4)',
+            quiz_detectou_violencia               => $active ? '1' : '0',
+        }
+    );
+
+}
+
 # retorna o string para ser usada em FK composta
 sub id_composed_fk {
     return shift()->id . ':' . shift;
@@ -410,6 +431,10 @@ sub update_activity {
 
 sub support_chat_auth {
     return 'S' . substr($_[0]->cpf_hash, 0, 4);
+}
+
+sub assistant_session_id {
+    return 'A' . substr($_[0]->cpf_hash, 0, 4);
 }
 
 sub name_for_admin {

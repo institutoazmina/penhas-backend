@@ -78,7 +78,7 @@ __PACKAGE__->add_columns(
   "telefone2",
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "email",
-  { data_type => "varchar", is_nullable => 0, size => 255 },
+  { data_type => "varchar", is_nullable => 1, size => 255 },
   "eh_24h",
   {
     data_type => "tinyint",
@@ -205,8 +205,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-09-21 19:23:19
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WrWOrYNaTXNQgvZsh6ImLg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-20 11:25:36
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:JgWLLBFDJQHwfJKBPEuQKQ
 
 # ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id);
 

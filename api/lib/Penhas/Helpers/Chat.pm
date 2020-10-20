@@ -34,16 +34,16 @@ our %activity_labels = (
 );
 
 sub setup {
-    my $self = shift;
+    my $user_obj = shift;
 
-    $self->helper('chat_find_users'     => sub { &chat_find_users(@_) });
-    $self->helper('chat_profile_user'   => sub { &chat_profile_user(@_) });
-    $self->helper('chat_list_sessions'  => sub { &chat_list_sessions(@_) });
-    $self->helper('chat_open_session'   => sub { &chat_open_session(@_) });
-    $self->helper('chat_send_message'   => sub { &chat_send_message(@_) });
-    $self->helper('chat_list_message'   => sub { &chat_list_message(@_) });
-    $self->helper('chat_manage_block'   => sub { &chat_manage_block(@_) });
-    $self->helper('chat_delete_session' => sub { &chat_delete_session(@_) });
+    $user_obj->helper('chat_find_users'     => sub { &chat_find_users(@_) });
+    $user_obj->helper('chat_profile_user'   => sub { &chat_profile_user(@_) });
+    $user_obj->helper('chat_list_sessions'  => sub { &chat_list_sessions(@_) });
+    $user_obj->helper('chat_open_session'   => sub { &chat_open_session(@_) });
+    $user_obj->helper('chat_send_message'   => sub { &chat_send_message(@_) });
+    $user_obj->helper('chat_list_message'   => sub { &chat_list_message(@_) });
+    $user_obj->helper('chat_manage_block'   => sub { &chat_manage_block(@_) });
+    $user_obj->helper('chat_delete_session' => sub { &chat_delete_session(@_) });
 
 }
 
@@ -144,7 +144,7 @@ sub chat_find_users {
 
         $_->{activity} = &_activity_mins_to_label($_->{activity});
 
-        delete $_->{last_tm_activity}; # just in case
+        delete $_->{last_tm_activity};    # just in case
     }
 
     my $next_page = $c->encode_jwt(
@@ -306,6 +306,7 @@ sub chat_list_sessions {
         has_more  => $has_more,
         next_page => $has_more ? $next_page : undef,
         support   => &_chat_support($c, user_obj => $user_obj),
+        assistant => &_chat_assistant($c, user_obj => $user_obj),
     };
 }
 
@@ -436,6 +437,62 @@ sub _chat_support {
     return $ret;
 }
 
+sub _chat_assistant {
+    my ($c, %opts) = @_;
+    my $user_obj = $opts{user_obj};
+
+    return undef unless $user_obj->is_female();
+
+    my $texto = '';
+
+    if ($user_obj->quiz_detectou_violencia_atualizado_em) {
+        my $dia = $user_obj->quiz_detectou_violencia_atualizado_em->timezone('America/Sao_Paulo')->dmy('/');
+
+        if ($user_obj->quiz_detectou_violencia()) {
+            $texto
+              = "De acordo com as respostas do questionário realizado no dia $dia, identifiquei que você estava em situação de risco.";
+        }
+        else {
+            $texto
+              = "De acordo com as respostas do questionário realizado no dia $dia, identifiquei que você não estava em situação de violência.";
+        }
+
+    }
+
+    my $ret = {
+        title      => 'Assistente PenhaS',
+        subtitle   => 'Entenda se você está em situação de violência',
+        avatar_url => $ENV{ASSISTANT_SUPORTE_URL},
+
+        quiz_session => {
+            session_id   => $user_obj->assistant_session_id(),
+            current_msgs => [
+                (
+                    $texto
+                    ? (
+                        {
+                            content => $texto,
+                            style   => "normal",
+                            type    => "displaytext"
+                        }
+                      )
+                    : ()
+                ),
+                {
+                    content => 'Deseja responder o questionário novamente?',
+                    ref     => "reset_questionnaire",
+                    type    => "yesno"
+                }
+            ],
+            prev_msgs => []
+        }
+    };
+
+
+    return $ret;
+
+}
+
 sub _load_chat_room {
     my ($c, %opts) = @_;
 
@@ -529,10 +586,10 @@ sub _load_chat_room {
     my $meta    = {
         can_send_message => $blocked     ? 0 : $did_blocked ? 0 : 1,
         did_blocked      => $did_blocked ? 1 : 0,
-        is_blockable     => 1,    # usuarios sempre sao is_blockable, apenas o azmina nao eh
-        last_msg_etag    => db_epoch_to_etag($session->get_column('last_message_at')),
-        header_message   => '',
-        header_warning   => '',
+        is_blockable => 1,    # usuarios sempre sao is_blockable, apenas o azmina nao eh
+        last_msg_etag  => db_epoch_to_etag($session->get_column('last_message_at')),
+        header_message => '',
+        header_warning => '',
     };
 
     return ($cipher, $session, $user_obj, $other, $meta);
@@ -711,6 +768,9 @@ sub chat_list_message {
         else {
             $message = '[erro ao descriptografar mensagem]' unless $message =~ s/#$//;
         }
+
+        # set internal flag as UTF-8 hint
+        utf8::upgrade($message);
 
         push @messages, {
             id      => $row->{id},

@@ -668,6 +668,10 @@ sub process_quiz_session {
             # sefor 0, nao ativa, mas precisa manter ligar o do mesmo jeito anonimo
             $user_obj->cliente_modo_camuflado_toggle(active => $set_modo_camuflado eq '1' ? 1 : 0);
             $user_obj->cliente_modo_anonimo_toggle(active => 1);
+            $user_obj->quiz_detectou_violencia_toggle(active => 1);
+        }
+        else {
+            $user_obj->quiz_detectou_violencia_toggle(active => 0);
         }
 
     }
