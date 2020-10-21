@@ -90,7 +90,7 @@ sub ponto_apoio_list {
 
     my $search = {
         'me.test_status'             => is_test() ? 'test' : 'prod',
-        'me.ja_passou_por_moderacao' => 1,
+        #'me.ja_passou_por_moderacao' => 1,
         'me.status'                  => 'active',
 
         ($categorias ? ('me.categoria' => {in => $categorias}) : ()),
