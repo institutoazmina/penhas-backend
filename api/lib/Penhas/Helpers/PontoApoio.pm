@@ -351,7 +351,7 @@ sub ponto_apoio_detail {
     my $row = $c->schema2->resultset('PontoApoio')->search(
         {
             'me.test_status'             => is_test() ? 'test' : 'prod',
-            'me.ja_passou_por_moderacao' => 1,
+            #'me.ja_passou_por_moderacao' => 1,
             'me.status'                  => 'active',
             'me.id'                      => $id,
         },
