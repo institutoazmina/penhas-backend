@@ -42,7 +42,7 @@ sub ponto_apoio_list {
     log_debug('ponto_apoio_list args: ' . $c->app->dumper(\%opts));
 
     my $user_obj     = $opts{user_obj};
-    my $latitude     = $opts{latitude} or confess 'missing latitude';
+    my $latitude     = $opts{latitude}  or confess 'missing latitude';
     my $longitude    = $opts{longitude} or confess 'missing longitude';
     my $keywords     = trim(lc($opts{keywords} || ''));
     my $max_distance = $opts{max_distance} || 50;
@@ -51,10 +51,11 @@ sub ponto_apoio_list {
     my $eh_24h             = $opts{eh_24h};
     my $dias_funcionamento = $opts{dias_funcionamento};
 
-    confess '$categorias is not arrayref' if $categorias && ref $categorias ne 'ARRAY';
+    confess '$categorias is not arrayref'                    if $categorias && ref $categorias ne 'ARRAY';
     $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}] if $ENV{FILTER_PONTO_APOIO_CATS};
 
-    use DDP; p $ENV{FILTER_PONTO_APOIO_CATS};
+    use DDP;
+    p $ENV{FILTER_PONTO_APOIO_CATS};
 
     $c->reply_invalid_param('Distância precisa ser menor que 5000km', 'form_error', 'max_distance')
       if $max_distance > 5000;
@@ -76,6 +77,9 @@ sub ponto_apoio_list {
     if ($opts{as_csv}) {
         $rows = -1;
     }
+    if ($max_distance == 5000) {
+        $rows = -1;
+    }
 
     # just in case, pra nao rolar sql injection, mas aqui já deve ter validado isso no controller
     confess '$latitude is not valid'  unless $latitude  =~ /^(([-+]?(([1-8]?\d(\.\d+))+|90)))$/ao;
@@ -92,9 +96,10 @@ sub ponto_apoio_list {
      * SIN(RADIANS( $latitude ))))) AS distance_in_km|;
 
     my $search = {
-        'me.test_status'             => is_test() ? 'test' : 'prod',
+        'me.test_status' => is_test() ? 'test' : 'prod',
+
         #'me.ja_passou_por_moderacao' => 1,
-        'me.status'                  => 'active',
+        'me.status' => 'active',
 
         ($categorias ? ('me.categoria' => {in => $categorias}) : ()),
     };
@@ -163,7 +168,9 @@ sub ponto_apoio_list {
         $_->{avaliacao} = sprintf('%.01f', $_->{avaliacao});
         $_->{avaliacao} =~ s/\./,/;
         $_->{avaliacao} = 'n/a' if delete $_->{qtde_avaliacao} == 0;
-        $_->{distancia} = int(delete $_->{distance_in_km}) . '';
+        if ($rows > 0) {
+            $_->{distancia} = int(delete $_->{distance_in_km}) . '';
+        }
         $_->{categoria} = {
             id   => delete $_->{categoria_id},
             cor  => delete $_->{categoria_cor},
@@ -353,10 +360,11 @@ sub ponto_apoio_detail {
 
     my $row = $c->schema2->resultset('PontoApoio')->search(
         {
-            'me.test_status'             => is_test() ? 'test' : 'prod',
+            'me.test_status' => is_test() ? 'test' : 'prod',
+
             #'me.ja_passou_por_moderacao' => 1,
-            'me.status'                  => 'active',
-            'me.id'                      => $id,
+            'me.status' => 'active',
+            'me.id'     => $id,
         },
         {
             'columns' => [
