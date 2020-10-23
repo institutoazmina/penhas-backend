@@ -31,7 +31,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 1,
+    is_nullable => 0,
   },
   "nome",
   { data_type => "varchar", is_nullable => 0, size => 255 },
@@ -183,6 +183,12 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 1,
   },
+  "updated_at",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 0,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -197,16 +203,10 @@ __PACKAGE__->has_many(
   { "foreign.ponto_apoio_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
-__PACKAGE__->has_many(
-  "ponto_apoio2projetos",
-  "Penhas::Schema2::Result::PontoApoio2projeto",
-  { "foreign.ponto_apoio_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-20 11:25:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:JgWLLBFDJQHwfJKBPEuQKQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-23 15:24:40
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yt8cj0+wCkSgO1oG+KH2+A
 
 # ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id);
 

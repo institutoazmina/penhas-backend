@@ -1,6 +1,6 @@
 #<<<
 use utf8;
-package Penhas::Schema2::Result::PontoApoio2projeto;
+package Penhas::Schema2::Result::PontoApoioCategoria2projeto;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
@@ -9,7 +9,7 @@ use strict;
 use warnings;
 
 use base 'Penhas::Schema::Base';
-__PACKAGE__->table("ponto_apoio2projetos");
+__PACKAGE__->table("ponto_apoio_categoria2projetos");
 __PACKAGE__->add_columns(
   "id",
   {
@@ -18,7 +18,7 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "ponto_apoio_id",
+  "ponto_apoio_categoria_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -35,9 +35,9 @@ __PACKAGE__->add_columns(
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
-  "ponto_apoio",
-  "Penhas::Schema2::Result::PontoApoio",
-  { id => "ponto_apoio_id" },
+  "ponto_apoio_categoria",
+  "Penhas::Schema2::Result::PontoApoioCategoria",
+  { id => "ponto_apoio_categoria_id" },
   { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 __PACKAGE__->belongs_to(
@@ -48,14 +48,11 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-09-21 19:23:19
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7dsdfY6HJpz1Vcl6RCVkJw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-23 16:06:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:E1EiHyjBgWsYKUtDQ0EEPw
 
-# delete from ponto_apoio2projetos where ponto_apoio_projeto_id not in (select id from ponto_apoio_projeto);
-# delete from ponto_apoio2projetos where ponto_apoio_id not in (select id from ponto_apoio);
-
-# ALTER TABLE ponto_apoio2projetos ADD FOREIGN KEY (ponto_apoio_id) REFERENCES ponto_apoio(id) ON DELETE CASCADE ON UPDATE cascade;
-# ALTER TABLE ponto_apoio2projetos ADD FOREIGN KEY (ponto_apoio_projeto_id) REFERENCES ponto_apoio_projeto(id) ON DELETE CASCADE ON UPDATE cascade;
+# ALTER TABLE ponto_apoio_categoria2projetos ADD FOREIGN KEY (ponto_apoio_categoria_id) REFERENCES ponto_apoio_categoria(id) ON DELETE CASCADE ON UPDATE cascade;
+# ALTER TABLE ponto_apoio_categoria2projetos ADD FOREIGN KEY (ponto_apoio_projeto_id) REFERENCES ponto_apoio_projeto(id) ON DELETE CASCADE ON UPDATE cascade;
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

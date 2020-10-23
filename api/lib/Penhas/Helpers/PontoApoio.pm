@@ -38,7 +38,8 @@ sub _format_pa_row {
 sub ponto_apoio_list {
     my ($c, %opts) = @_;
 
-    log_debug($c->app->dumper(\%opts));
+    local $Data::Dumper::Maxdepth = 2;
+    log_debug('ponto_apoio_list args: ' . $c->app->dumper(\%opts));
 
     my $user_obj     = $opts{user_obj};
     my $latitude     = $opts{latitude} or confess 'missing latitude';
@@ -52,6 +53,8 @@ sub ponto_apoio_list {
 
     confess '$categorias is not arrayref' if $categorias && ref $categorias ne 'ARRAY';
     $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}] if $ENV{FILTER_PONTO_APOIO_CATS};
+
+    use DDP; p $ENV{FILTER_PONTO_APOIO_CATS};
 
     $c->reply_invalid_param('Distância precisa ser menor que 5000km', 'form_error', 'max_distance')
       if $max_distance > 5000;
@@ -147,7 +150,7 @@ sub ponto_apoio_list {
     $rs = $rs->search({'eh_24h'             => $eh_24h ? 1 : 0})     if defined $eh_24h;
     $rs = $rs->search({'dias_funcionamento' => $dias_funcionamento}) if defined $dias_funcionamento;
 
-    log_debug($c->app->dumper([rows => $rows]));
+    #log_debug($c->app->dumper([rows => $rows]));
 
     my @rows      = $rs->all;
     my $cur_count = scalar @rows;

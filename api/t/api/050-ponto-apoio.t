@@ -20,6 +20,8 @@ goto AGAIN if cpf_already_exists($random_cpf);
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
 $ENV{SKIP_END_NEWS}            = '1';
 
+$ENV{FILTER_PONTO_APOIO_CATS}='';
+
 my @other_fields = (
     raca        => 'branco',
     apelido     => 'guardioes',
@@ -118,7 +120,7 @@ do {
         },
         {
             order_by => \'RAND()',
-            columns  => [qw/id label projeto/],
+            columns  => [qw/id label/],
             rows     => 1,
         }
     )->next();
@@ -168,13 +170,13 @@ do {
         ja_passou_por_moderacao => '1',
         status                  => 'active',
         created_on              => \'now()',
+        updated_at              => \'now()',
     };
 
     my $cat1 = $schema2->resultset('PontoApoioCategoria')->create(
         {
             status  => 'test',
             label   => 'cat1',
-            projeto => $rand_cat->projeto,
             color   => '#FFFFFF',
         }
     )->id;
@@ -182,7 +184,6 @@ do {
         {
             status  => 'test',
             label   => 'cat2',
-            projeto => $rand_cat->projeto,
             color   => '#FF00FF',
         }
     )->id;
@@ -190,7 +191,6 @@ do {
         {
             status  => 'test',
             label   => 'cat3',
-            projeto => $rand_cat->projeto,
         }
     )->id;
 
