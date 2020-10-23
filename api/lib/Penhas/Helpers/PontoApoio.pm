@@ -105,11 +105,16 @@ sub ponto_apoio_list {
     };
     my $attr = {
         'columns' => [
-            {distance_in_km => \$distance_in_km},
+            (
+                $rows == -1 ? () : (
+                    {distance_in_km => \$distance_in_km},
+                )
+            ),
             {categoria_nome => 'categoria.label'},
-            {categoria_cor  => 'categoria.color'},,
-            {categoria_id   => 'categoria.id'},
-            {categoria_id   => 'categoria.id'},
+            {categoria_cor  => 'categoria.color'},
+            ,
+            {categoria_id => 'categoria.id'},
+            {categoria_id => 'categoria.id'},
             ($user_obj ? ({cliente_avaliacao => 'cliente_ponto_apoio_avaliacaos.avaliacao'}) : ()),
             qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf me.qtde_avaliacao/,
         ],
@@ -118,14 +123,18 @@ sub ponto_apoio_list {
             ($user_obj ? ('cliente_ponto_apoio_avaliacaos') : ()),
         ],
 
-        order_by     => \'distance_in_km ASC',
         result_class => 'DBIx::Class::ResultClass::HashRefInflator',
 
         (
-            $rows == -1 ? () : (
-                having => [\['distance_in_km < ?', $max_distance + 1]],
-                rows   => $rows + 1,
-                offset => $offset,
+            $rows == -1
+            ? (
+                order_by => \'me.id',
+              )
+            : (
+                order_by => \'distance_in_km ASC',
+                having   => [\['distance_in_km < ?', $max_distance + 1]],
+                rows     => $rows + 1,
+                offset   => $offset,
             )
         )
     };
