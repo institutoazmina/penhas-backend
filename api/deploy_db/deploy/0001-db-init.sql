@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "unaccent";
+
 BEGIN;
 
 CREATE TABLE penhas_config (

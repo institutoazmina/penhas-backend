@@ -20,7 +20,7 @@ goto AGAIN if cpf_already_exists($random_cpf);
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
 $ENV{SKIP_END_NEWS}            = '1';
 
-$ENV{FILTER_PONTO_APOIO_CATS}='';
+$ENV{FILTER_PONTO_APOIO_CATS} = '';
 
 my @other_fields = (
     raca        => 'branco',
@@ -175,22 +175,22 @@ do {
 
     my $cat1 = $schema2->resultset('PontoApoioCategoria')->create(
         {
-            status  => 'test',
-            label   => 'cat1',
-            color   => '#FFFFFF',
+            status => 'test',
+            label  => 'cat1',
+            color  => '#FFFFFF',
         }
     )->id;
     my $cat2 = $schema2->resultset('PontoApoioCategoria')->create(
         {
-            status  => 'test',
-            label   => 'cat2',
-            color   => '#FF00FF',
+            status => 'test',
+            label  => 'cat2',
+            color  => '#FF00FF',
         }
     )->id;
     my $cat3 = $schema2->resultset('PontoApoioCategoria')->create(
         {
-            status  => 'test',
-            label   => 'cat3',
+            status => 'test',
+            label  => 'cat3',
         }
     )->id;
 
@@ -229,10 +229,12 @@ do {
 
         my $tmp = $schema2->resultset('PontoApoio')->create($fields);
 
+
         $ponto_apoio1 = $tmp if $code == 1;
         $ponto_apoio2 = $tmp if $code == 2;
         $ponto_apoio3 = $tmp if $code == 3;
     }
+    $t->app->tick_ponto_apoio_index();
 
     $avaliar_ponto_apoio = $ponto_apoio3;
 

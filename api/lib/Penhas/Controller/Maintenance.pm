@@ -20,6 +20,7 @@ sub housekeeping {
     my $c = shift;
 
     $c->schema2->resultset('ClientesAudiosEvento')->tick_audios_eventos_status();
+    $c->tick_ponto_apoio_index();
 
     return $c->render(json => {});
 }

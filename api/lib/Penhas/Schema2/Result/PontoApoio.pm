@@ -189,6 +189,14 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 0,
   },
+  "indexed_at",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
+  "index",
+  { data_type => "varchar", is_nullable => 1, size => 200 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -205,8 +213,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-23 15:24:40
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yt8cj0+wCkSgO1oG+KH2+A
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-23 21:38:36
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5TUr2k/1k419fvEdAcpn9w
 
 # ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id);
 

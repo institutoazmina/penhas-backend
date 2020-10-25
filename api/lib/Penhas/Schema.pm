@@ -63,4 +63,16 @@ sub now {
     return $now;
 }
 
+sub unaccent {
+    my $self = shift;
+    my $text = shift;
+    return undef unless defined $text;
+    return '' if $text eq '';
+    return $self->storage->dbh_do(
+        sub {
+            $_[1]->selectrow_array('SELECT unaccent(?)', {}, $text);
+        }
+    );
+}
+
 1;

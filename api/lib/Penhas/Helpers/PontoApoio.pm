@@ -13,11 +13,12 @@ use Scope::OnExit;
 sub setup {
     my $self = shift;
 
-    $self->helper('ponto_apoio_list'    => sub { &ponto_apoio_list(@_) });
-    $self->helper('ponto_apoio_fields'  => sub { &ponto_apoio_fields(@_) });
-    $self->helper('ponto_apoio_suggest' => sub { &ponto_apoio_suggest(@_) });
-    $self->helper('ponto_apoio_rating'  => sub { &ponto_apoio_rating(@_) });
-    $self->helper('ponto_apoio_detail'  => sub { &ponto_apoio_detail(@_) });
+    $self->helper('ponto_apoio_list'       => sub { &ponto_apoio_list(@_) });
+    $self->helper('ponto_apoio_fields'     => sub { &ponto_apoio_fields(@_) });
+    $self->helper('ponto_apoio_suggest'    => sub { &ponto_apoio_suggest(@_) });
+    $self->helper('ponto_apoio_rating'     => sub { &ponto_apoio_rating(@_) });
+    $self->helper('ponto_apoio_detail'     => sub { &ponto_apoio_detail(@_) });
+    $self->helper('tick_ponto_apoio_index' => sub { &tick_ponto_apoio_index(@_) });
 }
 
 
@@ -143,22 +144,12 @@ sub ponto_apoio_list {
 
     my $rs = $c->schema2->resultset('PontoApoio')->search($search, $attr);
 
-    my $keywords_search;
     if ($keywords) {
-        my $keywords_search = {
-            '-or' => [
-                \['lower(me.nome) like ?',            "%$keywords%"],
-                \['lower(me.sigla) like ?',           "$keywords%"],
-                \['lower(me.descricao) like ?',       "%$keywords%"],
-                \['lower(me.municipio) like ?',       "%$keywords%"],
-                \['lower(me.nome_logradouro) like ?', "%$keywords%"],
-                \['lower(me.bairro) like ?',          "%$keywords%"],
-                \['lower(me.uf) like ?',              "$keywords"],
-                \['lower(me.cep) like ?',             "$keywords%"],
-            ],
-        };
-        log_debug("keywords: $keywords");
-        $rs = $rs->search($keywords_search);
+        log_debug("keywords original: $keywords");
+        $keywords = $c->schema->unaccent($keywords);
+        $keywords = lc($keywords);
+        log_debug("keywords after unaccent: $keywords");
+        $rs = $rs->search({'index' => {like => "% $keywords%"}});
     }
 
     $rs = $rs->search({'eh_24h'             => $eh_24h ? 1 : 0})     if defined $eh_24h;
@@ -208,7 +199,6 @@ sub ponto_apoio_list {
             offset             => $offset,
             eh_24h             => $eh_24h,
             dias_funcionamento => $dias_funcionamento,
-            keywords_search    => $keywords_search,
         }
     };
 }
@@ -462,6 +452,55 @@ sub ponto_apoio_detail {
         ),
         avaliacao_maxima => '5',
     };
+}
+
+sub tick_ponto_apoio_index {
+    my ($c) = @_;
+    log_debug('tick_ponto_apoio_index started');
+
+    my $pg_schema = $c->schema;
+
+    my $rs = $c->schema2->resultset('PontoApoio')->search(
+        {
+            test_status => is_test() ? 'test' : 'prod',
+
+            '-or' => [
+                {indexed_at => undef},
+                {indexed_at => {'<' => \'updated_at'}},
+            ],
+        },
+        {rows => 1000}
+    );
+
+    my $rows = 0;
+    my $now  = time();
+    while (my $ponto = $rs->next) {
+        my $index = '';
+        $index .= ' ' . ($ponto->$_() || '') for qw/
+          id
+          nome
+          sigla
+          descricao
+          municipio
+          nome_logradouro
+          bairro
+          uf
+          cep/;
+        $index = $pg_schema->unaccent($index);
+        $index = lc($index);
+
+        $ponto->update(
+            {
+                indexed_at => $ponto->get_column('updated_at'),
+                index      => $index
+            }
+        );
+        $rows++;
+        last if time() - $now > 50;
+    }
+    log_debug("tick_ponto_apoio_index reindex $rows rows");
+
+    return 1;
 }
 
 1;
