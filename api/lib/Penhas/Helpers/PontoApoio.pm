@@ -469,13 +469,22 @@ sub tick_ponto_apoio_index {
                 {indexed_at => {'<' => \'updated_at'}},
             ],
         },
-        {rows => 1000}
+        {
+            rows     => 1000,
+            prefetch => [{categoria => 'ponto_apoio_categoria2projetos'}],
+        }
     );
 
     my $rows = 0;
     my $now  = time();
     while (my $ponto = $rs->next) {
-        my $index = '';
+        my $index    = '';
+        my @projetos = map { $_->id() } $ponto->categoria->ponto_apoio_categoria2projetos->all;
+        foreach my $projeto_id (@projetos) {
+            $index .= '`P' . $projeto_id . ']]';
+        }
+        $index .= $ponto->categoria->label . ' ';
+
         $index .= ' ' . ($ponto->$_() || '') for qw/
           id
           nome
