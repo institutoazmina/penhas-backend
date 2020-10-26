@@ -44,7 +44,7 @@ sub ponto_apoio_list {
 
     my $user_obj  = $opts{user_obj};
     my $is_web    = $opts{is_web} ? 1 : 0;
-    my $latitude = $opts{latitude};
+    my $latitude  = $opts{latitude};
     my $longitude = $opts{longitude};
 
     # just in case, pra nao rolar sql injection, mas aqui já deve ter validado isso no controller
@@ -500,7 +500,7 @@ sub tick_ponto_apoio_index {
         foreach my $projeto_id (@projetos) {
             $index .= '`P' . $projeto_id . ']]';
         }
-        $index .= $ponto->categoria->label;
+        $index .= ' ' . $ponto->categoria->label;
 
         $index .= ' ' . ($ponto->$_() || '') for qw/
           nome
