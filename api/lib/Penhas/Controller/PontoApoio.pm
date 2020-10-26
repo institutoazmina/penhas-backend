@@ -96,7 +96,6 @@ sub _pa_list {
 
     $valid->{categorias} = [split /,/, $valid->{categorias}] if $valid->{categorias};
 
-use DDP; p $valid;
     my $ponto_apoio_list = $c->ponto_apoio_list(
         %$valid,
         user_obj => $user_obj,

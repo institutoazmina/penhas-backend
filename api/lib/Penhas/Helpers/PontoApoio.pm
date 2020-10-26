@@ -496,7 +496,7 @@ sub tick_ponto_apoio_index {
     while (my $ponto = $rs->next) {
         my $index = '';
         $index .= '`WEB]]' if $ponto->categoria->show_on_web;    # precisa ser a primeira coisa
-        my @projetos = map { $_->id() } $ponto->categoria->ponto_apoio_categoria2projetos->all;
+        my @projetos = map { $_->ponto_apoio_projeto_id() } $ponto->categoria->ponto_apoio_categoria2projetos->all;
         foreach my $projeto_id (@projetos) {
             $index .= '`P' . $projeto_id . ']]';
         }
