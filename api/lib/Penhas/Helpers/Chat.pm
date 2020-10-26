@@ -12,7 +12,7 @@ use Crypt::Rijndael;    # AES
 use Crypt::PRNG qw(random_bytes);
 use Convert::Z85;
 use Compress::Zlib;
-
+use Encode;
 our $ForceFilterClientes;
 my $reload_app_err_msg = 'Recarregue o app, conversa não pode ser aberta.';
 our %activity_labels = (
@@ -669,6 +669,7 @@ sub chat_send_message {
             $last_msg_at      = $db_info->{db_now} or die 'missing db_now';
 
             my $is_compressed     = 0;
+            #$message = decode 'utf-8', $message;
             my $buffer            = $message . '#';
             my $buffer_compressed = length($message) > 48 ? Compress::Zlib::memGzip($message) : undef;
             if ($buffer_compressed && length($buffer_compressed) < length($buffer)) {
@@ -770,7 +771,7 @@ sub chat_list_message {
         }
 
         # set internal flag as UTF-8 hint
-        utf8::upgrade($message);
+        $message = decode 'utf-8', $message;
 
         push @messages, {
             id      => $row->{id},

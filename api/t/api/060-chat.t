@@ -341,7 +341,7 @@ db_transaction {
       ->json_is('/has_more', '0')                                                              #
       ->json_is('/next_page', undef, 'tem next_page mesmo sendo undef');
 
-    my $hello_from_cli1 = 'hello from cliente 1! ' . rand;
+    my $hello_from_cli1 = 'hello from cliente 1! ' . rand . 'atenção';
     $t->post_ok(
         '/me/chats-messages',
         {'x-api-key' => $session},
