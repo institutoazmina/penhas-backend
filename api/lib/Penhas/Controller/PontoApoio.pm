@@ -65,7 +65,7 @@ sub _pa_list {
         ($valid->{latitude}, $valid->{longitude}) = split /,/, $tmp->{latlng};
     }
 
-    if (!(defined $valid->{latitude} && defined $valid->{longitude}) && !$valid->{is_web}) {
+    if (!(defined $valid->{latitude} && defined $valid->{longitude})) {
         my $gps_required = $user_obj ? 0 : 1;
         $c->merge_validate_request_params(
             $valid,
@@ -76,6 +76,11 @@ sub _pa_list {
 
     # se nao tem ainda, eh pq o usuario nao mandou, entao temos que pegar via CEP
     if ((!$valid->{latitude} || !$valid->{longitude}) && !$valid->{is_web}) {
+
+        if (!$user_obj) {
+            $c->reply_invalid_param('é necessário localização', 'location_token');
+        }
+
         die 'user_obj should be defined' unless $user_obj;
         $c->stash(geo_code_rps => 'geocode:' . $user_obj->id);
 

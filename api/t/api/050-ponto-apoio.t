@@ -172,13 +172,14 @@ do {
         updated_at              => \'now()',
     };
 
-    my $cat1 = $schema2->resultset('PontoApoioCategoria')->create(
+    my $cat1o = $schema2->resultset('PontoApoioCategoria')->create(
         {
             status => 'test',
             label  => 'cat1',
             color  => '#FFFFFF',
         }
-    )->id;
+    );
+    my $cat1 = $cat1o->id;
     my $cat2 = $schema2->resultset('PontoApoioCategoria')->create(
         {
             status => 'test',
@@ -192,6 +193,13 @@ do {
             label  => 'cat3',
         }
     )->id;
+    my $proj = $schema2->resultset('PontoApoioProjeto')->create(
+        {
+            label  => 'testing is boring',
+            status => 'test',
+        }
+    );
+    $cat1o->ponto_apoio_categoria2projetos->create({ponto_apoio_projeto_id => $proj->id});
 
     my $avaliar_ponto_apoio;
     foreach my $code (1 .. 3) {
@@ -544,6 +552,20 @@ do {
       ->json_is('/rows/1',    undef, 'nao tem mais')       #
       ->json_is('/has_more',  0);
 
+
+    $t->get_ok(
+        '/pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'projeto'      => $proj->label,
+            location_token => $token1->{location_token},
+            rows           => 1,
+        }
+      )->status_is(200)                                    #
+      ->json_is('/rows/0/id', $ponto_apoio1->id, 'has cat1 id')             #
+      ->json_is('/has_more',  0,                 'so tem um pa no cat1');
+
+
 };
 
 done_testing();
@@ -554,5 +576,5 @@ exit;
 sub reset_db {
     $schema2->resultset('PontoApoio')->search({test_status => 'test'})->delete;
     $schema2->resultset('PontoApoioCategoria')->search({status => 'test'})->delete;
-
+    $schema2->resultset('PontoApoioProjeto')->search({status => 'test'})->delete;
 }
