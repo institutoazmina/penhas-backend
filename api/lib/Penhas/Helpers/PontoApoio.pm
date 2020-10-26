@@ -31,7 +31,7 @@ sub _format_pa_row {
 }
 
 # filtro por nota
-# filtro por projeto [ímplicito]
+# filtro por projeto
 # filtro por categoria
 # ordem por distancia (pegar lat long)
 # filtro por nome (generico)
@@ -42,21 +42,38 @@ sub ponto_apoio_list {
     local $Data::Dumper::Maxdepth = 2;
     log_debug('ponto_apoio_list args: ' . $c->app->dumper(\%opts));
 
-    my $user_obj     = $opts{user_obj};
-    my $latitude     = $opts{latitude}  or confess 'missing latitude';
-    my $longitude    = $opts{longitude} or confess 'missing longitude';
+    my $user_obj  = $opts{user_obj};
+    my $is_web    = $opts{is_web} ? 1 : 0;
+    my $latitude = $opts{latitude};
+    my $longitude = $opts{longitude};
+
+    # just in case, pra nao rolar sql injection, mas aqui já deve ter validado isso no controller
+    confess '$latitude is not valid' if defined $latitude && $latitude !~ /^(([-+]?(([1-8]?\d(\.\d+))+|90)))$/ao;
+    confess '$longitude is not valid'
+      if defined $longitude && $longitude !~ /^([-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?))$/ao;
+
+
     my $keywords     = trim(lc($opts{keywords} || ''));
     my $max_distance = $opts{max_distance} || 50;
 
     my $categorias         = $opts{categorias};
-    my $eh_24h             = $opts{eh_24h};
-    my $dias_funcionamento = $opts{dias_funcionamento};
+    my $eh_24h             = exists $opts{eh_24h}             ? $opts{eh_24h}             : undef;
+    my $dias_funcionamento = exists $opts{dias_funcionamento} ? $opts{dias_funcionamento} : undef;
 
     confess '$categorias is not arrayref'                    if $categorias && ref $categorias ne 'ARRAY';
     $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}] if $ENV{FILTER_PONTO_APOIO_CATS};
 
-    use DDP;
-    p $ENV{FILTER_PONTO_APOIO_CATS};
+    my $filter_projeto_id;
+    if (exists $opts{projeto} && $opts{projeto}) {
+        my $projeto = $c->schema2->resultset('PontoApoioProjeto')->search(
+            {
+                status => is_test() ? 'test' : 'prod',
+                label  => $opts{projeto}
+            }
+        )->next;
+        $c->reply_invalid_param('Não encontrado', 'form_error', 'projeto') unless $projeto;
+        $filter_projeto_id = $projeto->id;
+    }
 
     $c->reply_invalid_param('Distância precisa ser menor que 5000km', 'form_error', 'max_distance')
       if $max_distance > 5000;
@@ -78,13 +95,9 @@ sub ponto_apoio_list {
     if ($opts{as_csv}) {
         $rows = -1;
     }
-    if ($max_distance == 5000) {
+    if ($max_distance == 5000 || ($is_web && !$latitude)) {
         $rows = -1;
     }
-
-    # just in case, pra nao rolar sql injection, mas aqui já deve ter validado isso no controller
-    confess '$latitude is not valid'  unless $latitude  =~ /^(([-+]?(([1-8]?\d(\.\d+))+|90)))$/ao;
-    confess '$longitude is not valid' unless $longitude =~ /^([-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?))$/ao;
 
     # essa conta aqui só é uma aproximação do globo, com distorções nos polos e equador
     # o ideal é fazer isso tudo no postgres, com postgis, pois lá o suporte a index é bem mais simples
@@ -151,6 +164,9 @@ sub ponto_apoio_list {
         log_debug("keywords after unaccent: $keywords");
         $rs = $rs->search({'index' => {like => "% $keywords%"}});
     }
+
+    $rs = $rs->search({'index' => {like => "%`P$filter_projeto_id]]%"}}) if defined $filter_projeto_id;
+    $rs = $rs->search({'index' => {like => "`WEB]]%"}})                  if $is_web;
 
     $rs = $rs->search({'eh_24h'             => $eh_24h ? 1 : 0})     if defined $eh_24h;
     $rs = $rs->search({'dias_funcionamento' => $dias_funcionamento}) if defined $dias_funcionamento;
@@ -478,15 +494,15 @@ sub tick_ponto_apoio_index {
     my $rows = 0;
     my $now  = time();
     while (my $ponto = $rs->next) {
-        my $index    = '';
+        my $index = '';
+        $index .= '`WEB]]' if $ponto->categoria->show_on_web;    # precisa ser a primeira coisa
         my @projetos = map { $_->id() } $ponto->categoria->ponto_apoio_categoria2projetos->all;
         foreach my $projeto_id (@projetos) {
             $index .= '`P' . $projeto_id . ']]';
         }
-        $index .= $ponto->categoria->label . ' ';
+        $index .= $ponto->categoria->label;
 
         $index .= ' ' . ($ponto->$_() || '') for qw/
-          id
           nome
           sigla
           descricao

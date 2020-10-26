@@ -43,17 +43,20 @@ sub _pa_list {
 
     my $valid = $c->validate_request_params(
         categorias     => {required   => 0,    type     => IntList},
+        projeto        => {max_length => 200,  required => 0, type => 'Str'},
         rows           => {required   => 0,    type     => 'Int'},
         max_distance   => {required   => 0,    type     => 'Int'},
         next_page      => {max_length => 9999, required => 0, type => 'Str'},
         location_token => {max_length => 9999, required => 0, type => 'Str'},
         keywords       => {max_length => 200,  required => 0, type => 'Str'},
 
+        is_web             => {required => 0, type => 'Bool', undef_if_missing => 1},
         eh_24h             => {required => 0, type => 'Bool', undef_if_missing => 1},
         dias_funcionamento => {required => 0, type => 'Str',  max_length       => 99},
     );
 
     my $user_obj = $c->stash('user_obj');
+
     if ($valid->{location_token}) {
 
         my $tmp = eval { $c->decode_jwt($valid->{location_token}) };
@@ -62,7 +65,7 @@ sub _pa_list {
         ($valid->{latitude}, $valid->{longitude}) = split /,/, $tmp->{latlng};
     }
 
-    if (!(defined $valid->{latitude} && defined $valid->{longitude})) {
+    if (!(defined $valid->{latitude} && defined $valid->{longitude}) && !$valid->{is_web}) {
         my $gps_required = $user_obj ? 0 : 1;
         $c->merge_validate_request_params(
             $valid,
@@ -72,7 +75,7 @@ sub _pa_list {
     }
 
     # se nao tem ainda, eh pq o usuario nao mandou, entao temos que pegar via CEP
-    if (!$valid->{latitude} || !$valid->{longitude}) {
+    if ((!$valid->{latitude} || !$valid->{longitude}) && !$valid->{is_web}) {
         die 'user_obj should be defined' unless $user_obj;
         $c->stash(geo_code_rps => 'geocode:' . $user_obj->id);
 
@@ -93,6 +96,7 @@ sub _pa_list {
 
     $valid->{categorias} = [split /,/, $valid->{categorias}] if $valid->{categorias};
 
+use DDP; p $valid;
     my $ponto_apoio_list = $c->ponto_apoio_list(
         %$valid,
         user_obj => $user_obj,

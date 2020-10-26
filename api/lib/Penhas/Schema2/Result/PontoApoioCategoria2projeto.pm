@@ -54,5 +54,36 @@ __PACKAGE__->belongs_to(
 # ALTER TABLE ponto_apoio_categoria2projetos ADD FOREIGN KEY (ponto_apoio_categoria_id) REFERENCES ponto_apoio_categoria(id) ON DELETE CASCADE ON UPDATE cascade;
 # ALTER TABLE ponto_apoio_categoria2projetos ADD FOREIGN KEY (ponto_apoio_projeto_id) REFERENCES ponto_apoio_projeto(id) ON DELETE CASCADE ON UPDATE cascade;
 
+=pod
+
+delimiter //
+create trigger `ponto_apoio_categoria2projetos_after_update` after update on `ponto_apoio_categoria2projetos`
+for each row
+begin
+ update ponto_apoio
+ set indexed_at = null
+ where categoria = NEW.ponto_apoio_categoria_id OR categoria = OLD.ponto_apoio_categoria_id;
+end;//
+
+create trigger `ponto_apoio_categoria2projetos_after_insert` after insert on `ponto_apoio_categoria2projetos`
+for each row
+begin
+ update ponto_apoio
+ set indexed_at = null
+ where categoria = NEW.ponto_apoio_categoria_id;
+end;//
+
+create trigger `ponto_apoio_categoria2projetos_after_delete` after delete on `ponto_apoio_categoria2projetos`
+for each row
+begin
+ update ponto_apoio
+ set indexed_at = null
+ where categoria = OLD.ponto_apoio_categoria_id;
+end;//
+
+delimiter ;
+
+=cut
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

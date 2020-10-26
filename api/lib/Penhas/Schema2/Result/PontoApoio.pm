@@ -196,7 +196,7 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
   },
   "index",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "text", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -213,8 +213,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-23 21:38:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5TUr2k/1k419fvEdAcpn9w
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-25 22:15:14
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:vlBJIjIvZV8PnfK1MoKUOA
 
 # ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id);
 

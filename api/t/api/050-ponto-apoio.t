@@ -120,7 +120,6 @@ do {
         },
         {
             order_by => \'RAND()',
-            columns  => [qw/id label/],
             rows     => 1,
         }
     )->next();
@@ -424,6 +423,7 @@ do {
             'latitude'  => '-23.589893',
             'longitude' => '-46.633462',
             'keywords'  => $avaliar_ponto_apoio->nome,
+            'is_web'    => $rand_cat->show_on_web ? '1' : '0',
         }
       )->status_is(200)    #
       ->json_is('/rows/0/cliente_avaliacao', $rand_zero_to_five)           #
@@ -530,6 +530,20 @@ do {
     )->status_is(204);
     $avaliar_ponto_apoio->discard_changes;
     is $avaliar_ponto_apoio->qtde_avaliacao, 0, 'nao te mais avaliacao';
+
+    # web pode puxar sem passar lat/lng
+    $t->get_ok(
+        '/pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'keywords' => $avaliar_ponto_apoio->nome,
+            'is_web'   => 1,
+        }
+      )->status_is(200)    #
+      ->json_is('/rows/0/id', $avaliar_ponto_apoio->id)    #
+      ->json_is('/rows/1',    undef, 'nao tem mais')       #
+      ->json_is('/has_more',  0);
+
 };
 
 done_testing();

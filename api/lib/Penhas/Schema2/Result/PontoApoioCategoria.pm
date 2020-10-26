@@ -42,6 +42,13 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => 7,
   },
+  "show_on_web",
+  {
+    data_type => "tinyint",
+    default_value => 1,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -58,8 +65,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-23 16:06:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:KvFh854Pw1A+YMb5biliXA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-25 22:15:14
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:hc5YUHViX3nqnxGisERGEw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

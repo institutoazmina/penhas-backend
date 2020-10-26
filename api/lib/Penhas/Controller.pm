@@ -112,7 +112,7 @@ sub _reply_exception {
 
             $an_error->{message} = $campos_nao_foram_preenchidos unless exists $an_error->{message};
             return $c->respond_to_if_web(
-                json => {json     => $an_error, status => $status,},
+                json => {json => $an_error, status => $status,},
                 html => {
                     template => $c->stash('template') || 'guardiao/index',
                     %$an_error,
@@ -196,6 +196,7 @@ sub validate_request_params {
     my $params = $c->req->params->to_hash;
     my $tested = {};
     foreach my $key (keys %fields) {
+        next unless exists $params->{$key};
         my $me   = $fields{$key};
         my $type = $me->{type};
 
