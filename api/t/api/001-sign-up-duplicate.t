@@ -235,9 +235,17 @@ subtest_buffered 'Modos' => sub {
         form => {active => 0}
     )->status_is(204);
 
+    $t->post_ok(
+        '/me/ja-foi-vitima-de-violencia-toggle',
+        {'x-api-key' => $session},
+        form => {active => 1}
+    )->status_is(204);
+
     $directus = get_cliente_by_email($random_email);
-    is $directus->{modo_anonimo_ativo},   0, 'modo_anonimo_ativo 0';
-    is $directus->{modo_camuflado_ativo}, 0, 'modo_camuflado_ativo 0';
+    is $directus->{modo_anonimo_ativo},         0, 'modo_anonimo_ativo 0';
+    is $directus->{modo_camuflado_ativo},       0, 'modo_camuflado_ativo 0';
+    is $directus->{ja_foi_vitima_de_violencia}, 1, 'ja_foi_vitima_de_violencia 1';
+
 };
 
 

@@ -96,6 +96,9 @@ sub register {
     # POST /me/modo-camuflado-toggle
     $me->under('modo-camuflado-toggle')->post()->to(action => 'route_cliente_modo_camuflado_toggle');
 
+    # POST /me/ja-foi-vitima-de-violencia-toggle
+    $me->under('ja-foi-vitima-de-violencia-toggle')->post()->to(action => 'route_cliente_ja_foi_vitima_de_violencia_toggle');
+
     # /me/quiz
     my $me_quiz = $me->under('quiz')->to(controller => 'Me_Quiz', action => 'assert_user_perms');
     $me_quiz->post()->to(action => 'process');

@@ -348,6 +348,19 @@ sub cliente_modo_anonimo_toggle {
 
 }
 
+sub cliente_ja_foi_vitima_de_violencia_toggle {
+    my ($self, %opts) = @_;
+    my $active = $opts{active};
+
+    $self->update(
+        {
+            ja_foi_vitima_de_violencia               => $active ? 1 : 0,
+            ja_foi_vitima_de_violencia_atualizado_em => \'NOW(4)',
+        }
+    );
+
+}
+
 sub quiz_detectou_violencia_toggle {
     my ($self, %opts) = @_;
     my $active = $opts{active};

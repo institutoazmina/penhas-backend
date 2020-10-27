@@ -131,5 +131,19 @@ sub route_cliente_modo_anonimo_toggle {
     return $c->render(text => '', status => 204,);
 }
 
+sub route_cliente_ja_foi_vitima_de_violencia_toggle {
+    my $c = shift;
+
+    my $user_obj = $c->stash('user_obj');
+
+    my $valid = $c->validate_request_params(
+        active => {required => 1, type => 'Int', max_length => 1},
+    );
+
+    $user_obj->cliente_ja_foi_vitima_de_violencia_toggle(%$valid);
+
+    return $c->render(text => '', status => 204,);
+}
+
 
 1;
