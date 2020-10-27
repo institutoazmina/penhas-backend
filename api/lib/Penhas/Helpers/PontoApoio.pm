@@ -64,7 +64,7 @@ sub _ponto_apoio_csv {
         ['nome',                   'Nome'],
         ['sigla',                  'Sigla'],
         ['natureza',               'Natureza'],
-        ['categoria',              'Categoria'],
+        ['categoria_nome',         'Categoria'],
         ['tipo_logradouro',        'Tipo logradouro'],
         ['nome_logradouro',        'Nome logradouro'],
         ['numero',                 'Número'],
@@ -94,7 +94,7 @@ sub _ponto_apoio_csv {
         ['horario_correto',        'Horário correto',  'bool'],
         ['telefone_correto',       'Telefone correto', 'bool'],
         ['observacao',             'Observação'],
-        ['id','ID']
+        ['id',                     'ID']
     );
     $csv->say($fh, [map { $_->[1] } @fields]);
 
@@ -153,8 +153,8 @@ sub ponto_apoio_list {
     my $eh_24h             = exists $opts{eh_24h}             ? $opts{eh_24h}             : undef;
     my $dias_funcionamento = exists $opts{dias_funcionamento} ? $opts{dias_funcionamento} : undef;
 
-    confess '$categorias is not arrayref'                    if $categorias && ref $categorias ne 'ARRAY';
-    $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}] if $ENV{FILTER_PONTO_APOIO_CATS};
+    confess '$categorias is not arrayref' if $categorias && ref $categorias ne 'ARRAY';
+    $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}] if $ENV{FILTER_PONTO_APOIO_CATS} && !$as_csv;
 
     my $filter_projeto_id = $c->_project_id_by_label(%opts);
 
@@ -173,7 +173,6 @@ sub ponto_apoio_list {
 
     my $rows = $opts{rows} || 100;
     $rows = 100 if !is_test() && ($rows > 5000 || $rows < 100);
-    log_debug($c->app->dumper([rows => $rows]));
 
     if ($as_csv) {
         $rows      = -1;
@@ -240,7 +239,7 @@ sub ponto_apoio_list {
         )
     };
 
-    log_debug($c->app->dumper([$search, $attr]));
+    log_debug($c->app->dumper($search, $attr));
 
     my $rs = $c->schema2->resultset('PontoApoio')->search($search, $attr);
 
@@ -261,7 +260,7 @@ sub ponto_apoio_list {
 
     if ($as_csv) {
         my $max_updated_at = $rs->get_column('updated_at')->max();
-        my $filename       = $max_updated_at;
+        my $filename       = $max_updated_at . 'v1';
         $filename .= "proj$filter_projeto_id"     if defined $filter_projeto_id;
         $filename .= "web$is_web"                 if defined $is_web;
         $filename .= $eh_24h ? "eh24h" : '!eh24h' if defined $eh_24h;
