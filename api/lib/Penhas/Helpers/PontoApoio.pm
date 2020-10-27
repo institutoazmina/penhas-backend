@@ -55,7 +55,6 @@ sub _ponto_apoio_csv {
     my ($c, $rs, $filename) = @_;
     $rs = $rs->reset;
 
-
     my $csv = Text::CSV_XS->new({binary => 1, auto_diag => 1});
 
     # and write as CSV
@@ -95,6 +94,7 @@ sub _ponto_apoio_csv {
         ['horario_correto',        'Horário correto',  'bool'],
         ['telefone_correto',       'Telefone correto', 'bool'],
         ['observacao',             'Observação'],
+        ['id','ID']
     );
     $csv->say($fh, [map { $_->[1] } @fields]);
 
