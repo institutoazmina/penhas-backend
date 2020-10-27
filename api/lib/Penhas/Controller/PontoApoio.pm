@@ -106,7 +106,12 @@ sub _pa_list {
         %$valid,
         user_obj => $user_obj,
     );
-    return $c->reply->file($ponto_apoio_list->{file}) if exists $ponto_apoio_list->{file};
+    if (exists $ponto_apoio_list->{file}) {
+        return $c->render_file(
+            'filepath' => $ponto_apoio_list->{file},
+            'filename' => 'lista-pontos-apoios-' . DateTime->now->set_time_zone('America/Sao_Paulo')->dmy('-') . '.csv',
+        );
+    }
 
     $c->render(
         json   => $ponto_apoio_list,
