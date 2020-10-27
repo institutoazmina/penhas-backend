@@ -196,9 +196,9 @@ sub validate_request_params {
     my $params = $c->req->params->to_hash;
     my $tested = {};
     foreach my $key (keys %fields) {
-        next unless exists $params->{$key};
         my $me   = $fields{$key};
         my $type = $me->{type};
+        next if !exists $params->{$key} && !$me->{required};
 
         my $val = $params->{$key};
         if (!defined $val && $me->{undef_if_missing}) {
