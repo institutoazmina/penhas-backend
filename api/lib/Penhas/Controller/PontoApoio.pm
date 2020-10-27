@@ -53,6 +53,7 @@ sub _pa_list {
         is_web             => {required => 0, type => 'Bool', undef_if_missing => 1},
         eh_24h             => {required => 0, type => 'Bool', undef_if_missing => 1},
         dias_funcionamento => {required => 0, type => 'Str',  max_length       => 99},
+        as_csv             => {required => 0, type => 'Bool', undef_if_missing => 1},
     );
 
     my $user_obj = $c->stash('user_obj');
@@ -105,6 +106,7 @@ sub _pa_list {
         %$valid,
         user_obj => $user_obj,
     );
+    return $c->reply->file($ponto_apoio_list->{file}) if exists $ponto_apoio_list->{file};
 
     $c->render(
         json   => $ponto_apoio_list,
@@ -113,7 +115,8 @@ sub _pa_list {
 }
 
 sub pa_aux_data {
-    my $c = shift;
+    my $c    = shift;
+    my %opts = @_;
 
     # limite de requests por segundo no IP
     # no maximo 30 request por minuto
@@ -122,6 +125,8 @@ sub pa_aux_data {
     # recortando o IPV6 para apenas o prefixo (18 chars)
     $c->stash(apply_rps_on => 'pad:' . substr($remote_ip, 0, 18));
     $c->apply_request_per_second_limit(30, 60);
+
+    my $filter_projeto_id = $c->_project_id_by_label(%opts);
 
     $c->render(
         json => {
@@ -141,8 +146,16 @@ sub pa_aux_data {
                 $c->schema2->resultset('PontoApoioCategoria')->search(
                     {
                         status => 'prod',
+
+                        (
+                            $filter_projeto_id
+                            ? ('ponto_apoio_categoria2projetos.ponto_apoio_projeto_id' => $filter_projeto_id)
+                            : ()
+                        ),
                     },
                     {
+                        ($filter_projeto_id ? (join => 'ponto_apoio_categoria2projetos') : ()),
+
                         result_class => 'DBIx::Class::ResultClass::HashRefInflator',
                         order_by     => ['label'],
                         columns      => [qw/id label/],
@@ -155,7 +168,10 @@ sub pa_aux_data {
                 {value => 'dias_uteis_fds_plantao', label => 'Dias úteis com plantão aos fins de semanas'},
                 {value => 'todos_os_dias',          label => 'Todos os dias'},
             ],
-            fields => $c->ponto_apoio_fields(format => 'public'),
+            fields => $c->ponto_apoio_fields(
+                format            => 'public',
+                filter_projeto_id => $filter_projeto_id,
+            ),
         },
         status => 200,
     );

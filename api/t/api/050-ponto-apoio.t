@@ -565,6 +565,15 @@ do {
       ->json_is('/rows/0/id', $ponto_apoio1->id, 'has cat1 id')             #
       ->json_is('/has_more',  0,                 'so tem um pa no cat1');
 
+    $t->get_ok(
+        '/pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            location_token => $token1->{location_token},
+            as_csv         => 1,
+        }
+    )->status_is(200);
+
 
 };
 

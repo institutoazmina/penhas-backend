@@ -9,6 +9,9 @@ use Penhas::Utils qw/random_string_from is_test/;
 use Digest::MD5 qw/md5_hex/;
 use Mojo::Util qw/trim/;
 use Scope::OnExit;
+use Text::CSV_XS;
+use Encode qw/encode_utf8/;
+
 
 sub setup {
     my $self = shift;
@@ -19,6 +22,8 @@ sub setup {
     $self->helper('ponto_apoio_rating'     => sub { &ponto_apoio_rating(@_) });
     $self->helper('ponto_apoio_detail'     => sub { &ponto_apoio_detail(@_) });
     $self->helper('tick_ponto_apoio_index' => sub { &tick_ponto_apoio_index(@_) });
+    $self->helper('_project_id_by_label'   => sub { &_project_id_by_label(@_) });
+    $self->helper('_ponto_apoio_csv'       => sub { &_ponto_apoio_csv(@_) });
 }
 
 
@@ -28,6 +33,91 @@ sub _format_pa_row {
     return {
         (map { $_ => $row->$_ } qw/id/),
     };
+}
+
+sub _project_id_by_label {
+    my ($c, %opts) = @_;
+    my $filter_projeto_id;
+    if (exists $opts{projeto} && $opts{projeto}) {
+        my $projeto = $c->schema2->resultset('PontoApoioProjeto')->search(
+            {
+                status => is_test() ? 'test' : 'prod',
+                label  => $opts{projeto}
+            }
+        )->next;
+        $c->reply_invalid_param('Não encontrado', 'form_error', 'projeto') unless $projeto;
+        $filter_projeto_id = $projeto->id;
+    }
+    return $filter_projeto_id;
+}
+
+sub _ponto_apoio_csv {
+    my ($c, $rs, $filename) = @_;
+    $rs = $rs->reset;
+
+
+    my $csv = Text::CSV_XS->new({binary => 1, auto_diag => 1});
+
+    # and write as CSV
+    open my $fh, ">:encoding(utf8)", $filename or die "cannot open for write $filename: $!";
+
+    my @fields = (
+        ['nome',                   'Nome'],
+        ['sigla',                  'Sigla'],
+        ['natureza',               'Natureza'],
+        ['categoria',              'Categoria'],
+        ['tipo_logradouro',        'Tipo logradouro'],
+        ['nome_logradouro',        'Nome logradouro'],
+        ['numero',                 'Número'],
+        ['complemento',            'Complemento'],
+        ['bairro',                 'Bairro'],
+        ['municipio',              'Município'],
+        ['uf',                     'UF'],
+        ['cep',                    'cep'],
+        ['ddd',                    'ddd'],
+        ['telefone1',              'telefone1'],
+        ['telefone2',              'telefone2'],
+        ['email',                  'e-mail'],
+        ['eh_24h',                 '24horas', 'bool'],
+        ['horario_inicio',         'Horário início'],
+        ['horario_fim',            'Horário fim'],
+        ['dias_funcionamento',     'Dias funcionamento'],
+        ['eh_presencial',          'Presencial',             'bool'],
+        ['eh_online',              'Online',                 'bool'],
+        ['funcionamento_pandemia', 'Funcionamento pandemia', 'bool'],
+        ['observacao_pandemia',    'Observação pandemia'],
+        ['latitude',               'Latitude'],
+        ['longitude',              'Longitude'],
+        ['verificado',             'Verificado',       'bool'],
+        ['existe_delegacia',       'Existe delegacia', 'bool'],
+        ['delegacia_mulher',       'Delegacia Mulher'],
+        ['endereco_correto',       'Endereço correto', 'bool'],
+        ['horario_correto',        'Horário correto',  'bool'],
+        ['telefone_correto',       'Telefone correto', 'bool'],
+        ['observacao',             'Observação'],
+    );
+    $csv->say($fh, [map { $_->[1] } @fields]);
+
+    while (my $r = $rs->next) {
+        my @cols;
+        foreach (@fields) {
+            my $v = $r->{$_->[0]};
+            if (defined $v) {
+                if ($_->[2] && $_->[2] eq 'bool') {
+                    push @cols, $v ? 'Sim' : 'Não';
+                }
+                else {
+                    push @cols, $v;
+                }
+            }
+            else {
+                push @cols, '';
+            }
+        }
+        $csv->say($fh, [@cols]);
+    }
+    close $fh or die "cannot close $filename: $!";
+    return {file => $filename};
 }
 
 # filtro por nota
@@ -46,11 +136,14 @@ sub ponto_apoio_list {
     my $is_web    = $opts{is_web} ? 1 : 0;
     my $latitude  = $opts{latitude};
     my $longitude = $opts{longitude};
+    my $as_csv    = $opts{as_csv};
 
     # just in case, pra nao rolar sql injection, mas aqui já deve ter validado isso no controller
-    confess '$latitude is not valid' if defined $latitude && $latitude !~ /^(([-+]?(([1-8]?\d(\.\d+))+|90)))$/ao;
+    confess '$latitude is not valid'
+      if defined $latitude && $latitude !~ /^(([-+]?(([1-8]?\d(\.\d+))+|90)))$/ao;
     confess '$longitude is not valid'
-      if defined $longitude && $longitude !~ /^([-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?))$/ao;
+      if defined $longitude
+      && $longitude !~ /^([-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?))$/ao;
 
 
     my $keywords     = trim(lc($opts{keywords} || ''));
@@ -63,17 +156,7 @@ sub ponto_apoio_list {
     confess '$categorias is not arrayref'                    if $categorias && ref $categorias ne 'ARRAY';
     $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}] if $ENV{FILTER_PONTO_APOIO_CATS};
 
-    my $filter_projeto_id;
-    if (exists $opts{projeto} && $opts{projeto}) {
-        my $projeto = $c->schema2->resultset('PontoApoioProjeto')->search(
-            {
-                status => is_test() ? 'test' : 'prod',
-                label  => $opts{projeto}
-            }
-        )->next;
-        $c->reply_invalid_param('Não encontrado', 'form_error', 'projeto') unless $projeto;
-        $filter_projeto_id = $projeto->id;
-    }
+    my $filter_projeto_id = $c->_project_id_by_label(%opts);
 
     $c->reply_invalid_param('Distância precisa ser menor que 5000km', 'form_error', 'max_distance')
       if $max_distance > 5000;
@@ -92,8 +175,10 @@ sub ponto_apoio_list {
     $rows = 100 if !is_test() && ($rows > 5000 || $rows < 100);
     log_debug($c->app->dumper([rows => $rows]));
 
-    if ($opts{as_csv}) {
-        $rows = -1;
+    if ($as_csv) {
+        $rows      = -1;
+        $latitude  = undef;
+        $longitude = undef;
     }
     if ($max_distance == 5000 || ($is_web && !$latitude)) {
         $rows = -1;
@@ -103,11 +188,13 @@ sub ponto_apoio_list {
     # o ideal é fazer isso tudo no postgres, com postgis, pois lá o suporte a index é bem mais simples
     # mas o chato é manter as bases sincronizadas (pelo menos lat/long+categorias+textos indexados)
     # se você é acredita que a terra é plana, pode ignorar o comentario acima, *ta tudo bem*
-    my $distance_in_km = qq| 111.111 * DEGREES(ACOS(LEAST(1.0, COS(RADIANS(me.latitude))
+    my $distance_in_km = defined $latitude
+      ? qq| 111.111 * DEGREES(ACOS(LEAST(1.0, COS(RADIANS(me.latitude))
      * COS(RADIANS( $latitude ))
      * COS(RADIANS(me.longitude - $longitude))
      + SIN(RADIANS(me.latitude))
-     * SIN(RADIANS( $latitude ))))) AS distance_in_km|;
+     * SIN(RADIANS( $latitude ))))) AS distance_in_km|
+      : '';
 
     my $search = {
         'me.test_status' => is_test() ? 'test' : 'prod',
@@ -118,7 +205,7 @@ sub ponto_apoio_list {
         ($categorias ? ('me.categoria' => {in => $categorias}) : ()),
     };
     my $attr = {
-        'columns' => [
+        ($as_csv ? '+columns' : 'columns') => [
             (
                 $rows == -1 ? () : (
                     {distance_in_km => \$distance_in_km},
@@ -152,8 +239,8 @@ sub ponto_apoio_list {
             )
         )
     };
+
     log_debug($c->app->dumper([$search, $attr]));
-    log_debug($c->app->dumper([rows => $rows]));
 
     my $rs = $c->schema2->resultset('PontoApoio')->search($search, $attr);
 
@@ -165,11 +252,30 @@ sub ponto_apoio_list {
         $rs = $rs->search({'index' => {like => "% $keywords%"}});
     }
 
-    $rs = $rs->search({'index' => {like => "%`P$filter_projeto_id]]%"}}) if defined $filter_projeto_id;
-    $rs = $rs->search({'index' => {like => "`WEB]]%"}})                  if $is_web;
+    $rs = $rs->search({'index' => {like => "%`P$filter_projeto_id]]%"}})
+      if defined $filter_projeto_id;
+    $rs = $rs->search({'index' => {like => "`WEB]]%"}}) if $is_web;
 
     $rs = $rs->search({'eh_24h'             => $eh_24h ? 1 : 0})     if defined $eh_24h;
     $rs = $rs->search({'dias_funcionamento' => $dias_funcionamento}) if defined $dias_funcionamento;
+
+    if ($as_csv) {
+        my $max_updated_at = $rs->get_column('updated_at')->max();
+        my $filename       = $max_updated_at;
+        $filename .= "proj$filter_projeto_id"     if defined $filter_projeto_id;
+        $filename .= "web$is_web"                 if defined $is_web;
+        $filename .= $eh_24h ? "eh24h" : '!eh24h' if defined $eh_24h;
+        $filename .= $dias_funcionamento          if defined $dias_funcionamento;
+        $filename .= $keywords                    if defined $keywords;
+        if ($categorias) {
+            $filename .= "cat" . $_ for sort $categorias->@*;
+        }
+        $filename = $ENV{PONTO_APOIO_CACHE_DIR} . '/' . md5_hex(encode_utf8($filename)) . '.csv';
+
+        return {file => $filename} if -e $filename;
+
+        return $c->_ponto_apoio_csv($rs, $filename);
+    }
 
     #log_debug($c->app->dumper([rows => $rows]));
 
@@ -222,7 +328,8 @@ sub ponto_apoio_list {
 sub ponto_apoio_fields {
     my ($c, %opts) = @_;
 
-    my $is_public = defined $opts{format} && $opts{format} eq 'public';
+    my $filter_projeto_id = $opts{filter_projeto_id};
+    my $is_public         = defined $opts{format} && $opts{format} eq 'public';
 
     my @config = (
 
@@ -238,8 +345,14 @@ sub ponto_apoio_fields {
                       $c->schema2->resultset('PontoApoioCategoria')->search(
                         {
                             status => 'prod',
+                            (
+                                $filter_projeto_id
+                                ? ('ponto_apoio_categoria2projetos.ponto_apoio_projeto_id' => $filter_projeto_id)
+                                : ()
+                            ),
                         },
                         {
+                            ($filter_projeto_id ? (join => 'ponto_apoio_categoria2projetos') : ()),
                             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
                             order_by     => ['label'],
                             columns      => [qw/id label/],
@@ -270,7 +383,11 @@ sub ponto_apoio_fields {
 
             push $ret->@*, {
                 code => $item->[0],
-                name => (exists $names{$item->[0]} ? $names{$item->[0]} : &_gen_name_from_code($item->[0])),
+                name => (
+                    exists $names{$item->[0]}
+                    ? $names{$item->[0]}
+                    : &_gen_name_from_code($item->[0])
+                ),
                 $item->[1]->%*,
                 %tmp,
             };
@@ -335,7 +452,8 @@ sub ponto_apoio_rating {
     }
 
     my $ponto_apoio = $c->schema2->resultset('PontoApoio')->find($ponto_apoio_id);
-    $c->reply_invalid_param('ponto de apoio não encontrado', 'form_error', 'ponto_apoio_id') unless $ponto_apoio;
+    $c->reply_invalid_param('ponto de apoio não encontrado', 'form_error', 'ponto_apoio_id')
+      unless $ponto_apoio;
 
     $c->schema2->txn_do(
         sub {
@@ -357,7 +475,12 @@ sub ponto_apoio_rating {
             my $agg = $ponto_apoio->cliente_ponto_apoio_avaliacaos->search(
                 undef,
                 {
-                    columns      => [{avaliacao => \'coalesce( avg(avaliacao), 0)', qtde_avaliacao => \'count(1)'}],
+                    columns => [
+                        {
+                            avaliacao      => \'coalesce( avg(avaliacao), 0)',
+                            qtde_avaliacao => \'count(1)'
+                        }
+                    ],
                     result_class => 'DBIx::Class::ResultClass::HashRefInflator',
                 }
             )->next;
@@ -387,7 +510,11 @@ sub ponto_apoio_detail {
                 {categoria_cor  => 'categoria.color'},,
                 {categoria_id   => 'categoria.id'},
                 {categoria_id   => 'categoria.id'},
-                ($user_obj ? ({cliente_avaliacao => 'cliente_ponto_apoio_avaliacaos.avaliacao'}) : ()),
+                (
+                    $user_obj
+                    ? ({cliente_avaliacao => 'cliente_ponto_apoio_avaliacaos.avaliacao'})
+                    : ()
+                ),
                 qw/
                   me.id
                   me.nome
@@ -454,7 +581,8 @@ sub ponto_apoio_detail {
         dias_uteis_fds_plantao => 'Dias úteis com plantão aos fins de semanas',
         todos_os_dias          => 'Todos os dias'
     };
-    $row->{dias_funcionamento} = $dow_de_para->{$row->{dias_funcionamento}} || $row->{dias_funcionamento};
+    $row->{dias_funcionamento}
+      = $dow_de_para->{$row->{dias_funcionamento}} || $row->{dias_funcionamento};
 
 
     return {

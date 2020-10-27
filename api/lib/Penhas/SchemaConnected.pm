@@ -80,13 +80,15 @@ sub get_schema {
     $ENV{GUARD_HASH_SALT} ||= $ENV{CPF_CACHE_HASH_SALT} . '.guard';
 
     die 'missing PUBLIC_API_URL' unless $ENV{PUBLIC_API_URL};
-    $ENV{PUBLIC_API_URL} .= '/' unless $ENV{PUBLIC_API_URL} =~ /\/$/;
+    $ENV{PUBLIC_API_URL} .= '/'  unless $ENV{PUBLIC_API_URL} =~ /\/$/;
 
     $ENV{MEDIA_CACHE_DIR} = '/tmp' unless -d $ENV{MEDIA_CACHE_DIR};
 
     $ENV{MEDIA_ERR_DIR} = '/tmp' unless -d $ENV{MEDIA_ERR_DIR};
 
     $ENV{TMP_AUDIO_DIR} = '/tmp' unless -d $ENV{TMP_AUDIO_DIR};
+
+    $ENV{PONTO_APOIO_CACHE_DIR} = '/tmp' unless -d $ENV{PONTO_APOIO_CACHE_DIR};
 
     if ($ENV{TMP_AUDIO_DIR} =~ q|^/tmp|) {
         $ENV{TMP_AUDIO_DIR} = '/tmp/audios';
