@@ -582,7 +582,7 @@ sub _load_chat_room {
         $other->{activity} = &_activity_mins_to_label($other->{activity});
     }
 
-    my $did_blocked = $user_obj->cliente_bloqueios->search({blocked_cliente_id => $other->{cliente_id}})->count;
+    my $did_blocked = $user_obj->cliente_bloqueios->search({blocked_cliente_id => $other->{cliente_id}})->count > 0;
 
     my $blocked = delete $other->{blocked_me};
     my $meta    = {
