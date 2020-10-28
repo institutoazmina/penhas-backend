@@ -548,22 +548,19 @@ sub _load_chat_room {
     my ($other_id) = grep { $_ != $user_obj->id } $session->participants->@*;
 
     my $other = $c->schema2->resultset('Cliente')->search(
+        {'me.id' => $other_id},
         {
-            'cliente_bloqueios.blocked_cliente_id' => [undef, $user_obj->id],
-            'me.id'                                => $other_id
-        },
-        {
-            join    => ['cliente_bloqueios', 'clientes_app_activity'],
+            join    => ['clientes_app_activity'],
             columns => [
                 {cliente_id => 'me.id'},
                 {apelido    => 'me.apelido'},
                 {avatar_url => 'me.avatar_url'},
-                {blocked_me => 'cliente_bloqueios.blocked_cliente_id'},
                 {activity   => \"TIMESTAMPDIFF( MINUTE, clientes_app_activity.last_activity, now() )"},
             ],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
     )->next;
+
     if (!$other) {
         $other = {
             blocked_me => 0,
@@ -574,10 +571,15 @@ sub _load_chat_room {
         };
     }
     else {
-        $other->{blocked_me} = $other->{blocked_me} ? 1 : 0;
+        $other->{blocked_me} = $c->schema2->resultset('ClienteBloqueio')->search(
+            {
+                'me.blocked_cliente_id' => $user_obj->id,
+                'me.cliente_id'         => $other_id
+            }
+        )->count > 0 ? 1 : 0;
+
         $other->{avatar_url} ||= $ENV{AVATAR_PADRAO_URL};
         $other->{activity} = &_activity_mins_to_label($other->{activity});
-
     }
 
     my $did_blocked = $user_obj->cliente_bloqueios->search({blocked_cliente_id => $other->{cliente_id}})->count;
@@ -586,10 +588,10 @@ sub _load_chat_room {
     my $meta    = {
         can_send_message => $blocked     ? 0 : $did_blocked ? 0 : 1,
         did_blocked      => $did_blocked ? 1 : 0,
-        is_blockable => 1,    # usuarios sempre sao is_blockable, apenas o azmina nao eh
-        last_msg_etag  => db_epoch_to_etag($session->get_column('last_message_at')),
-        header_message => '',
-        header_warning => '',
+        is_blockable     => 1,    # usuarios sempre sao is_blockable, apenas o azmina nao eh
+        last_msg_etag    => db_epoch_to_etag($session->get_column('last_message_at')),
+        header_message   => '',
+        header_warning   => '',
     };
 
     return ($cipher, $session, $user_obj, $other, $meta);
@@ -668,7 +670,8 @@ sub chat_send_message {
             $prev_last_msg_at = $db_info->{last_message_at};
             $last_msg_at      = $db_info->{db_now} or die 'missing db_now';
 
-            my $is_compressed     = 0;
+            my $is_compressed = 0;
+
             #$message = decode 'utf-8', $message;
             my $buffer            = $message . '#';
             my $buffer_compressed = length($message) > 48 ? Compress::Zlib::memGzip($message) : undef;
