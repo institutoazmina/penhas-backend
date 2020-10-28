@@ -550,17 +550,18 @@ sub _load_chat_room {
     my $other = $c->schema2->resultset('Cliente')->search(
         {'me.id' => $other_id},
         {
-            join    => ['clientes_app_activity'],
+            join    => ['cliente_bloqueios_custom', 'clientes_app_activity'],
+            bind    => [$user_obj->id],
             columns => [
                 {cliente_id => 'me.id'},
                 {apelido    => 'me.apelido'},
                 {avatar_url => 'me.avatar_url'},
+                {blocked_me => 'cliente_bloqueios_custom.blocked_cliente_id'},
                 {activity   => \"TIMESTAMPDIFF( MINUTE, clientes_app_activity.last_activity, now() )"},
             ],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
     )->next;
-
     if (!$other) {
         $other = {
             blocked_me => 0,
@@ -571,15 +572,10 @@ sub _load_chat_room {
         };
     }
     else {
-        $other->{blocked_me} = $c->schema2->resultset('ClienteBloqueio')->search(
-            {
-                'me.blocked_cliente_id' => $user_obj->id,
-                'me.cliente_id'         => $other_id
-            }
-        )->count > 0 ? 1 : 0;
-
+        $other->{blocked_me} = $other->{blocked_me} ? 1 : 0;
         $other->{avatar_url} ||= $ENV{AVATAR_PADRAO_URL};
         $other->{activity} = &_activity_mins_to_label($other->{activity});
+
     }
 
     my $did_blocked = $user_obj->cliente_bloqueios->search({blocked_cliente_id => $other->{cliente_id}})->count > 0;

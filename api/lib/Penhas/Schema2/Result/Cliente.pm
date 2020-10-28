@@ -266,6 +266,19 @@ use MooseX::MarkAsMethods autoclean => 1;
 use Scope::OnExit;
 use Penhas::KeyValueStorage;
 
+__PACKAGE__->has_many(
+    cliente_bloqueios_custom => 'Penhas::Schema2::Result::ClienteBloqueio',
+    sub {
+        my $args = shift;
+
+        return {
+            "$args->{foreign_alias}.cliente_id"         => {-ident => "$args->{self_alias}.id"},
+            "$args->{foreign_alias}.blocked_cliente_id" => \' = ? '
+        };
+    }
+);
+
+
 sub is_female {
     my $self = shift;
     return $self->genero() =~ /^(Feminino|MulherTrans)$/ ? 1 : 0;
