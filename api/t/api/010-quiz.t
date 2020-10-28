@@ -65,8 +65,8 @@ subtest_buffered 'Testar envio de campo boolean com valor invalido + interpolati
     is $first_msg->{style},     'error',                         'type is error';
 
 
-    is $second_msg->{content}, 'intro1',                                     'question intro is working';
-    is $third_msg->{content},  'HELLOQuiz User Name!',                       'question intro interpolation is working';
+    is $second_msg->{content}, 'intro1',                 'question intro is working';
+    is $third_msg->{content},  'HELLOQuiz User Name!',   'question intro interpolation is working';
     is $input_msg->{content},  'yesno question☺️⚠️👍👭🤗🤳', 'yesno question question is present';
 };
 
@@ -203,9 +203,9 @@ subtest_buffered 'group de questoes boolean' => sub {
     is $first_msg->{type},    'displaytext',         'just a text';
     is $first_msg->{content}, 'btn_camuflado1=PASS', 'expected pass';
 
-    is $input_msg->{type},    'button',                    'is a button';
-    is $input_msg->{content}, 'btn_responder_com1',        'button has content';
-    is $input_msg->{action},  'botao_tela_modo_camuflado', 'button action camuflado again';
+    is $input_msg->{type},               'button',                    'is a button';
+    is $input_msg->{content},            'btn_responder_com1',        'button has content';
+    is $input_msg->{action},             'botao_tela_modo_camuflado', 'button action camuflado again';
     ok $input_msg->{ending_action_text}, 'has ending_action_text';
     ok $input_msg->{ending_cancel_text}, 'has ending_cancel_text';
     ok $input_msg->{label},              'has label';
@@ -310,8 +310,18 @@ subtest_buffered 'reiniciando o quiz' => sub {
     my $first_msg = $json->{quiz_session}{current_msgs}[0];
     my $input_msg = $json->{quiz_session}{current_msgs}[-1];
 
-    is $first_msg->{type},      'displaytext', 'just a text';
-    like $first_msg->{content}, qr/única/,    'unica função';
+    is $first_msg->{type},      'button',  'button';
+    like $first_msg->{content}, qr/única/, 'unica função';
+
+    # apertando o botao "BT_RETURN" = 1
+    $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {
+            session_id => $json->{quiz_session}{session_id},
+            BT_RETURN  => 1,
+        }
+    )->status_is(200)->json_is('/quiz_session/finished', 1)->json_is('/quiz_session/end_screen', 'home');
 
     # apertando o botao "reset_questionnaire" = Y
     $json = $t->post_ok(

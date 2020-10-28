@@ -501,11 +501,26 @@ sub process_quiz_assistant {
         }
         elsif ($params->{reset_questionnaire} eq 'N') {
 
-            push @preprend_msg, &_new_displaytext_normal('Tudo bem, no momento esta é minha única função!');
+            push @preprend_msg, {
+                type       => 'button',
+                content    => 'Tudo bem, no momento esta é minha única função!',
+                action     => '',
+                ref        => 'BT_RETURN',
+                label      => 'Sair',
+                _relevance => '1',
+            };
         }
         else {
             push @preprend_msg, &_new_displaytext_error('Valor para reset_questionnaire precisa ser Y ou N');
         }
+    }
+    elsif (exists $params->{BT_RETURN} && $params->{BT_RETURN} eq '1') {
+        return {
+            quiz_session => {
+                finished   => 1,
+                end_screen => 'home',
+            }
+        };
     }
     else {
         push @preprend_msg, &_new_displaytext_error('Não entendo outros campos.');
