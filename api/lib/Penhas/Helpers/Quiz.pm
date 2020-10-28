@@ -506,7 +506,7 @@ sub process_quiz_assistant {
                 content    => 'Tudo bem, no momento esta é minha única função!',
                 action     => '',
                 ref        => 'BT_RETURN',
-                label      => 'Sair',
+                label      => 'Retornar',
                 _relevance => '1',
             };
         }
