@@ -260,7 +260,7 @@ subtest_buffered 'update' => sub {
         '/me',
         {'x-api-key' => $session},
         form => {
-            senha_nova => $random_email,
+            senha => $random_email,
         }
     )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha_atual')
       ->json_is('/reason', 'is_required');
@@ -270,18 +270,46 @@ subtest_buffered 'update' => sub {
         {'x-api-key' => $session},
         form => {
             senha_atual => 'foobar',
-            senha_nova  => $random_email,
+            senha       => $random_email,
         }
     )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha_atual')
       ->json_is('/reason', 'invalid');
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => { senha_atual => 'foobar', senha => 'lalalala' }
+    )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha_atual')
+      ->json_is('/reason', 'invalid');
+
+    my $random_user = get_schema2->resultset('Cliente')->search({email => {'!=' => $random_email}})->next;
+    if ($random_user) {
+        $t->put_ok(
+            '/me',
+            {'x-api-key' => $session},
+            form => {
+                senha_atual => '123456',
+                email       => $random_user->email,
+            }
+        )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'email')
+          ->json_is('/reason', 'duplicate');
+
+    }
+
     $t->put_ok(
         '/me',
         {'x-api-key' => $session},
         form => {
             senha_atual => '123456',
-            senha_nova  => 'ABCDEF',
+            senha       => 'ABCDEF',
         }
-    )->status_is(200);
+    )->status_is(200, 'senha atualizada');
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {}
+    )->status_is(200, 'just messing arround');
 
     $t->put_ok(
         '/me',
@@ -314,13 +342,12 @@ subtest_buffered 'update' => sub {
             minibio => 'sora wo',
             raca    => 'amarelo',
         }
-    )->status_is(200)#
-    ->json_is('/user_profile/minibio', 'sora wo', 'minibio ok')#
-    ->json_is('/user_profile/raca', 'amarelo', 'raca ok')
-    ;
+      )->status_is(200)    #
+      ->json_is('/user_profile/minibio', 'sora wo', 'minibio ok')    #
+      ->json_is('/user_profile/raca',    'amarelo', 'raca ok');
 
     my @rand_skills
-      = map { $_->id() } get_schema2->resultset('Skill')    #
+      = map { $_->id() } get_schema2->resultset('Skill')             #
       ->search(undef, {rows => 1 + int(rand() * 3), order_by => \'rand()'})->all;
 
     $t->put_ok(

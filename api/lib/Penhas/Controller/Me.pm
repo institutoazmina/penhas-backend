@@ -6,6 +6,7 @@ use JSON;
 use Penhas::Types qw/IntList Raca/;
 use MooseX::Types::Email qw/EmailAddress/;
 use Digest::SHA qw/sha256_hex/;
+use Scope::OnExit;
 
 sub check_and_load {
     my $c = shift;
@@ -100,13 +101,13 @@ sub update {
         skills        => {required   => 0,    type     => IntList, empty_is_valid => 1,},
         skills_remove => {required   => 0,    type     => 'Bool'},
         apelido       => {max_length => 40,   required => 0, type => 'Str', min_length => 2},
-        senha_nova    => {max_length => 200,  required => 0, type => 'Str', min_length => 6},
+        senha         => {max_length => 200,  required => 0, type => 'Str', min_length => 6},
         minibio       => {max_length => 2200, required => 0, type => 'Str'},
         email         => {max_length => 200,  required => 0, type => EmailAddress},
         raca          => {required   => 0,    type     => Raca},
     );
 
-    if ((exists $valid->{email} && $valid->{email}) || (exists $valid->{senha_nova} && $valid->{senha_nova})) {
+    if ((exists $valid->{email} && $valid->{email}) || (exists $valid->{senha} && $valid->{senha})) {
         my $data = $c->validate_request_params(
             senha_atual => {max_length => 200, required => 1, type => 'Str', min_length => 6},
         );
@@ -117,10 +118,25 @@ sub update {
         }
     }
 
-    $valid->{email} = lc($valid->{email}) if exists $valid->{email};
+    if (exists $valid->{email}) {
+        my $email = lc(delete $valid->{email});
+        my $lock  = "email:$email";
+        $c->kv()->lock_and_wait($lock);
+        on_scope_exit { $c->kv()->unlock($lock) };
 
-    if (exists $valid->{senha_nova} && $valid->{senha_nova}) {
-        $valid->{senha_sha256} = lc(sha256_hex(delete $valid->{senha_nova}));
+        my $in_use = $c->schema2->resultset('Cliente')->search(
+            {
+                'id'    => {'!=' => $user_obj->id},
+                'email' => $email,
+            }
+        )->count > 0;
+        $c->reply_invalid_param('O e-mail já está em uso em outra conta', 'form_error', 'email', 'duplicate')
+          if $in_use;
+        $user_obj->update({email => $email});
+    }
+
+    if (exists $valid->{senha} && $valid->{senha}) {
+        $valid->{senha_sha256} = lc(sha256_hex(delete $valid->{senha}));
     }
 
     if (delete $valid->{skills_remove}) {

@@ -1,6 +1,7 @@
 package Penhas::Controller::SignUp;
 use Mojo::Base 'Penhas::Controller';
 use utf8;
+use Scope::OnExit;
 
 use DateTime;
 use Digest::SHA qw/sha256_hex/;

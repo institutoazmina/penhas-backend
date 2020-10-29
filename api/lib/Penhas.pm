@@ -40,7 +40,7 @@ sub startup {
     # Plugins.
     $self->plugin('JWT', secret => $secret);
 
-    $self->plugin('ParamLogger', filter => [qw(password senha senha_nova senha_atual message)]);
+    $self->plugin('ParamLogger', filter => [qw(password senha senha_atual message)]);
 
 
     # servir a /public (templates de email e arquivos static)
