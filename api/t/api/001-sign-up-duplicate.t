@@ -143,7 +143,6 @@ subtest_buffered 'Cadastro com sucesso' => sub {
     is $cadastro->{user_profile}{nome_completo}, 'test name';
     is $cadastro->{user_profile}{nome_social},   'foobar lorem';
 
-
     $t->post_ok(
         '/logout',
         {'x-api-key' => $res->{session}}
@@ -248,6 +247,107 @@ subtest_buffered 'Modos' => sub {
 
 };
 
+subtest_buffered 'update' => sub {
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {
+            email => $random_email,
+        }
+    )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha_atual');
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {
+            senha_nova => $random_email,
+        }
+    )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha_atual')
+      ->json_is('/reason', 'is_required');
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {
+            senha_atual => 'foobar',
+            senha_nova  => $random_email,
+        }
+    )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha_atual')
+      ->json_is('/reason', 'invalid');
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {
+            senha_atual => '123456',
+            senha_nova  => 'ABCDEF',
+        }
+    )->status_is(200);
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {skills => '12225'}
+      )->status_is(400)->json_is('/error', 'form_error')    #
+      ->json_is('/field',  'skills')                        #
+      ->json_is('/reason', 'invalid')                       #
+      ->json_like('/message', qr/12225/);
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {
+            senha_atual => 'ABCDEF',
+            email       => $random_email,
+        }
+    )->status_is(200);
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {apelido => 'ze pequenoあ'}
+    )->status_is(200)->json_is('/user_profile/apelido', 'ze pequenoあ', 'nome ok, encoding ok');
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {
+            minibio => 'sora wo',
+            raca    => 'amarelo',
+        }
+    )->status_is(200)#
+    ->json_is('/user_profile/minibio', 'sora wo', 'minibio ok')#
+    ->json_is('/user_profile/raca', 'amarelo', 'raca ok')
+    ;
+
+    my @rand_skills
+      = map { $_->id() } get_schema2->resultset('Skill')    #
+      ->search(undef, {rows => 1 + int(rand() * 3), order_by => \'rand()'})->all;
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {skills => join ',', @rand_skills}
+    )->status_is(200)->json_is('/user_profile/skills', [sort @rand_skills], 'skills updated');
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {skills => ''}
+    )->status_is(200)->json_is('/user_profile/skills', [], 'all skills removed');
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {skills => join ',', @rand_skills}
+    )->status_is(200)->json_is('/user_profile/skills', [sort @rand_skills], 'skills updated again');
+
+    $t->put_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {skills_remove => '1'}
+    )->status_is(200)->json_is('/user_profile/skills', [], 'skills updated [all skills removed]');
+
+};
 
 subtest_buffered 'Reset de senha' => sub {
 
@@ -332,7 +432,6 @@ subtest_buffered 'Reset de senha' => sub {
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         }
     )->status_is(200)->json_has('/session')->tx->res->json;
-
 };
 
 done_testing();

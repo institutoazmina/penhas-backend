@@ -86,6 +86,7 @@ sub register {
     my $user_loaded = $authenticated->under('')->to(controller => 'Me', action => 'check_and_load');
     my $me          = $user_loaded->route('me');
     $me->get()->to(action => 'find');
+    $me->put()->to(action => 'update');
 
     # POST /me/call-police-pressed
     $me->under('call-police-pressed')->post()->to(action => 'inc_call_police_counter');

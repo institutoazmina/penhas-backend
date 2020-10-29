@@ -123,6 +123,8 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "skills_cached",
+  { data_type => "text", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
@@ -255,8 +257,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-20 11:25:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:i0812Nd/0oGfmps8hTsY9A
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-29 16:49:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DUdx9IfKbg9NpRSZ4qd9bA
 
 use Carp qw/confess/;
 

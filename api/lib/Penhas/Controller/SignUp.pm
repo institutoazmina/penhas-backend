@@ -176,9 +176,10 @@ sub post {
             senha_sha256 => sha256_hex($params->{senha}),
 
             (map { $_ => $params->{$_} || '' } qw/genero apelido raca nome_social genero_outro/),
-            status     => 'active',
-            created_on => \'NOW()',
-            salt_key   => encode_z85(random_bytes(8)),    # 8 bytes, que viram 10 chars em base85
+            status        => 'active',
+            created_on    => \'NOW()',
+            salt_key      => encode_z85(random_bytes(8)),    # 8 bytes, que viram 10 chars em base85
+            skills_cached => '[]',
         }
     );
     my $directus_id = $row->id;

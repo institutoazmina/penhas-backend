@@ -34,11 +34,11 @@ sub cliente_set_skill {
             slog_info(
                 "current cliente_skills (old): is %s, new set is %s",
                 (join ',', sort keys %$current_skills),
-                (join ',', $opts{skills}->@*),
+                (join ',', $skills->@*),
             );
 
             # percorre os skills desejados
-            foreach my $skill ($opts{skills}->@*) {
+            foreach my $skill ($skills->@*) {
 
                 # nao existe, precisa inserir
                 if (!$current_skills->{$skill}) {
@@ -53,6 +53,10 @@ sub cliente_set_skill {
             # remove o que sobrou dos "atuais"
             my @ids = values $current_skills->%*;
             $rs->search({id => {in => \@ids}})->delete() if @ids;
+
+            $c->schema2->resultset('Cliente')                             #
+              ->search({id            => $user->{id}})                    #
+              ->update({skills_cached => to_json([sort $skills->@*])});
 
         }
     );
