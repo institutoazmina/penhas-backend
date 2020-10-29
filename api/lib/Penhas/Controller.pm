@@ -235,7 +235,8 @@ sub validate_request_params {
                defined $val
             && $val eq ''
             && (exists $me->{empty_is_valid} ? !$me->{empty_is_valid} : 1)
-            && (   $me->{empty_is_invalid}
+            && (  !$me->{empty_is_valid}
+                || $me->{empty_is_invalid}
                 || $type eq 'Bool'
                 || $type eq 'Int'
                 || $type eq 'Num'

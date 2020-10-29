@@ -68,6 +68,8 @@ sub _pa_list {
 
     if (!(defined $valid->{latitude} && defined $valid->{longitude})) {
         my $gps_required = $user_obj ? 0 : 1;
+        $gps_required = 0 if $valid->{is_web} || $valid->{as_csv};
+
         $c->merge_validate_request_params(
             $valid,
             latitude  => {max_length => 16, required => $gps_required, type => Latitute},
