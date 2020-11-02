@@ -28,7 +28,7 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
   },
   "app_version",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "varchar", is_nullable => 1, size => 800 },
   "created_at",
   {
     data_type => "datetime",
@@ -50,8 +50,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-12 06:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ABHuMgEIBzr0vfsSq16Xmg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-02 14:06:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NdBaFR0bFkxiQZuSBTEODw
 
 # ALTER TABLE login_logs ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

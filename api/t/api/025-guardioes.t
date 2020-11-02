@@ -4,6 +4,7 @@ use lib "$RealBin/../lib";
 use DateTime;
 use Penhas::Test;
 use Penhas::Minion::Tasks::SendSMS;
+use Penhas::Minion::Tasks::DeleteUser;
 my $t = test_instance;
 use Business::BR::CPF qw/random_cpf/;
 use DateTime;
@@ -60,7 +61,12 @@ subtest_buffered 'Cadastro com sucesso' => sub {
 };
 
 on_scope_exit { user_cleanup(user_id => $cliente_id); };
-
+my $job = Minion::Job->new(
+    id     => fake_int(1, 99)->(),
+    minion => $t->app->minion,
+    task   => 'testmocked',
+    notes  => {hello => 'mock'}
+);
 do {
     $ENV{GUARDS_ALLOWED_COUNTRY_CODES} = ',55,';
 
@@ -107,12 +113,6 @@ do {
       ->json_is('/data/is_accepted', '0')->json_like('/message', qr/Enviamos um SMS/);
 
     trace_popall;
-    my $job = Minion::Job->new(
-        id     => fake_int(1, 99)->(),
-        minion => $t->app->minion,
-        task   => 'testmocked',
-        notes  => {hello => 'mock'}
-    );
     ok(Penhas::Minion::Tasks::SendSMS::send_sms($job, test_get_minion_args_job(0)), 'send sms');
     do {
         my $text = trace_popall;
@@ -416,8 +416,8 @@ do {
     is $audio_1->audio_duration, '15.883', 'duration is right';
 
     ok(my $event = $schema2->resultset('ClientesAudiosEvento')->find($cliente_id . ':' . $event_id), 'event row found');
-    is $audio_1->cliente_id, $cliente_id, 'row is the same client_id';
-    is $event->cliente_id,   $cliente_id, 'event row is the same client_id as audio';
+    is $audio_1->cliente_id,   $cliente_id, 'row is the same client_id';
+    is $event->cliente_id,     $cliente_id, 'event row is the same client_id as audio';
     is $event->audio_duration, '15.883', 'duration is ok';
     ok $event->total_bytes > 160000 && $event->total_bytes < 240000, "bytes sum is about right ${\$event->total_bytes}";
 
@@ -577,6 +577,32 @@ do {
         '/me/audios/' . $event_id,
         {'x-api-key' => $session}
     )->status_is(400)->json_has('/error', 'invalid')->json_has('/message', 'evento não encontrado');
+
+    $t->delete_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {app_version => 'foo', senha_atual => '123456',}
+    )->status_is(204);
+
+    my $user_obj = get_schema2->resultset('Cliente')->find($cliente_id);
+    $user_obj->update(
+        {
+            perform_delete_at => '2020-01-01',
+        }
+    );
+    trace_popall;
+    $ENV{MAINTENANCE_SECRET} = '1234';
+    $t->get_ok(
+        '/maintenance/housekeeping',
+        form => {secret => $ENV{MAINTENANCE_SECRET}}
+    )->status_is(200);
+    ok $ENV{LAST_DELETE_JOB_ID}, 'has $ENV{LAST_DELETE_JOB_ID}';
+    ok(
+        Penhas::Minion::Tasks::DeleteUser::delete_user($job, test_get_minion_args_job($ENV{LAST_DELETE_JOB_ID})),
+        'delete user'
+    );
+    my $text = trace_popall;
+    is $text, "minion:delete_user,$cliente_id", 'logs looks ok';
 
 
 };

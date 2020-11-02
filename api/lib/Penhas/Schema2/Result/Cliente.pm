@@ -133,6 +133,12 @@ __PACKAGE__->add_columns(
   },
   "deleted_scheduled_meta",
   { data_type => "text", is_nullable => 1 },
+  "deletion_started_at",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
@@ -265,8 +271,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-02 12:00:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:skPiukWQ1MA/ksWduRQfSg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-02 14:06:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EYtOg7iIKGfvUjg1KNuyng
 
 use Carp qw/confess/;
 

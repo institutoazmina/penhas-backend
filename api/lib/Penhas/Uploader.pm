@@ -7,6 +7,7 @@ use URI::Escape;
 use Net::Amazon::S3;
 use Digest::HMAC_SHA1;
 use MIME::Base64 qw(encode_base64);
+use Mojo::URL;
 
 use Penhas::Utils;
 
@@ -42,7 +43,9 @@ sub upload {
 
     # Required args.
     defined $args->{$_} or die "missing '$_'" for qw(file path type);
-
+    $a = $args->{path};
+    use DDP;
+    p $a;
     if (is_test()) {
         return URI->new("https://fake.url/" . $args->{path});
     }
@@ -52,12 +55,27 @@ sub upload {
     $bucket->add_key_filename($args->{path}, $args->{file}, {content_type => $args->{type}});
 
     if ($self->err) {
-        die $self->err . ': ' . $self->errstr;
+        die $bucket->err . ': ' . $bucket->errstr;
     }
 
     my $sign_url = $self->_generate_auth_uri($args->{path}, 2145916800);
 
     return URI->new($sign_url);
+}
+
+sub remove_by_uri {
+    my ($self, $uri) = @_;
+
+    my $path = Mojo::URL->new($uri)->path->to_abs_string;
+    if (is_test()) {
+        return 1;
+    }
+    my $bucket  = $self->_s3->bucket($self->media_bucket);
+    my $success = $bucket->delete_key($path);
+    if (!$success) {
+        die $bucket->err . ': ' . $bucket->errstr;
+    }
+    return $success;
 }
 
 sub _generate_auth_uri {
@@ -86,3 +104,4 @@ sub _encode {
 __PACKAGE__->meta->make_immutable;
 
 1;
+

@@ -506,8 +506,8 @@ subtest_buffered 'Reset de senha' => sub {
     )->status_is(204);
     $t->get_ok('/me', {'x-api-key' => $session})->status_is(200);
 
-is $user_obj->discard_changes->status, 'active', 'is active';
-    is $user_obj->perform_delete_at, undef,'perform_delete_at is null';
+    is $user_obj->discard_changes->status, 'active', 'is active';
+    is $user_obj->perform_delete_at, undef, 'perform_delete_at is null';
 
     is $email_rs->search({template => 'account_reactivate.html'})->count, 1, 'ok';
 
