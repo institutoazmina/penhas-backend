@@ -7,6 +7,7 @@ use Penhas::Types qw/IntList Raca/;
 use MooseX::Types::Email qw/EmailAddress/;
 use Digest::SHA qw/sha256_hex/;
 use Scope::OnExit;
+use Penhas::Controller::Logout;
 
 sub check_and_load {
     my $c = shift;
@@ -37,7 +38,7 @@ sub check_and_load {
     return 1;
 }
 
-sub find {
+sub me_find {
     my $c = shift;
 
     my %extra;
@@ -93,7 +94,7 @@ sub find {
     );
 }
 
-sub update {
+sub me_update {
     my $c = shift;
 
     my $user_obj = $c->stash('user_obj');
@@ -173,9 +174,134 @@ sub update {
     $user_obj->discard_changes;
     $c->stash('user' => {$user_obj->get_columns});    # ATUALIZAR AQUI
 
-    &find($c);
+    &me_find($c);
 }
 
+sub me_delete {
+    my $c = shift;
+
+    my $user_obj = $c->stash('user_obj');
+
+    my $valid = $c->validate_request_params(
+        senha_atual => {max_length => 200, required => 1, type => 'Str', min_length => 6},
+        app_version => {max_length => 800, required => 1, type => 'Str', min_length => 1},
+    );
+
+    my $senha = sha256_hex($valid->{senha_atual});
+    if (lc($senha) ne lc($user_obj->senha_sha256())) {
+        $c->reply_invalid_param('Senha atual não confere.', 'form_error', 'senha_atual');
+    }
+
+    my $remote_ip = $c->remote_addr();
+
+    $c->schema2->txn_do(
+        sub {
+            $user_obj->update(
+                {
+                    status                 => 'deleted_scheduled',
+                    deleted_scheduled_meta => to_json(
+                        {
+                            epoch       => time(),
+                            app_version => $valid->{app_version},
+                            ip          => $remote_ip,
+                            delete      => 1,
+                            (
+                                $user_obj->deleted_scheduled_meta()
+                                ? (previous => $user_obj->deleted_scheduled_meta())
+                                : ()
+                            ),
+                        }
+                    ),
+                    perform_delete_at => \'DATE_ADD(NOW(), INTERVAL -30 DAY)'
+                }
+            );
+
+            my $email_db = $c->schema->resultset('EmaildbQueue')->create(
+                {
+                    config_id => 1,
+                    template  => 'account_deletion.html',
+                    to        => $user_obj->email,
+                    subject   => 'PenhaS - Remoção de conta',
+                    variables => encode_json(
+                        {
+                            nome_completo => $user_obj->nome_completo,
+                            remote_ip     => $remote_ip,
+                            app_version   => $valid->{app_version},
+                            email         => $user_obj->email,
+                            cpf           => substr($user_obj->cpf_prefix, 0, 3)
+                        }
+                    ),
+                }
+            );
+            die 'missing id' unless $email_db;
+
+            # apaga todas as sessions ativas (pode ter mais de uma dependendo da configuracao)
+            $user_obj->clientes_active_sessions->delete;
+        }
+    );
+
+    # faz logout da session atual (apaga no cache, etc)
+    &Penhas::Controller::Logout::logout_post($c);
+}
+
+sub me_reactivate {
+    my $c = shift;
+
+    my $valid = $c->validate_request_params(
+        app_version => {max_length => 800, required => 1, type => 'Str', min_length => 1},
+    );
+    my $user_obj = $c->schema2->resultset('Cliente')->search(
+        {
+            'id'           => $c->stash('user_id'),
+            'status'       => 'deleted_scheduled',
+            'login_status' => 'OK',
+        },
+    )->next;
+
+    $c->reply_not_found() unless $user_obj;
+    my $remote_ip = $c->remote_addr();
+
+    $c->schema2->txn_do(
+        sub {
+            $user_obj->update(
+                {
+                    status                 => 'active',
+                    deleted_scheduled_meta => to_json(
+                        {
+                            epoch       => time(),
+                            app_version => $valid->{app_version},
+                            ip          => $remote_ip,
+                            reactivate  => 1,
+                            previous    => $user_obj->deleted_scheduled_meta(),
+                        }
+                    ),
+                    perform_delete_at => undef,
+                }
+            );
+
+            my $email_db = $c->schema->resultset('EmaildbQueue')->create(
+                {
+                    config_id => 1,
+                    template  => 'account_reactivate.html',
+                    to        => $user_obj->email,
+                    subject   => 'PenhaS - Reativação de conta',
+                    variables => encode_json(
+                        {
+                            nome_completo => $user_obj->nome_completo,
+                            remote_ip     => $remote_ip,
+                            app_version   => $valid->{app_version},
+                            email         => $user_obj->email,
+                            cpf           => substr($user_obj->cpf_prefix, 0, 3)
+                        }
+                    ),
+                }
+            );
+            die 'missing id' unless $email_db;
+        }
+    );
+
+    return $c->render(text => '', status => 204,);
+}
 
 sub inc_call_police_counter {
     my $c = shift;

@@ -278,7 +278,7 @@ subtest_buffered 'update' => sub {
     $t->put_ok(
         '/me',
         {'x-api-key' => $session},
-        form => { senha_atual => 'foobar', senha => 'lalalala' }
+        form => {senha_atual => 'foobar', senha => 'lalalala'}
     )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha_atual')
       ->json_is('/reason', 'invalid');
 
@@ -412,8 +412,6 @@ subtest_buffered 'Reset de senha' => sub {
         }
     )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha');
 
-    use DDP;
-    p $forget;
     $t->post_ok(
         '/reset-password/write-new',
         form => {
@@ -451,6 +449,17 @@ subtest_buffered 'Reset de senha' => sub {
     ok($forget = get_forget_password_row($directus->{id}), 'has a new row');
     ok $forget->{used_at}, 'used_at is NOT null';
 
+    my $email_rs = get_schema->resultset('EmaildbQueue')->search(
+        {
+            to => $random_email,
+        }
+    );
+    my $user_obj = get_schema2->resultset('Cliente')->search(
+        {
+            email => $random_email,
+        }
+    )->next;
+
     $t->post_ok(
         '/login',
         form => {
@@ -458,7 +467,50 @@ subtest_buffered 'Reset de senha' => sub {
             senha       => 'abc12345678',
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         }
-    )->status_is(200)->json_has('/session')->tx->res->json;
+    )->status_is(200)->json_has('/session');
+    is $user_obj->status, 'active', 'status active';
+    my $session = last_tx_json()->{session};
+    $t->delete_ok(
+        '/me',
+        {'x-api-key' => last_tx_json()->{session}},
+        form => {
+            senha_atual => 'abc12345678',
+            app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
+        }
+    )->status_is(204);
+    is $user_obj->discard_changes->status, 'deleted_scheduled', 'in deletion';
+    ok $user_obj->perform_delete_at, 'perform_delete_at is not null';
+
+    is $email_rs->search({template => 'account_deletion.html'})->count, 1, 'ok';
+    $t->get_ok('/me', {'x-api-key' => $session})->status_is(403);
+
+    $t->post_ok(
+        '/login',
+        form => {
+            email       => $random_email,
+            senha       => 'abc12345678',
+            app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
+        }
+    )->status_is(200)->json_has('/session')->json_is('/deleted_scheduled', '1');
+    $session = last_tx_json()->{session};
+    is $user_obj->discard_changes->status, 'deleted_scheduled', 'still in deletion';
+    ok $user_obj->perform_delete_at, 'perform_delete_at still not null';
+    $t->get_ok('/me', {'x-api-key' => $session})->status_is(404);
+
+    $t->post_ok(
+        '/reactivate',
+        {'x-api-key' => $session},
+        form => {
+            app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
+        }
+    )->status_is(204);
+    $t->get_ok('/me', {'x-api-key' => $session})->status_is(200);
+
+is $user_obj->discard_changes->status, 'active', 'is active';
+    is $user_obj->perform_delete_at, undef,'perform_delete_at is null';
+
+    is $email_rs->search({template => 'account_reactivate.html'})->count, 1, 'ok';
+
 };
 
 done_testing();

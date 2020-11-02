@@ -125,6 +125,14 @@ __PACKAGE__->add_columns(
   },
   "skills_cached",
   { data_type => "text", is_nullable => 1 },
+  "perform_delete_at",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
+  "deleted_scheduled_meta",
+  { data_type => "text", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
@@ -257,8 +265,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-29 16:49:24
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DUdx9IfKbg9NpRSZ4qd9bA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-02 12:00:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:skPiukWQ1MA/ksWduRQfSg
 
 use Carp qw/confess/;
 

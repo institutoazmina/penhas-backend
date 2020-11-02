@@ -32,7 +32,7 @@ sub post {
         cpf           => {required   => 1,   type     => CPF},
         cep           => {required   => 1,   type     => CEP},
 
-        app_version => {max_length => 200, required => 1, type => 'Str', min_length => 1},
+        app_version => {max_length => 800, required => 1, type => 'Str', min_length => 1},
     );
     if (!$dry) {
         $c->validate_request_params(

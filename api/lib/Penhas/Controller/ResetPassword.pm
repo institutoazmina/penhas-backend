@@ -20,7 +20,7 @@ sub request_new {
 
     $c->validate_request_params(
         email       => {max_length => 200, required => 1, type => EmailAddress},
-        app_version => {max_length => 200, required => 1, type => 'Str', min_length => 1},
+        app_version => {max_length => 800, required => 1, type => 'Str', min_length => 1},
     );
     my $email = lc(delete $params->{email});
 
@@ -90,7 +90,7 @@ sub request_new {
             config_id => 1,
             template  => 'forgot_password.html',
             to        => $email,
-            subject   => 'Penhas - Recuperação de senha',
+            subject   => 'PenhaS - Recuperação de senha',
             variables => encode_json(
                 {
                     nome_completo => $found->{nome_completo},

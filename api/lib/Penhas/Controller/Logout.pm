@@ -2,7 +2,7 @@ package Penhas::Controller::Logout;
 use Mojo::Base 'Penhas::Controller';
 use Penhas::KeyValueStorage;
 
-sub post {
+sub logout_post {
     my $c = shift;
 
     my $session_id        = $c->stash('jwt_session_id');

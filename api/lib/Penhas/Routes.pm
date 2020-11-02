@@ -80,13 +80,18 @@ sub register {
     $authenticated->under('filter-skills')->get()->to(controller => 'Skills', action => 'filter_skills');
 
     # POST /logout
-    $authenticated->under('logout')->post()->to(controller => 'Logout', action => 'post');
+    $authenticated->under('logout')->post()->to(controller => 'Logout', action => 'logout_post');
+
+    # POST /reactivate
+    $authenticated->route('reactivate')->post->to(controller => 'Me', action => 'me_reactivate');
 
     # GET /me
     my $user_loaded = $authenticated->under('')->to(controller => 'Me', action => 'check_and_load');
     my $me          = $user_loaded->route('me');
-    $me->get()->to(action => 'find');
-    $me->put()->to(action => 'update');
+    $me->get()->to(action => 'me_find');
+    $me->put()->to(action => 'me_update');
+    $me->delete()->to(action => 'me_delete');
+
 
     # POST /me/call-police-pressed
     $me->under('call-police-pressed')->post()->to(action => 'inc_call_police_counter');

@@ -20,7 +20,7 @@ sub post {
     $c->validate_request_params(
         email       => {max_length => 200, required => 1, type => EmailAddress},
         senha       => {max_length => 200, required => 1, type => 'Str', min_length => 6},
-        app_version => {max_length => 200, required => 1, type => 'Str', min_length => 1},
+        app_version => {max_length => 800, required => 1, type => 'Str', min_length => 1},
     );
     my $email = lc(delete $params->{email});
     my $senha = sha256_hex(delete $params->{senha});
@@ -34,11 +34,11 @@ sub post {
     $c->apply_request_per_second_limit(3, 60);
 
     # procura pelo email
-    my $schema = $c->schema;
-    my $found_obj  = $c->schema2->resultset('Cliente')->search(
-        {email        => $email, status => 'active'},
+    my $schema    = $c->schema;
+    my $found_obj = $c->schema2->resultset('Cliente')->search(
+        {email => $email, status => {in => ['deleted_scheduled', 'active', 'banned']}},
     )->next;
-    my $found = $found_obj ? { $found_obj->get_columns() } : undef;
+    my $found = $found_obj ? {$found_obj->get_columns()} : undef;
     if ($found) {
         my $directus_id = $found->{id};
         if ($found->{login_status} eq 'NOK' && $found->{login_status_last_blocked_at}) {
@@ -55,7 +55,8 @@ sub post {
 
             }
             else {
-                $found_obj->update( {
+                $found_obj->update(
+                    {
                         login_status                 => 'OK',
                         login_status_last_blocked_at => ''
                     }
@@ -108,24 +109,28 @@ sub post {
     };
 
   LOGON:
-    my $directus_id = $found->{id};
+    my $directus_id       = $found->{id};
+    my $deleted_scheduled = 0;
 
     # acertou a senha, mas esta suspenso
     if ($found->{status} ne 'active') {
-        die {
-            error   => 'ban',
-            message => 'A conta suspensa.',
-            field   => 'email',
-            reason  => 'invalid'
-        };
+        if ($found->{status} eq 'deleted_scheduled') {
+            $deleted_scheduled++;
+        }
+        else {
+            die {
+                error   => 'ban',
+                message => 'A conta suspensa.',
+                field   => 'email',
+                reason  => 'invalid'
+            };
+        }
     }
 
-    $found_obj->update({
-        qtde_login_senha_normal => \'qtde_login_senha_normal + 1'
-    });
+    $found_obj->update({qtde_login_senha_normal => \'qtde_login_senha_normal + 1'});
 
     # invalida todas as outras sessions
-    if ($ENV{DELETE_PREVIOUS_SESSIONS}){
+    if ($ENV{DELETE_PREVIOUS_SESSIONS}) {
         $c->schema2->resultset('ClientesActiveSession')->search(
             {cliente_id => $directus_id},
         )->delete;
@@ -147,6 +152,13 @@ sub post {
 
     $c->render(
         json => {
+            (
+                $deleted_scheduled
+                ? (
+                    deleted_scheduled => 1,
+                  )
+                : ()
+            ),
             session => $c->encode_jwt(
                 {
                     ses => $session_id,
