@@ -81,6 +81,7 @@ sub delete_user {
                 }
             );
 
+            # todas FK estao DELETE CASCADE exceto a media_upload (que foi removida acima)
             $user->delete;
         }
     );
