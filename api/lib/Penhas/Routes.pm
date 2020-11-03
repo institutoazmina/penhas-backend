@@ -92,6 +92,8 @@ sub register {
     $me->put()->to(action => 'me_update');
     $me->delete()->to(action => 'me_delete');
 
+    # GET /me/delete-text
+    $me->under('delete-text')->get()->to(controller => 'Me', action => 'me_delete_text');
 
     # POST /me/call-police-pressed
     $me->under('call-police-pressed')->post()->to(action => 'inc_call_police_counter');

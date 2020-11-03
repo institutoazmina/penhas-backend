@@ -470,9 +470,13 @@ subtest_buffered 'Reset de senha' => sub {
     )->status_is(200)->json_has('/session');
     is $user_obj->status, 'active', 'status active';
     my $session = last_tx_json()->{session};
+    $t->get_ok(
+        '/me/delete-text',
+        {'x-api-key' => $session},
+    )->status_is(200)->json_has('/text', 'tem texto');
     $t->delete_ok(
         '/me',
-        {'x-api-key' => last_tx_json()->{session}},
+        {'x-api-key' => $session},
         form => {
             senha_atual => 'abc12345678',
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
@@ -483,6 +487,7 @@ subtest_buffered 'Reset de senha' => sub {
 
     is $email_rs->search({template => 'account_deletion.html'})->count, 1, 'ok';
     $t->get_ok('/me', {'x-api-key' => $session})->status_is(403);
+
 
     $t->post_ok(
         '/login',

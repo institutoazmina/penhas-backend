@@ -177,6 +177,19 @@ sub me_update {
     &me_find($c);
 }
 
+sub me_delete_text {
+    my $c = shift;
+
+    return $c->render(
+        json => {
+            text =>
+              "O seu perfil será desativado por 30 dias, após este período seus dados serão completamente excluídos.<br/>"
+              . "Caso entre novamente no aplicativo antes deste período, você ainda poderá reativar o perfil."
+        },
+        status => 200,
+    );
+}
+
 sub me_delete {
     my $c = shift;
 
