@@ -5,7 +5,7 @@ use utf8;
 use JSON;
 use Penhas::Logger;
 use Number::Phone::Lib;
-use Penhas::Utils qw/random_string_from is_test/;
+use Penhas::Utils qw/random_string_from is_test tt_render/;
 use Digest::MD5 qw/md5_hex/;
 use Mojo::Util qw/trim/;
 use Scope::OnExit;
@@ -81,17 +81,17 @@ sub _ponto_apoio_csv {
         ['horario_inicio',         'Horário início'],
         ['horario_fim',            'Horário fim'],
         ['dias_funcionamento',     'Dias funcionamento'],
-        ['eh_presencial',          'Presencial', 'bool'],
-        ['eh_online',              'Online', 'bool'],
+        ['eh_presencial',          'Presencial',             'bool'],
+        ['eh_online',              'Online',                 'bool'],
         ['funcionamento_pandemia', 'Funcionamento pandemia', 'bool'],
         ['observacao_pandemia',    'Observação pandemia'],
         ['latitude',               'Latitude'],
         ['longitude',              'Longitude'],
-        ['verificado',             'Verificado', 'bool'],
+        ['verificado',             'Verificado',       'bool'],
         ['existe_delegacia',       'Existe delegacia', 'bool'],
         ['delegacia_mulher',       'Delegacia Mulher'],
         ['endereco_correto',       'Endereço correto', 'bool'],
-        ['horario_correto',        'Horário correto', 'bool'],
+        ['horario_correto',        'Horário correto',  'bool'],
         ['telefone_correto',       'Telefone correto', 'bool'],
         ['observacao',             'Observação'],
         ['id',                     'ID']
@@ -150,7 +150,7 @@ sub ponto_apoio_list {
     my $max_distance = $opts{max_distance} || 50;
 
     my $categorias         = $opts{categorias};
-    my $eh_24h             = exists $opts{eh_24h} ? $opts{eh_24h} : undef;
+    my $eh_24h             = exists $opts{eh_24h}             ? $opts{eh_24h}             : undef;
     my $dias_funcionamento = exists $opts{dias_funcionamento} ? $opts{dias_funcionamento} : undef;
 
     confess '$categorias is not arrayref' if $categorias && ref $categorias ne 'ARRAY';
@@ -316,14 +316,14 @@ sub ponto_apoio_list {
         latitude         => $latitude,
         longitude        => $longitude,
 
-        _debug => {
-            max_distance       => $max_distance,
-            keywords           => $keywords,
-            rows               => $rows,
-            offset             => $offset,
-            eh_24h             => $eh_24h,
-            dias_funcionamento => $dias_funcionamento,
-        }
+        #_debug => {
+        #    max_distance       => $max_distance,
+        #    keywords           => $keywords,
+        #    rows               => $rows,
+        #    offset             => $offset,
+        #    eh_24h             => $eh_24h,
+        #    dias_funcionamento => $dias_funcionamento,
+        #}
     };
 }
 
@@ -586,6 +586,15 @@ sub ponto_apoio_detail {
     $row->{dias_funcionamento}
       = $dow_de_para->{$row->{dias_funcionamento}} || $row->{dias_funcionamento};
 
+    if ($user_obj) {
+        $row->{content_html} = tt_render(
+                q|<p style="color: #0a115f">[% observacao %]</p><br/>|
+              . q|<p style="color: #0a115f"><b>Endereço</b></p>|
+              . q|<p style="color: #818181;">[% tipo_logradouro %] [% nome_logradouro %]|
+              . q|% IF numero.defined() %], [%numero %][%END %] -[%bairro %] -[%municipio %], [%uf %], [%cep %] </p>|,
+            $row
+        );
+    }
 
     return {
         ponto_apoio => $row,
