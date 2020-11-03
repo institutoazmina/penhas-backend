@@ -183,8 +183,8 @@ sub me_delete_text {
     return $c->render(
         json => {
             text =>
-              "O seu perfil será desativado por 30 dias, após este período seus dados serão completamente excluídos.<br/>"
-              . "Caso entre novamente no aplicativo antes deste período, você ainda poderá reativar o perfil."
+              "<p>O seu perfil será desativado por 30 dias, após este período seus dados serão completamente excluídos.<br/></p>"
+              . "<p>Caso entre novamente no aplicativo antes deste período, você ainda poderá reativar o perfil.<p>"
         },
         status => 200,
     );
