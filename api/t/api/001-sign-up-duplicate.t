@@ -117,6 +117,7 @@ subtest_buffered 'Erro na criação de conta' => sub {
 };
 
 my $cliente_id;
+my $user_obj;
 subtest_buffered 'Cadastro com sucesso' => sub {
     my $res = $t->post_ok(
         '/signup',
@@ -135,6 +136,8 @@ subtest_buffered 'Cadastro com sucesso' => sub {
     )->status_is(200)->tx->res->json;
 
     $cliente_id = $res->{_test_only_id};
+    $user_obj   = get_schema2->resultset('Cliente')->find($cliente_id);
+
     my $cadastro = $t->get_ok(
         '/me',
         {'x-api-key' => $res->{session}}
@@ -142,6 +145,44 @@ subtest_buffered 'Cadastro com sucesso' => sub {
 
     is $cadastro->{user_profile}{nome_completo}, 'test name';
     is $cadastro->{user_profile}{nome_social},   'foobar lorem';
+
+    is $user_obj->clientes_preferences->count, 0, 'no clientes_preferences';
+    $t->get_ok('/me/preferences', {'x-api-key' => $res->{session}})->status_is(200);
+    ok my $key0 = last_tx_json->{preferences}[0]{key}, 'has some pref';
+    ok my $key1 = last_tx_json->{preferences}[1]{key}, 'has some pref';
+    ok my $key2 = last_tx_json->{preferences}[2]{key}, 'has some pref';
+
+    $t->post_ok(
+        '/me/preferences', {'x-api-key' => $res->{session}},
+        form => {
+            ignored => '1',
+            $key0   => 0,
+            $key1   => 1,
+        }
+    )->status_is(204);
+    $t->get_ok('/me/preferences', {'x-api-key' => $res->{session}})->status_is(200);
+    is last_tx_json->{preferences}[0]{key}, $key0, 'name ok';
+    is last_tx_json->{preferences}[0]{value}, 0, 'key 0 is updated to 0';
+
+    is last_tx_json->{preferences}[1]{value}, 1, 'key 1 is still 1';
+    is last_tx_json->{preferences}[1]{key}, $key1, 'name ok';
+    is $user_obj->clientes_preferences->count, 2, '2 clientes_preferences';
+
+    $t->post_ok(
+        '/me/preferences', {'x-api-key' => $res->{session}},
+        form => {
+            $key0 => 1,
+            $key2 => 0,
+        }
+    )->status_is(204);
+    $t->get_ok('/me/preferences', {'x-api-key' => $res->{session}})->status_is(200);
+    is last_tx_json->{preferences}[0]{key}, $key0, 'name ok';
+    is last_tx_json->{preferences}[0]{value}, 1, 'key 0 is updated to 1';
+
+    is last_tx_json->{preferences}[2]{value}, 0, 'key 1 is updated to 0';
+    is last_tx_json->{preferences}[2]{key}, $key2, 'name ok';
+
+    is $user_obj->clientes_preferences->count, 3, '3 clientes_preferences';
 
     $t->post_ok(
         '/logout',
@@ -454,11 +495,6 @@ subtest_buffered 'Reset de senha' => sub {
             to => $random_email,
         }
     );
-    my $user_obj = get_schema2->resultset('Cliente')->search(
-        {
-            email => $random_email,
-        }
-    )->next;
 
     $t->post_ok(
         '/login',

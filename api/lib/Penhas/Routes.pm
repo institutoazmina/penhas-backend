@@ -107,6 +107,12 @@ sub register {
     # POST /me/ja-foi-vitima-de-violencia-toggle
     $me->under('ja-foi-vitima-de-violencia-toggle')->post()->to(action => 'route_cliente_ja_foi_vitima_de_violencia_toggle');
 
+    # /me/preferences
+    my $me_pref = $me->under('preferences')->to(controller => 'Me_Preferences', action => 'assert_user_perms');
+    $me_pref->get()->to(action => 'list_preferences');
+    $me_pref->post()->to(action => 'post_preferences');
+
+
     # /me/quiz
     my $me_quiz = $me->under('quiz')->to(controller => 'Me_Quiz', action => 'assert_user_perms');
     $me_quiz->post()->to(action => 'process');

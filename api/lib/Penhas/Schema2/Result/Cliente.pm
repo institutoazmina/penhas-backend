@@ -216,6 +216,12 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "clientes_preferences",
+  "Penhas::Schema2::Result::ClientesPreference",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "clientes_quiz_sessions",
   "Penhas::Schema2::Result::ClientesQuizSession",
   { "foreign.cliente_id" => "self.id" },
@@ -271,8 +277,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-02 14:06:22
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EYtOg7iIKGfvUjg1KNuyng
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-03 21:24:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+Shvt9+9YzrH3hqRAcpTfA
 
 use Carp qw/confess/;
 
