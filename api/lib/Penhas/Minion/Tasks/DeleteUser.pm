@@ -10,7 +10,7 @@ use Penhas::Uploader;
 sub register {
     my ($self, $app) = @_;
 
-    $app->minion->add_task(delete_user => \&send_sms);
+    $app->minion->add_task(delete_user => \&delete_user);
 }
 
 sub delete_user {
