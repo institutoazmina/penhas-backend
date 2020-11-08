@@ -10,11 +10,11 @@ use DateTime;
 
 $ENV{GEOCODE_USE_HERE_API} = 1;
 if ($ENV{GEOCODE_HERE_APP_ID}) {
-    my $res = $t->app->geo_code_cached('04002003 Brasil');
+    my $res = $t->app->geo_code_cached('04002-003 Brasil');
     is($res, '-23.57276,-46.65084', 'ok');
 
     my $res2 = $t->app->reverse_geo_code_cached($res);
-    like $res2, qr/maria fig/i, 'name ok';
+    like $res2, qr/Vila Mariana/i, 'fair ok';
 }
 
 done_testing();

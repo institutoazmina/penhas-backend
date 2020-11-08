@@ -24,7 +24,7 @@ if ($ENV{GEOCODE_HERE_APP_ID}) {
     is($res, '-23.57276,-46.65084', 'ok');
 
     my $res2 = $t->app->reverse_geo_code($res);
-    like $res2, qr/maria fig/i, 'name ok';
+    like $res2, qr/Vila Mariana/i, 'name ok';
 }
 
 done_testing();
