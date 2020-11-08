@@ -35,10 +35,11 @@ sub setup {
     Penhas::Helpers::ChatSupport::setup($self);
 
     state $kv = Penhas::KeyValueStorage->instance;
-    $self->helper(kv             => sub {$kv});
-    $self->helper(schema         => \&Penhas::SchemaConnected::get_schema);
-    $self->helper(schema2        => \&Penhas::SchemaConnected::get_schema2);
-    $self->helper(sum_cpf_errors => \&sum_cpf_errors);
+    $self->helper(kv                    => sub {$kv});
+    $self->helper(schema                => \&Penhas::SchemaConnected::get_schema);
+    $self->helper(schema2               => \&Penhas::SchemaConnected::get_schema2);
+    $self->helper(sum_cpf_errors        => \&sum_cpf_errors);
+    $self->helper(rs_user_by_preference => \&rs_user_by_preference);
 
     $self->helper(
         respond_to_if_web => sub {
@@ -129,5 +130,34 @@ sub sum_cpf_errors {
     return $total;
 }
 
+=pod
+create view view_user_preferences as
+   SELECT
+        p.name,
+        c.id as cliente_id,
+        coalesce(cp.value, p.initial_value) as value
+    FROM preferences p
+    CROSS JOIN clientes c
+    LEFT JOIN clientes_preferences cp ON cp.cliente_id = c.id AND cp.preference_id = p.id;
+=cut
+
+sub rs_user_by_preference {
+    my ($self, $pref_name, $pref_value, $as_hashref) = @_;
+
+    $as_hashref ||= 1;
+
+    my $rs = $self->schema2->resultset('ViewUserPreference')->search(
+        {
+            name  => $pref_name,
+            value => $pref_value,
+        },
+        {
+            columns => 'cliente_id',
+            ($as_hashref ? (result_class => 'DBIx::Class::ResultClass::HashRefInflator') : ())
+        }
+    );
+    return $rs;
+
+}
 
 1;

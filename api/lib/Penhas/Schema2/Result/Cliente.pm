@@ -252,6 +252,12 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "notification_logs",
+  "Penhas::Schema2::Result::NotificationLog",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "ponto_apoio_sugestoes",
   "Penhas::Schema2::Result::PontoApoioSugestoe",
   { "foreign.cliente_id" => "self.id" },
@@ -277,8 +283,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-03 21:24:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+Shvt9+9YzrH3hqRAcpTfA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-05 17:09:19
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:b0MxRTKLAHCbpwLs3il+3g
 
 use Carp qw/confess/;
 

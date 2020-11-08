@@ -49,6 +49,7 @@ state $text_xslate = Text::Xslate->new(
   pg_timestamp2iso_8601
   db_epoch_to_etag
   pg_timestamp2human
+  notifications_enabled
 );
 
 
@@ -215,6 +216,10 @@ sub db_epoch_to_etag {
       unless $timestamp =~ /^2\d{3}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}(\.\d{1,8})?$/;
 
     return substr(md5_hex($timestamp), 0, 6) . '';
+}
+
+sub notifications_enabled {
+    $ENV{NOTIFICATIONS_ENABLED} || 0;
 }
 
 1;

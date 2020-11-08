@@ -33,8 +33,8 @@ sub setup {
 sub like_tweet {
     my ($c, %opts) = @_;
 
-    my $user = $opts{user} or confess 'missing user';
-    my $id   = $opts{id}   or confess 'missing id';
+    my $user   = $opts{user} or confess 'missing user';
+    my $id     = $opts{id}   or confess 'missing id';
     my $remove = $opts{remove};
 
     confess 'missing remove' unless defined $remove;
@@ -60,6 +60,7 @@ sub like_tweet {
         }
     )->next;
 
+    my $liked;
     if (!$already_liked && !$remove) {
         $likes_rs->create(
             {
@@ -73,6 +74,7 @@ sub like_tweet {
                 qtde_likes => \'qtde_likes+1',
             }
         );
+        $liked++;
     }
     elsif ($remove && $already_liked) {
 
@@ -99,6 +101,21 @@ sub like_tweet {
             ],
         }
     )->next;
+
+    if ($liked && notifications_enabled()) {
+        my $anonimo    = $user->{modo_anonimo_ativo} ? 1 : 0;
+        my $subject_id = $anonimo                    ? 0 : $user->{id};
+        my $job_id     = $c->minion->enqueue(
+            'new_notification',
+            [
+                'new_like',
+                {tweet_id => $reference->id, subject_id => $subject_id}
+            ] => {
+                attempts => 5,
+            }
+        );
+        $ENV{LAST_NTF_LIKE_JOB_ID} = $job_id;
+    }
 
     return {tweet => &_get_tweet_by_id($c, $user, $reference->id)};
 }
@@ -155,8 +172,8 @@ sub delete_tweet {
 sub add_tweet {
     my ($c, %opts) = @_;
 
-    my $user    = $opts{user}    or confess 'missing user';
-    my $content = $opts{content} or confess 'missing content';
+    my $user      = $opts{user}    or confess 'missing user';
+    my $content   = $opts{content} or confess 'missing content';
     my $media_ids = $opts{media_ids};
     my $reply_to  = $opts{reply_to};
 
@@ -208,13 +225,14 @@ sub add_tweet {
     my $id = $base . sprintf('%04d', $cur_seq);
     my $rs = $c->schema2->resultset('Tweet');
 
-    my $tweet = $rs->create(
+    my $anonimo = $user->{modo_anonimo_ativo} ? 1 : 0;
+    my $tweet   = $rs->create(
         {
             status       => 'published',
             id           => $id,
             content      => $content,
             'cliente_id' => $user->{id},
-            anonimo      => $user->{modo_anonimo_ativo} ? 1 : 0,
+            anonimo      => $anonimo,
             parent_id    => $reply_to,
             created_at   => $now->datetime(' '),
             media_ids    => $media_ids ? to_json($media_ids) : undef,
@@ -232,6 +250,20 @@ sub add_tweet {
                 ],
             }
         );
+
+        if (notifications_enabled()) {
+            my $subject_id = $anonimo ? 0 : $user->{id};
+            my $job_id     = $c->minion->enqueue(
+                'new_notification',
+                [
+                    'new_comment',
+                    {tweet_id => $reply_to, subject_id => $subject_id}
+                ] => {
+                    attempts => 5,
+                }
+            );
+            $ENV{LAST_NTF_COMMENT_JOB_ID} = $job_id;
+        }
     }
 
     return &_get_tweet_by_id($c, $user, $tweet->id);
@@ -520,12 +552,12 @@ sub _fomart_tweet {
         },
         id               => $me->{id},
         content          => $me->{disable_escape} ? $me->{content} : &_nl2br(xml_escape($me->{content})),
-        anonimo          => $anonimo ? 1 : 0,
+        anonimo          => $anonimo              ? 1              : 0,
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
         media            => $media_ref,
         icon             => $anonimo ? $avatar_anonimo : $me->{cliente_avatar_url} || $avatar_default,
-        name             => $anonimo ? 'Anônimo' : $me->{cliente_apelido},
+        name             => $anonimo ? 'Anônimo'       : $me->{cliente_apelido},
         created_at       => $me->{created_at},
         _tags_index      => $me->{tags_index},
         ($anonimo ? (cliente_id => 0) : (cliente_id => $me->{cliente_id})),
@@ -559,9 +591,9 @@ sub _get_tweet_by_id {
 sub _get_tracked_news_url {
     my ($user, $news) = @_;
 
-    my $userid = $user->{id}        or confess 'missing user.id';
-    my $newsid = $news->{id}        or confess 'missing news.id';
-    my $url    = $news->{hyperlink} or confess 'missing news.hyperlink';
+    my $userid      = $user->{id}        or confess 'missing user.id';
+    my $newsid      = $news->{id}        or confess 'missing news.id';
+    my $url         = $news->{hyperlink} or confess 'missing news.hyperlink';
     my $valid_until = time() + 3600;
     my $trackid     = random_string(4);
 

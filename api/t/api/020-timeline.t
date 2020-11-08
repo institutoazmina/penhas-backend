@@ -6,7 +6,7 @@ use Penhas::Test;
 
 my $t = test_instance;
 use Business::BR::CPF qw/random_cpf/;
-
+use Penhas::Minion::Tasks::NewNotification;
 
 AGAIN:
 my $random_cpf   = random_cpf();
@@ -102,7 +102,7 @@ subtest_buffered 'cadastro' => sub {
     is $cadastro->{user_profile}{nome_completo}, $nome_completo;
     is $cadastro->{user_profile}{nome_social}, '', 'nome social nao existe em genero=feminino';
 
-    ok ((grep { $_->{code} eq 'tweets'} $cadastro->{modules}->@*) , 'modulo [tweets] timeline presente');
+    ok((grep { $_->{code} eq 'tweets' } $cadastro->{modules}->@*), 'modulo [tweets] timeline presente');
 };
 
 my $tweet_rs = app->schema2->resultset('Tweet');
@@ -117,6 +117,7 @@ do {
 
     )->status_is(200)->tx->res->json;
 
+    $ENV{NOTIFICATIONS_ENABLED} = 1;
     my $res = $t->post_ok(
         '/me/tweets',
         {'x-api-key' => $session},
@@ -125,6 +126,9 @@ do {
         }
     )->status_is(200)->tx->res->json;
     my $tweet_id = $res->{id};
+
+    &_test_notifications(tweet_id => $tweet_id);
+    $ENV{NOTIFICATIONS_ENABLED} = 0;
 
     $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'like'),
@@ -358,3 +362,110 @@ do {
 
 done_testing();
 
+exit;
+
+sub _test_notifications {
+    my (%opts) = @_;
+    my $tweet_id = $opts{tweet_id};
+
+    my $user = get_schema2->resultset('Cliente')->find($cliente_id);
+
+    my $job = Minion::Job->new(
+        id     => fake_int(1, 99)->(),
+        minion => $t->app->minion,
+        task   => 'testmocked',
+        notes  => {hello => 'mock'}
+    );
+    is $ENV{LAST_NTF_COMMENT_JOB_ID}, undef, 'no LAST_NTF_COMMENT_JOB_ID yet';
+    db_transaction2 {
+
+        my $comment = $t->post_ok(
+            (join '/', '/timeline', $tweet_id, 'comment'),
+            {'x-api-key' => $session},
+            form => {content => 'test1'}
+        )->status_is(200)->tx->res->json;
+
+        is $user->notification_logs->count, 0, 'no logs';
+        trace_popall;
+        ok(
+            Penhas::Minion::Tasks::NewNotification::new_notification(
+                $job, test_get_minion_args_job($ENV{LAST_NTF_COMMENT_JOB_ID})
+            ),
+            'job'
+        );
+        is $user->notification_logs->count, 1, 'inserted';
+        is trace_popall, 'minion:new_notification,new_comment,NOTIFY_COMMENTS_POSTS_CREATED,1', 'expected code path';
+
+        $t->post_ok(
+            '/me/preferences', {'x-api-key' => $session},
+            form => {
+                'NOTIFY_COMMENTS_POSTS_CREATED' => 0,
+            }
+        )->status_is(204);
+        $t->get_ok(
+            '/me/preferences', {'x-api-key' => $session},
+        );
+
+        my $comment2 = $t->post_ok(
+            (join '/', '/timeline', $tweet_id, 'comment'),
+            {'x-api-key' => $session},
+            form => {content => 'test2'}
+        )->status_is(200)->tx->res->json;
+
+        trace_popall;
+        ok(
+            Penhas::Minion::Tasks::NewNotification::new_notification(
+                $job, test_get_minion_args_job($ENV{LAST_NTF_COMMENT_JOB_ID})
+            ),
+            'job'
+        );
+        is trace_popall, 'minion:new_notification,new_comment,NOTIFY_COMMENTS_POSTS_CREATED,0', 'expected code path';
+        is $user->notification_logs->count, 1, 'still only one notification, yay!';
+
+        is $ENV{LAST_NTF_LIKE_JOB_ID}, undef, 'no LAST_NTF_LIKE_JOB_ID yet';
+        $t->post_ok(
+            (join '/', '/timeline', $tweet_id, 'like'),
+            {'x-api-key' => $session},
+        )->status_is(200);
+        trace_popall;
+        ok(
+            Penhas::Minion::Tasks::NewNotification::new_notification(
+                $job, test_get_minion_args_job($ENV{LAST_NTF_LIKE_JOB_ID})
+            ),
+            'job'
+        );
+        is trace_popall, 'minion:new_notification,new_like,NOTIFY_LIKES_POSTS_CREATED,1', 'expected code path';
+        is $user->notification_logs->count, 2, 'new notifications';
+
+        my $comment2_subcomment = $t->post_ok(
+            (join '/', '/timeline', $comment2->{id}, 'comment'),
+            {'x-api-key' => $session},
+            form => {content => 'test2'}
+        )->status_is(200)->tx->res->json;
+
+        trace_popall;
+        ok(
+            Penhas::Minion::Tasks::NewNotification::new_notification(
+                $job, test_get_minion_args_job($ENV{LAST_NTF_COMMENT_JOB_ID})
+            ),
+            'job'
+        );
+        is trace_popall, 'minion:new_notification,new_comment,NOTIFY_COMMENTS_POSTS_COMMENTED,1', 'expected code path';
+        is $user->notification_logs->count, 3, 'new notifications';
+
+        $t->post_ok(
+            (join '/', '/timeline', $comment2_subcomment->{id}, 'like'),
+            {'x-api-key' => $session},
+        )->status_is(200);
+        trace_popall;
+        ok(
+            Penhas::Minion::Tasks::NewNotification::new_notification(
+                $job, test_get_minion_args_job($ENV{LAST_NTF_LIKE_JOB_ID})
+            ),
+            'job'
+        );
+        is trace_popall, 'minion:new_notification,new_like,NOTIFY_LIKES_POSTS_COMMENTED,1', 'expected code path';
+        is $user->notification_logs->count, 4, 'new notifications';
+
+    };
+}

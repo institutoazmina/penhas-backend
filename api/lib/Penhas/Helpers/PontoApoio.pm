@@ -591,7 +591,7 @@ sub ponto_apoio_detail {
                 q|<p style="color: #0a115f">[% observacao %]</p><br/>|
               . q|<p style="color: #0a115f"><b>Endereço</b></p>|
               . q|<p style="color: #818181;">[% tipo_logradouro %] [% nome_logradouro %]|
-              . q|% IF numero.defined() %], [%numero %][%END %] -[%bairro %] -[%municipio %], [%uf %], [%cep %] </p>|,
+              . q|[% IF numero.defined() %], [% numero %][% END %] -[%bairro %] -[%municipio %], [%uf %], [%cep %] </p>|,
             $row
         );
     }
