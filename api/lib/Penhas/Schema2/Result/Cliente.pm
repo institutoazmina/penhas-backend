@@ -320,10 +320,10 @@ sub _build_access_modules {
     my @modules;
     if ($self->is_female) {
         push @modules,
-          qw/tweets chat_privado chat_suporte pontos_de_apoio modo_seguranca/;
+          qw/tweets chat_privado chat_suporte pontos_de_apoio modo_seguranca noticias/;
     }
     else {
-        push @modules, qw/chat_suporte pontos_de_apoio/;
+        push @modules, qw/chat_suporte pontos_de_apoio noticias/;
     }
 
     return {map { ($_ => {}) } @modules};
@@ -348,7 +348,6 @@ sub access_modules_as_config {
         tweets => {
             max_length => 2200,
         },
-
     };
     return [map { +{code => $_, meta => $meta->{$_} || {}} } keys $_[0]->access_modules->%*];
 }

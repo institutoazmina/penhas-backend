@@ -59,6 +59,7 @@ __PACKAGE__->belongs_to(
 
 # ALTER TABLE notification_log ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE CASCADE;
 # ALTER TABLE notification_log ADD FOREIGN KEY (notification_message_id) REFERENCES notification_message(id) ON DELETE RESTRICT ON UPDATE RESTRICT;
+# create index ix_notification_log_by_time on notification_log (created_at, cliente_id);
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
