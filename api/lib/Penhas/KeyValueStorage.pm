@@ -142,16 +142,25 @@ sub local_get_count_and_inc {
 sub redis_get_cached_or_execute {
     my ($self, $key, $ttl, $cb) = @_;
 
+    my $iteration = 0;
     my $redis     = $self->redis;
     my $cache_key = $ENV{REDIS_NS} . $key;
 
+  AGAIN:
     my $result = $redis->get($cache_key);
     if ($result) {
         return sereal_decode_with_object($sereal_dec, $result);
     }
     else {
-        # TODO lock control
 
+        # faz um lock, potencialmente aguardando alguns segundos
+        $self->lock_and_wait('cached_or_execute' . $cache_key);
+
+        # busca novamente, caso outro worker tenha preenchido o valor
+        $result = $redis->get($cache_key);
+        return $result if defined $result;
+
+        # se não tem resultado ainda, é realmente necessário calcular
         my $ret = $cb->();
 
         $redis->setex($cache_key, $ttl, sereal_encode_with_object($sereal_enc, $ret));
