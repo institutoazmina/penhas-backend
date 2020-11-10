@@ -18,7 +18,7 @@ sub _build_redis {
     $ENV{REDIS_NS} ||= '';
     Redis->new(
         reconnect => 5,
-        every     => 10_000,                                             # 10ms
+        every     => 10_000,                                  # 10ms
         server    => $ENV{REDIS_SERVER} || '127.0.0.1:6379'
     );
 }
@@ -99,7 +99,7 @@ sub lock_and_wait {
 
     $max_seconds = defined $max_seconds && $max_seconds >= 1 ? $max_seconds : 15;
 
-    my $interval = 0.1;
+    my $interval  = 0.1;
     my $max_loops = $max_seconds * (1 / $interval);
 
     my $locked;
@@ -123,6 +123,10 @@ sub unlock {
     $self->redis->del($lock_key);
 }
 
+sub redis_del {
+    my ($self, $key) = @_;
+    $self->redis->del($ENV{REDIS_NS} . $key);
+}
 
 sub local_get_count_and_inc {
     my ($self, %conf) = @_;
@@ -146,6 +150,7 @@ sub redis_get_cached_or_execute {
         return sereal_decode_with_object($sereal_dec, $result);
     }
     else {
+        # TODO lock control
 
         my $ret = $cb->();
 

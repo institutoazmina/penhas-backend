@@ -26,7 +26,10 @@ sub new_notification {
 
     my $subname = $known_types->{$type} || die "notification type $type is not known";
 
-    __PACKAGE__->$subname($job, $type, $opts);
+    my (%ret) = __PACKAGE__->$subname($job, $type, $opts);
+
+    # reseta o cache de quem recebeu notificação
+    $job->app->user_notifications_clear_cache($_->{cliente_id}) for @{$ret{clientes} || []};
 
     return $job->finish(1);
 
@@ -100,7 +103,9 @@ sub new_notification_timeline {
         }
     );
 
-    return;
+    return (
+        clientes => \@clientes,
+    );
 }
 
 1;

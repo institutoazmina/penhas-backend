@@ -41,6 +41,9 @@ sub setup {
     $self->helper(sum_cpf_errors        => \&sum_cpf_errors);
     $self->helper(rs_user_by_preference => \&rs_user_by_preference);
 
+    $self->helper(user_notifications_clear_cache  => \&user_notifications_clear_cache);
+    $self->helper(user_notifications_unread_count => \&user_notifications_unread_count);
+
     $self->helper(
         respond_to_if_web => sub {
             my $c = shift;
@@ -158,6 +161,55 @@ sub rs_user_by_preference {
     );
     return $rs;
 
+}
+
+sub user_notifications_unread_count {
+    my ($self, $user_id) = @_;
+
+    croak '$user_id is not defined' unless defined $user_id;
+
+    return $self->kv->redis_get_cached_or_execute(
+        'unreadntfcount:' . $user_id,
+        86400,    # 24 hours
+        sub {
+            my %extracond = (
+                'me.created_at' => {
+                    '>=' => $self->schema2->resultset('ClientesAppNotification')->search({cliente_id => $user_id})
+                      ->get_column('read_until')->as_query()
+                }
+            );
+            my $iteration = 0;
+          AGAIN:
+            my $count = $self->schema2->resultset('NotificationLog')->search(
+                {
+                    'me.cliente_id' => $user_id,
+                    %extracond,
+                },
+                {
+                    join => 'cliente',
+                }
+            )->count;
+
+            # se não tem nenhuma, talvez seja pq a subquery retornou null, entao vamos contar novamente
+            # sem o where de me.created_at <= (subquery) pq a tabela ClientesAppNotification ainda esta vazia
+            if (!$count && $iteration == 0) {
+                %extracond = ();
+                $iteration++;    # não deixa entrar em loop, caso realmente não tenha nenhuma notificação
+                goto AGAIN;
+            }
+
+            return $count;
+        }
+    );
+
+}
+
+sub user_notifications_clear_cache {
+    my ($self, $user_id) = @_;
+
+    croak '$user_id is not defined' unless defined $user_id;
+
+    return $self->kv->redis_del('unreadntfcount:' . $user_id);
 }
 
 1;

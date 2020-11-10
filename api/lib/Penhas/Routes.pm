@@ -95,6 +95,9 @@ sub register {
     # GET /me/delete-text
     $me->under('delete-text')->get()->to(controller => 'Me', action => 'me_delete_text');
 
+    # GET /me/unread-notif-count // notifications
+    $me->under('unread-notif-count')->get()->to(controller => 'Me', action => 'me_unread_notif_count');
+
     # POST /me/call-police-pressed
     $me->under('call-police-pressed')->post()->to(action => 'inc_call_police_counter');
 
@@ -105,7 +108,8 @@ sub register {
     $me->under('modo-camuflado-toggle')->post()->to(action => 'route_cliente_modo_camuflado_toggle');
 
     # POST /me/ja-foi-vitima-de-violencia-toggle
-    $me->under('ja-foi-vitima-de-violencia-toggle')->post()->to(action => 'route_cliente_ja_foi_vitima_de_violencia_toggle');
+    $me->under('ja-foi-vitima-de-violencia-toggle')->post()
+      ->to(action => 'route_cliente_ja_foi_vitima_de_violencia_toggle');
 
     # /me/preferences
     my $me_pref = $me->under('preferences')->to(controller => 'Me_Preferences', action => 'assert_user_perms');

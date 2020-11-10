@@ -190,6 +190,14 @@ sub me_delete_text {
     );
 }
 
+sub me_unread_notif_count {
+    my $c = shift;
+    return $c->render(
+        json   => {count => $c->user_notifications_unread_count($c->stash('user_id'))},
+        status => 200,
+    );
+}
+
 sub me_delete {
     my $c = shift;
 

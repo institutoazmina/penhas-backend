@@ -467,5 +467,10 @@ sub _test_notifications {
         is trace_popall, 'minion:new_notification,new_like,NOTIFY_LIKES_POSTS_COMMENTED,1', 'expected code path';
         is $user->notification_logs->count, 4, 'new notifications';
 
+        $t->get_ok(
+            ('/me/unread-notif-count'),
+            {'x-api-key' => $session},
+        )->status_is(200)->json_is('/count', 4, '4 unread notifications');
+
     };
 }
