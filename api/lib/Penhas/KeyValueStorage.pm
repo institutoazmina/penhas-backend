@@ -5,7 +5,7 @@ use Redis;
 use Penhas::Logger qw(get_logger log_error);
 use Carp qw/croak carp/;
 use Digest::SHA qw(sha1_hex);
-
+use Scope::OnExit;
 use Sereal qw(sereal_encode_with_object
   sereal_decode_with_object);
 my $sereal_enc = Sereal::Encoder->new();
@@ -154,7 +154,8 @@ sub redis_get_cached_or_execute {
     else {
 
         # faz um lock, potencialmente aguardando alguns segundos
-        $self->lock_and_wait('cached_or_execute' . $cache_key);
+        my (undef, $locked_key) = $self->lock_and_wait('cached_or_execute' . $cache_key);
+        on_scope_exit { $self->redis->del($locked_key) };
 
         # busca novamente, caso outro worker tenha preenchido o valor
         $result = $redis->get($cache_key);
