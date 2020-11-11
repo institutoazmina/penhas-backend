@@ -98,6 +98,9 @@ sub register {
     # GET /me/unread-notif-count // notifications
     $me->under('unread-notif-count')->get()->to(controller => 'Me', action => 'me_unread_notif_count');
 
+    # GET /me/notifications
+    $me->under('notifications')->get()->to(controller => 'Me', action => 'me_notifications');
+
     # POST /me/call-police-pressed
     $me->under('call-police-pressed')->post()->to(action => 'inc_call_police_counter');
 

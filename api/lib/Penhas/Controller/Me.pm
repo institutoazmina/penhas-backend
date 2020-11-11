@@ -198,6 +198,24 @@ sub me_unread_notif_count {
     );
 }
 
+sub me_notifications {
+    my $c     = shift;
+    my $valid = $c->validate_request_params(
+        next_page => {max_length => 9999, required => 0, type => 'Str'},
+        rows      => {required   => 0,    type     => 'Int'},
+    );
+
+    my $user_obj = $c->stash('user_obj');
+
+    return $c->render(
+        json => $c->user_notifications(
+            user_obj => $user_obj,
+            %$valid
+        ),
+        status => 200,
+    );
+}
+
 sub me_delete {
     my $c = shift;
 

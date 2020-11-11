@@ -15,36 +15,37 @@ use Penhas::Helpers::Geolocation;
 use Penhas::Helpers::GeolocationCached;
 use Penhas::Helpers::Chat;
 use Penhas::Helpers::ChatSupport;
+use Penhas::Helpers::Notifications;
 
 use Carp qw/croak confess/;
 
 sub setup {
-    my $self = shift;
+    my $c = shift;
 
-    Penhas::Helpers::Quiz::setup($self);
-    Penhas::Helpers::Guardioes::setup($self);
-    Penhas::Helpers::CPF::setup($self);
-    Penhas::Helpers::Timeline::setup($self);
-    Penhas::Helpers::ClienteSetSkill::setup($self);
-    Penhas::Helpers::ClienteAudio::setup($self);
-    Penhas::Helpers::PontoApoio::setup($self);
-    Penhas::Helpers::RSS::setup($self);
-    Penhas::Helpers::Geolocation::setup($self);
-    Penhas::Helpers::GeolocationCached::setup($self);
-    Penhas::Helpers::Chat::setup($self);
-    Penhas::Helpers::ChatSupport::setup($self);
+    Penhas::Helpers::Quiz::setup($c);
+    Penhas::Helpers::Guardioes::setup($c);
+    Penhas::Helpers::CPF::setup($c);
+    Penhas::Helpers::Timeline::setup($c);
+    Penhas::Helpers::ClienteSetSkill::setup($c);
+    Penhas::Helpers::ClienteAudio::setup($c);
+    Penhas::Helpers::PontoApoio::setup($c);
+    Penhas::Helpers::RSS::setup($c);
+    Penhas::Helpers::Geolocation::setup($c);
+    Penhas::Helpers::GeolocationCached::setup($c);
+    Penhas::Helpers::Chat::setup($c);
+    Penhas::Helpers::ChatSupport::setup($c);
+    Penhas::Helpers::Notifications::setup($c);
 
     state $kv = Penhas::KeyValueStorage->instance;
-    $self->helper(kv                    => sub {$kv});
-    $self->helper(schema                => \&Penhas::SchemaConnected::get_schema);
-    $self->helper(schema2               => \&Penhas::SchemaConnected::get_schema2);
-    $self->helper(sum_cpf_errors        => \&sum_cpf_errors);
-    $self->helper(rs_user_by_preference => \&rs_user_by_preference);
+    $c->helper(kv                    => sub {$kv});
+    $c->helper(schema                => \&Penhas::SchemaConnected::get_schema);
+    $c->helper(schema2               => \&Penhas::SchemaConnected::get_schema2);
+    $c->helper(sum_cpf_errors        => \&sum_cpf_errors);
+    $c->helper(rs_user_by_preference => \&rs_user_by_preference);
 
-    $self->helper(user_notifications_clear_cache  => \&user_notifications_clear_cache);
-    $self->helper(user_notifications_unread_count => \&user_notifications_unread_count);
 
-    $self->helper(
+
+    $c->helper(
         respond_to_if_web => sub {
             my $c = shift;
 
@@ -60,7 +61,7 @@ sub setup {
         }
     );
 
-    $self->helper(
+    $c->helper(
         assert_user_has_module => sub {
             my $c      = shift;
             my $module = shift or confess 'missing param $module';
@@ -77,14 +78,14 @@ sub setup {
         }
     );
 
-    $self->helper(
+    $c->helper(
         accept_html => sub {
             my $c = shift;
             return ($c->req->headers->header('accept') || '') =~ /html/ ? 1 : 0;
         }
     );
 
-    $self->helper(
+    $c->helper(
         remote_addr => sub {
             my $c = shift;
 
@@ -112,18 +113,18 @@ sub setup {
     );
 
 
-    $self->helper('reply.exception' => sub { Penhas::Controller::reply_exception(@_) });
-    $self->helper('reply.not_found' => sub { Penhas::Controller::reply_not_found(@_) });
-    $self->helper('user_not_found'  => sub { Penhas::Controller::reply_not_found(@_, type => 'user_not_found') });
+    $c->helper('reply.exception' => sub { Penhas::Controller::reply_exception(@_) });
+    $c->helper('reply.not_found' => sub { Penhas::Controller::reply_not_found(@_) });
+    $c->helper('user_not_found'  => sub { Penhas::Controller::reply_not_found(@_, type => 'user_not_found') });
 
-    $self->helper('reply_invalid_param' => sub { Penhas::Controller::reply_invalid_param(@_) });
+    $c->helper('reply_invalid_param' => sub { Penhas::Controller::reply_invalid_param(@_) });
 }
 
 sub sum_cpf_errors {
-    my ($self, %opts) = @_;
+    my ($c, %opts) = @_;
 
     # contar quantas vezes o IP ja errou no ultimo dia
-    my $total = $self->schema2->resultset('CpfErro')->search(
+    my $total = $c->schema2->resultset('CpfErro')->search(
         {
             'reset_at'  => {'>' => DateTime->now->datetime(' ')},
             'remote_ip' => ($opts{remote_ip} or croak 'missing remote_ip'),
@@ -145,11 +146,11 @@ create view view_user_preferences as
 =cut
 
 sub rs_user_by_preference {
-    my ($self, $pref_name, $pref_value, $as_hashref) = @_;
+    my ($c, $pref_name, $pref_value, $as_hashref) = @_;
 
     $as_hashref ||= 1;
 
-    my $rs = $self->schema2->resultset('ViewUserPreference')->search(
+    my $rs = $c->schema2->resultset('ViewUserPreference')->search(
         {
             name  => $pref_name,
             value => $pref_value,
@@ -161,55 +162,6 @@ sub rs_user_by_preference {
     );
     return $rs;
 
-}
-
-sub user_notifications_unread_count {
-    my ($self, $user_id) = @_;
-
-    croak '$user_id is not defined' unless defined $user_id;
-
-    return $self->kv->redis_get_cached_or_execute(
-        'unreadntfcount:' . $user_id,
-        86400,    # 24 hours
-        sub {
-            my %extracond = (
-                'me.created_at' => {
-                    '>=' => $self->schema2->resultset('ClientesAppNotification')->search({cliente_id => $user_id})
-                      ->get_column('read_until')->as_query()
-                }
-            );
-            my $iteration = 0;
-          AGAIN:
-            my $count = $self->schema2->resultset('NotificationLog')->search(
-                {
-                    'me.cliente_id' => $user_id,
-                    %extracond,
-                },
-                {
-                    join => 'cliente',
-                }
-            )->count;
-
-            # se não tem nenhuma, talvez seja pq a subquery retornou null, entao vamos contar novamente
-            # sem o where de me.created_at <= (subquery) pq a tabela ClientesAppNotification ainda esta vazia
-            if (!$count && $iteration == 0) {
-                %extracond = ();
-                $iteration++;    # não deixa entrar em loop, caso realmente não tenha nenhuma notificação
-                goto AGAIN;
-            }
-
-            return $count;
-        }
-    );
-
-}
-
-sub user_notifications_clear_cache {
-    my ($self, $user_id) = @_;
-
-    croak '$user_id is not defined' unless defined $user_id;
-
-    return $self->kv->redis_del('unreadntfcount:' . $user_id);
 }
 
 1;

@@ -59,8 +59,17 @@ sub new_notification_timeline {
     if ($tweet->disable_escape && $content =~ /\</) {
         $content = Mojo::DOM->new($content)->all_text;
     }
-    if ($type eq 'new_like' && length($content) > 100) {
+    if (length($content) > 100) {
         $content = substr($content, 0, 100) . '…';
+    }
+
+    my $comment = $opts->{comment};
+    if (defined $comment && length($comment) > 100) {
+        $comment = substr($comment, 0, 100) . '…';
+    }
+
+    if ($type eq 'new_comment') {
+        $content = '❝' . $comment . '❞ na publicação ' . $content;
     }
 
     my $message = {
@@ -69,7 +78,7 @@ sub new_notification_timeline {
         content    => $content,
         meta       => to_json({tweet_id => $tweet->id}),
         subject_id => $opts->{subject_id},
-        created_at => \'now()',
+        created_at => \'now(6)',
     };
     my @subjects;
 
@@ -95,7 +104,7 @@ sub new_notification_timeline {
                         [
                             $_->{cliente_id},
                             $message_row->id,
-                            \'NOW()'
+                            \'NOW(6)'
                         ]
                     } @clientes
                 ]

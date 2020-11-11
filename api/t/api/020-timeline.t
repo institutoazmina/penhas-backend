@@ -409,7 +409,7 @@ sub _test_notifications {
         my $comment2 = $t->post_ok(
             (join '/', '/timeline', $tweet_id, 'comment'),
             {'x-api-key' => $session},
-            form => {content => 'test2'}
+            form => {content => 'comment'}
         )->status_is(200)->tx->res->json;
 
         trace_popall;
@@ -440,7 +440,7 @@ sub _test_notifications {
         my $comment2_subcomment = $t->post_ok(
             (join '/', '/timeline', $comment2->{id}, 'comment'),
             {'x-api-key' => $session},
-            form => {content => 'test2'}
+            form => {content => 'subcomment'}
         )->status_is(200)->tx->res->json;
 
         trace_popall;
@@ -471,6 +471,34 @@ sub _test_notifications {
             ('/me/unread-notif-count'),
             {'x-api-key' => $session},
         )->status_is(200)->json_is('/count', 4, '4 unread notifications');
+
+        $t->get_ok(
+            ('/me/notifications'),
+            {'x-api-key' => $session},
+            form => {rows => 3}
+          )->status_is(200, 'notifications page1')    #
+          ->json_is('/has_more', 1, 'has more')                                 #
+          ->json_has('/next_page', 'next_page')                                 #
+          ->json_is('/rows/0/content', 'subcomment')                            #
+          ->json_is('/rows/0/title',   'curtiu seu comentário')                 #
+          ->json_is('/rows/1/content', '❝subcomment❞ na publicação comment')    #
+          ->json_is('/rows/1/title',   'comentou seu comentário')               #
+          ->json_is('/rows/2/content', 'ijime dame zettai')                     #
+          ->json_is('/rows/2/title',   'curtiu sua publicação');
+
+        $t->get_ok(
+            ('/me/notifications'),
+            {'x-api-key' => $session},
+            form => {next_page => last_tx_json->{next_page}}
+          )->status_is(200, 'notifications next_page')                          #
+          ->json_is('/has_more',       0,     'has more')                            #
+          ->json_is('/next_page',      undef, 'next_page not defined')               #
+          ->json_is('/rows/0/content', '❝test1❞ na publicação ijime dame zettai')    #
+          ->json_is('/rows/0/title',   'comentou sua publicação');
+        $t->get_ok(
+            ('/me/unread-notif-count'),
+            {'x-api-key' => $session},
+        )->status_is(200)->json_is('/count', 0, '0 unread notifications');
 
     };
 }

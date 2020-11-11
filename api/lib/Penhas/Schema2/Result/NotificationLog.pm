@@ -18,6 +18,12 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
+  "created_at",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
   "cliente_id",
   {
     data_type => "integer",
@@ -30,12 +36,6 @@ __PACKAGE__->add_columns(
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 0,
-  },
-  "created_at",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
     is_nullable => 0,
   },
 );
@@ -54,8 +54,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-05 17:09:19
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3OG/gxx8EzXV8ivJvWn+VQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-10 18:26:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BIuHMUoxR0Tn/flxDJZkPw
 
 # ALTER TABLE notification_log ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE CASCADE;
 # ALTER TABLE notification_log ADD FOREIGN KEY (notification_message_id) REFERENCES notification_message(id) ON DELETE RESTRICT ON UPDATE RESTRICT;

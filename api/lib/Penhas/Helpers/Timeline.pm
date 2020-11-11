@@ -257,7 +257,7 @@ sub add_tweet {
                 'new_notification',
                 [
                     'new_comment',
-                    {tweet_id => $reply_to, subject_id => $subject_id}
+                    {tweet_id => $reply_to, subject_id => $subject_id, comment => $content}
                 ] => {
                     attempts => 5,
                 }
