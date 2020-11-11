@@ -154,9 +154,11 @@ sub ponto_apoio_list {
     my $dias_funcionamento = exists $opts{dias_funcionamento} ? $opts{dias_funcionamento} : undef;
 
     confess '$categorias is not arrayref' if $categorias && ref $categorias ne 'ARRAY';
-    $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}] if $ENV{FILTER_PONTO_APOIO_CATS} && !$as_csv;
 
     my $filter_projeto_id = $c->_project_id_by_label(%opts);
+
+    $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}]
+      if $ENV{FILTER_PONTO_APOIO_CATS} && !$as_csv && !$filter_projeto_id;
 
     $c->reply_invalid_param('Distância precisa ser menor que 5000km', 'form_error', 'max_distance')
       if $max_distance > 5000;
