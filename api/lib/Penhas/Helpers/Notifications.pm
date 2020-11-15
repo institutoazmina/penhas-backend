@@ -97,8 +97,8 @@ sub user_notifications {
         pop @rows;
         $cur_count--;
     }
-    my $last_timestamp  = $rows[-1]{created_at};
-    my $first_timestamp = $rows[0]{created_at};
+    my $last_timestamp  = @rows ? $rows[-1]{created_at} : undef;
+    my $first_timestamp = @rows ? $rows[0]{created_at}  : undef;
 
     my @not_in;
     my @output_rows;
