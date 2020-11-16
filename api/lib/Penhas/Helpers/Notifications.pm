@@ -108,12 +108,14 @@ sub user_notifications {
         push @not_in,     $r->{id}                            if $r->{created_at} eq $last_timestamp;
         push @load_users, $notification_message->{subject_id} if $notification_message->{subject_id};
 
+        $notification_message->{icon} ||= 0;
+
         push @output_rows, {
             content     => $notification_message->{content},
             title       => $notification_message->{title},
             time        => pg_timestamp2iso_8601($notification_message->{created_at}),
+            icon        => $ENV{DEFAULT_NOTIFICATION_ICON} . '/' . $notification_message->{icon} . '.svg',
             _subject_id => $notification_message->{subject_id},
-            (is_test() ? (_log_created_at => $r->{created_at}) : ())
         };
     }
 
@@ -125,7 +127,7 @@ sub user_notifications {
         },
         {
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-            columns      => ['id', 'apelido', 'avatar_url'],
+            columns      => ['id', 'apelido'],
         }
     )->all;
 
@@ -135,15 +137,12 @@ sub user_notifications {
 
         # nao tem, eh anonimo ou postado
         if (!defined $subject_id) {
-            $r->{icon} = $ENV{DEFAULT_NOTIFICATION_ICON};
             $r->{name} = 'PenhaS';
         }
         elsif ($subject) {
-            $r->{icon} = $subject->{avatar_url} || $ENV{AVATAR_PADRAO_URL};
             $r->{name} = $subject->{apelido};
         }
         else {
-            $r->{icon} = $ENV{AVATAR_ANONIMO_URL};
             $r->{name} = 'Anônimo';
         }
     }

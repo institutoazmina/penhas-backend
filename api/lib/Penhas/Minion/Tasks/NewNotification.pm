@@ -53,7 +53,12 @@ sub new_notification_timeline {
         new_comment => $has_parent ? 'NOTIFY_COMMENTS_POSTS_COMMENTED' : 'NOTIFY_COMMENTS_POSTS_CREATED',
         new_like    => $has_parent ? 'NOTIFY_LIKES_POSTS_COMMENTED'    : 'NOTIFY_LIKES_POSTS_CREATED',
     };
+    my $icons = {
+        new_comment => 2,    # icones na pasta public/i/
+        new_like    => 3,
+    };
     my $preference_name = $prefs->{$type};
+    my $icon            = $icons->{$type};
 
     my $content = $tweet->content;
     if ($tweet->disable_escape && $content =~ /\</) {
@@ -79,6 +84,7 @@ sub new_notification_timeline {
         meta       => to_json({tweet_id => $tweet->id}),
         subject_id => $opts->{subject_id},
         created_at => \'now(6)',
+        icon       => $icon,
     };
     my @subjects;
 

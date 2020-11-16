@@ -481,8 +481,10 @@ sub _test_notifications {
           ->json_has('/next_page', 'next_page')                                 #
           ->json_is('/rows/0/content', 'subcomment')                            #
           ->json_is('/rows/0/title',   'curtiu seu comentário')                 #
+          ->json_like('/rows/0/icon', qr/3\.svg/, 'icon ok')                    #
           ->json_is('/rows/1/content', '❝subcomment❞ na publicação comment')    #
           ->json_is('/rows/1/title',   'comentou seu comentário')               #
+          ->json_like('/rows/1/icon', qr/2\.svg/, 'icon ok')                    #
           ->json_is('/rows/2/content', 'ijime dame zettai')                     #
           ->json_is('/rows/2/title',   'curtiu sua publicação');
 

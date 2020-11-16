@@ -39,6 +39,8 @@ __PACKAGE__->add_columns(
   { data_type => "text", default_value => "'{}'", is_nullable => 0 },
   "subject_id",
   { data_type => "integer", is_nullable => 1 },
+  "icon",
+  { data_type => "integer", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -49,8 +51,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-07 20:28:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/5CPs4sFm2NiArHqnsPo7Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-16 06:18:51
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+5a2zOsNpngusMTUEC+6Hg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

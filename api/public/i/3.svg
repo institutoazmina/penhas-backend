@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512px" height="450px" viewBox="0 0 512 450" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>curtida_heart_outline</title>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="curtida_heart_outline" fill="#0A115F" fill-rule="nonzero">
+            <path d="M458.4,33.3 C400.6,-15.3 311.3,-8 256,48.3 C200.7,-8 111.4,-15.4 53.6,33.3 C-21.6,96.6 -10.6,199.8 43,254.5 L218.4,433.2 C228.4,443.4 241.8,449.1 256,449.1 C270.3,449.1 283.6,443.5 293.6,433.3 L469,254.6 C522.5,199.9 533.7,96.7 458.4,33.3 Z M434.8,220.8 L259.4,399.5 C257,401.9 255,401.9 252.6,399.5 L77.2,220.8 C40.7,183.6 33.3,113.2 84.5,70.1 C123.4,37.4 183.4,42.3 221,80.6 L256,116.3 L291,80.6 C328.8,42.1 388.8,37.4 427.5,70 C478.6,113.1 471,183.9 434.8,220.8 L434.8,220.8 Z" id="Shape"></path>
+        </g>
+    </g>
+</svg>
