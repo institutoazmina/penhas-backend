@@ -72,8 +72,8 @@ sub _pa_list {
 
         $c->merge_validate_request_params(
             $valid,
-            latitude  => {max_length => 16, required => $gps_required, type => Latitute},
-            longitude => {max_length => 16, required => $gps_required, type => Longitude},
+            latitude  => {max_length => 20, required => $gps_required, type => Latitute},
+            longitude => {max_length => 20, required => $gps_required, type => Longitude},
         );
     }
 
