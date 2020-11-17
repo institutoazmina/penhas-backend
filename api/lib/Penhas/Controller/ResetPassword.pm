@@ -130,7 +130,7 @@ sub write_new {
     my $dry   = delete $params->{dry};
     if (!$dry) {
         $c->validate_request_params(
-            senha => {max_length => 200, required => 1, type => 'Str', min_length => 6},
+            senha => {max_length => 200, required => 1, type => 'Str', min_length => 8},
         );
     }
     my $email = lc(delete $params->{email});
