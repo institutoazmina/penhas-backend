@@ -222,7 +222,7 @@ sub validate_request_params {
             if (defined($min_len) && $len < $min_len) {
                 my %msg = %def_message;
                 $c->log->debug($val);
-                $msg{message} .= ' mínimo: ' . $max_len . ' enviado: ' . $len;
+                $msg{message} .= ' mínimo: ' . $min_len . ' enviado: ' . $len;
                 die {error => 'form_error', field => $key, reason => 'invalid_min_length', %msg, status => 400};
             }
         }

@@ -55,7 +55,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
             nome_completo => $nome_completo,
             cpf           => $random_cpf,
             email         => $random_email,
-            senha         => '123456',
+            senha         => 'WSDAWW55',
             cep           => '12345678',
             dt_nasc       => '1994-01-31',
             @other_fields,

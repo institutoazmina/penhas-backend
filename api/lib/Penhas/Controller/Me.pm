@@ -8,6 +8,7 @@ use MooseX::Types::Email qw/EmailAddress/;
 use Digest::SHA qw/sha256_hex/;
 use Scope::OnExit;
 use Penhas::Controller::Logout;
+use Penhas::Utils qw/check_password_or_die/;
 
 sub check_and_load {
     my $c = shift;
@@ -137,6 +138,7 @@ sub me_update {
     }
 
     if (exists $valid->{senha} && $valid->{senha}) {
+        check_password_or_die($valid->{senha});
         $valid->{senha_sha256} = lc(sha256_hex(delete $valid->{senha}));
     }
 

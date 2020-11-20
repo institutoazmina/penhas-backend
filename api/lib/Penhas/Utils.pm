@@ -50,6 +50,7 @@ state $text_xslate = Text::Xslate->new(
   db_epoch_to_etag
   pg_timestamp2human
   notifications_enabled
+  check_password_or_die
 );
 
 
@@ -222,4 +223,16 @@ sub notifications_enabled {
     $ENV{NOTIFICATIONS_ENABLED} || 0;
 }
 
+sub check_password_or_die {
+    my $pass = shift();
+    if ($pass =~ /^(12345.*|picture1|password|111111.*|123123.*|senha)$/i) {
+        die {
+            error   => 'pass_too_weak',
+            message => 'A senha utilizada é muito simples, utlize uma senha melhor .',
+            field   => 'senha',
+            reason  => 'invalid'
+        };
+    }
+    return;
+}
 1;

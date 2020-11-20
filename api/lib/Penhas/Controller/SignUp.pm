@@ -6,7 +6,7 @@ use Scope::OnExit;
 use DateTime;
 use Digest::SHA qw/sha256_hex/;
 use Penhas::Logger;
-use Penhas::Utils qw/random_string random_string_from is_test cpf_hash_with_salt/;
+use Penhas::Utils qw/random_string random_string_from is_test cpf_hash_with_salt check_password_or_die/;
 use Scope::OnExit;
 use Convert::Z85;
 use Crypt::PRNG qw(random_bytes);
@@ -58,6 +58,8 @@ sub post {
         else {
             $params->{nome_social} = '';
         }
+
+        check_password_or_die($params->{senha});
     }
 
     $params->{cpf} =~ s/[^\d]//ga;
