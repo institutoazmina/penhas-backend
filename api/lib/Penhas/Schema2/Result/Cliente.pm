@@ -348,8 +348,8 @@ sub access_modules_as_config {
             audio_each_duration => '30',
             audio_full_duration => '900',
 
-            audio_each_duration => '900',
-            audio_full_duration => '900',
+            #audio_each_duration => '900',
+            #audio_full_duration => '900',
         },
         tweets => {
             max_length => 2200,
