@@ -9,7 +9,7 @@
     <p class="p-top">Tenha acesso a folders, posteres e outros materiais para espalhar a conscientização.</p>
 
     <div class="text-center">
-        <a href="https://azmina.com.br/" target="_blank" class="btn btn-lg btn-acessar">Acessar materiais</a>
+        <a href="https://azmina.com.br/penhas-saiba-mais/" target="_blank" class="btn btn-lg btn-acessar">Acessar materiais</a>
     </div>
 
     </div> <!-- divgray -->
@@ -54,8 +54,11 @@
 
         </div>
         <!-- Accordion wrapper -->
-    </div>
+        <div class="text-center">
+            <a href="https://azmina.com.br/" target="_blank" class="btn btn-lg btn-acessar">Não encontrei o que preciso</a>
+        </div>
     <!-- div white -->
+    </div>
     % }
 
 </main>

@@ -58,5 +58,6 @@ a.faq-sobre-link, a.faq-sobre-link:visited, a.faq-sobre-link:hover, a.faq-sobre-
 .btn-acessar, .btn-acessar:hover, .btn-acessar:active,.btn-acessar:visited {
     background-color: #9f63ff;
     color: white;
+    font-size: 18px;
     border-radius: 30px;
 }
