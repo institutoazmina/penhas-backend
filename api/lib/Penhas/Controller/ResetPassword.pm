@@ -93,7 +93,7 @@ sub request_new {
             subject   => 'PenhaS - Recuperação de senha',
             variables => encode_json(
                 {
-                    nome_completo => $found->{nome_completo},
+                    nome_completo => $found->nome_completo,
                     code          => $item->token,
                     remote_ip     => $remote_ip,
                     app_version   => $params->{app_version},

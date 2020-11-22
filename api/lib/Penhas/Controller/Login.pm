@@ -38,7 +38,9 @@ sub post {
     my $found_obj = $c->schema2->resultset('Cliente')->search(
         {email => $email, status => {in => ['deleted_scheduled', 'active', 'banned']}},
     )->next;
-    my $found = $found_obj ? {$found_obj->get_columns()} : undef;
+    my $found         = $found_obj ? {$found_obj->get_columns()} : undef;
+    my $error_message = 'Você ainda não possui cadastro conosco.';
+
     if ($found) {
         my $directus_id = $found->{id};
         if ($found->{login_status} eq 'NOK' && $found->{login_status_last_blocked_at}) {
@@ -94,7 +96,7 @@ sub post {
                     }
                 );
             }
-
+            $error_message = 'E-mail ou senha inválida.';
             goto WRONG_PASS;
         }
     }
@@ -103,7 +105,7 @@ sub post {
 
     die {
         error   => 'wrongpassword',
-        message => 'E-mail ou senha inválida.',
+        message => $error_message,
         field   => 'password',
         reason  => 'invalid'
     };

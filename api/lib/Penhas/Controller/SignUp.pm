@@ -112,7 +112,7 @@ sub post {
 
         die {
             error   => 'cpf_not_match',
-            message => 'A data de nascimento não confere com o titular do CPF.',
+            message => 'Data de nascimento não confere com o CPF.',
             field   => 'dt_nasc',
             reason  => 'invalid',
         };
@@ -131,12 +131,9 @@ sub post {
 
         die {
             error   => 'name_not_match',
-            message => sprintf(
-                'O nome informado (%s) não confere com o titular do CPF. Preencha exatamente como está no documento.',
-                $nome_titular
-            ),
-            field  => 'nome_completo',
-            reason => 'invalid',
+            message => 'Nome deve ser escrito igual ao do seu CPF.',
+            field   => 'nome_completo',
+            reason  => 'invalid',
         };
     }
 
