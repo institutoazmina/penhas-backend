@@ -197,7 +197,16 @@ sub me_unread_notif_count {
     my $count = $c->user_notifications_unread_count($c->stash('user_id'));
 
     if ($c->stash('user_id') == 180 || $c->stash('user_id') == 3933) {
-        $count = int(rand() * 1000);
+        $count = int(rand() * 10000);
+        if ($count =~ /^[12]/) {
+        $count = 1 + substr($count, -2, 1);
+    }
+    elsif ($count =~ /^[345]/) {
+        $count = substr($count, 0, 2);
+    }
+    elsif ($count =~ /^[67]/) {
+        $count = substr($count, 0, 3);
+    }
     }
     return $c->render(
         json   => {count => $count},
