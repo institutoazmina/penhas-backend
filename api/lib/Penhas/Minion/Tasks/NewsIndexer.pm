@@ -6,6 +6,7 @@ use utf8;
 use Penhas::Logger;
 use Mojo::UserAgent;
 use Penhas::KeyValueStorage;
+use Mojo::URL;
 
 sub register {
     my ($self, $app) = @_;
@@ -56,9 +57,7 @@ sub news_indexer {
 
     $ENV{MOJO_INSECURE} = 1;
     slog_info('Downloading %s...', $news->{hyperlink});
-    my $response = $ua->get($news->{hyperlink}, {
-        'User-Agent' => 'Indexador Feed RSS azmina.com.br'
-    })->result;
+    my $response = $ua->get($news->{hyperlink}, {'User-Agent' => 'Indexador Feed RSS azmina.com.br'})->result;
 
     my $dom = $response->dom;
     if ($response->code != 200) {
@@ -84,6 +83,10 @@ sub news_indexer {
         $og_image = $og_image->attr('content');
     }
 
+    # se nao eh root
+    if ($og_image !~ /https?\:\//) {
+        $og_image = Mojo::URL->new($news->{hyperlink})->host() . $og_image;
+    }
 
     my $log = '';
 
@@ -180,7 +183,7 @@ sub news_indexer {
 
             slog_debug("\%s TRUE test is $test_true",   $test);
             slog_debug("\%s FALSE test is $test_false", $test) if $test_false;
-            slog_debug('--> %s 「%s」',               $test, $content || '(not set)');
+            slog_debug('--> %s 「%s」',                   $test, $content || '(not set)');
             if (!$content) {
                 $logthis->("$test content is empty, skipping matching column");
                 next;
@@ -222,7 +225,7 @@ sub news_indexer {
                     indexed_at      => \'NOW()',
                     published       => is_test() ? 'published:testing' : 'published',
                     indexed         => '1',
-                    logs            => \["CONCAT(COALESCE(logs,''), ?)", $log],
+                    logs            => \["CONCAT(COALESCE(logs,''), ?)",            $log],
                     image_hyperlink => \["COALESCE(nullif(image_hyperlink,''), ?)", $og_image],
                     has_topic_tags  => (
                         scalar @tags
