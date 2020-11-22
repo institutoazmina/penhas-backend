@@ -26,7 +26,8 @@ h4, div.card-header h5 {
 a.faq-sobre-link, a.faq-sobre-link:visited, a.faq-sobre-link:hover, a.faq-sobre-link:active {
     color: #f982b4;
     text-decoration: underline;
-    padding-top: 1em;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
     display: block;
 }
 .card, .card-header {
@@ -43,10 +44,19 @@ a.faq-sobre-link, a.faq-sobre-link:visited, a.faq-sobre-link:hover, a.faq-sobre-
     background-image: url(/web-assets/left.svg);
     background-repeat: no-repeat;
     background-position: right;
+    font-size: 16px;
 }
 .card-header>a.collapsed h5 {
     background-image: url(/web-assets/down.svg);
 }
 .card-body-nopad{
     padding: 0;
+}
+.p-top{
+    padding-top: 0.5em;
+}
+.btn-acessar, .btn-acessar:hover, .btn-acessar:active,.btn-acessar:visited {
+    background-color: #9f63ff;
+    color: white;
+    border-radius: 30px;
 }
