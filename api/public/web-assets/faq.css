@@ -1,3 +1,6 @@
+html,body {
+    background-color: #ffffff;
+}
 .divgray {
     background-color: #f8f8f8;
     color: #0a115f;
@@ -12,8 +15,10 @@
 
 .h-need-help, div.card-header h5 {
     text-align: left;
-
     font-weight: 700;
+}
+.h-need-help {
+    padding-top: 0.5em;
 }
 h4, div.card-header h5 {
     color: #0a115f;
@@ -26,4 +31,7 @@ a.faq-sobre-link, a.faq-sobre-link:visited, a.faq-sobre-link:hover, a.faq-sobre-
     border:none;
     padding-left: 0;
     padding-right: 0;
+}
+.btn-back-faq, .btn-back-faq:visited, .btn-back-faq:active,.btn-back-faq:hover {
+    color: #f982b4;
 }

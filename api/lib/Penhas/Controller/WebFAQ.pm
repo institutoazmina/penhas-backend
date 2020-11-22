@@ -16,6 +16,11 @@ sub apply_rps {
 
     $c->stash(template => 'webfaq/index');
 
+    return 1;
+}
+
+sub webfaq_index {
+    my $c    = shift;
     my @faqs = $c->schema2->resultset('FaqTelaSobre')->search(
         {
             'me.status'             => 'published',
@@ -49,17 +54,30 @@ sub apply_rps {
         }
         push $current_cat->{rows}->@*, $item;
     }
-
-    use DDP;
-    p $faqs_by_cat;
     $c->stash(faqs_by_cat => $faqs_by_cat);
 
-    return 1;
+    return $c->render(html => {});
 }
 
-sub webfaq_index {
-    my $c = shift;
+sub webfaq_detail {
+    my $c  = shift;
+    my $id = $c->param('faq_id');
+    if ($id =~ /^\d+$/) {
+        $c->stash(
+            faq => $c->schema2->resultset('FaqTelaSobre')->search(
+                {
+                    'me.status' => 'published',
+                    'me.id'     => $id,
+                },
+                {
+                    columns      => [qw/me.id me.title me.content_html/],
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+                }
+            )->next
+        );
+    }
 
+    $c->stash(template => 'webfaq/detail');
 
     return $c->render(html => {});
 }

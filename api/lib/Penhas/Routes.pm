@@ -41,6 +41,9 @@ sub register {
     my $faq = $r->under('web/faq')->to(controller => 'WebFAQ', action => 'apply_rps');
     $faq->get()->to(action => 'webfaq_index');
 
+    my $faq_detail = $r->under('web/faq/:faq_id')->to(controller => 'WebFAQ', action => 'apply_rps');
+    $faq_detail->get()->to(action => 'webfaq_detail');
+
     # GET /geocode
     $r->route('geocode')->get()->to(controller => 'PontoApoio', action => 'public_geocode');
 
