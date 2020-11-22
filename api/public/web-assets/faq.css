@@ -24,7 +24,10 @@ h4, div.card-header h5 {
     color: #0a115f;
 }
 a.faq-sobre-link, a.faq-sobre-link:visited, a.faq-sobre-link:hover, a.faq-sobre-link:active {
-    color: #f982b4
+    color: #f982b4;
+    text-decoration: underline;
+    padding-top: 1em;
+    display: block;
 }
 .card, .card-header {
     background: none;
@@ -43,4 +46,7 @@ a.faq-sobre-link, a.faq-sobre-link:visited, a.faq-sobre-link:hover, a.faq-sobre-
 }
 .card-header>a.collapsed h5 {
     background-image: url(/web-assets/down.svg);
+}
+.card-body-nopad{
+    padding: 0;
 }

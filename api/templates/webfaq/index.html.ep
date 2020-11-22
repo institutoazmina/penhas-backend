@@ -33,11 +33,9 @@
             <!-- Card body -->
             <div id="collapse<%== $cat->{id} %>" class="collapse" role="tabpanel" aria-labelledby="heading<%== $cat->{id} %>"
               data-parent="#accordionEx">
-              <div class="card-body">
+              <div class="card-body card-body-nopad">
               % for my $faq (@{$cat->{rows}}) {
-                <p>
-                    <a class="faq-sobre-link" href="/web/faq/<%== $faq->{id} %>"><%= $faq->{title} %></a>
-                </p>
+                <a class="faq-sobre-link" href="/web/faq/<%== $faq->{id} %>"><%= $faq->{title} %></a>
               % }
               </div>
             </div>

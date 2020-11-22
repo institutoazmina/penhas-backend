@@ -1,10 +1,5 @@
 <main role="main">
 
-    <div class="divgray">
-        <A class="btn-back-faq" href="javascript:history.go(-1)">Voltar para Perguntas</a>
-    </div> <!-- divgray -->
-
-
     % if (my $faq = stash ('faq') ) {
     <div class="divwhite">
     <h4 class="h-need-help"><%= $faq->{title} %></h4>
@@ -14,5 +9,8 @@
     </div><!-- div white -->
 
     % }
+    <div class="divgray">
+        <A class="btn-back-faq" href="javascript:history.go(-1)">Voltar para Perguntas</a>
+    </div> <!-- divgray -->
 
 </main>
