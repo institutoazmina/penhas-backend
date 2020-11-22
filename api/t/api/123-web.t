@@ -62,7 +62,10 @@ $c2->faq_tela_sobres->create(
 
 $t->get_ok(
     '/web/faq',
-)->status_is(200, 'puxando faq');
+  )->status_is(200, 'puxando faq')    #
+  ->element_count_is('a.faq-sobre-link', '3', '3 links faq')                    #
+  ->text_like('div[id=heading' . $c1->id . '] h5', qr/Cat1/, 'cat1 present')    #
+  ->text_like('div[id=heading' . $c2->id . '] h5', qr/Cat2/, 'cat2 present');
 
 
 done_testing();
