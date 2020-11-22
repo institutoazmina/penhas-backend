@@ -36,6 +36,7 @@ a.faq-sobre-link, a.faq-sobre-link:visited, a.faq-sobre-link:hover, a.faq-sobre-
     color: #f982b4;
 }
 .card-header>a h5 {
+    padding-right: 20px;
     background-image: url(/web-assets/left.svg);
     background-repeat: no-repeat;
     background-position: right;
