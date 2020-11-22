@@ -207,7 +207,6 @@ sub me_unread_notif_count {
         elsif ($count =~ /^[67]/) {
             $count = substr($count, 0, 3);
         }
-        $count = 'mais+99' if $count>99;
     }
     return $c->render(
         json   => {count => $count},
