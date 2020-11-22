@@ -37,6 +37,10 @@ sub register {
     $guardioes->get()->to(action => 'get');
     $guardioes->post()->to(action => 'post');
 
+    # GET /web/faq
+    my $faq = $r->under('web/faq')->to(controller => 'WebFAQ', action => 'apply_rps');
+    $faq->get()->to(action => 'webfaq_index');
+
     # GET /geocode
     $r->route('geocode')->get()->to(controller => 'PontoApoio', action => 'public_geocode');
 

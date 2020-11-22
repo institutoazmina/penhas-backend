@@ -1,0 +1,55 @@
+<main role="main">
+
+    <div class="divgray">
+
+    <p>Quia ipsum facilis in a consequatur praesentium non. Id aut corporis consequatur voluptatem. Placeat et explicabo porro veritatis. Eum dicta error commodi. Eum possimus repellat in est molestiae corporis.</p>
+
+    </div> <!-- divgray -->
+
+
+    % if (my $cats = stash ('faqs_by_cat') ) {
+    <div class="divwhite">
+    <h4 class="h-need-help">Perguntas frequentes</h4>
+
+    <p>Tire suas dúvidas sobre o PenhaS e saiba tudo sobre as funcionalidades do aplicativo.</p>
+
+    <!--Accordion wrapper-->
+        <div class="accordion md-accordion" id="accordionEx" role="tablist" aria-multiselectable="true">
+
+          % for my $cat (@$cats) {
+          <!-- Accordion card -->
+          <div class="card">
+
+            <!-- Card header -->
+            <div class="card-header" role="tab" id="heading<%== $cat->{id} %>">
+              <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx" href="#collapse<%== $cat->{id} %>"
+                aria-expanded="false" aria-controls="collapse<%== $cat->{id} %>">
+                <h5 class="mb-0">
+                  <%== $cat->{title} %>
+                </h5>
+              </a>
+            </div>
+
+            <!-- Card body -->
+            <div id="collapse<%== $cat->{id} %>" class="collapse" role="tabpanel" aria-labelledby="heading<%== $cat->{id} %>"
+              data-parent="#accordionEx">
+              <div class="card-body">
+              % for my $faq (@{$cat->{rows}}) {
+                <p>
+                    <a class="faq-sobre-link" href="/web/faq/<%== $faq->{id} %>"><%== $faq->{title} %></a>
+                </p>
+              % }
+              </div>
+            </div>
+
+          </div>
+          % }
+          <!-- Accordion card -->
+
+        </div>
+        <!-- Accordion wrapper -->
+    </div>
+    <!-- div white -->
+    % }
+
+</main>

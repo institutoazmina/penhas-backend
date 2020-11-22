@@ -1,0 +1,29 @@
+.divgray {
+    background-color: #f8f8f8;
+    color: #0a115f;
+    padding: 1em;
+}
+
+.divwhite {
+    background-color: #ffffff;
+    color: #0a115f;
+    padding: 1em;
+}
+
+.h-need-help, div.card-header h5 {
+    text-align: left;
+
+    font-weight: 700;
+}
+h4, div.card-header h5 {
+    color: #0a115f;
+}
+a.faq-sobre-link, a.faq-sobre-link:visited, a.faq-sobre-link:hover, a.faq-sobre-link:active {
+    color: #f982b4
+}
+.card, .card-header {
+    background: none;
+    border:none;
+    padding-left: 0;
+    padding-right: 0;
+}
