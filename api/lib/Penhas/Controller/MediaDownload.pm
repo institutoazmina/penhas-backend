@@ -74,7 +74,7 @@ sub logged_in_get_media {
         )->catch(
             sub {
                 my $err = shift;
-                $c->log->debug("Proxy error: $err");
+                $c->log->debug("Proxy error: $err while downloading $s3_path");
                 $c->render(text => 'Something went wrong!', status => 400);
             }
         );
@@ -147,7 +147,7 @@ sub public_get_proxy {
         )->catch(
             sub {
                 my $err = shift;
-                $c->log->debug("Proxy error: $err");
+                $c->log->debug("Proxy error: $err while downloading $href");
                 $c->reply->static('avatar/news.err.jpg');
             }
         );
