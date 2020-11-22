@@ -7,9 +7,9 @@
 
     % if (my $faq = stash ('faq') ) {
     <div class="divwhite">
-    <h4 class="h-need-help"><%== $faq->{title} %></h4>
+    <h4 class="h-need-help"><%= $faq->{title} %></h4>
 
-    <%= $faq->{content_html} %>
+    <%== $faq->{content_html} %>
 
     </div><!-- div white -->
 

@@ -36,7 +36,7 @@
               <div class="card-body">
               % for my $faq (@{$cat->{rows}}) {
                 <p>
-                    <a class="faq-sobre-link" href="/web/faq/<%== $faq->{id} %>"><%== $faq->{title} %></a>
+                    <a class="faq-sobre-link" href="/web/faq/<%== $faq->{id} %>"><%= $faq->{title} %></a>
                 </p>
               % }
               </div>
