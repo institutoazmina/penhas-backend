@@ -193,9 +193,14 @@ sub me_delete_text {
 }
 
 sub me_unread_notif_count {
-    my $c = shift;
+    my $c     = shift;
+    my $count = $c->user_notifications_unread_count($c->stash('user_id'));
+
+    if ($c->stash('user_id') == 180 || $c->stash('user_id') == 3933) {
+        $count = int(rand() * 1000);
+    }
     return $c->render(
-        json   => {count => $c->user_notifications_unread_count($c->stash('user_id'))},
+        json   => {count => $count},
         status => 200,
     );
 }
