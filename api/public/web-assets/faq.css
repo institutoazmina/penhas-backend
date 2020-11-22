@@ -35,3 +35,11 @@ a.faq-sobre-link, a.faq-sobre-link:visited, a.faq-sobre-link:hover, a.faq-sobre-
 .btn-back-faq, .btn-back-faq:visited, .btn-back-faq:active,.btn-back-faq:hover {
     color: #f982b4;
 }
+.card-header>a h5 {
+    background-image: url(/web-assets/left.svg);
+    background-repeat: no-repeat;
+    background-position: right;
+}
+.card-header>a.collapsed h5 {
+    background-image: url(/web-assets/down.svg);
+}
