@@ -199,14 +199,15 @@ sub me_unread_notif_count {
     if ($c->stash('user_id') == 180 || $c->stash('user_id') == 3933) {
         $count = int(rand() * 10000);
         if ($count =~ /^[12]/) {
-        $count = 1 + substr($count, -2, 1);
-    }
-    elsif ($count =~ /^[345]/) {
-        $count = substr($count, 0, 2);
-    }
-    elsif ($count =~ /^[67]/) {
-        $count = substr($count, 0, 3);
-    }
+            $count = 1 + substr($count, -2, 1);
+        }
+        elsif ($count =~ /^[345]/) {
+            $count = substr($count, 0, 2);
+        }
+        elsif ($count =~ /^[67]/) {
+            $count = substr($count, 0, 3);
+        }
+        $count = '+99' if $count>99;
     }
     return $c->render(
         json   => {count => $count},
