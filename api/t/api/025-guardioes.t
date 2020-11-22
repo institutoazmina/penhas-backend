@@ -390,9 +390,9 @@ do {
         {'x-api-key' => $session},
         form => {
             gps_lat  => '3.123456789123456',
-            gps_long => '3.1234567891234567',
+            gps_long => '3.123456789123456710',
         }
-    )->status_is(400)->json_is('/error', 'gps_position_invalid', 'maximo 15 chars')
+    )->status_is(400)->json_is('/error', 'gps_position_invalid', 'maximo 17 chars')
       ->json_is('/field', 'gps_long', 'erro no campo gps_long');
 
 

@@ -548,7 +548,7 @@ sub cliente_alert_guards {
     my $user_obj = $opts{user_obj} or confess 'missing user_obj';
 
     my %extra_db;
-    my $regex = qr/^-?\d{1,2}(?:\.\d{1,15})?$/a;
+    my $regex = qr/^-?\d{1,2}(?:\.\d{1,17})?$/a;
     for my $field (qw/gps_lat gps_long/) {
         next unless defined $opts{$field};
 
