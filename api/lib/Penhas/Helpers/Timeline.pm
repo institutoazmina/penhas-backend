@@ -551,7 +551,7 @@ sub _fomart_tweet {
             owner => $user->{id} == $me->{cliente_id} ? 1 : 0,
         },
         id               => $me->{id},
-        content          => $me->{disable_escape} ? $me->{content} : &_nl2br(xml_escape($me->{content})),
+        content          => $me->{disable_escape} ? $me->{content} : &_linkfy(&_nl2br(xml_escape($me->{content}))),
         anonimo          => $anonimo              ? 1              : 0,
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
@@ -563,6 +563,12 @@ sub _fomart_tweet {
         ($anonimo ? (cliente_id => 0) : (cliente_id => $me->{cliente_id})),
 
     };
+}
+
+sub _linkfy {
+    my ($text) = @_;
+    $text =~ s/(https?:\/\/(?:www\.|(?!www))[^\s.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})/<a href="$1">$1<\/a>/g;
+    return $text;
 }
 
 sub _nl2br {
