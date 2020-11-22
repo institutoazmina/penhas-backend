@@ -83,9 +83,12 @@ sub news_indexer {
         $og_image = $og_image->attr('content');
     }
 
-    # se nao eh root
-    if ($og_image !~ /https?\:\//) {
-        $og_image = Mojo::URL->new($news->{hyperlink})->host() . $og_image;
+    if ($og_image =~ /^\/\//) {
+        $og_image = 'https:' . $og_image;
+    }
+    elsif ($og_image !~ /^https?\:\//) {
+        my $ux = Mojo::URL->new($news->{hyperlink});
+        $og_image = $ux->scheme() . '://' . $ux->host() . $og_image;
     }
 
     my $log = '';
