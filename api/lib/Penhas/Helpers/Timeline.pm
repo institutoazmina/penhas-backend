@@ -567,7 +567,8 @@ sub _fomart_tweet {
 
 sub _linkfy {
     my ($text) = @_;
-    $text =~ s/(https?:\/\/(?:www\.|(?!www))[^\s.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})/<a href="$1">$1<\/a>/g;
+    # se nao encontrar o http, mas encontarr www, entao troca por https
+    $text =~ s/(https?:\/\/(?:www\.|(?!www))[^\s.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})/my $href =$1; $href = "https:\/\/$href" unless $href =~ \/^http\/; "<a href=\"$href\">$href<\/a>"/ge;
     return $text;
 }
 
