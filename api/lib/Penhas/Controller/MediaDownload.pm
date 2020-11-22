@@ -132,13 +132,23 @@ sub public_get_proxy {
                 if ($code == 200) {
                     $tx->result->save_to($cached_filename);
 
+                    # cache 30 dias
+                    $c->res->headers->cache_control("max-age=2592000, must-revalidate");
+
                     $c->reply->file($cached_filename);
                 }
                 else {
                     if ($code == 404) {
+
+                        # cache 1 hora
+                        $c->res->headers->cache_control("max-age=3600, must-revalidate");
+
                         $c->reply->static('avatar/news.404.jpg');
                     }
                     else {
+                        # cache 1 hora
+                        $c->res->headers->cache_control("max-age=3600, must-revalidate");
+
                         $c->reply->static('avatar/news.err.jpg');
                     }
                 }
@@ -148,6 +158,10 @@ sub public_get_proxy {
             sub {
                 my $err = shift;
                 $c->log->debug("Proxy error: $err while downloading $href");
+
+                # cache 1 hora
+                $c->res->headers->cache_control("max-age=3600, must-revalidate");
+
                 $c->reply->static('avatar/news.err.jpg');
             }
         );

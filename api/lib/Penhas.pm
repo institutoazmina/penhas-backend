@@ -46,6 +46,8 @@ sub startup {
     # servir a /public (templates de email e arquivos static)
     $self->plugin('RenderFile');
 
+    $self->plugin('StaticCache' => { even_in_dev => 1, max_age => 31536000 });
+
     # Minion (job manager)
     $self->plugin('Penhas::Minion');
 
