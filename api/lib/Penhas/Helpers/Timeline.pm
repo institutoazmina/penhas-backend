@@ -777,7 +777,7 @@ sub add_tweets_news {
     my (@vitrine, @news);
     if ($plain_news) {
         my $expected_rows = int(scalar @list / 3);
-        $expected_rows = 2 if $expected_rows < 2;
+        $expected_rows = 3 if $expected_rows < 3;
 
         log_info("asking for $expected_rows rows of Noticias");
         my $cond = {
@@ -812,7 +812,7 @@ sub add_tweets_news {
     }
     else {
         my $expected_rows = int(scalar @list / 3);
-        $expected_rows = 2 if $expected_rows < 2;
+        $expected_rows = 3 if $expected_rows < 3;
 
         log_info("asking for $expected_rows rows of NoticiasVitrine");
 
@@ -855,7 +855,7 @@ sub add_tweets_news {
 
         $news_conter++;
 
-        next unless $news_conter % 3 == 00;
+        next unless $news_conter % 3 == 0;
 
 
         if ($plain_news) {
