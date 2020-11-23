@@ -7,6 +7,7 @@ use Penhas::Logger;
 use Mojo::UserAgent;
 use Penhas::KeyValueStorage;
 use Mojo::URL;
+use Scope::OnExit;
 
 sub register {
     my ($self, $app) = @_;
@@ -20,6 +21,7 @@ sub news_indexer {
     log_trace("minion:news_indexer", $news_id);
 
     my $logger = $job->app->log;
+    my $kv     = $job->app->kv;
     my $schema = $job->app->schema2;
 
     my $filter_rs = $schema->resultset('Noticia')->search(
@@ -209,6 +211,10 @@ sub news_indexer {
     }
 
     $logthis->("\n" . 'Final tags for Noticia (%d) is %s', $news->{id}, join(', ', keys %$tags));
+
+    my ($locked, $lock_key) = $kv->lock_and_wait('news_updater', 300);
+    on_scope_exit { $kv->redis->del($lock_key) };
+    die 'cannot get locked' unless $locked;
 
     $schema->txn_do(
         sub {
