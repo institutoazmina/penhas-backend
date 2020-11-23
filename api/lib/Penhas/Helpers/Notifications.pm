@@ -139,6 +139,9 @@ sub user_notifications {
         if (!defined $subject_id) {
             $r->{name} = 'PenhaS';
         }
+        elsif ($subject_id == -1) {
+            $r->{name} = 'Suporte PenhaS';
+        }
         elsif ($subject) {
             $r->{name} = $subject->{apelido};
         }

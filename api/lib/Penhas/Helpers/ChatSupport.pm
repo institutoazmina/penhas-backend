@@ -223,7 +223,7 @@ sub support_send_message {
         my $subrs = $c->schema2->resultset('ChatClientesNotification')->search(
             {
                 cliente_id                 => $user_obj->id,
-                pending_message_cliente_id => 0,
+                pending_message_cliente_id => -1,
             }
         );
 
@@ -285,7 +285,7 @@ sub support_list_message {
             $c->schema2->resultset('ChatClientesNotification')->search(
                 {
                     cliente_id                 => $user_obj->id,
-                    pending_message_cliente_id => 0,
+                    pending_message_cliente_id => -1,
                 }
             )->delete;
 
