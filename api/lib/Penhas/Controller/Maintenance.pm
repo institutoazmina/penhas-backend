@@ -1,6 +1,8 @@
 package Penhas::Controller::Maintenance;
 use Mojo::Base 'Penhas::Controller';
 use Penhas::Logger;
+use Penhas::Utils qw/is_test/;
+use Scope::OnExit;
 
 sub check_authorization {
     my $c = shift;
@@ -56,6 +58,39 @@ sub housekeeping {
 # cria notificacoes do chat (nao leu em X tempo)
 sub tick_notifications {
     my $c = shift;
+
+    if (is_test()) {
+        &_tick_notifications($c);
+    }
+    else {
+
+        $c->subprocess(
+            sub {
+                my $start = time();
+                while (time() - $start < 50) {
+                    &_tick_notifications($c);
+                    sleep 10;
+                }
+                return 1;
+            },
+            sub {
+                # nothing
+            }
+        );
+
+    }
+
+    $c->render(json => {});
+}
+
+# cria notificacoes do chat (nao leu em X tempo)
+sub _tick_notifications {
+    my $c = shift;
+
+    my $lkey = $ENV{REDIS_NS} . '_tick_notifications';
+    my ($locked) = $c->kv->exec_function('lockSet', 3, $lkey, 50 * 1000, time());
+    return unless $locked;
+    on_scope_exit { $c->kv()->redis->del($lkey) };
 
     my $rs = $c->schema2->resultset('ChatClientesNotification');
 
