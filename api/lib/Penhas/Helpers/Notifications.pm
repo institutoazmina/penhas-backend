@@ -140,9 +140,8 @@ sub user_notifications {
             $r->{name} = 'PenhaS';
         }
         elsif ($subject_id == -1) {
-            $r->{name}    = 'Suporte PenhaS';
-            $r->{title}   = 'respondeu sua mensagem';
-            $r->{content} = '';
+            $r->{name}  = 'Suporte PenhaS';
+            $r->{title} = 'respondeu sua mensagem';
         }
         elsif ($subject) {
             $r->{name} = $subject->{apelido};

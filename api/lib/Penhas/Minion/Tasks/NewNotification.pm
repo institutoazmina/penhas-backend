@@ -43,9 +43,9 @@ sub new_notification_chat {
     my $logger  = $job->app->log;
 
     my $message = {
-        is_test    => is_test() ? 1 : 0,
-        title      => 'enviou uma mensagem',
-        content    => '-',
+        is_test    => is_test()                 ? 1  : 0,
+        title      => $opts->{subject_id} == -1 ? '' : 'enviou uma mensagem',
+        content    => '',
         meta       => to_json({}),
         subject_id => $opts->{subject_id},
         created_at => \'now(6)',
