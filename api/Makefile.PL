@@ -86,6 +86,7 @@ my %WriteMakefileArgs = (
     "Mojolicious::Plugin::ParamLogger" => "0.03",
     "Mojolicious::Plugin::RenderFile" => "0.12",
     "Mojolicious::Plugin::StaticCache" => "0.02",
+    "Mojolicious::Plugin::Subprocess" => "1.001",
     "Moose" => 0,
     "Moose::Util::TypeConstraints" => 0,
     "MooseX::MarkAsMethods" => 0,
@@ -141,7 +142,7 @@ my %WriteMakefileArgs = (
     "constant" => 0,
     "lib" => 0
   },
-  "VERSION" => 20201122,
+  "VERSION" => 20201123,
   "test" => {
     "TESTS" => "t/*.t t/api/*.t"
   }
@@ -224,6 +225,7 @@ my %FallbackPrereqs = (
   "Mojolicious::Plugin::ParamLogger" => "0.03",
   "Mojolicious::Plugin::RenderFile" => "0.12",
   "Mojolicious::Plugin::StaticCache" => "0.02",
+  "Mojolicious::Plugin::Subprocess" => "1.001",
   "Moose" => 0,
   "Moose::Util::TypeConstraints" => 0,
   "MooseX::MarkAsMethods" => 0,
