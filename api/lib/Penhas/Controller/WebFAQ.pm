@@ -11,7 +11,7 @@ sub apply_rps {
     my $remote_ip = $c->remote_addr();
 
     # recortando o IPV6 para apenas o prefixo (18 chars)
-    $c->stash(apply_rps_on => substr($remote_ip, 0, 18));
+    $c->stash(apply_rps_on => 'WEB' . substr($remote_ip, 0, 18));
     $c->apply_request_per_second_limit(100, 3600);
 
     $c->stash(template => 'webfaq/index');

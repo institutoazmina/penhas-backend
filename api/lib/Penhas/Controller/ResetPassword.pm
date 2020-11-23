@@ -19,7 +19,7 @@ sub request_new {
     my $params = $c->req->params->to_hash;
 
     $c->validate_request_params(
-        email       => {max_length => 200, required => 1, type => EmailAddress},
+        email => {max_length => 200, required => 1, type => EmailAddress},
         app_version => {max_length => 800, required => 1, type => 'Str', min_length => 1},
     );
     my $email = lc(delete $params->{email});
@@ -29,7 +29,7 @@ sub request_new {
     my $remote_ip = $c->remote_addr();
 
     # recortando o IPV6 para apenas o prefixo (18 chars)
-    $c->stash(apply_rps_on => substr($remote_ip, 0, 18));
+    $c->stash(apply_rps_on => 'RN' . substr($remote_ip, 0, 18));
     $c->apply_request_per_second_limit(5, 60 * 60);
 
     # procura o cliente pelo email
@@ -124,7 +124,7 @@ sub write_new {
     $c->validate_request_params(
         email => {max_length => 200, required => 1, type => EmailAddress},
         token => {max_length => 100, required => 1, type => 'Str', min_length => $digits},
-        dry => {required => 1, type => 'Int'},
+        dry   => {required   => 1,   type     => 'Int'},
     );
     my $token = delete $params->{token};
     my $dry   = delete $params->{dry};
@@ -140,7 +140,7 @@ sub write_new {
     my $remote_ip = $c->remote_addr();
 
     # recortando o IPV6 para apenas o prefixo (18 chars)
-    $c->stash(apply_rps_on => substr($remote_ip, 0, 18));
+    $c->stash(apply_rps_on => 'WN' . substr($remote_ip, 0, 18));
 
     # no maximo 30 testes por hora
     $c->apply_request_per_second_limit(30, 60 * 60);
