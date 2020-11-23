@@ -60,15 +60,17 @@ sub tick_notifications {
     my $c = shift;
 
     if (is_test()) {
-        &_tick_notifications($c);
+        &_tick_notifications($c, 0);
     }
     else {
 
         $c->subprocess(
             sub {
-                my $start = time();
+                my $start     = time();
+                my $iteration = 0;
                 while (time() - $start < 50) {
-                    &_tick_notifications($c);
+                    &_tick_notifications($c, $iteration);
+                    $iteration++;
                     sleep 10;
                 }
                 return 1;
@@ -85,7 +87,8 @@ sub tick_notifications {
 
 # cria notificacoes do chat (nao leu em X tempo)
 sub _tick_notifications {
-    my $c = shift;
+    my $c         = shift;
+    my $iteration = shift;
 
     my $lkey = $ENV{REDIS_NS} . '_tick_notifications';
     my ($locked) = $c->kv->exec_function('lockSet', 3, $lkey, 50 * 1000, time());
@@ -97,15 +100,21 @@ sub _tick_notifications {
     $rs = $rs->search({'me.cliente_id' => $ENV{MAINTENANCE_USER_ID}})
       if $ENV{MAINTENANCE_USER_ID};
 
-    # "esquece" as mais antigas, pra ser notificado de novo caso tenha nova mensagem
-    $rs->search({messaged_at => {'<=' => \'DATE_ADD(NOW(), INTERVAL -1 DAY)'}})->delete;
+    if ($iteration == 0) {
 
+        # 1x por request (minuto)
+        # "esquece" as mais antigas, pra ser notificado de novo caso tenha nova mensagem
+        $rs->search({messaged_at => {'<=' => \'DATE_ADD(NOW(), INTERVAL -1 DAY)'}})->delete;
+    }
+
+    # a cada 10 segundos (se tudo estiver correto)
     # cria as notificacoes novas
     my $pending = $rs->search(
         {
             messaged_at          => {'<=' => \'DATE_ADD(NOW(), INTERVAL -5 MINUTE)'},
             notification_created => '0',
         },
+        {rows => 100}    # no maximo 100 duma vez
     );
 
     while (my $r = $pending->next) {
