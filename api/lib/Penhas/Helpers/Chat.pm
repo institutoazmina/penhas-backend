@@ -763,8 +763,8 @@ sub chat_list_message {
             # apaga qualquer notificação pendente
             $c->schema2->resultset('ChatClientesNotification')->search(
                 {
-                    cliente_id                 => $other->{cliente_id},
-                    pending_message_cliente_id => $user_obj->id,
+                    cliente_id                 => $user_obj->id,
+                    pending_message_cliente_id => $other->{cliente_id},
                 }
             )->delete;
 
