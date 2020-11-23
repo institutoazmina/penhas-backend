@@ -25,8 +25,6 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "pending_message_cliente_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "messaged_at",
   {
     data_type => "datetime",
@@ -40,6 +38,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "pending_message_cliente_id",
+  { data_type => "integer", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -50,8 +50,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-22 23:18:32
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RbgVKXlKy9Lfek+myGNKTg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-23 01:03:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:rdCGx1ZPOfw25BkUsMp80g
 
 # ALTER TABLE chat_clientes_notifications ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 # CREATE INDEX idx_chat_clientes_notifications ON chat_clientes_notifications(messaged_at);
