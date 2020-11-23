@@ -4,7 +4,7 @@ use Carp qw/confess/;
 use utf8;
 use JSON;
 use Penhas::Logger;
-use Penhas::Utils qw/is_test pg_timestamp2iso_8601 db_epoch_to_etag/;
+use Penhas::Utils qw/is_test pg_timestamp2iso_8601 db_epoch_to_etag notifications_enabled/;
 use Mojo::Util qw/trim/;
 use Scope::OnExit;
 use Crypt::CBC;
@@ -569,6 +569,7 @@ sub _load_chat_room {
             apelido    => 'Usuário removido',
             avatar_url => $ENV{AVATAR_PADRAO_URL},
             activity   => '-',
+            not_found  => 1,
         };
     }
     else {
@@ -589,6 +590,7 @@ sub _load_chat_room {
         header_message   => '',
         header_warning   => '',
     };
+    $meta->{can_send_message} = 0 if delete $other->{not_found};
 
     return ($cipher, $session, $user_obj, $other, $meta);
 }
@@ -696,6 +698,26 @@ sub chat_send_message {
         }
     );
     die '$chat_message is not defined' unless $chat_message;
+
+    if (notifications_enabled()) {
+        my $subrs = $c->schema2->resultset('ChatClientesNotification')->search(
+            {
+                cliente_id                 => $other->{cliente_id},
+                pending_message_cliente_id => $user_obj->id,
+            }
+        );
+
+        # nao tem mensagem, entao vamos criar uma
+        # esse contexto ta dentro do lock ainda
+        if ($subrs->count == 0) {
+            $subrs->create(
+                {
+                    messaged_at => \'now()',
+                }
+            );
+        }
+    }
+
     return {
         id                 => $chat_message->id,
         prev_last_msg_etag => db_epoch_to_etag($prev_last_msg_at),
@@ -735,6 +757,18 @@ sub chat_list_message {
                 order_by => \'me.created_at DESC',
             }
         );
+
+        if (notifications_enabled()) {
+
+            # apaga qualquer notificação pendente
+            $c->schema2->resultset('ChatClientesNotification')->search(
+                {
+                    cliente_id                 => $other->{cliente_id},
+                    pending_message_cliente_id => $user_obj->id,
+                }
+            )->delete;
+
+        }
     }
 
     $rs = $rs->search(

@@ -22,6 +22,7 @@ sub new_notification {
     my $known_types = {
         new_comment => 'new_notification_timeline',
         new_like    => 'new_notification_timeline',
+        new_message => 'new_notification_chat'
     };
 
     my $subname = $known_types->{$type} || die "notification type $type is not known";
@@ -33,6 +34,58 @@ sub new_notification {
 
     return $job->finish(1);
 
+}
+
+sub new_notification_chat {
+    my (undef, $job, $type, $opts) = @_;
+
+    my $schema2 = $job->app->schema2;    # mysql
+    my $logger  = $job->app->log;
+
+    my $message = {
+        is_test    => is_test() ? 1 : 0,
+        title      => 'enviou uma mensagem',
+        content    => '-',
+        meta       => to_json({}),
+        subject_id => $opts->{subject_id},
+        created_at => \'now(6)',
+        icon       => 1,
+    };
+
+    my $preference_name = 'NOTIFY_CHAT_NEW_MESSAGES';
+    my @clientes        = $job->app->rs_user_by_preference($preference_name, '1')->search(
+        {
+            cliente_id => $opts->{cliente_id},
+        }
+    )->all;
+
+    log_trace($preference_name, scalar @clientes);
+
+    # nao tem nenhum habilitado, entao nao precisa nem criar a mensagem
+    return unless @clientes;
+
+    $schema2->txn_do(
+        sub {
+            my $message_row = $schema2->resultset('NotificationMessage')->create($message);
+
+            $schema2->resultset('NotificationLog')->populate(
+                [
+                    [qw/cliente_id notification_message_id created_at/],
+                    map {
+                        [
+                            $_->{cliente_id},
+                            $message_row->id,
+                            \'NOW(6)'
+                        ]
+                    } @clientes
+                ]
+            );
+        }
+    );
+
+    return (
+        clientes => \@clientes,
+    );
 }
 
 sub new_notification_timeline {
@@ -86,7 +139,6 @@ sub new_notification_timeline {
         created_at => \'now(6)',
         icon       => $icon,
     };
-    my @subjects;
 
     my @clientes = $job->app->rs_user_by_preference($preference_name, '1')->search(
         {

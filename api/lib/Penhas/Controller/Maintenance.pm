@@ -53,4 +53,47 @@ sub housekeeping {
     return $c->render(json => {});
 }
 
+# cria notificacoes do chat (nao leu em X tempo)
+sub tick_notifications {
+    my $c = shift;
+
+    my $rs = $c->schema2->resultset('ChatClientesNotification');
+
+    $rs = $rs->search({'me.cliente_id' => $ENV{MAINTENANCE_USER_ID}})
+      if $ENV{MAINTENANCE_USER_ID};
+
+    # "esquece" as mais antigas, pra ser notificado de novo caso tenha nova mensagem
+    $rs->search({messaged_at => {'<=' => \'DATE_ADD(NOW(), INTERVAL -1 DAY)'}})->delete;
+
+    # cria as notificacoes novas
+    my $pending = $rs->search(
+        {
+            messaged_at          => {'<=' => \'DATE_ADD(NOW(), INTERVAL -5 MINUTE)'},
+            notification_created => '0',
+        },
+    );
+
+    while (my $r = $pending->next) {
+
+        my $job_id = $c->minion->enqueue(
+            'new_notification',
+            [
+                'new_message',
+                {cliente_id => $r->cliente_id(), subject_id => $r->pending_message_cliente_id()}
+            ] => {
+                attempts => 5,
+            }
+        );
+        slog_info(
+            'ChatClientesNotification id %s Adding job new_notification new_message, job id %s',
+            $r->id,
+            $job_id,
+        );
+        $r->update({notification_created => 1});
+        $ENV{LAST_CHAT_JOB_ID} = $job_id;
+    }
+
+    return $c->render(json => {});
+}
+
 1;

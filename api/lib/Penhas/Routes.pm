@@ -77,6 +77,9 @@ sub register {
     # GET /maintenance/housekeeping
     $maintenance->route('housekeeping')->get()->to(controller => 'Maintenance', action => 'housekeeping');
 
+    # GET /maintenance/tick-notifications
+    $maintenance->route('tick-notifications')->get()->to(controller => 'Maintenance', action => 'tick_notifications');
+
     # PRIVATE ENDPOINTS
     my $authenticated = $r->under()->to(controller => 'JWT', action => 'check_user_jwt');
 

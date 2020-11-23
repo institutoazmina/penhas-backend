@@ -7,6 +7,7 @@ use Penhas::Minion::Tasks::SendSMS;
 my $t = test_instance;
 use Business::BR::CPF qw/random_cpf/;
 use DateTime;
+use Penhas::Minion::Tasks::NewNotification;
 
 my $schema2 = $t->app->schema2;
 
@@ -341,6 +342,7 @@ db_transaction {
       ->json_is('/has_more', '0')                                                              #
       ->json_is('/next_page', undef, 'tem next_page mesmo sendo undef');
 
+    $ENV{NOTIFICATIONS_ENABLED} = 1;
     my $hello_from_cli1 = 'hello from cliente 1! ' . rand . 'atenção';
     $t->post_ok(
         '/me/chats-messages',
@@ -351,6 +353,9 @@ db_transaction {
         },
       )->status_is(200, 'mandando mensagem')                                                   #
       ->json_has('/id', 'we got an id!');
+
+    &test_notifcations(other_id => $cliente_id3, cliente_id => $cliente_id);
+
     $t->post_ok(
         '/me/chats-messages',
         {'x-api-key' => $session},
@@ -647,3 +652,55 @@ db_transaction {
 done_testing();
 
 exit;
+
+sub test_notifcations {
+    my (%opts)     = @_;
+    my $other_id   = $opts{other_id};
+    my $cliente_id = $opts{cliente_id};
+
+    my $rs = get_schema2->resultset('ChatClientesNotification')->search({cliente_id => $other_id});
+
+    is $rs->count, 1, 'one pending notification to other';
+
+    my $row = $rs->next;
+
+    $ENV{MAINTENANCE_SECRET}  = 'SECRET';
+    $ENV{MAINTENANCE_USER_ID} = $other_id;
+    my $user = get_schema2->resultset('Cliente')->find($other_id);
+
+    is $row->notification_created, '0', 'not notified yet';
+    $t->get_ok('/maintenance/tick-notifications', form => {secret => $ENV{MAINTENANCE_SECRET}})->status_is(200);
+
+    is $row->discard_changes->notification_created, '0', 'still not notified';
+
+    $row->update({messaged_at => \'DATE_ADD(NOW(), INTERVAL -6 MINUTE)'});
+
+    is $ENV{LAST_CHAT_JOB_ID}, undef, 'no LAST_CHAT_JOB_ID yet';
+    $t->get_ok('/maintenance/tick-notifications', form => {secret => $ENV{MAINTENANCE_SECRET}})->status_is(200);
+
+    is $row->discard_changes->notification_created, '1', 'now is notified';
+    ok defined $ENV{LAST_CHAT_JOB_ID}, 'LAST_CHAT_JOB_ID is defined';
+
+    my $job = Minion::Job->new(
+        id     => fake_int(1, 99)->(),
+        minion => $t->app->minion,
+        task   => 'testmocked',
+        notes  => {hello => 'mock'}
+    );
+    is $user->notification_logs->count, 0, 'no logs';
+    trace_popall;
+    ok(
+        Penhas::Minion::Tasks::NewNotification::new_notification(
+            $job, test_get_minion_args_job($ENV{LAST_CHAT_JOB_ID})
+        ),
+        'job'
+    );
+    is $user->notification_logs->count, 1, 'inserted';
+    is trace_popall, 'minion:new_notification,new_message,NOTIFY_CHAT_NEW_MESSAGES,1', 'expected code path';
+
+    $row->update({messaged_at => \'DATE_ADD(NOW(), INTERVAL -2 DAY)'});
+
+    $t->get_ok('/maintenance/tick-notifications', form => {secret => $ENV{MAINTENANCE_SECRET}})->status_is(200);
+    is $rs->count, '0', 'deleted because too old';
+
+}
