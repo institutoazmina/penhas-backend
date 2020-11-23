@@ -4,7 +4,7 @@ use Carp qw/confess/;
 use utf8;
 use JSON;
 use Penhas::Logger;
-use Penhas::Utils qw/is_test pg_timestamp2iso_8601 db_epoch_to_etag pg_timestamp2human/;
+use Penhas::Utils qw/is_test pg_timestamp2iso_8601 db_epoch_to_etag pg_timestamp2human notifications_enabled/;
 use Mojo::Util qw/trim/;
 use Scope::OnExit;
 use Crypt::CBC;
@@ -129,7 +129,7 @@ sub _load_support_room {
         }
     }
 
-    my $other = $c->stash('looged_as_admin')
+    my $other = $c->stash('logged_as_admin')
       ? {
         blocked_me => 0,
         cliente_id => 0,
@@ -176,6 +176,7 @@ sub support_send_message {
     my $chat_message;
     my $prev_last_msg_at;
     my $last_msg_at;
+    my $logged_as_admin = $c->stash('logged_as_admin') ? 1 : 0;
     $c->schema->txn_do(
         sub {
             # pega o ultimo horario antes da nossa msg
@@ -196,19 +197,19 @@ sub support_send_message {
                     cliente_id    => $user_obj->id,
                     message       => $message,
                     created_at    => $last_msg_at,
-                    admin_user_id => ($c->stash('looged_as_admin') ? $c->stash('admin_user')->id() : undef),
+                    admin_user_id => ($logged_as_admin ? $c->stash('admin_user')->id() : undef),
 
                 }
             );
 
             $session->update(
                 {
-                    last_msg_is_support => $c->stash('looged_as_admin') ? 1 : 0,
+                    last_msg_is_support => $logged_as_admin,
                     last_msg_at         => $last_msg_at,
 
                     last_msg_preview => length($message) > 100 ? substr($message, 0, 100) . '…' : $message,
                     last_msg_by      => (
-                          $c->stash('looged_as_admin')
+                          $logged_as_admin
                         ? $c->stash('admin_user')->first_name()
                         : $user_obj->name_for_admin()
                     ),
@@ -218,6 +219,25 @@ sub support_send_message {
         }
     );
     die '$chat_message is not defined' unless $chat_message;
+    if (notifications_enabled() && $logged_as_admin) {
+        my $subrs = $c->schema2->resultset('ChatClientesNotification')->search(
+            {
+                cliente_id                 => $user_obj->id,
+                pending_message_cliente_id => 0,
+            }
+        );
+
+        # nao tem mensagem, entao vamos criar uma
+        # esse contexto ta dentro do lock ainda
+        if ($subrs->count == 0) {
+            $subrs->create(
+                {
+                    messaged_at => \'now()',
+                }
+            );
+        }
+    }
+
     return {
         id                 => $chat_message->id,
         prev_last_msg_etag => db_epoch_to_etag($prev_last_msg_at),
@@ -231,6 +251,7 @@ sub support_list_message {
     my ($session, $user_obj, $other, $meta) = &_load_support_room($c, %opts);
     my $rows = $opts{rows} || 10;
     $rows = 5 if !is_test() && ($rows > 100 || $rows < 5);
+    my $logged_as_admin = $c->stash('logged_as_admin');
 
     my $page = $opts{pagination};
     if ($page) {
@@ -257,6 +278,18 @@ sub support_list_message {
                 order_by => \'me.created_at DESC',
             }
         );
+
+        if (notifications_enabled() && !$logged_as_admin) {
+
+            # apaga qualquer notificação pendente
+            $c->schema2->resultset('ChatClientesNotification')->search(
+                {
+                    cliente_id                 => $user_obj->id,
+                    pending_message_cliente_id => 0,
+                }
+            )->delete;
+
+        }
     }
 
     $rs = $rs->search(
@@ -278,12 +311,11 @@ sub support_list_message {
     my $row_first = $rows[0]  ? $rows[0]{created_at}  : undef;
     my $row_last  = $rows[-1] ? $rows[-1]{created_at} : undef;
 
-    my $looged_as_admin = $c->stash('looged_as_admin');
     my @messages;
     my $myself = $user_obj->id;
     foreach my $row (@rows) {
         my $is_me = $row->{admin_user_id} ? 0 : 1;
-        $is_me = $is_me ? 0 : 1 if $looged_as_admin;
+        $is_me = $is_me ? 0 : 1 if $logged_as_admin;
 
         push @messages, {
             id      => $row->{id},

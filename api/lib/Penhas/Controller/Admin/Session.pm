@@ -124,7 +124,7 @@ sub admin_check_authorization {
     $c->log->info(sprintf 'Logged as %s', $admin->id . ' ' . $admin->first_name);
 
     $c->stash(
-        looged_as_admin => 1,
+        logged_as_admin => 1,
         admin_user      => $admin,
     );
 
