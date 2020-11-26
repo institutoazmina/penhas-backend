@@ -29,14 +29,14 @@ sub test_cli_seg {
     my $cliente2 = get_schema2->resultset('Cliente')->find($user_id2);
     on_scope_exit { user_cleanup(user_id => $user_id2); };
 
-    my $rs = $schema2->resultset('AdminClientesSegment')->search(
+    my $segment_rs = $schema2->resultset('AdminClientesSegment')->search(
         {
             is_test => '1',
         }
     );
 
-    $rs->delete;
-    my $q = $rs->create(
+    $segment_rs->delete;
+    my $q = $segment_rs->create(
         {
             label   => 'test1',
             is_test => 1,
@@ -45,7 +45,7 @@ sub test_cli_seg {
         }
     );
 
-    my $q2 = $rs->create(
+    my $q2 = $segment_rs->create(
         {
             label   => 'test1',
             is_test => 1,
@@ -139,7 +139,7 @@ sub test_cli_seg {
           ->search({notification_message_id => last_tx_json->{notification_message_id}})->count, 2, '2 rows';
     };
 
-
+    $segment_rs->delete;
 }
 
 sub test_faq {
