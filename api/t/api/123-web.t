@@ -8,6 +8,7 @@ my $t = test_instance;
 
 use DateTime;
 use utf8;
+use Business::BR::CPF qw/random_cpf/;
 
 my $schema2 = $t->app->schema2;
 
@@ -22,7 +23,11 @@ exit;
 sub test_cli_seg {
 
     my ($session, $user_id) = get_user_session('24115775670');
-    my $cliente = get_schema2->resultset('Cliente')->find($user_id);
+    my $cliente    = get_schema2->resultset('Cliente')->find($user_id);
+    my $random_cpf = random_cpf();
+    my ($session2, $user_id2) = get_user_session($random_cpf);
+    my $cliente2 = get_schema2->resultset('Cliente')->find($user_id2);
+    on_scope_exit { user_cleanup(user_id => $user_id2); };
 
     my $rs = $schema2->resultset('AdminClientesSegment')->search(
         {
@@ -36,6 +41,15 @@ sub test_cli_seg {
             label   => 'test1',
             is_test => 1,
             cond    => to_json({'me.id' => $user_id}),
+            attr    => to_json({}),
+        }
+    );
+
+    my $q2 = $rs->create(
+        {
+            label   => 'test1',
+            is_test => 1,
+            cond    => to_json({'me.cpf_hash' => [$cliente->cpf_hash, $cliente2->cpf_hash]}),
             attr    => to_json({}),
         }
     );
@@ -110,6 +124,19 @@ sub test_cli_seg {
                 message_content => 'kids',
             }
         )->status_is(400)->json_is('/error', 'form_error');
+
+
+        $t->post_ok(
+            '/admin/add-notification',
+            form => {
+                segment_id      => $q2->id,
+                message_title   => 'a',
+                message_content => 'boo',
+            }
+        )->status_is(200)->json_has('/notification_message_id', 'defined notification_message_id');
+
+        is get_schema2->resultset('NotificationLog')
+          ->search({notification_message_id => last_tx_json->{notification_message_id}})->count, 2, '2 rows';
     };
 
 
