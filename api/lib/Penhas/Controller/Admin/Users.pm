@@ -1,7 +1,7 @@
 package Penhas::Controller::Admin::Users;
 use Mojo::Base 'Penhas::Controller';
 use utf8;
-
+use JSON;
 use Penhas::Utils;
 use DateTime;
 use MooseX::Types::Email qw/EmailAddress/;
@@ -17,10 +17,12 @@ sub au_search {
         cliente_id => {required => 0, type => 'Int'},
         next_page  => {required => 0, type => 'Str'},
         nome       => {required => 0, type => 'Str', empty_is_valid => 1, max_length => 99},
+        segment_id => {required => 0, type => 'Int'},
     );
 
-    my $nome = $valid->{nome};
-    my $rows = $valid->{rows} || 10;
+    my $dirty = 0;
+    my $nome  = $valid->{nome};
+    my $rows  = $valid->{rows} || 10;
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
     my $offset = 0;
@@ -29,6 +31,7 @@ sub au_search {
         $c->reply_invalid_param('next_page')
           if ($tmp->{iss} || '') ne 'AU:NP';
         $offset = $tmp->{offset};
+        $valid->{segment_id} = $tmp->{segment_id} if defined $tmp->{segment_id};
     }
 
     my $rs = $c->schema2->resultset('Cliente')->search(
@@ -56,6 +59,7 @@ sub au_search {
     );
 
     if ($nome) {
+        $dirty++;    #nao atualizar o contador do segmento, se tiver.
         $rs = $rs->search(
             {
                 '-or' => [
@@ -65,6 +69,13 @@ sub au_search {
                 ],
             }
         );
+    }
+
+    my $segment;
+    if ($valid->{segment_id}) {
+        $segment = $c->schema2->resultset('AdminClientesSegment')->find($valid->{segment_id});
+        $c->reply_invalid_param('segment_id') unless $segment;
+        $rs = $segment->apply_to_rs($c, $rs);
     }
 
     my ($total_count, @rows);
@@ -89,6 +100,7 @@ sub au_search {
     }
     else {
         $total_count = $rs->count;
+        $segment->update({last_count => $total_count, last_run_at => \'NOW()'}) if $segment && !$dirty;
 
         $rs   = $rs->search(undef, {rows => $rows + 1, offset => $offset});
         @rows = $rs->all;
@@ -103,10 +115,23 @@ sub au_search {
 
     my $next_page = $c->encode_jwt(
         {
-            iss    => 'AU:NP',
-            offset => $offset + $cur_count,
+            iss        => 'AU:NP',
+            offset     => $offset + $cur_count,
+            segment_id => $valid->{segment_id}
         },
         1
+    );
+
+    my $segments = $c->schema2->resultset('AdminClientesSegment')->search(
+        {
+            is_test => is_test() ? 1 : 0,
+            status  => 'published',
+        },
+        {
+            columns      => [qw/id label/],
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+            order_by     => 'sort'
+        }
     );
 
     return $c->respond_to_if_web(
@@ -116,6 +141,7 @@ sub au_search {
                 has_more    => $has_more,
                 next_page   => $has_more ? $next_page : undef,
                 total_count => $total_count,
+                segments    => [$segments->all]
             }
         },
         html => {
@@ -123,7 +149,8 @@ sub au_search {
             has_more           => $has_more,
             next_page          => $has_more ? $next_page : undef,
             total_count        => $total_count,
-            pg_timestamp2human => \&pg_timestamp2human
+            pg_timestamp2human => \&pg_timestamp2human,
+            segments           => [$segments->all]
         },
     );
 }
@@ -183,6 +210,89 @@ sub ua_list_messages {
             %$ret,
             cliente            => $user_obj,
             pg_timestamp2human => \&pg_timestamp2human
+        },
+    );
+}
+
+sub ua_add_notifications {
+    my $c     = shift;
+    my $valid = $c->validate_request_params(
+        cliente_id      => {required => 0, type => 'Int'},
+        segment_id      => {required => 0, type => 'Int'},
+        message_title   => {required => 1, type => 'Str', max_length => 200},
+        message_content => {required => 1, type => 'Str', max_length => 9999},
+    );
+
+    my $rs = $c->schema2->resultset('Cliente')->search(
+        undef,
+        {
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+            columns      => ['me.id'],
+        }
+    );
+
+    if ($valid->{segment_id}) {
+        my $segment = $c->schema2->resultset('AdminClientesSegment')->find($valid->{segment_id});
+        $c->reply_invalid_param('segment_id') unless $segment;
+        $rs = $segment->apply_to_rs($c, $rs);
+    }
+    elsif ($valid->{cliente_id}) {
+        $rs = $rs->search({'me.id' => $valid->{cliente_id}});
+    }
+    else {
+        $c->reply_invalid_param('é necessário cliente_id ou segment_id');
+    }
+
+    my $message_id;
+    my $message_count;
+    $c->schema2->txn_do(
+        sub {
+            my $message_row = $c->schema2->resultset('NotificationMessage')->create(
+                {
+                    title      => $valid->{message_title},
+                    content    => $valid->{message_content},
+                    icon       => 0,
+                    subject_id => undef,
+                    meta       => to_json(
+                        {
+                            created_by => $c->stash('admin_user')->id,
+                            ip         => $c->remote_addr(),
+                        }
+                    ),
+                    created_at => \'now()',
+                }
+            );
+            $message_id = $message_row->id;
+            my @clientes = map { $_->{id} } $rs->all;
+
+            $c->schema2->resultset('NotificationLog')->populate(
+                [
+                    [qw/cliente_id notification_message_id created_at/],
+                    map {
+                        [
+                            $_,
+                            $message_id,
+                            \'NOW(6)'
+                        ]
+                    } @clientes
+                ]
+            );
+
+            $c->user_notifications_clear_cache($_) for @clientes;
+            $message_count = scalar @clientes;
+        }
+    );
+
+    return $c->render(
+        json => {
+            message => 'Zero resultados encontrado - nenhuma mensagem foi criada!',
+        },
+    ) unless $message_id;
+
+    return $c->render(
+        json => {
+            notification_message_id => $message_id,
+            message                 => sprintf('Notificação adicionada em %d clientes', $message_count),
         },
     );
 }
