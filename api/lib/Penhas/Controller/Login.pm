@@ -69,7 +69,7 @@ sub post {
         elsif ($found->{login_status} eq 'BLOCK') {
             die {
                 error   => 'login_status_block',
-                message => 'Logon para este e-mail está suspenso temporariamente.',
+                message => 'Logon para este e-mail está suspenso interminavelmente.',
             };
         }
 

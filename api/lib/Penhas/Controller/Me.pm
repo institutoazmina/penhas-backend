@@ -20,7 +20,6 @@ sub check_and_load {
         {
             'id'           => $c->stash('user_id'),
             'status'       => 'active',
-            'login_status' => 'OK',
         },
     )->next;
 
