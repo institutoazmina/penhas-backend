@@ -59,7 +59,7 @@ sub request_new {
         }
     )->next;
     if ($item) {
-        my $valid_until = $item->valid_until;
+        my $valid_until = $item->valid_until->epoch;
 
         return $c->render(
             json => {
