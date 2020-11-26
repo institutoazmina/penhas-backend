@@ -34,7 +34,8 @@ sub request_new {
 
     # procura o cliente pelo email
     my $schema = $c->schema;
-    my $found = $c->schema2->resultset('Cliente')->search({'email' => $email}, {columns => ['id', 'cpf_prefix']})->next;
+    my $found  = $c->schema2->resultset('Cliente')
+      ->search({'email' => $email}, {columns => ['id', 'cpf_prefix', 'nome_completo']})->next;
     if (!$found) {
         die {
             error   => 'email_not_found',
