@@ -16,6 +16,7 @@ use Penhas::Helpers::GeolocationCached;
 use Penhas::Helpers::Chat;
 use Penhas::Helpers::ChatSupport;
 use Penhas::Helpers::Notifications;
+use Penhas::Helpers::WebHelpers;
 
 use Carp qw/croak confess/;
 
@@ -35,6 +36,7 @@ sub setup {
     Penhas::Helpers::Chat::setup($c);
     Penhas::Helpers::ChatSupport::setup($c);
     Penhas::Helpers::Notifications::setup($c);
+    Penhas::Helpers::WebHelpers::setup($c);
 
     state $kv = Penhas::KeyValueStorage->instance;
     $c->helper(kv                    => sub {$kv});
@@ -42,24 +44,6 @@ sub setup {
     $c->helper(schema2               => \&Penhas::SchemaConnected::get_schema2);
     $c->helper(sum_cpf_errors        => \&sum_cpf_errors);
     $c->helper(rs_user_by_preference => \&rs_user_by_preference);
-
-
-
-    $c->helper(
-        respond_to_if_web => sub {
-            my $c = shift;
-
-            my $accept = $c->req->headers->header('accept');
-            if ($c->stash('template') && $accept && $accept =~ /html/) {
-                $c->respond_to(@_);
-            }
-            else {
-                my %opts = %{{@_}->{json}};
-                die 'missing object json' unless $opts{json};
-                $c->render(%opts);
-            }
-        }
-    );
 
     $c->helper(
         assert_user_has_module => sub {

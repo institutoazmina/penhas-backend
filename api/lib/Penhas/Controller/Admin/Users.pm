@@ -217,13 +217,41 @@ sub ua_list_messages {
 }
 
 sub ua_add_notifications {
-    my $c     = shift;
+    my $c = shift;
+
+    $c->use_redis_flash();
+
     my $valid = $c->validate_request_params(
-        cliente_id      => {required => 0, type => 'Int'},
-        segment_id      => {required => 0, type => 'Int'},
-        message_title   => {required => 1, type => 'Str', max_length => 200},
-        message_content => {required => 1, type => 'Str', max_length => 9999},
+        cliente_id              => {required => 0, type => 'Int'},
+        segment_id              => {required => 0, type => 'Int'},
+        notification_message_id => {required => 0, type => 'Int'},
+        message_title           => {required => 1, type => 'Str', max_length => 200},
+        message_content         => {required => 1, type => 'Str', max_length => 9999},
     );
+
+    if ($valid->{notification_message_id}) {
+        my $notification_message
+          = $c->schema2->resultset('NotificationMessage')->find($valid->{notification_message_id})
+          or $c->reply_item_not_found();
+
+        $notification_message->update(
+            {
+                title   => $valid->{message_title},
+                content => $valid->{message_content},
+            }
+        );
+
+        return $c->respond_to_if_web(
+            json => {
+                text   => '',
+                status => 204,
+            },
+            html => sub {
+                $c->flash_to_redis({success_message => 'Salvo com sucesso!'});
+                $c->redirect_to('/admin/message-detail?id=' . $notification_message->id);
+            }
+        );
+    }
 
     my $rs = $c->schema2->resultset('Cliente')->search(
         undef,
@@ -232,7 +260,6 @@ sub ua_add_notifications {
             columns      => ['me.id'],
         }
     );
-
     if ($valid->{segment_id}) {
         my $segment = $c->schema2->resultset('AdminClientesSegment')->find($valid->{segment_id});
         $c->reply_invalid_param('segment_id') unless $segment;
@@ -249,6 +276,8 @@ sub ua_add_notifications {
     my $message_count;
     $c->schema2->txn_do(
         sub {
+            my @clientes = map { $_->{id} } $rs->all;
+            $message_count = scalar @clientes;
             my $message_row = $c->schema2->resultset('NotificationMessage')->create(
                 {
                     title      => $valid->{message_title},
@@ -259,13 +288,13 @@ sub ua_add_notifications {
                         {
                             created_by => $c->stash('admin_user')->id,
                             ip         => $c->remote_addr(),
+                            count      => $message_count,
                         }
                     ),
                     created_at => \'now()',
                 }
             );
             $message_id = $message_row->id;
-            my @clientes = map { $_->{id} } $rs->all;
 
             $c->schema2->resultset('NotificationLog')->populate(
                 [
@@ -281,7 +310,6 @@ sub ua_add_notifications {
             );
 
             $c->user_notifications_clear_cache($_) for @clientes;
-            $message_count = scalar @clientes;
         }
     );
 
@@ -291,20 +319,26 @@ sub ua_add_notifications {
         },
     ) unless $message_id;
 
-    return $c->render(
+    my $message = sprintf('Notificação adicionada em %d clientes', $message_count);
+    return $c->respond_to_if_web(
         json => {
-            notification_message_id => $message_id,
-            message                 => sprintf('Notificação adicionada em %d clientes', $message_count),
+            json => {
+                notification_message_id => $message_id,
+                message                 => $message,
+            },
         },
+        html => sub {
+            $c->flash_to_redis({success_message => $message});
+            $c->redirect_to('/admin/message-detail?id=' . $message_id);
+        }
     );
 }
 
 sub ua_add_notification_get {
     my $c = shift;
 
-    $c->stash(
-        template => 'admin/add_notification',
-    );
+    $c->use_redis_flash();
+    $c->stash(template => 'admin/add_notification');
     my $valid = $c->validate_request_params(
         segment_id => {required => 1, type => 'Int'},
     );
@@ -314,10 +348,32 @@ sub ua_add_notification_get {
     return $c->respond_to_if_web(
         json => {},
         html => {
-            add_editor => 1,
+            add_editor         => 1,
             segment_id         => $segment->id,
             segment            => $segment,
             pg_timestamp2human => \&pg_timestamp2human
+        },
+    );
+}
+
+sub ua_notification_message_get {
+    my $c = shift;
+
+    $c->use_redis_flash();
+
+    $c->stash(template => 'admin/add_notification');
+    my $valid = $c->validate_request_params(
+        id => {required => 1, type => 'Int'},
+    );
+    my $notification_message = $c->schema2->resultset('NotificationMessage')->find($valid->{id});
+    $c->reply_invalid_param('id') unless $notification_message;
+
+    return $c->respond_to_if_web(
+        json => {},
+        html => {
+            add_editor           => 1,
+            notification_message => $notification_message,
+            pg_timestamp2human   => \&pg_timestamp2human
         },
     );
 }

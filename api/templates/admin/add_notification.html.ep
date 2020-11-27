@@ -1,10 +1,18 @@
+% my $error = $c->stash('error');
+% my $params = $c->stash('params');
+% my $notification_message = $c->stash('notification_message');
 <div class="border-bottom">
-    <h1 class="h2">Criar nova notificação</h1>
+    <h1 class="h2"> <%== $notification_message ?  'Editar notificação' : 'Criar nova notificação' %></h1>
 </div>
-
+% if (my $success = stash ('success_message') ) {
+<div class="alert alert-success" role="alert">
+    <%== $success %>
+</div>
+% }
 <br />
 <form method="POST" action="/admin/add-notification">
     <div class="form-group">
+
         % if ( stash('segment_id') ) {
         <select name="segment_id" class="form-control" id="exampleFormControlSelect1" readonly>
             <option selected value="<%== stash('segment_id') %>">
@@ -12,16 +20,23 @@
             </option>
         </select>
         % }
+        % if ($notification_message){
+        <pre><%== $notification_message->meta %></pre>
+        <input type="hidden" name="notification_message_id" value="<%==$notification_message->id %>" />
+        % }
 
         <div class="form-group">
             <label for="exampleInputEmail1">Título</label>
-            <input required name="message_title" class="form-control" id="imessage_title" aria-describedby="title"
+            <input required
+                value="<%== $params->{message_title} || ($notification_message ? $notification_message->title : '') %>"
+                name="message_title" class="form-control" id="imessage_title" aria-describedby="title"
                 placeholder="Novidades!">
         </div>
         <label>Conteúdo</label>
 
         <div class="form-group">
-            <textarea name="message_content" id="editor"></textarea>
+            <textarea name="message_content"
+                id="editor"><%== $params->{message_content} || ($notification_message ? $notification_message->content : '') %></textarea>
         </div>
 
         <script>
@@ -30,7 +45,7 @@
                 plugins: "lists, autolink link, image, code, media",
                 link_default_protocol: 'https',
                 toolbar:
-                    "h1 h2 bold italic strikethrough blockquote bullist numlist backcolor | link  image | removeformat code help",
+                    "code | link  image | h1 h2 bold italic strikethrough bullist numlist backcolor | help removeformat",
                 menubar: false,
                 setup: editor => {
                     // Apply the focus effect
@@ -59,5 +74,5 @@
 
     </div>
 
-    <button type="submit" class="btn btn-primary">Criar</button>
+    <button type="submit" class="btn btn-primary"> <%== $notification_message ?'Salvar' : 'Criar' %> </button>
 </form>
