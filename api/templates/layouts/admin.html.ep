@@ -52,6 +52,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/admin/users">Usuários</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/notifications">Notificações</a>
+                </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown01" data-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false"><%== stash('admin_user')->first_name() %></a>

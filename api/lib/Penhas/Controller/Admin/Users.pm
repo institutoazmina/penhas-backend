@@ -158,7 +158,7 @@ sub au_search {
 }
 
 sub ua_send_message {
-    my $c     = shift;
+    my $c = shift;
 
     $c->use_redis_flash();
     my $valid = $c->validate_request_params(
@@ -187,7 +187,7 @@ sub ua_send_message {
 }
 
 sub ua_list_messages {
-    my $c     = shift;
+    my $c = shift;
     $c->use_redis_flash();
     my $valid = $c->validate_request_params(
         cliente_id => {required => 1,     type       => 'Int'},
@@ -212,183 +212,7 @@ sub ua_list_messages {
         json => {json => $ret},
         html => {
             %$ret,
-            cliente            => $user_obj,
-        },
-    );
-}
-
-sub ua_add_notifications {
-    my $c = shift;
-
-    $c->use_redis_flash();
-
-    my $valid = $c->validate_request_params(
-        cliente_id              => {required => 0, type => 'Int'},
-        segment_id              => {required => 0, type => 'Int'},
-        action                  => {required => 0, type => 'Str'},
-        notification_message_id => {required => 0, type => 'Int'},
-        message_title           => {required => 1, type => 'Str', max_length => 200},
-        message_content         => {required => 1, type => 'Str', max_length => 9999},
-    );
-
-    if ($valid->{notification_message_id}) {
-        my $notification_message
-          = $c->schema2->resultset('NotificationMessage')->find($valid->{notification_message_id})
-          or $c->reply_item_not_found();
-
-        if ($valid->{action} && $valid->{action} eq 'delete') {
-            $notification_message->notification_logs->delete;
-            $notification_message->delete;
-            return $c->respond_to_if_web(
-                json => {
-                    text   => '',
-                    status => 204,
-                },
-                html => sub {
-                    $c->flash_to_redis({success_message => 'Removido com sucesso!'});
-                    $c->redirect_to('/admin');
-                }
-            );
-        }
-
-        $notification_message->update(
-            {
-                title   => $valid->{message_title},
-                content => $valid->{message_content},
-            }
-        );
-
-        return $c->respond_to_if_web(
-            json => {
-                text   => '',
-                status => 204,
-            },
-            html => sub {
-                $c->flash_to_redis({success_message => 'Salvo com sucesso!'});
-                $c->redirect_to('/admin/message-detail?id=' . $notification_message->id);
-            }
-        );
-    }
-
-    my $rs = $c->schema2->resultset('Cliente')->search(
-        undef,
-        {
-            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-            columns      => ['me.id'],
-        }
-    );
-    if ($valid->{segment_id}) {
-        my $segment = $c->schema2->resultset('AdminClientesSegment')->find($valid->{segment_id});
-        $c->reply_invalid_param('segment_id') unless $segment;
-        $rs = $segment->apply_to_rs($c, $rs);
-    }
-    elsif ($valid->{cliente_id}) {
-        $rs = $rs->search({'me.id' => $valid->{cliente_id}});
-    }
-    else {
-        $c->reply_invalid_param('é necessário cliente_id ou segment_id');
-    }
-
-    my $message_id;
-    my $message_count;
-    $c->schema2->txn_do(
-        sub {
-            my @clientes = map { $_->{id} } $rs->all;
-            $message_count = scalar @clientes;
-            my $message_row = $c->schema2->resultset('NotificationMessage')->create(
-                {
-                    title      => $valid->{message_title},
-                    content    => $valid->{message_content},
-                    icon       => 0,
-                    subject_id => undef,
-                    meta       => to_json(
-                        {
-                            created_by => $c->stash('admin_user')->id,
-                            ip         => $c->remote_addr(),
-                            count      => $message_count,
-                        }
-                    ),
-                    created_at => \'now()',
-                }
-            );
-            $message_id = $message_row->id;
-
-            $c->schema2->resultset('NotificationLog')->populate(
-                [
-                    [qw/cliente_id notification_message_id created_at/],
-                    map {
-                        [
-                            $_,
-                            $message_id,
-                            \'NOW(6)'
-                        ]
-                    } @clientes
-                ]
-            );
-
-            $c->user_notifications_clear_cache($_) for @clientes;
-        }
-    );
-
-    return $c->render(
-        json => {
-            message => 'Zero resultados encontrado - nenhuma mensagem foi criada!',
-        },
-    ) unless $message_id;
-
-    my $message = sprintf('Notificação adicionada em %d clientes', $message_count);
-    return $c->respond_to_if_web(
-        json => {
-            json => {
-                notification_message_id => $message_id,
-                message                 => $message,
-            },
-        },
-        html => sub {
-            $c->flash_to_redis({success_message => $message});
-            $c->redirect_to('/admin/message-detail?id=' . $message_id);
-        }
-    );
-}
-
-sub ua_add_notification_get {
-    my $c = shift;
-
-    $c->use_redis_flash();
-    $c->stash(template => 'admin/add_notification');
-    my $valid = $c->validate_request_params(
-        segment_id => {required => 1, type => 'Int'},
-    );
-    my $segment = $c->schema2->resultset('AdminClientesSegment')->find($valid->{segment_id});
-    $c->reply_invalid_param('segment_id') unless $segment;
-
-    return $c->respond_to_if_web(
-        json => {},
-        html => {
-            add_editor         => 1,
-            segment_id         => $segment->id,
-            segment            => $segment,
-        },
-    );
-}
-
-sub ua_notification_message_get {
-    my $c = shift;
-
-    $c->use_redis_flash();
-
-    $c->stash(template => 'admin/add_notification');
-    my $valid = $c->validate_request_params(
-        id => {required => 1, type => 'Int'},
-    );
-    my $notification_message = $c->schema2->resultset('NotificationMessage')->find($valid->{id});
-    $c->reply_invalid_param('id') unless $notification_message;
-
-    return $c->respond_to_if_web(
-        json => {},
-        html => {
-            add_editor           => 1,
-            notification_message => $notification_message,
+            cliente => $user_obj,
         },
     );
 }

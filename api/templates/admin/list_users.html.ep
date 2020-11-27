@@ -72,9 +72,9 @@
     <form method="GET">
         <h3>Filtrar resultados</h3>
         <div class="form-group">
-            <select name="segment_id" class="form-control" id="exampleFormControlSelect1">
+            <select name="segment_id" class="form-control">
                 % for my $r (@{stash('segments') || []}) {
-                <option <%= $r->{id} == stash('segment_id') ? 'selected' : '' %> value="<%== $r->{id} %>">
+                <option <%= $r->{id} == (stash('segment_id') || 0) ? 'selected' : '' %> value="<%== $r->{id} %>">
                     <%== $r->{label} . ' ----- ' . $r->{last_count} . ' resultados, contado em ' . $pg_timestamp2human->($r->{last_run_at}) %>
                 </option>
                 % }
