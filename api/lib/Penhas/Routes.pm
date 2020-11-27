@@ -63,6 +63,7 @@ sub register {
     $admin->route('send-message')->post->to(controller => 'Admin::Users', action => 'ua_send_message');
     $admin->route('user-messages')->get->to(controller => 'Admin::Users', action => 'ua_list_messages');
     $admin->route('add-notification')->post->to(controller => 'Admin::Users', action => 'ua_add_notifications');
+    $admin->route('add-notification')->get->to(controller => 'Admin::Users', action => 'ua_add_notification_get');
 
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss

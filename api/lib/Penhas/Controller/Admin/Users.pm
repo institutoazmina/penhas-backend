@@ -63,9 +63,9 @@ sub au_search {
         $rs = $rs->search(
             {
                 '-or' => [
-                    \['lower(me.nome_completo) like ?', "$nome%"],
-                    \['lower(me.apelido) like ?',       "$nome%"],
-                    \['lower(me.email) like ?',         "$nome%"],
+                    \['lower(me.nome_completo) like ?', "\%$nome\%"],
+                    \['lower(me.apelido) like ?',       "\%$nome\%"],
+                    \['lower(me.email) like ?',         "\%$nome\%"],
                 ],
             }
         );
@@ -128,7 +128,7 @@ sub au_search {
             status  => 'published',
         },
         {
-            columns      => [qw/id label/],
+            columns      => [qw/id label last_count last_run_at/],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
             order_by     => 'sort'
         }
@@ -150,7 +150,9 @@ sub au_search {
             next_page          => $has_more ? $next_page : undef,
             total_count        => $total_count,
             pg_timestamp2human => \&pg_timestamp2human,
-            segments           => [$segments->all]
+            segments           => [$segments->all],
+            segment            => $segment,
+            segment_id         => $segment ? $segment->id : undef,
         },
     );
 }
@@ -293,6 +295,29 @@ sub ua_add_notifications {
         json => {
             notification_message_id => $message_id,
             message                 => sprintf('Notificação adicionada em %d clientes', $message_count),
+        },
+    );
+}
+
+sub ua_add_notification_get {
+    my $c = shift;
+
+    $c->stash(
+        template => 'admin/add_notification',
+    );
+    my $valid = $c->validate_request_params(
+        segment_id => {required => 1, type => 'Int'},
+    );
+    my $segment = $c->schema2->resultset('AdminClientesSegment')->find($valid->{segment_id});
+    $c->reply_invalid_param('segment_id') unless $segment;
+
+    return $c->respond_to_if_web(
+        json => {},
+        html => {
+            add_editor => 1,
+            segment_id         => $segment->id,
+            segment            => $segment,
+            pg_timestamp2human => \&pg_timestamp2human
         },
     );
 }

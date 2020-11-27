@@ -21,6 +21,9 @@
     <link rel="stylesheet" href="/web-assets/admin.css?v=<%==$version%>" />
     % }
 
+    % if (stash('add_editor')) {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/5.6.1/tinymce.min.js" integrity="sha512-RAKGi5Lz3BrsIKXW8sSbTM2sgNbf5m3n7zApdXDTL1IH0OvG1Xe1q2yI2R2gTDqsd2PLuQIIiPnDJeOSLikJTA==" crossorigin="anonymous"></script>
+    % }
     <title><%= (stash 'title') || 'Padrão' %></title>
 
     </style>

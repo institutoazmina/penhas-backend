@@ -1,0 +1,63 @@
+<div class="border-bottom">
+    <h1 class="h2">Criar nova notificação</h1>
+</div>
+
+<br />
+<form method="POST" action="/admin/add-notification">
+    <div class="form-group">
+        % if ( stash('segment_id') ) {
+        <select name="segment_id" class="form-control" id="exampleFormControlSelect1" readonly>
+            <option selected value="<%== stash('segment_id') %>">
+                <%== stash('segment')->label . ' - ' . stash('segment')->last_count . ' resultados, contado em ' . $pg_timestamp2human->(stash('segment')->last_run_at) %>
+            </option>
+        </select>
+        % }
+
+        <div class="form-group">
+            <label for="exampleInputEmail1">Título</label>
+            <input required name="message_title" class="form-control" id="imessage_title" aria-describedby="title"
+                placeholder="Novidades!">
+        </div>
+        <label>Conteúdo</label>
+
+        <div class="form-group">
+            <textarea name="message_content" id="editor"></textarea>
+        </div>
+
+        <script>
+            tinymce.init({
+                selector: "textarea#editor",
+                plugins: "lists, autolink link, image, code, media",
+                link_default_protocol: 'https',
+                toolbar:
+                    "h1 h2 bold italic strikethrough blockquote bullist numlist backcolor | link  image | removeformat code help",
+                menubar: false,
+                setup: editor => {
+                    // Apply the focus effect
+                    editor.on("init", () => {
+                        editor.getContainer().style.transition =
+                            "border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out";
+                    });
+                    editor.on("focus", () => {
+                        (editor.getContainer().style.boxShadow =
+                            "0 0 0 .2rem rgba(0, 123, 255, .25)"),
+                            (editor.getContainer().style.borderColor = "#80bdff");
+                    });
+                    editor.on("blur", () => {
+                        (editor.getContainer().style.boxShadow = ""),
+                            (editor.getContainer().style.borderColor = "");
+                    });
+                    editor.on('change', function () {
+                        tinymce.triggerSave();
+                    });
+
+                }
+            });
+
+
+        </script>
+
+    </div>
+
+    <button type="submit" class="btn btn-primary">Criar</button>
+</form>
