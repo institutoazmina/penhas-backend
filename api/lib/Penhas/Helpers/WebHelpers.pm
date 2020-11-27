@@ -53,6 +53,8 @@ sub respond_to_if_web {
 sub use_redis_flash {
     my $c = shift;
 
+    $c->stash(pg_timestamp2human => \&pg_timestamp2human);
+
     my $flashredis = $c->flash('flashredis');
     if ($flashredis) {
         my $loaded = $c->kv->redis->get($flashredis);

@@ -134,6 +134,7 @@ sub admin_check_authorization {
 sub admin_dashboard {
     my $c = shift;
 
+    $c->use_redis_flash();
     my $params = $c->validate_request_params(
         rows             => {type => 'Int'},
         next_page        => {type => 'Str', max_length => 999},

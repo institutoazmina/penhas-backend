@@ -4,11 +4,6 @@
 <div class="border-bottom">
     <h1 class="h2"> <%== $notification_message ?  'Editar notificação' : 'Criar nova notificação' %></h1>
 </div>
-% if (my $success = stash ('success_message') ) {
-<div class="alert alert-success" role="alert">
-    <%== $success %>
-</div>
-% }
 <br />
 <form method="POST" action="/admin/add-notification">
     <div class="form-group">
@@ -75,4 +70,13 @@
     </div>
 
     <button type="submit" class="btn btn-primary"> <%== $notification_message ?'Salvar' : 'Criar' %> </button>
+    % if ($notification_message){
+        <hr />
+        <div class="text-right">
+            <button type="submit" name="action" value="delete" class="btn btn-sm btn-danger">Apagar</button>
+
+        </div>
+    % }
+
+
 </form>

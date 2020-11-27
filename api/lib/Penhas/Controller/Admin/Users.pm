@@ -159,8 +159,9 @@ sub au_search {
 
 sub ua_send_message {
     my $c     = shift;
-    my $valid = $c->validate_request_params(
 
+    $c->use_redis_flash();
+    my $valid = $c->validate_request_params(
         cliente_id => {required => 1, type => 'Int'},
         message    => {required => 1, type => 'Str'},
     );
@@ -187,6 +188,7 @@ sub ua_send_message {
 
 sub ua_list_messages {
     my $c     = shift;
+    $c->use_redis_flash();
     my $valid = $c->validate_request_params(
         cliente_id => {required => 1,     type       => 'Int'},
         rows       => {required => 0,     type       => 'Int'},
@@ -211,7 +213,6 @@ sub ua_list_messages {
         html => {
             %$ret,
             cliente            => $user_obj,
-            pg_timestamp2human => \&pg_timestamp2human
         },
     );
 }
@@ -224,6 +225,7 @@ sub ua_add_notifications {
     my $valid = $c->validate_request_params(
         cliente_id              => {required => 0, type => 'Int'},
         segment_id              => {required => 0, type => 'Int'},
+        action                  => {required => 0, type => 'Str'},
         notification_message_id => {required => 0, type => 'Int'},
         message_title           => {required => 1, type => 'Str', max_length => 200},
         message_content         => {required => 1, type => 'Str', max_length => 9999},
@@ -233,6 +235,21 @@ sub ua_add_notifications {
         my $notification_message
           = $c->schema2->resultset('NotificationMessage')->find($valid->{notification_message_id})
           or $c->reply_item_not_found();
+
+        if ($valid->{action} && $valid->{action} eq 'delete') {
+            $notification_message->notification_logs->delete;
+            $notification_message->delete;
+            return $c->respond_to_if_web(
+                json => {
+                    text   => '',
+                    status => 204,
+                },
+                html => sub {
+                    $c->flash_to_redis({success_message => 'Removido com sucesso!'});
+                    $c->redirect_to('/admin');
+                }
+            );
+        }
 
         $notification_message->update(
             {
@@ -351,7 +368,6 @@ sub ua_add_notification_get {
             add_editor         => 1,
             segment_id         => $segment->id,
             segment            => $segment,
-            pg_timestamp2human => \&pg_timestamp2human
         },
     );
 }
@@ -373,7 +389,6 @@ sub ua_notification_message_get {
         html => {
             add_editor           => 1,
             notification_message => $notification_message,
-            pg_timestamp2human   => \&pg_timestamp2human
         },
     );
 }
