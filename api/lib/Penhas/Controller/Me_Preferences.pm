@@ -1,7 +1,7 @@
 package Penhas::Controller::Me_Preferences;
 use Mojo::Base 'Penhas::Controller';
 use Scope::OnExit;
-
+use Penhas::Utils qw/is_test/;
 use DateTime;
 
 sub assert_user_perms {
