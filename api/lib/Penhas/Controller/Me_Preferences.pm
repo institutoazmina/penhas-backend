@@ -103,6 +103,8 @@ sub post_preferences {
         }
     }
 
+    return &list_preferences($c) unless is_test();
+
     return $c->render(
         text   => '',
         status => 204,
