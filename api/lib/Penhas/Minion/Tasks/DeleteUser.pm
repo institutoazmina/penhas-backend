@@ -64,6 +64,7 @@ sub delete_user {
                         {
                             cpf_prefix             => $user->cpf_prefix,
                             cpf_hash               => $user->cpf_hash,
+                            old_perform_delete_at  => $user->old_perform_delete_at,
                             deleted_scheduled_meta => (
                                 $user->deleted_scheduled_meta
                                 ? from_json($user->deleted_scheduled_meta)
