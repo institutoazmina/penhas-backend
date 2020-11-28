@@ -147,6 +147,8 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "quiz_assistant_yes_count",
+  { data_type => "integer", default_value => 0, is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
@@ -303,8 +305,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-28 20:44:16
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:1/NgaE+vk7kR1TWyWQgzQA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-28 20:51:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:o9kJYkCAltkZBs2uSsjUaw
 
 use Carp qw/confess/;
 
@@ -526,6 +528,9 @@ sub avatar_url_or_default {
 sub reset_all_questionnaires {
     my ($self) = @_;
 
+    $self->update({
+        quiz_assistant_yes_count => \'quiz_assistant_yes_count+1',
+    });
     $self->clientes_quiz_sessions->search({deleted_at => undef})->update(
         {
             deleted    => 1,
