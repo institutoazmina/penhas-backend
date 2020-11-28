@@ -39,6 +39,7 @@ sub post {
         {email => $email, status => {in => ['deleted_scheduled', 'active', 'banned']}},
     )->next;
     my $found         = $found_obj ? {$found_obj->get_columns()} : undef;
+    my $error_code    = 'notfound';
     my $error_message = 'Você ainda não possui cadastro conosco.';
 
     if ($found) {
@@ -96,6 +97,7 @@ sub post {
                     }
                 );
             }
+            $error_code    = 'wrongpassword';
             $error_message = 'E-mail ou senha inválida.';
             goto WRONG_PASS;
         }
@@ -104,7 +106,7 @@ sub post {
   WRONG_PASS:
 
     die {
-        error   => 'wrongpassword',
+        error   => $error_code,
         message => $error_message,
         field   => 'password',
         reason  => 'invalid'
