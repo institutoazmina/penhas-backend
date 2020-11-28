@@ -139,6 +139,14 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "primeiro_quiz_detectou_violencia",
+  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
+  "primeiro_quiz_detectou_violencia_atualizado_em",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("cpf_hash", ["cpf_hash"]);
@@ -295,8 +303,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-22 23:18:32
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iBoTq5Hde2UyrbTXYgCluQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-28 20:44:16
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:1/NgaE+vk7kR1TWyWQgzQA
 
 use Carp qw/confess/;
 
@@ -421,6 +429,11 @@ sub quiz_detectou_violencia_toggle {
         {
             quiz_detectou_violencia_atualizado_em => \'NOW(4)',
             quiz_detectou_violencia               => $active ? '1' : '0',
+
+            # saber o status da primeira vez que saiu de NULL para algum valor
+            primeiro_quiz_detectou_violencia => \['coalesce(primeiro_quiz_detectou_violencia, ?)', $active ? '1' : '0'],
+            primeiro_quiz_detectou_violencia_atualizado_em => \
+              'coalesce(primeiro_quiz_detectou_violencia_atualizado_em, now(4))',
         }
     );
 
