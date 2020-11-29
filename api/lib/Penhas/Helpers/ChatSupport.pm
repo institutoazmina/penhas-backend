@@ -5,7 +5,7 @@ use utf8;
 use JSON;
 use Penhas::Logger;
 use Penhas::Utils qw/is_test pg_timestamp2iso_8601 db_epoch_to_etag pg_timestamp2human notifications_enabled/;
-use Mojo::Util qw/trim/;
+use Mojo::Util qw/trim xml_escape/;
 use Scope::OnExit;
 use Crypt::CBC;
 use Crypt::Rijndael;    # AES
@@ -14,6 +14,7 @@ use Convert::Z85;
 
 our $ForceFilterClientes;
 my $reload_app_err_msg = 'Recarregue o app, conversa não pode ser aberta.';
+
 
 sub setup {
     my $self = shift;
@@ -316,6 +317,8 @@ sub support_list_message {
     foreach my $row (@rows) {
         my $is_me = $row->{admin_user_id} ? 0 : 1;
         $is_me = $is_me ? 0 : 1 if $logged_as_admin;
+
+        $row->{message} = xml_escape($row->{message});
 
         push @messages, {
             id      => $row->{id},

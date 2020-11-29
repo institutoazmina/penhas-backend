@@ -5,7 +5,7 @@ use utf8;
 use JSON;
 use Penhas::Logger;
 use Penhas::Utils qw/is_test pg_timestamp2iso_8601 db_epoch_to_etag notifications_enabled/;
-use Mojo::Util qw/trim/;
+use Mojo::Util qw/trim xml_escape/;
 use Scope::OnExit;
 use Crypt::CBC;
 use Crypt::Rijndael;    # AES
@@ -379,7 +379,16 @@ sub chat_open_session {
             }
         );
         $existing = {id => $existing->id};
+
+        $c->schema2->resultset('PrivateChatSessionMetadata')->create(
+            {
+                cliente_id       => $user_obj->id,
+                other_cliente_id => $to_cliente->{id},
+                started_at       => \'NOW()'
+            }
+        );
     }
+
 
     my $chat_auth = &_sign_chat_auth($c, id => $existing->{id}, uid => $user_obj->id);
 
@@ -808,6 +817,7 @@ sub chat_list_message {
         # set internal flag as UTF-8 hint
         $message = decode 'utf-8', $message;
 
+        $message = xml_escape($message);
         push @messages, {
             id      => $row->{id},
             message => $message . '',
