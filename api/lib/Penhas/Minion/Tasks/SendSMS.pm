@@ -41,6 +41,7 @@ sub send_sms {
             'secret' => $ENV{AWS_SNS_SECRET},
         }
     );
+    $sns->service($ENV{AWS_SNS_ENDPOINT} || 'http://sns.us-east-1.amazonaws.com');
 
     my $r = $sns->dispatch(
         {
