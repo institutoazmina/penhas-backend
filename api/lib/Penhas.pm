@@ -78,6 +78,7 @@ sub startup {
         around_dispatch => sub {
             my ($next, $c) = @_;
             Log::Log4perl::NDC->remove;
+            select(undef, undef, undef, 0.1 + (rand() / 4)) if $c->req->headers->header('cf-ipcountry') =~ /BR/i;
             $next->();
         }
     );
