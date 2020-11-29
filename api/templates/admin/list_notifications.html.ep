@@ -2,7 +2,10 @@
     <h1 class="h2">Lista de notificações</h1>
 </div>
 <br />
-
+<div class="text-right">
+    <a class="btn btn-outline-dark" href="/admin/add-notification?load_segments=1">Criar
+        notificação</a>
+</div>
 <br>
 <div class="table-responsive">
     <table class="table table-striped table-sm table-hover">

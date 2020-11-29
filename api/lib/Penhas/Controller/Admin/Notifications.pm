@@ -148,17 +148,43 @@ sub unft_new_template {
     $c->use_redis_flash();
     $c->stash(template => 'admin/add_notification');
     my $valid = $c->validate_request_params(
-        segment_id => {required => 1, type => 'Int'},
+        segment_id    => {required => 0, type => 'Int'},
+        load_segments => {required => 0, type => 'Bool'}
     );
-    my $segment = $c->schema2->resultset('AdminClientesSegment')->find($valid->{segment_id});
-    $c->reply_invalid_param('segment_id') unless $segment;
+
+    my ($segment, $segments);
+    if ($valid->{segment_id}) {
+        $segment = $c->schema2->resultset('AdminClientesSegment')->find($valid->{segment_id});
+        $c->reply_invalid_param('segment_id não é valido') unless $segment;
+    }
+    else {
+        $segments = $c->schema2->resultset('AdminClientesSegment')->search(
+            {
+                is_test => is_test() ? 1 : 0,
+                status  => 'published',
+            },
+            {
+                columns      => [qw/id label last_count last_run_at/],
+                result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                order_by     => 'sort'
+            }
+        );
+    }
 
     return $c->respond_to_if_web(
         json => {},
         html => {
             add_editor => 1,
-            segment_id => $segment->id,
-            segment    => $segment,
+            (
+                $segment
+                ? (
+                    segment_id => $segment->id,
+                    segment    => $segment,
+                  )
+                : (
+                    segments => [$segments->all],
+                )
+            )
         },
     );
 }
