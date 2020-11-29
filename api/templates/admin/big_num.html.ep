@@ -1,12 +1,8 @@
 <div class="border-bottom">
     <h1 class="h2">Big numbers</h1>
-
-    <span>Tempo de execução de query <%== $elapsed %> segundos</span>
 </div>
 
 % if ( stash('results') ) {
-<hr />
-
 <div class="row">
     % for my $r (@{stash('results') || []}) {
     <div class="col-xxl-3 col-lg-6">
@@ -29,5 +25,7 @@
     % }
 
 </div>
+<hr/>
+<p>Tempo de execução total das queries <%== $elapsed %> segundos</p>
 
 % }
