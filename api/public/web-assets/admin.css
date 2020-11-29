@@ -107,3 +107,23 @@ body {
     font-weight: 600;
     color: #0062cc;
 }
+
+.text-xs {
+  font-size: 0.75rem !important;
+}
+
+.text-sm {
+  font-size: 0.875rem !important;
+}
+
+.text-lg {
+    font-size: 1.25rem !important;
+  }
+
+  .text-slg {
+    font-size: 1.5rem !important;
+  }
+
+.text-xl {
+  font-size: 2.5rem !important;
+}

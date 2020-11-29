@@ -66,6 +66,7 @@ sub register {
     $admin->route('add-notification')->get->to(controller => 'Admin::Notifications', action => 'unft_new_template');
     $admin->route('message-detail')->get->to(controller => 'Admin::Notifications', action => 'unft_explore');
     $admin->route('notifications')->get->to(controller => 'Admin::Notifications', action => 'unft_list');
+    $admin->route('bignum')->get->to(controller => 'Admin::BigNum', action => 'abignum_get');
 
 
     # INTERNAL ENDPOINTS
