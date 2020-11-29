@@ -325,6 +325,8 @@ sub support_list_message {
         };
     }
 
+    $user_obj->update({support_chat_messages_sent => \'support_chat_messages_sent+1'}) if !$logged_as_admin;
+
     return {
         messages => \@messages,
         other    => $other,

@@ -718,6 +718,8 @@ sub chat_send_message {
         }
     }
 
+    $user_obj->update({private_chat_messages_sent => \'private_chat_messages_sent+1'});
+
     return {
         id                 => $chat_message->id,
         prev_last_msg_etag => db_epoch_to_etag($prev_last_msg_at),
