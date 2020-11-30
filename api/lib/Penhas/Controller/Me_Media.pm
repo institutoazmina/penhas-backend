@@ -309,6 +309,8 @@ sub _extract_duration {
     my $stderr = '';
     my $stdout = '';
     eval { run3 \@ffprobe, \undef, \$stdout, \$stderr; };
+    log_error("stderr '$stderr'");
+    log_error("stderr '$stdout'");
 
     if (defined $stdout) {
         $stdout =~ s/^\s+//;
@@ -335,6 +337,7 @@ sub _extract_duration {
             message => 'Erro ao ler arquivo convertido',
         };
     }
+log_error("final time $stdout");
 
     return $stdout;
 }
