@@ -365,7 +365,7 @@ sub access_modules_as_config {
         },
         modo_seguranca => {
             numero              => '000',
-            audio_each_duration => '5',
+            audio_each_duration => '900',
             audio_full_duration => '900',
 
             #audio_each_duration => '900',
