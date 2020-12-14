@@ -64,6 +64,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "last_error_message",
+  { data_type => "text", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -80,8 +82,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-04 20:32:26
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:POVJfi8lJwfmKbrRO7C3hw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-12-13 21:27:14
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+mFDOo0xP/2p/AtD60EB6Q
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -51,63 +51,79 @@ sub tick_rss_feeds {
         slog_info('Downloading feed id %s url %s', $feed->id, $feed->url);
 
         my $rss = Mojo::Feed->new(url => $feed->url);
-        $rss->items->each(
-            sub {
-                my $info      = $_->to_hash();
-                my $link      = lc delete $info->{link};
-                my $title     = delete $info->{title};
-                my $published = delete $info->{published};
+        eval {
+            $rss->items->each(
+                sub {
+                    my $info      = $_->to_hash();
+                    my $link      = lc delete $info->{link};
+                    my $title     = delete $info->{title};
+                    my $published = delete $info->{published};
 
-                # tratando google
-                if ($link =~ /www\.google\.com.+url/) {
-                    $link = Mojo::URL->new($link)->query->param('url');
+                    # tratando google
+                    if ($link =~ /www\.google\.com.+url/) {
+                        $link = Mojo::URL->new($link)->query->param('url');
+                    }
+
+                    # o ID nao precisa ir pro index, e geralmente ele eh a propria URL
+                    delete $info->{guid};
+                    delete $info->{id};
+
+                    next unless $link =~ /^https?\:\/\//;    # precisa ser http ou https
+                    next unless $title;                      # precisa ter um titulo
+
+                    $title = substr(html_unescape($title), 0, 2000);
+
+                    # limpa tags html
+                    # limpa espaços repetidos
+                    $title =~ s/<[^>]*>/ /g;
+                    $title =~ s/\s+/ /g;
+
+                    slog_info('found link "%s" with title "%s"', $link, $title);
+
+                    if ($feed->autocapitalize) {
+                        $title = ucfirst(lc($title));
+
+                        # apenas palavras com mais de 3 chars
+                        $title =~ s/(\s)(.[^\s]{3})/$1 . ucfirst($2)/eg;
+
+                        # colocar upper case novamente depois de . ou ;
+                        $title =~ s/(\.\s+)(.)/$1 . ucfirst($2)/eg;
+
+                        slog_info('autocapitalize title to "%s"', $title);
+                    }
+
+                    push @news, {
+                        link      => $link,
+                        title     => $title,
+                        published => $published,
+
+                        rss_feed_id => $feed->id,
+                        fonte       => $feed->fonte,
+                        info        => $info,
+                    };
                 }
-
-                # o ID nao precisa ir pro index, e geralmente ele eh a propria URL
-                delete $info->{guid};
-                delete $info->{id};
-
-                next unless $link =~ /^https?\:\/\//;    # precisa ser http ou https
-                next unless $title;                      # precisa ter um titulo
-
-                $title = substr(html_unescape($title), 0, 2000);
-
-                # limpa tags html
-                # limpa espaços repetidos
-                $title =~ s/<[^>]*>/ /g;
-                $title =~ s/\s+/ /g;
-
-                slog_info('found link "%s" with title "%s"', $link, $title);
-
-                if ($feed->autocapitalize) {
-                    $title = ucfirst(lc($title));
-
-                    # apenas palavras com mais de 3 chars
-                    $title =~ s/(\s)(.[^\s]{3})/$1 . ucfirst($2)/eg;
-
-                    # colocar upper case novamente depois de . ou ;
-                    $title =~ s/(\.\s+)(.)/$1 . ucfirst($2)/eg;
-
-                    slog_info('autocapitalize title to "%s"', $title);
+            );
+        };
+        if ($@) {
+            my $err = "$@";
+            slog_error('Download feed id %s url %s failed with %s', $feed->id, $feed->url, $err);
+            $feed->update(
+                {
+                    last_run           => $now->datetime,
+                    next_tick          => $now->clone->add({days => 7}),
+                    last_error_message => $err,
                 }
+            );
+        }
+        else {
 
-                push @news, {
-                    link      => $link,
-                    title     => $title,
-                    published => $published,
-
-                    rss_feed_id => $feed->id,
-                    fonte       => $feed->fonte,
-                    info        => $info,
-                };
-            }
-        );
-        $feed->update(
-            {
-                last_run  => $now->datetime,
-                next_tick => $next_tick->datetime,
-            }
-        );
+            $feed->update(
+                {
+                    last_run  => $now->datetime,
+                    next_tick => $next_tick->datetime,
+                }
+            );
+        }
     }
 
     my $news_rs      = $c->schema2->resultset('Noticia');
