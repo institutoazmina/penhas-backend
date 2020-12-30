@@ -16,7 +16,7 @@ services:
 
   directus:
     image: directus/directus:v8-apache
-    restart: always
+    restart: unless-stopped
     networks:
         - external_network
     #depends_on:
@@ -48,14 +48,12 @@ services:
 
   penhas_api:
     image: azminas/penhas_api
-    restart: always
+    restart: unless-stopped
     ports:
       - "${PENHAS_API_LISTEN}:8080"
     environment:
       REDIS_SERVER: "${REDIS_SERVER}"
-      DIRECUTS_API_TOKEN: "${DIRECUTS_API_TOKEN}"
       REDIS_NS: "${REDIS_NS}"
-      DIRECUTS_ENDPOINT: "${DIRECUTS_ENDPOINT}"
       MYSQL_HOST: "${DIRECTUS_DATABASE_HOST}"
       MYSQL_PORT: "${DIRECTUS_DATABASE_PORT}"
       MYSQL_DBNAME: "${DIRECTUS_DATABASE_NAME}"
