@@ -79,19 +79,6 @@ sub startup {
             my ($next, $c) = @_;
             Log::Log4perl::NDC->remove;
 
-            if ($c->req->headers->header('cf-ray') =~ /-SSA/i) {    # salvador, ja vai dar 40ms+40ms
-                select(undef, undef, undef, 0.2 + (rand() / 5));
-            }
-            elsif ($c->req->headers->header('cf-ray') =~ /-GRU/i) {    # sp
-                select(undef, undef, undef, 0.13 + (rand() / 5));
-            }
-            elsif ($c->req->headers->header('cf-ray') =~ /-(GIG|POA)/i) {    # rio / porto alegre
-                select(undef, undef, undef, 0.8 + (rand() / 5));
-            }
-            elsif ($c->req->headers->header('cf-ipcountry') =~ /BR/i) {
-                select(undef, undef, undef, 0.1 + (rand() / 5));
-            }
-
             $next->();
         }
     );
