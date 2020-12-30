@@ -22,7 +22,7 @@ services:
     #depends_on:
     #    - db
     ports:
-      - "${DIRECTUS_API_LISTEN}:80"
+      - "172.17.0.1:${DIRECTUS_API_LISTEN}:80"
     environment:
       DIRECTUS_APP_ENV: "production"
       DIRECTUS_AUTH_PUBLICKEY: "${DIRECTUS_AUTH_PUBLICKEY}"
@@ -50,7 +50,7 @@ services:
     image: azminas/penhas_api
     restart: unless-stopped
     ports:
-      - "${PENHAS_API_LISTEN}:8080"
+      - "172.17.0.1:${PENHAS_API_LISTEN}:8080"
     environment:
       REDIS_SERVER: "${REDIS_SERVER}"
       REDIS_NS: "${REDIS_NS}"
