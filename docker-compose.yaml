@@ -1,42 +1,42 @@
 version: "3"
 services:
-  db:
-    image: mariadb:10.5.1-bionic
-    restart: always
-    volumes:
-        - db_data:/var/lib/mysql
-    networks:
-        - external_network
-    environment:
-        MYSQL_DATABASE: "directus"
-        MYSQL_USER: "directus"
-        MYSQL_PASSWORD: "directus"
-        MYSQL_ROOT_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
-    command: mysqld --innodb-buffer-pool-size=256M
+#  db:
+#    image: mariadb:10.5.1-bionic
+#    restart: always
+#    volumes:
+#        - db_data:/var/lib/mysql
+#    networks:
+#        - external_network
+#    environment:
+#        MYSQL_DATABASE: "directus"
+#        MYSQL_USER: "directus"
+#        MYSQL_PASSWORD: "directus"
+#        MYSQL_ROOT_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
+#    command: mysqld --innodb-buffer-pool-size=256M
 
   directus:
     image: directus/directus:v8-apache
     restart: always
     networks:
         - external_network
-    depends_on:
-        - db
+    #depends_on:
+    #    - db
     ports:
       - "${DIRECTUS_API_LISTEN}:80"
     environment:
       DIRECTUS_APP_ENV: "production"
       DIRECTUS_AUTH_PUBLICKEY: "${DIRECTUS_AUTH_PUBLICKEY}"
       DIRECTUS_AUTH_SECRETKEY: "${DIRECTUS_AUTH_SECRETKEY}"
-      DIRECTUS_DATABASE_HOST: "mysql"
-      DIRECTUS_DATABASE_PORT: "3306"
-      DIRECTUS_DATABASE_NAME: "directus"
-      DIRECTUS_DATABASE_USERNAME: "directus"
+      DIRECTUS_DATABASE_HOST: "${DIRECTUS_DATABASE_HOST}"
+      DIRECTUS_DATABASE_PORT: "${DIRECTUS_DATABASE_PORT}"
+      DIRECTUS_DATABASE_NAME: "${DIRECTUS_DATABASE_NAME}"
+      DIRECTUS_DATABASE_USERNAME: "${DIRECTUS_DATABASE_USERNAME}"
       DIRECTUS_DATABASE_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
     volumes:
         - ./directus/data/config:/var/directus/config
         - ./directus/data/uploads:/var/directus/public/uploads
-    links:
-        - db:mysql
+    #links:
+    #    - db:mysql
 
   penhas_api:
     image: azminas/penhas_api
@@ -48,30 +48,26 @@ services:
       DIRECUTS_API_TOKEN: "${DIRECUTS_API_TOKEN}"
       REDIS_NS: "${REDIS_NS}"
       DIRECUTS_ENDPOINT: "${DIRECUTS_ENDPOINT}"
-      MYSQL_HOST: "mysql"
-      MYSQL_PORT: "3306"
-      MYSQL_DBNAME: "directus"
-      MYSQL_USER: "directus"
+      MYSQL_HOST: "${DIRECTUS_DATABASE_HOST}"
+      MYSQL_PORT: "${DIRECTUS_DATABASE_PORT}"
+      MYSQL_DBNAME: "${DIRECTUS_DATABASE_NAME}"
+      MYSQL_USER: "${DIRECTUS_DATABASE_USERNAME}"
       MYSQL_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
     volumes:
-        - penhas_api_data:/data/
+        - ../data/:/data/
         - ./api/:/src/
     networks:
         - external_network
-        - custom_network
-    depends_on:
-        - directus
-    links:
-        - db:mysql
+    #depends_on:
+    #    - directus
+    #links:
+    #    - db:mysql
 
-volumes:
-    db_data: {}
-    penhas_api_data: {}
+#volumes:
+#    db_data: {}
+#    penhas_api_data: {}
 
 networks:
     external_network:
-    custom_network:
-      external:
-        name: mastodon_internal_network
 
 # ALTER USER 'directus'@'172.19.0.4' IDENTIFIED WITH mysql_native_password;
