@@ -32,6 +32,14 @@ services:
       DIRECTUS_DATABASE_NAME: "${DIRECTUS_DATABASE_NAME}"
       DIRECTUS_DATABASE_USERNAME: "${DIRECTUS_DATABASE_USERNAME}"
       DIRECTUS_DATABASE_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
+      EMAIL_TRANSPORT: "smtp"
+      EMAIL_FROM: "${SMTP_FROM}"
+      EMAIL_SMTP_HOST: "${SMTP_HOST}"
+      EMAIL_SMTP_PORT: "587"
+      EMAIL_SMTP_USER: "${SMTP_USER}"
+      EMAIL_SMTP_PASSWORD: "${SMTP_PASSWORD}"
+      EMAIL_SMTP_POOL: "false"
+      EMAIL_SMTP_SECURE: "false"
     volumes:
         - ./directus/data/config:/var/directus/config
         - ./directus/data/uploads:/var/directus/public/uploads
