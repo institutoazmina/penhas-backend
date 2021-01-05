@@ -619,7 +619,7 @@ sub cliente_alert_guards {
     my $message_link    = ' adicionou um pedido de socorro. Entre em contato. ';
 
     if ($alert->gps_lat && $alert->gps_long) {
-        $message_link .= 'Veja sua localizaçāo no mapa: https://google.com/maps?q='
+        $message_link .= 'Veja sua localizaçāo no mapa: https://maps.google.com/maps?q='
           . join(',', substr($alert->gps_lat, 0, 11), substr($alert->gps_long, 0, 11));
     }
     else {
