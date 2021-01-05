@@ -152,7 +152,7 @@ sub _load_support_room {
         is_blockable     => 0,
         last_msg_etag    => db_epoch_to_etag($session->get_column('last_msg_at')),
         header_message   => 'Este é um canal de contato direto com as administradoras do PenhaS.',
-        header_warning   => 'Importante: demoramos certa de <b>2 dias para responder as mensagens</b>',
+        header_warning   => 'Importante: demoramos cerca de <b>2 dias para responder as mensagens</b>',
     };
 
     return ($session, $user_obj, $other, $meta);
