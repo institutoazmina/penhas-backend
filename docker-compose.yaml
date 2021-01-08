@@ -38,7 +38,7 @@ services:
       DIRECTUS_MAIL_DEFAULT_PORT: "587"
       DIRECTUS_MAIL_DEFAULT_USERNAME: "${SMTP_USER}"
       DIRECTUS_MAIL_DEFAULT_PASSWORD: "${SMTP_PASSWORD}"
-      DIRECTUS_MAIL_DEFAULT_ENCRYPTION: "ssl"
+      DIRECTUS_MAIL_DEFAULT_ENCRYPTION: "tls"
     volumes:
         - ./directus/data/config:/var/directus/config
         - ./directus/data/uploads:/var/directus/public/uploads
