@@ -195,6 +195,7 @@ sub me_unread_notif_count {
     my $c     = shift;
     my $count = $c->user_notifications_unread_count($c->stash('user_id'));
 
+=pod
     if ($c->stash('user_id') == 180 || $c->stash('user_id') == 3933) {
         $count = int(rand() * 10000);
         if ($count =~ /^[12]/) {
@@ -207,6 +208,7 @@ sub me_unread_notif_count {
             $count = substr($count, 0, 3);
         }
     }
+=cut
     return $c->render(
         json   => {count => $count},
         status => 200,
