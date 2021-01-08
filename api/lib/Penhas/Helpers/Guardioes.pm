@@ -629,7 +629,7 @@ sub cliente_alert_guards {
     # 130 no lugar de 140, pois o minimo reservado pro nome sao 10 chars
     my $remaining_chars = 130 - length($message_prepend . $message_link);
 
-    # se ficou menor, nao tem jeito, vamo ser dois SMS..
+    # se ficou menor, nao tem jeito, vamo ter dois SMS..
     $remaining_chars += 140 if $remaining_chars < 0;
 
     my $message_sms = $message_prepend . substr($user_obj->nome_completo, 0, $remaining_chars) . $message_link;
