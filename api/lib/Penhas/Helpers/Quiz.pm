@@ -518,7 +518,7 @@ sub process_quiz_assistant {
         return {
             quiz_session => {
                 finished   => 1,
-                end_screen => 'home',
+                end_screen => '/mainboard?page=supportpoint',
             }
         };
     }
