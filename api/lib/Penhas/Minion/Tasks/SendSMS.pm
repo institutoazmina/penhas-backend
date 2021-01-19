@@ -41,19 +41,18 @@ sub send_sms {
             'secret' => $ENV{AWS_SNS_SECRET},
         }
     );
-    $sns->service($ENV{AWS_SNS_ENDPOINT} || 'http://sns.us-east-1.amazonaws.com');
+    $sns->service($ENV{AWS_SNS_ENDPOINT} || 'https://sns.sa-east-1.amazonaws.com');
 
     my $r = $sns->dispatch(
         {
-            'Action'           => 'Publish',
-            'Message'          => $message,
-            'PhoneNumber'      => $phonenumber,
-            'MessageStructure' => {
-                'AWS.SNS.SMS.SMSType' => {
-                    DataType    => 'String',
-                    StringValue => 'Transactional',
-                }
-            },
+            'Action'      => 'Publish',
+            'Message'     => $message,
+            'PhoneNumber' => $phonenumber,
+            'Attributes'  => {
+                'MessageAttributes.entry.1.Name'              => 'AWS.SNS.SMS.SMSType',
+                'MessageAttributes.entry.1.Value.StringValue' => 'Transactional',
+                'MessageAttributes.entry.1.Value.DataType'    => 'String',
+            }
         }
     );
 
