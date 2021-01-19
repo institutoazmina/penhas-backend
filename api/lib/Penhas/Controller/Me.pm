@@ -263,7 +263,7 @@ sub me_delete {
                             delete      => 1,
                             (
                                 $user_obj->deleted_scheduled_meta()
-                                ? (previous => $user_obj->deleted_scheduled_meta())
+                                ? (previous => from_json($user_obj->deleted_scheduled_meta() || '{}'))
                                 : ()
                             ),
                         }
@@ -328,7 +328,7 @@ sub me_reactivate {
                             app_version => $valid->{app_version},
                             ip          => $remote_ip,
                             reactivate  => 1,
-                            previous    => $user_obj->deleted_scheduled_meta(),
+                            previous    => from_json($user_obj->deleted_scheduled_meta() || '{}'),
                         }
                     ),
                     perform_delete_at => undef,
