@@ -8,7 +8,7 @@ my $t = test_instance;
 use Business::BR::CPF qw/random_cpf/;
 use DateTime;
 
-my $schema2 = $t->app->schema2;
+my $schema2 = get_schema2;
 
 my $now_datetime = DateTime->now()->datetime(' ');
 

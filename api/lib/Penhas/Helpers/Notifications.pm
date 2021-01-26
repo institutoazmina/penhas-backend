@@ -110,6 +110,7 @@ sub user_notifications {
 
         $notification_message->{icon} ||= 0;
 
+use DDP; p $notification_message;
         push @output_rows, {
             content     => $notification_message->{content},
             title       => $notification_message->{title},
@@ -164,8 +165,6 @@ sub user_notifications {
     # atualiza o "read_until" pra zerar (ou não) o contador
     if (!$opts{next_page} && $first_timestamp) {
 
-        use DDP;
-        p $first_timestamp;
         my $updated_timestamp = $c->schema2->resultset('ClientesAppNotification')->search({cliente_id => $user_obj->id})
           ->update({read_until => $first_timestamp});
         if ($updated_timestamp == 0) {

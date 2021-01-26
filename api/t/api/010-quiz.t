@@ -321,7 +321,7 @@ subtest_buffered 'reiniciando o quiz' => sub {
             session_id => $json->{quiz_session}{session_id},
             BT_RETURN  => 1,
         }
-    )->status_is(200)->json_is('/quiz_session/finished', 1)->json_is('/quiz_session/end_screen', 'home');
+    )->status_is(200)->json_is('/quiz_session/finished', 1)->json_is('/quiz_session/end_screen', '/mainboard?page=chat');
 
     # apertando o botao "reset_questionnaire" = Y
     $json = $t->post_ok(

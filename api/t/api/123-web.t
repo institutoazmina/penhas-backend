@@ -98,7 +98,7 @@ sub test_cli_seg {
             }
         )->status_is(200)->json_has('/notification_message_id', 'defined notification_message_id');
 
-        my $msg = $cliente->notification_logs->next, 'notification_logs defined';
+        ok my $msg = $cliente->notification_logs->next, 'notification_logs defined';
 
         is $msg->notification_message_id, last_tx_json->{notification_message_id},
           'notification_message_id matches';
@@ -113,7 +113,7 @@ sub test_cli_seg {
             }
         )->status_is(200)->json_has('/notification_message_id', 'defined notification_message_id');
 
-        $msg = $cliente->notification_logs->next, 'notification_logs defined';
+        ok $msg = $cliente->notification_logs->next, 'notification_logs defined';
         is $msg->notification_message_id, last_tx_json->{notification_message_id},
           'notification_message_id matches';
 

@@ -416,9 +416,9 @@ do {
     is $audio_1->audio_duration, '15.883', 'duration is right';
 
     ok(my $event = $schema2->resultset('ClientesAudiosEvento')->find($cliente_id . ':' . $event_id), 'event row found');
-    is $audio_1->cliente_id,   $cliente_id, 'row is the same client_id';
-    is $event->cliente_id,     $cliente_id, 'event row is the same client_id as audio';
-    is $event->audio_duration, '15.883', 'duration is ok';
+    is $audio_1->cliente_id, $cliente_id, 'row is the same client_id';
+    is $event->cliente_id,   $cliente_id, 'event row is the same client_id as audio';
+    is $event->audio_duration * 1000, 15.883 * 1000, 'duration is ok';
     ok $event->total_bytes > 160000 && $event->total_bytes < 240000, "bytes sum is about right ${\$event->total_bytes}";
 
     my $audio_2_response = $t->post_ok(
@@ -434,7 +434,7 @@ do {
     )->status_is(200)->json_has('/data/id')->tx->res->json;
 
     $event->discard_changes;
-    is $event->audio_duration, 15.883 + 17.369, 'duration is ok';
+    is $event->audio_duration * 1000, (15.883 + 17.369) * 1000, 'duration is ok';
     ok $event->total_bytes > 400000 && $event->total_bytes < 800000, 'bytes sum is about right';
 
     # duplica o envio do arquivo para verificar que o evento fica ainda OK
@@ -453,12 +453,12 @@ do {
     ok(my $audio_2     = $schema2->resultset('ClientesAudio')->find($audio_2_response->{data}{id}),     'row found');
     ok(my $audio_2_dup = $schema2->resultset('ClientesAudio')->find($audio_2_response_dup->{data}{id}), 'row found');
 
-    is $audio_2->duplicated_upload,     '1',      '$audio_2 is marked as duplicated';
-    is $audio_2_dup->duplicated_upload, '0',      '$audio_2_dup is the last';
-    is $audio_2_dup->audio_duration,    '17.369', 'duration is right';
+    is $audio_2->duplicated_upload,     '1', '$audio_2 is marked as duplicated';
+    is $audio_2_dup->duplicated_upload, '0', '$audio_2_dup is the last';
+    is $audio_2_dup->audio_duration * 1000, '17.369' * 1000, 'duration is right';
 
     $event->discard_changes;
-    is $event->audio_duration, 15.883 + 17.369, 'duration is ok';
+    is $event->audio_duration * 1000, (15.883 + 17.369) * 1000, 'duration is ok';
     ok $event->total_bytes > 400000 && $event->total_bytes < 800000, 'bytes sum is about right';
 
     $t->get_ok(

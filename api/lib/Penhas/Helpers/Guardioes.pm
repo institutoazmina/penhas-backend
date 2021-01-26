@@ -503,7 +503,8 @@ sub cliente_list_guardioes {
             header      => 'Convites recusados',
             description =>
               'Os convites recusados ainda podem serem aceitos usando o mesmo link. Use o botão 🗑️ para cancelar o convite.',
-            delete_warning => 'Após apagar um convite recusado, você não poderá convidar o mesmo número por até 7 dias.',
+            delete_warning =>
+              'Após apagar um convite recusado, você não poderá convidar o mesmo número por até 7 dias.',
         },
     };
     my @guards;
@@ -618,8 +619,11 @@ sub cliente_alert_guards {
     my $message_link    = ' adicionou um pedido de socorro. Entre em contato. ';
 
     if ($alert->gps_lat && $alert->gps_long) {
-        $message_link .= 'Veja sua localizaçāo no mapa: https://maps.google.com/maps?q='
-          . join('%2C', sprintf('%.5f', $alert->gps_lat), sprintf('%.5f', $alert->gps_long));
+        $message_link .= 'Veja sua localizaçāo no mapa: https://maps.google.com/maps?q=' . join(
+            '%2C',    # virgula url-encoded
+            sprintf('%.12g', sprintf('%.5f', $alert->gps_lat)),
+            sprintf('%.12g', sprintf('%.5f', $alert->gps_long)),
+        );
     }
     else {
         $message_link .= 'A localizaçāo não foi recebida.';
