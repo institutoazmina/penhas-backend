@@ -6,29 +6,29 @@ sub register {
 
     # PUBLIC ENDPOINTS
     # POST /signup
-    $r->any('signup')->post()->to(controller => 'SignUp', action => 'post');
+    $r->post('signup')->to(controller => 'SignUp', action => 'post');
 
     # POST /login
-    $r->any('login')->post()->to(controller => 'Login', action => 'post');
+    $r->post('login')->to(controller => 'Login', action => 'post');
 
     # POST /reset-password
-    $r->any('reset-password/request-new')->post()->to(controller => 'ResetPassword', action => 'request_new');
-    $r->any('reset-password/write-new')->post()->to(controller => 'ResetPassword', action => 'write_new');
+    $r->post('reset-password/request-new')->to(controller => 'ResetPassword', action => 'request_new');
+    $r->post('reset-password/write-new')->to(controller => 'ResetPassword', action => 'write_new');
 
     # GET /news-redirect
-    $r->any('news-redirect')->get()->to(controller => 'News', action => 'redirect');
+    $r->get('news-redirect')->to(controller => 'News', action => 'redirect');
 
     # GET /get-proxy
-    $r->any('get-proxy')->get()->to(controller => 'MediaDownload', action => 'public_get_proxy');
+    $r->get('get-proxy')->to(controller => 'MediaDownload', action => 'public_get_proxy');
 
     # GET /pontos-de-apoio-dados-auxiliares
-    $r->any('pontos-de-apoio-dados-auxiliares')->get()->to(controller => 'PontoApoio', action => 'pa_aux_data');
+    $r->get('pontos-de-apoio-dados-auxiliares')->to(controller => 'PontoApoio', action => 'pa_aux_data');
 
     # GET /pontos-de-apoio
-    $r->any('pontos-de-apoio')->get()->to(controller => 'PontoApoio', action => 'pa_list');
+    $r->get('pontos-de-apoio')->to(controller => 'PontoApoio', action => 'pa_list');
 
     # GET /pontos-de-apoio/$id
-    $r->any('pontos-de-apoio/:ponto_apoio_id')->get()->to(controller => 'PontoApoio', action => 'public_pa_detail');
+    $r->get('pontos-de-apoio/:ponto_apoio_id')->to(controller => 'PontoApoio', action => 'public_pa_detail');
 
     # Convite de guardiões
     # GET /guardiao?token=
@@ -45,61 +45,61 @@ sub register {
     $faq_detail->get()->to(action => 'webfaq_detail');
 
     # GET /geocode
-    $r->any('geocode')->get()->to(controller => 'PontoApoio', action => 'public_geocode');
+    $r->get('geocode')->to(controller => 'PontoApoio', action => 'public_geocode');
 
     # Admin endpoints
 
     # GET /admin/logout
-    $r->any('admin/logout')->get()->to(controller => 'Admin::Session', action => 'admin_logout');
+    $r->get('admin/logout')->to(controller => 'Admin::Session', action => 'admin_logout');
 
-    # POST /admin/login
-    $r->any('admin/login')->post()->to(controller => 'Admin::Session', action => 'admin_login');
-    $r->any('admin/login')->get()->to(controller => 'Admin::Session', action => 'admin_login_get');
+    # /admin/login
+    $r->post('admin/login')->to(controller => 'Admin::Session', action => 'admin_login');
+    $r->get('admin/login')->to(controller => 'Admin::Session', action => 'admin_login_get');
 
     # /admin
     my $admin = $r->under('admin')->to(controller => 'Admin::Session', action => 'admin_check_authorization');
     $admin->get()->to(action => 'admin_dashboard');
-    $admin->any('users')->get->to(controller => 'Admin::Users', action => 'au_search');
-    $admin->any('send-message')->post->to(controller => 'Admin::Users', action => 'ua_send_message');
-    $admin->any('user-messages')->get->to(controller => 'Admin::Users', action => 'ua_list_messages');
-    $admin->any('add-notification')->post->to(controller => 'Admin::Notifications', action => 'unft_crud');
-    $admin->any('add-notification')->get->to(controller => 'Admin::Notifications', action => 'unft_new_template');
-    $admin->any('message-detail')->get->to(controller => 'Admin::Notifications', action => 'unft_explore');
-    $admin->any('notifications')->get->to(controller => 'Admin::Notifications', action => 'unft_list');
-    $admin->any('bignum')->get->to(controller => 'Admin::BigNum', action => 'abignum_get');
+    $admin->get('users')->to(controller => 'Admin::Users', action => 'au_search');
+    $admin->post('send-message')->to(controller => 'Admin::Users', action => 'ua_send_message');
+    $admin->get('user-messages')->to(controller => 'Admin::Users', action => 'ua_list_messages');
+    $admin->post('add-notification')->to(controller => 'Admin::Notifications', action => 'unft_crud');
+    $admin->get('add-notification')->to(controller => 'Admin::Notifications', action => 'unft_new_template');
+    $admin->get('message-detail')->to(controller => 'Admin::Notifications', action => 'unft_explore');
+    $admin->get('notifications')->to(controller => 'Admin::Notifications', action => 'unft_list');
+    $admin->get('bignum')->to(controller => 'Admin::BigNum', action => 'abignum_get');
 
 
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss
     my $maintenance = $r->under('maintenance')->to(controller => 'Maintenance', action => 'check_authorization');
-    $maintenance->any('tick-rss')->get()->to(controller => 'TickRSS', action => 'tick');
+    $maintenance->get('tick-rss')->to(controller => 'TickRSS', action => 'tick');
 
     # GET /maintenance/tags-clear-cache
-    $maintenance->any('tags-clear-cache')->get()->to(controller => 'Tags', action => 'clear_cache');
+    $maintenance->get('tags-clear-cache')->to(controller => 'Tags', action => 'clear_cache');
 
     # GET /maintenance/reindex-all-news
-    $maintenance->any('reindex-all-news')->get()->to(controller => 'News', action => 'rebuild_index');
+    $maintenance->get('reindex-all-news')->to(controller => 'News', action => 'rebuild_index');
 
     # GET /maintenance/housekeeping
-    $maintenance->any('housekeeping')->get()->to(controller => 'Maintenance', action => 'housekeeping');
+    $maintenance->get('housekeeping')->to(controller => 'Maintenance', action => 'housekeeping');
 
     # GET /maintenance/tick-notifications
-    $maintenance->any('tick-notifications')->get()->to(controller => 'Maintenance', action => 'tick_notifications');
+    $maintenance->get('tick-notifications')->to(controller => 'Maintenance', action => 'tick_notifications');
 
     # PRIVATE ENDPOINTS
     my $authenticated = $r->under()->to(controller => 'JWT', action => 'check_user_jwt');
 
     # GET /filter-tags
-    $authenticated->under('filter-tags')->get()->to(controller => 'Tags', action => 'filter_tags');
+    $authenticated->get('filter-tags')->to(controller => 'Tags', action => 'filter_tags');
 
     # GET /filter-skills
-    $authenticated->under('filter-skills')->get()->to(controller => 'Skills', action => 'filter_skills');
+    $authenticated->get('filter-skills')->to(controller => 'Skills', action => 'filter_skills');
 
     # POST /logout
-    $authenticated->under('logout')->post()->to(controller => 'Logout', action => 'logout_post');
+    $authenticated->post('logout')->to(controller => 'Logout', action => 'logout_post');
 
     # POST /reactivate
-    $authenticated->any('reactivate')->post->to(controller => 'Me', action => 'me_reactivate');
+    $authenticated->post('reactivate')->to(controller => 'Me', action => 'me_reactivate');
 
     # GET /me
     my $user_loaded = $authenticated->under('')->to(controller => 'Me', action => 'check_and_load');
@@ -109,22 +109,22 @@ sub register {
     $me->delete()->to(action => 'me_delete');
 
     # GET /me/delete-text
-    $me->under('delete-text')->get()->to(controller => 'Me', action => 'me_delete_text');
+    $me->get('delete-text')->to(controller => 'Me', action => 'me_delete_text');
 
     # GET /me/unread-notif-count // notifications
-    $me->under('unread-notif-count')->get()->to(controller => 'Me', action => 'me_unread_notif_count');
+    $me->get('unread-notif-count')->to(controller => 'Me', action => 'me_unread_notif_count');
 
     # GET /me/notifications
-    $me->under('notifications')->get()->to(controller => 'Me', action => 'me_notifications');
+    $me->get('notifications')->to(controller => 'Me', action => 'me_notifications');
 
     # POST /me/call-police-pressed
-    $me->under('call-police-pressed')->post()->to(action => 'inc_call_police_counter');
+    $me->post('call-police-pressed')->to(action => 'inc_call_police_counter');
 
     # POST /me/modo-anonimo-toggle
-    $me->under('modo-anonimo-toggle')->post()->to(action => 'route_cliente_modo_anonimo_toggle');
+    $me->post('modo-anonimo-toggle')->to(action => 'route_cliente_modo_anonimo_toggle');
 
     # POST /me/modo-camuflado-toggle
-    $me->under('modo-camuflado-toggle')->post()->to(action => 'route_cliente_modo_camuflado_toggle');
+    $me->post('modo-camuflado-toggle')->to(action => 'route_cliente_modo_camuflado_toggle');
 
     # POST /me/ja-foi-vitima-de-violencia-toggle
     $me->under('ja-foi-vitima-de-violencia-toggle')->post()
@@ -154,12 +154,12 @@ sub register {
     $me_guardioes->post()->to(action => 'upsert');
     $me_guardioes->get()->to(action => 'list');
 
-    my $me_guardioes_object = $me_guardioes->under(':guard_id');
+    my $me_guardioes_object = $me_guardioes->any(':guard_id');
     $me_guardioes_object->delete()->to(action => 'delete');
     $me_guardioes_object->put()->to(action => 'edit');
 
     # POST /me/guardioes/alert
-    $me_guardioes->under('alert')->post()->to(action => 'alert_guards');
+    $me_guardioes->post('alert')->to(action => 'alert_guards');
 
     # POST /me/audios
     # GET /me/audios
@@ -171,8 +171,8 @@ sub register {
     my $me_audios_object = $me_audios->under(':event_id');
     $me_audios_object->get()->to(action => 'audio_events_detail');
     $me_audios_object->delete()->to(action => 'audio_events_delete');
-    $me_audios_object->any('download')->get()->to(action => 'audio_download');
-    $me_audios_object->any('request-access')->post()->to(action => 'audio_request_access');
+    $me_audios_object->get('download')->to(action => 'audio_download');
+    $me_audios_object->post('request-access')->to(action => 'audio_request_access');
 
     # POST /me/sugerir-pontos-de-apoio
     $me->under('sugerir-pontos-de-apoio')->post()->to(controller => 'PontoApoio', action => 'user_pa_suggest');
@@ -183,14 +183,14 @@ sub register {
     $me_pa->get()->to(controller => 'PontoApoio', action => 'user_pa_list');
 
     # GET /me/pontos-de-apoio/$id
-    $me_pa->under(':ponto_apoio_id')->get()->to(controller => 'PontoApoio', action => 'user_pa_detail');
+    $me_pa->get(':ponto_apoio_id')->to(controller => 'PontoApoio', action => 'user_pa_detail');
 
     # POST /me/avaliar-pontos-de-apoio
-    $me->under('avaliar-pontos-de-apoio')->post()->to(controller => 'PontoApoio', action => 'user_pa_rating');
+    $me->post('avaliar-pontos-de-apoio')->to(controller => 'PontoApoio', action => 'user_pa_rating');
 
 
     # GET /me/geocode
-    $me->under('geocode')->get()->to(controller => 'PontoApoio', action => 'user_geocode');
+    $me->get('geocode')->to(controller => 'PontoApoio', action => 'user_geocode');
 
     # /timeline/
     my $timeline = $authenticated->under('timeline')->to(controller => 'Timeline', action => 'assert_user_perms');
@@ -198,9 +198,9 @@ sub register {
 
     # /timeline/:id
     my $timeline_object = $timeline->under(':tweet_id')->to(controller => 'Timeline', action => 'load_object');
-    $timeline_object->under('comment')->post()->to(action => 'add_comment');
-    $timeline_object->under('like')->post()->to(action => 'add_like');
-    $timeline_object->under('report')->post()->to(action => 'add_report');
+    $timeline_object->post('comment')->to(action => 'add_comment');
+    $timeline_object->post('like')->to(action => 'add_like');
+    $timeline_object->post('report')->to(action => 'add_report');
 
     # /media-download
     my $media_download
@@ -218,19 +218,19 @@ sub register {
     $me_chat->get()->to(controller => 'Me_Chat', action => 'me_chat_sessions');
 
     # POST /me/chats-session
-    $me->post('chats-session')->post()->to(controller => 'Me_Chat', action => 'me_open_session');
+    $me->post('chats-session')->to(controller => 'Me_Chat', action => 'me_open_session');
 
     # DELETE /me/chats-session
-    $me->delete('chats-session')->delete()->to(controller => 'Me_Chat', action => 'me_delete_session');
+    $me->delete('chats-session')->to(controller => 'Me_Chat', action => 'me_delete_session');
 
     # POST /me/chats-messages
-    $me->post('chats-messages')->post()->to(controller => 'Me_Chat', action => 'me_send_message');
+    $me->post('chats-messages')->to(controller => 'Me_Chat', action => 'me_send_message');
 
     # GET /me/chats-messages
-    $me->get('chats-messages')->get()->to(controller => 'Me_Chat', action => 'me_list_message');
+    $me->get('chats-messages')->to(controller => 'Me_Chat', action => 'me_list_message');
 
     # POST /me/manage-blocks
-    $me->post('manage-blocks')->post()->to(controller => 'Me_Chat', action => 'me_manage_blocks');
+    $me->post('manage-blocks')->to(controller => 'Me_Chat', action => 'me_manage_blocks');
 
 
 }

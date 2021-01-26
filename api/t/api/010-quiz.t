@@ -333,7 +333,7 @@ subtest_buffered 'reiniciando o quiz' => sub {
         }
     )->status_is(200)->json_has('/quiz_session')->tx->res->json;
 
-    my $first_msg = $json->{quiz_session}{current_msgs}[0];
+    $first_msg = $json->{quiz_session}{current_msgs}[0];
     is $first_msg->{type},    'displaytext', 'just a text';
     is $first_msg->{content}, 'intro1',      'intro text';
 
