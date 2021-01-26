@@ -619,7 +619,7 @@ sub cliente_alert_guards {
 
     if ($alert->gps_lat && $alert->gps_long) {
         $message_link .= 'Veja sua localizaçāo no mapa: https://maps.google.com/maps?q='
-          . join(',', sprintf('%.5f', $alert->gps_lat), sprintf('%.5f', $alert->gps_long));
+          . join('%2C', sprintf('%.5f', $alert->gps_lat), sprintf('%.5f', $alert->gps_long));
     }
     else {
         $message_link .= 'A localizaçāo não foi recebida.';
