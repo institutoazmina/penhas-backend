@@ -202,27 +202,27 @@ db_transaction {
         '/search-users',
         {'x-api-key' => $session},
         form => {rows => 2, next_page => $next_page},
-      )->status_is(200, 'listando usuarios')                                                #
-      ->json_is('/rows/0/cliente_id', $cliente_id, 'id ok cli 1')                           #
-      ->json_hasnt('/rows/1', '1 rows')                                                     #
-      ->json_is('/has_more',      0,                'has more false')                       #
+      )->status_is(200, 'listando usuarios')    #
+      ->json_is('/rows/0/cliente_id', $cliente_id, 'id ok cli 1')        #
+      ->json_hasnt('/rows/1', '1 rows')                                  #
+      ->json_is('/has_more',      0,                'has more false')    #
       ->json_is('/rows/0/skills', $skills_in_order, 'skills ok');
 
     $t->get_ok(
         '/search-users',
         {'x-api-key' => $session},
         form => {name => 'a'},
-      )->status_is(400, 'filtro por nome')                                                  #
-      ->json_is('/error',  'form_error')                                                    #
-      ->json_is('/field',  'name')                                                          #
+      )->status_is(400, 'filtro por nome')                               #
+      ->json_is('/error',  'form_error')                                 #
+      ->json_is('/field',  'name')                                       #
       ->json_is('/reason', 'invalid_min_length');
 
     $t->get_ok(
         '/search-users',
         {'x-api-key' => $session},
         form => {name => 'cliEnte c'},
-      )->status_is(200, 'filtro por nome/apelido')                                          #
-      ->json_is('/rows/0/apelido',    'cliente C',  'apelido ok')                           #
+      )->status_is(200, 'filtro por nome/apelido')                       #
+      ->json_is('/rows/0/apelido',    'cliente C',  'apelido ok')        #
       ->json_is('/rows/0/cliente_id', $cliente_id3, 'id ok');
 
     $t->app->cliente_set_skill(user => {id => $cliente_id2}, skills => [$skill1->id]);
@@ -231,7 +231,7 @@ db_transaction {
         '/search-users',
         {'x-api-key' => $session},
         form => {skills => join(',', $skill2->id, $skill1->id)}
-      )->status_is(200, 'listando usuario com skills (OR)')                                 #
+      )->status_is(200, 'listando usuario com skills (OR)')              #
       ->json_is('/rows/0/cliente_id', $cliente_id2, 'first is last active user with skill1')    #
       ->json_is('/rows/1/cliente_id', $cliente_id,  'then myself')                              #
       ->json_hasnt('/rows/2', '2 rows only')                                                    #
@@ -702,5 +702,16 @@ sub test_notifcations {
 
     $t->get_ok('/maintenance/tick-notifications', form => {secret => $ENV{MAINTENANCE_SECRET}})->status_is(200);
     is $rs->count, '0', 'deleted because too old';
+
+
+    $cliente->cliente_modo_anonimo_toggle(active => 1);
+    trace_popall;
+    $t->get_ok(
+        ('/me/notifications'),
+        {'x-api-key' => $session3}
+    )->status_is(200, 'notifications with chat');
+    is trace_popall, 'anon_user:cliente A,expand_screen='.$cliente_id, 'right code';
+
+    $cliente->cliente_modo_anonimo_toggle(active => 0);
 
 }

@@ -103,20 +103,25 @@ sub user_notifications {
     my @not_in;
     my @output_rows;
     my @load_users;
+    my @load_users_chat;    # forcar carregar o chat, mesmo se estiverem em modo anônimo
     foreach my $r (@rows) {
         my $notification_message = $r->{notification_message};
-        push @not_in,     $r->{id}                            if $r->{created_at} eq $last_timestamp;
-        push @load_users, $notification_message->{subject_id} if $notification_message->{subject_id};
+        my $meta                 = $notification_message->{meta} ? from_json($notification_message->{meta}) : {};
+        push @not_in,          $r->{id}                            if $r->{created_at} eq $last_timestamp;
+        push @load_users,      $notification_message->{subject_id} if $notification_message->{subject_id};
+        push @load_users_chat, $notification_message->{subject_id}
+          if $notification_message->{subject_id}
+          && $meta->{chat};
 
         $notification_message->{icon} ||= 0;
 
-use DDP; p $notification_message;
         push @output_rows, {
             content     => $notification_message->{content},
             title       => $notification_message->{title},
             time        => pg_timestamp2iso_8601($notification_message->{created_at}),
             icon        => $ENV{DEFAULT_NOTIFICATION_ICON} . '/' . $notification_message->{icon} . '.svg',
             _subject_id => $notification_message->{subject_id},
+            _meta       => $meta,
         };
     }
 
@@ -133,7 +138,7 @@ use DDP; p $notification_message;
     )->all;
 
     foreach my $r (@output_rows) {
-        my $subject_id = delete $r->{_subject_id};
+        my $subject_id = $r->{_subject_id};
         my $subject    = $subjects{$subject_id};
 
         # nao tem, eh anonimo ou postado
@@ -149,6 +154,36 @@ use DDP; p $notification_message;
         }
         else {
             $r->{name} = 'Anônimo';
+        }
+    }
+
+    my %subjects_anon = map { ($_->{id} => $_) } $c->schema2->resultset('Cliente')->search(
+        {
+            '-and' => [
+                {'me.id' => {'in'     => \@load_users_chat}},
+                {'me.id' => {'not in' => [keys %subjects]}},
+            ],
+            'me.status' => 'active',
+        },
+        {
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+            columns      => ['id', 'apelido'],
+        }
+    )->all;
+
+    foreach my $r (@output_rows) {
+        next unless $r->{_meta}{chat};
+        next if $r->{name} && $r->{name} ne 'Anônimo';
+
+        my $subject_id = $r->{_subject_id};
+        my $subject    = $subjects_anon{$subject_id};
+
+        if ($subject) {
+            $r->{name} = $subject->{apelido};
+            log_trace("anon_user:" . $r->{name});
+        }
+        else {
+            $r->{name} = 'Usuário removido';
         }
     }
 
@@ -186,6 +221,33 @@ use DDP; p $notification_message;
         }
 
         $c->user_notifications_clear_cache($user_obj->id);
+    }
+
+    my ($meta, $subject_id);
+
+    # removendo chaves privadas no final e criando deep-links
+    foreach my $r (@output_rows) {
+
+        $meta       = delete $r->{_meta};
+        $subject_id = delete $r->{_subject_id};
+
+        if ($meta->{chat}) {
+            if ($subject_id == -1) {
+                $r->{expand_screen} = '/mainboard/chat?token=' . $user_obj->support_chat_auth();
+            }
+            else {
+                my $open_chat = eval { $c->chat_open_session(user_obj => $user_obj, cliente_id => $subject_id) };
+                if ($@) {
+                    $c->log->error("chat_open_session returned error: " . $c->app->dumper($@));
+                }
+                $r->{expand_screen} = '/mainboard/chat?token=' . $open_chat->{chat_auth}
+                  if $open_chat && ref $open_chat eq 'HASH';
+                log_trace("expand_screen=" . $subject_id);
+            }
+        }
+        elsif ($meta->{tweet_id}) {
+            $r->{expand_screen} = '/mainboard/detail?tweet_id=' . $meta->{tweet_id};
+        }
     }
 
     return {

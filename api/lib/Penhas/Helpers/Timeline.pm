@@ -334,7 +334,7 @@ sub list_tweets {
     $opts{$_} ||= '' for qw/after before parent_id id tags/;
 
     if ($opts{next_page}) {
-        slog_info('list_tweets applying next_page=%s' . to_json($opts{next_page}));
+        slog_info('list_tweets applying next_page=%s', to_json($opts{next_page}));
 
         $c->reply_invalid_param('uso do parent_id com next_page é vedado') if $opts{parent_id};
         $c->reply_invalid_param('uso do after com next_page é vedado')     if $opts{after};
@@ -350,13 +350,13 @@ sub list_tweets {
 
     slog_info(
         'list_tweets category=%s after=%s before=%s parent_id=%s id=%s rows=%s tags=%s',
-        $category,
-        $opts{after},
-        $opts{before},
-        $opts{parent_id},
-        $opts{id},
-        $opts{tags},
-        $rows,
+        $category        || '-',
+        $opts{after}     || '-',
+        $opts{before}    || '-',
+        $opts{parent_id} || '-',
+        $opts{id}        || '-',
+        $opts{tags}      || '-',
+        $rows            || '-',
     );
 
     my $cond = {
@@ -567,8 +567,10 @@ sub _fomart_tweet {
 
 sub _linkfy {
     my ($text) = @_;
+
     # se nao encontrar o http, mas encontarr www, entao troca por https
-    $text =~ s/(https?:\/\/(?:www\.|(?!www))[^\s.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})/my $href =$1; $href = "https:\/\/$href" unless $href =~ \/^http\/; "<a href=\"$href\">$href<\/a>"/ge;
+    $text
+      =~ s/(https?:\/\/(?:www\.|(?!www))[^\s.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})/my $href =$1; $href = "https:\/\/$href" unless $href =~ \/^http\/; "<a href=\"$href\">$href<\/a>"/ge;
     return $text;
 }
 

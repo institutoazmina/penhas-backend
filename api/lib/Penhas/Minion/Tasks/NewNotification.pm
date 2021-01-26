@@ -46,7 +46,7 @@ sub new_notification_chat {
         is_test    => is_test()                 ? 1  : 0,
         title      => $opts->{subject_id} == -1 ? '' : 'enviou uma mensagem',
         content    => '',
-        meta       => to_json({}),
+        meta       => to_json({chat => 1}),
         subject_id => $opts->{subject_id},
         created_at => \'now(6)',
         icon       => 1,
