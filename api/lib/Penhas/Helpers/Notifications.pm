@@ -125,16 +125,14 @@ sub user_notifications {
             _subject_id => $notification_message->{subject_id},
             _meta       => $meta,
 
-            (
-                $debug
-                ? (
-                    debug => {
-                        message_id => $notification_message->{id},
-                        log_id     => $r->{id},
-                    }
-                  )
-                : ()
-            )
+            $debug
+            ? (
+                debug => {
+                    message_id => $notification_message->{id},
+                    log_id     => $r->{id},
+                }
+              )
+            : ()
         };
     }
 
