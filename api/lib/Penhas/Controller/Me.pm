@@ -227,7 +227,6 @@ sub me_notifications {
 
     return $c->render(
         json => $c->user_notifications(
-            debug    => $ENV{DEBUG_NOTFICATIONS} ? 1 : 0,
             user_obj => $user_obj,
             %$valid,
         ),

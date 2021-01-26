@@ -706,7 +706,6 @@ sub test_notifcations {
 
     $cliente->cliente_modo_anonimo_toggle(active => 1);
     trace_popall;
-    $ENV{DEBUG_NOTFICATIONS} = 1;
     $t->get_ok(
         ('/me/notifications'),
         {'x-api-key' => $session3},
