@@ -465,7 +465,7 @@ sub cliente_list_guardioes {
                 {'me.status'     => {in   => [qw/pending accepted expired_for_not_use/]}},
                 {'me.refused_at' => {'!=' => undef}}
             ],
-            'me.deleted_at'=>undef,
+            'me.deleted_at' => undef,
         },
         {order_by => [qw/me.status/, {'-desc' => 'me.created_at'}]}
     );
@@ -479,9 +479,9 @@ sub cliente_list_guardioes {
     my $config_map = {
         accepted => {
             %defaults,
-            header      => 'Guardiãs',
-            description => 'Guardiãs ativas que recebem seus pedidos de socorro.',
-            layout      => 'accepted',
+            header         => 'Guardiãs',
+            description    => 'Guardiãs ativas que recebem seus pedidos de socorro.',
+            layout         => 'accepted',
             delete_warning =>
               'Caso você apague o guardião, ele não receberá mais seus alertas. Tem certeza que deseja apagar?',
         },
@@ -492,7 +492,7 @@ sub cliente_list_guardioes {
         },
         expired_for_not_use => {
             %defaults,
-            header => 'Convites expirados',
+            header      => 'Convites expirados',
             description =>
               'Estes convites não estão mais válidos para uso. Use o botão 🔄 para renviar ou 🗑️ para cancelar o convite definitivamente.',
             can_resend => 1,
@@ -500,11 +500,10 @@ sub cliente_list_guardioes {
         },
         refused => {
             %defaults,
-            header => 'Convites recusados',
+            header      => 'Convites recusados',
             description =>
               'Os convites recusados ainda podem serem aceitos usando o mesmo link. Use o botão 🗑️ para cancelar o convite.',
-            delete_warning =>
-              'Após apagar um convite recusado, você não poderá convidar mesmo celular por até 7 dias.',
+            delete_warning => 'Após apagar um convite recusado, você não poderá convidar o mesmo número por até 7 dias.',
         },
     };
     my @guards;
@@ -620,7 +619,7 @@ sub cliente_alert_guards {
 
     if ($alert->gps_lat && $alert->gps_long) {
         $message_link .= 'Veja sua localizaçāo no mapa: https://maps.google.com/maps?q='
-          . join(',', substr($alert->gps_lat, 0, 11), substr($alert->gps_long, 0, 11));
+          . join(',', sprintf('%.5f', $alert->gps_lat), sprintf('%.5f', $alert->gps_long));
     }
     else {
         $message_link .= 'A localizaçāo não foi recebida.';
