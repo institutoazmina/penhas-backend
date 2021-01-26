@@ -209,7 +209,7 @@ sub cliente_request_audio_access {
         }
     );
 
-    my $message = 'Enviaremos uma mensagem quando o arquivo estiver disponível';
+    my $message = 'A administração do PenhaS vai avaliar seu pedido. Retorne a esta seção em 48h. Caso não haja mudança no status, envie um e-mail para contato@penhas.com.br';
     return {
         message => $message,
         success => 1,
