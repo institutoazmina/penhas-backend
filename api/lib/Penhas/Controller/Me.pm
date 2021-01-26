@@ -221,15 +221,15 @@ sub me_notifications {
     my $valid = $c->validate_request_params(
         next_page => {max_length => 9999, required => 0, type => 'Str'},
         rows      => {required   => 0,    type     => 'Int'},
-        debug     => {required   => 0,    type     => 'Int'},
     );
 
     my $user_obj = $c->stash('user_obj');
 
     return $c->render(
         json => $c->user_notifications(
+            debug    => $ENV{DEBUG_NOTFICATIONS} ? 1 : 0,
             user_obj => $user_obj,
-            %$valid
+            %$valid,
         ),
         status => 200,
     );

@@ -706,10 +706,10 @@ sub test_notifcations {
 
     $cliente->cliente_modo_anonimo_toggle(active => 1);
     trace_popall;
+    $ENV{DEBUG_NOTFICATIONS} = 1;
     $t->get_ok(
         ('/me/notifications'),
         {'x-api-key' => $session3},
-        form => {debug => 1}
     )->status_is(200, 'notifications with chat');
     is trace_popall, 'anon_user:cliente A,expand_screen='.$cliente_id, 'right code';
 
