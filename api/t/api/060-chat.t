@@ -708,7 +708,8 @@ sub test_notifcations {
     trace_popall;
     $t->get_ok(
         ('/me/notifications'),
-        {'x-api-key' => $session3}
+        {'x-api-key' => $session3},
+        form => {debug => 1}
     )->status_is(200, 'notifications with chat');
     is trace_popall, 'anon_user:cliente A,expand_screen='.$cliente_id, 'right code';
 

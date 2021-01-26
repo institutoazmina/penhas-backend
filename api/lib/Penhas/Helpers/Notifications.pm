@@ -60,6 +60,8 @@ sub user_notifications {
     my $rows     = $opts{rows} || 100;
     $rows = 10 if !is_test() && ($rows > 1000 || $rows < 10);
 
+    my $debug = $opts{debug};
+
     my $older_than;
     my $not_in;
     if ($opts{next_page}) {
@@ -122,6 +124,17 @@ sub user_notifications {
             icon        => $ENV{DEFAULT_NOTIFICATION_ICON} . '/' . $notification_message->{icon} . '.svg',
             _subject_id => $notification_message->{subject_id},
             _meta       => $meta,
+
+            (
+                $debug
+                ? (
+                    debug => {
+                        message_id => $notification_message->{id},
+                        log_id     => $r->{id},
+                    }
+                  )
+                : ()
+            )
         };
     }
 

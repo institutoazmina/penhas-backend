@@ -18,8 +18,8 @@ sub check_and_load {
 
     my $user = $c->schema2->resultset('Cliente')->search(
         {
-            'id'           => $c->stash('user_id'),
-            'status'       => 'active',
+            'id'     => $c->stash('user_id'),
+            'status' => 'active',
         },
     )->next;
 
@@ -209,6 +209,7 @@ sub me_unread_notif_count {
         }
     }
 =cut
+
     return $c->render(
         json   => {count => $count},
         status => 200,
@@ -220,6 +221,7 @@ sub me_notifications {
     my $valid = $c->validate_request_params(
         next_page => {max_length => 9999, required => 0, type => 'Str'},
         rows      => {required   => 0,    type     => 'Int'},
+        debug     => {required   => 0,    type     => 'Int'},
     );
 
     my $user_obj = $c->stash('user_obj');
