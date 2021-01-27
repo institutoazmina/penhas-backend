@@ -41,7 +41,7 @@ sub post {
             nome_social => {required   => 0,   type     => Nome},
             raca        => {required   => 1,   type     => Raca},
             apelido     => {max_length => 40,  required => 1, type => 'Str', min_length => 2},
-            senha       => {max_length => 200, required => 1, type => 'Str', min_length => 8},
+            senha       => {max_length => 200, required => 1, type => 'Str'},
         );
 
         # nome_social quando o genero é trans ou Outro

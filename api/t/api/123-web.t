@@ -56,7 +56,7 @@ sub test_cli_seg {
 
     is $q->last_run_at, undef, 'run is null';
     my $admin_email = 'tests.automatic@example.com';
-    my $password    = 'k8Mw9(wj3H';
+    my $password    = 'k8Mw9)wj3H';
 
     # ID do role de test
     my $role_id = 7;

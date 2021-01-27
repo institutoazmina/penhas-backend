@@ -102,7 +102,7 @@ sub me_update {
         skills        => {required   => 0,    type     => IntList, empty_is_valid => 1,},
         skills_remove => {required   => 0,    type     => 'Bool'},
         apelido       => {max_length => 40,   required => 0, type => 'Str', min_length => 2},
-        senha         => {max_length => 200,  required => 0, type => 'Str', min_length => 6},
+        senha         => {max_length => 200,  required => 0, type => 'Str'},
         minibio       => {max_length => 2200, required => 0, type => 'Str'},
         email         => {max_length => 200,  required => 0, type => EmailAddress},
         raca          => {required   => 0,    type     => Raca},
@@ -110,7 +110,7 @@ sub me_update {
 
     if ((exists $valid->{email} && $valid->{email}) || (exists $valid->{senha} && $valid->{senha})) {
         my $data = $c->validate_request_params(
-            senha_atual => {max_length => 200, required => 1, type => 'Str', min_length => 6},
+            senha_atual => {max_length => 200, required => 1, type => 'Str'},
         );
 
         my $senha = sha256_hex($data->{senha_atual});

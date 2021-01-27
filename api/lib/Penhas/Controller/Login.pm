@@ -19,7 +19,7 @@ sub post {
     my $params = $c->req->params->to_hash;
     $c->validate_request_params(
         email       => {max_length => 200, required => 1, type => EmailAddress},
-        senha       => {max_length => 200, required => 1, type => 'Str', min_length => 6},
+        senha       => {max_length => 200, required => 1, type => 'Str'},
         app_version => {max_length => 800, required => 1, type => 'Str', min_length => 1},
     );
     my $email = lc(delete $params->{email});

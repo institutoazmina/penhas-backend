@@ -74,7 +74,7 @@ sub exec_tx_with_retry {
     my $tx = $some_tx->();
 
     if ($tx->error) {
-        my $err = $tx->error;
+        my $err         = $tx->error;
         my $description = sprintf "Request %s %s code: %s response: %s", $tx->req->method,
           $tx->req->url->to_string, $err->{code}, $tx->res->body;
 
@@ -225,6 +225,16 @@ sub notifications_enabled {
 
 sub check_password_or_die {
     my $pass = shift();
+
+    if (!$pass || $pass =~ / $/ || $pass =~ /^ /) {
+        die {
+            error   => 'warning_space_password',
+            message => 'A senha não pode iniciar ou terminar com espaço',
+            field   => 'senha',
+            reason  => 'invalid'
+        };
+    }
+
     if ($pass =~ /^(12345.*|picture1|password|111111.*|123123.*|senha)$/i) {
         die {
             error   => 'pass_too_weak',
@@ -233,6 +243,45 @@ sub check_password_or_die {
             reason  => 'invalid'
         };
     }
+    my $txt = 'É necessário pelo menos 8 caracteres, pelo menos 1 letra, 1 número, e 1 carácter especial';
+
+    if (length($pass) < 8) {
+        die {
+            error   => 'pass_too_weak/size',
+            message => "A senha utilizada é muito curta! $txt",
+            field   => 'senha',
+            reason  => 'invalid'
+        };
+    }
+
+    if ($pass !~ /[0-9]/) {
+        die {
+            error   => 'pass_too_weak/number',
+            message => "A senha utilizada não usou números! $txt",
+            field   => 'senha',
+            reason  => 'invalid'
+        };
+    }
+
+    if ($pass !~ /[A-Z]/i) {
+        die {
+            error   => 'pass_too_weak/letter',
+            message => "A senha utilizada não usou letras! $txt",
+            field   => 'senha',
+            reason  => 'invalid'
+        };
+    }
+
+    # se nao tem algo que é diferente de letra e numeros
+    if ($pass !~ /[^0-9A-Z]/i) {
+        die {
+            error   => 'pass_too_weak/char',
+            message => "A senha utilizada não usou caracteres especiais! $txt",
+            field   => 'senha',
+            reason  => 'invalid'
+        };
+    }
+
     return;
 }
 

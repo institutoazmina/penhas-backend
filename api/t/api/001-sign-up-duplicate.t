@@ -44,14 +44,14 @@ get_schema->resultset('CpfCache')->find_or_create(
     }
 );
 
-subtest_buffered 'Erro na criação de conta' => sub {
+do {
     $t->post_ok(
         '/signup',
         form => {
             nome_completo => 'aas asdas',
             cpf           => $bad_random_cpf,
             email         => $random_email,
-            senha         => '1AS345678A',
+            senha         => '1A`S345678A*',
             cep           => '03640123',
             genero        => 'Feminino',
             dt_nasc       => '1994-10-10',
@@ -91,7 +91,80 @@ subtest_buffered 'Erro na criação de conta' => sub {
             nome_completo => 'aas asdas',
             cpf           => $random_cpf,
             email         => $random_email,
-            senha         => '1AS345678A',
+            senha         => '3As344578a ',
+            cep           => '03640123',
+            genero        => 'Feminino',
+            dt_nasc       => '1994-01-31',
+            @other_fields,
+
+        },
+    )->status_is(400)->json_is('/error', 'warning_space_password');
+
+    $t->post_ok(
+        '/signup',
+        form => {
+            nome_completo => 'aas asdas',
+            cpf           => $random_cpf,
+            email         => $random_email,
+            senha         => '3As344578a',
+            cep           => '03640123',
+            genero        => 'Feminino',
+            dt_nasc       => '1994-01-31',
+            @other_fields,
+
+        },
+    )->status_is(400)->json_is('/error', 'pass_too_weak/char');
+
+    $t->post_ok(
+        '/signup',
+        form => {
+            nome_completo => 'aas asdas',
+            cpf           => $random_cpf,
+            email         => $random_email,
+            senha         => '65658895',
+            cep           => '03640123',
+            genero        => 'Feminino',
+            dt_nasc       => '1994-01-31',
+            @other_fields,
+
+        },
+    )->status_is(400)->json_is('/error', 'pass_too_weak/letter');
+    $t->post_ok(
+        '/signup',
+        form => {
+            nome_completo => 'aas asdas',
+            cpf           => $random_cpf,
+            email         => $random_email,
+            senha         => 'oiuytrew',
+            cep           => '03640123',
+            genero        => 'Feminino',
+            dt_nasc       => '1994-01-31',
+            @other_fields,
+
+        },
+    )->status_is(400)->json_is('/error', 'pass_too_weak/number');
+    $t->post_ok(
+        '/signup',
+        form => {
+            nome_completo => 'aas asdas',
+            cpf           => $random_cpf,
+            email         => $random_email,
+            senha         => 'iuy123*',
+            cep           => '03640123',
+            genero        => 'Feminino',
+            dt_nasc       => '1994-01-31',
+            @other_fields,
+
+        },
+    )->status_is(400)->json_is('/error', 'pass_too_weak/size');
+
+    $t->post_ok(
+        '/signup',
+        form => {
+            nome_completo => 'aas asdas',
+            cpf           => $random_cpf,
+            email         => $random_email,
+            senha         => 'atenção1',
             cep           => '03640123',
             genero        => 'Feminino',
             dt_nasc       => '1994-01-31',
@@ -106,7 +179,7 @@ subtest_buffered 'Erro na criação de conta' => sub {
             nome_completo => 'test name',
             cpf           => $random_cpf,
             email         => $random_email,
-            senha         => '1AS345678A',
+            senha         => 'atenção1',
             cep           => '03640123',
             dt_nasc       => '1994-01-31',
             @other_fields,
@@ -118,14 +191,14 @@ subtest_buffered 'Erro na criação de conta' => sub {
 
 my $cliente_id;
 my $user_obj;
-subtest_buffered 'Cadastro com sucesso' => sub {
+do {
     my $res = $t->post_ok(
         '/signup',
         form => {
             nome_completo => 'test name',
             cpf           => $random_cpf,
             email         => $random_email,
-            senha         => '1AS345678A',
+            senha         => '1A`S345678A*',
             cep           => '03640123',
             dt_nasc       => '1994-01-31',
             nome_social   => 'foobar lorem',
@@ -212,7 +285,7 @@ subtest_buffered 'Login' => sub {
         '/login',
         form => {
             email       => $random_email,
-            senha       => '1AS345678A',
+            senha       => '1A`S345678A*',
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         }
     )->status_is(200)->json_has('/session')->tx->res->json;
@@ -329,7 +402,7 @@ subtest_buffered 'update' => sub {
             '/me',
             {'x-api-key' => $session},
             form => {
-                senha_atual => '1AS345678A',
+                senha_atual => '1A`S345678A*',
                 email       => $random_user->email,
             }
         )->status_is(400, 'xp')->json_is('/error', 'form_error')->json_is('/field', 'email')
@@ -341,7 +414,7 @@ subtest_buffered 'update' => sub {
         '/me',
         {'x-api-key' => $session},
         form => {
-            senha_atual => '1AS345678A',
+            senha_atual => '1A`S345678A*',
             senha       => '1234578',
         }
     )->status_is(400, 'senha muito fraca')->json_is('/error', 'pass_too_weak');
@@ -350,8 +423,8 @@ subtest_buffered 'update' => sub {
         '/me',
         {'x-api-key' => $session},
         form => {
-            senha_atual => '1AS345678A',
-            senha       => 'XXDEFWDA',
+            senha_atual => '1A`S345678A*',
+            senha       => 'XXD~EFWDA1',
         }
     )->status_is(200, 'senha atualizada');
 
@@ -374,7 +447,7 @@ subtest_buffered 'update' => sub {
         '/me',
         {'x-api-key' => $session},
         form => {
-            senha_atual => 'XXDEFWDA',
+            senha_atual => 'XXD~EFWDA1',
             email       => $random_email,
         }
     )->status_is(200);
@@ -447,7 +520,7 @@ subtest_buffered 'Reset de senha' => sub {
         form => {
             email       => $random_email,
             dry         => 1,
-            token       => '1AS345678',
+            token       => '1A`S345678',
             app_version => '...',
         }
     )->status_is(400)->json_is('/error', 'invalid_token');
@@ -457,7 +530,7 @@ subtest_buffered 'Reset de senha' => sub {
         form => {
             email       => $random_email,
             dry         => 0,
-            token       => '1AS345678',
+            token       => '1A`S345678',
             app_version => '...',
         }
     )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha');
@@ -481,7 +554,7 @@ subtest_buffered 'Reset de senha' => sub {
             email       => $random_email,
             dry         => 1,
             token       => $forget->{token},
-            senha       => 'abc1AS345678',
+            senha       => 'abc1A`S345678',
             app_version => '...',
         }
     )->status_is(200, 'ok 1')->json_is('/continue', '1', 'suc 2');
@@ -492,7 +565,7 @@ subtest_buffered 'Reset de senha' => sub {
             email       => $random_email,
             dry         => 0,
             token       => $forget->{token},
-            senha       => 'abc1AS345678',
+            senha       => 'abc1A`S345678',
             app_version => '...',
         }
     )->status_is(200, 'ok 2')->json_is('/success', '1', 'suc 2');
@@ -503,7 +576,7 @@ subtest_buffered 'Reset de senha' => sub {
             email       => $random_email,
             dry         => 0,
             token       => $forget->{token},
-            senha       => 'abc1AS345678',
+            senha       => 'abc1A`S345678',
             app_version => '...',
         }
     )->status_is(400)->json_is('/error', 'invalid_token');
@@ -521,7 +594,7 @@ subtest_buffered 'Reset de senha' => sub {
         '/login',
         form => {
             email       => $random_email,
-            senha       => 'abc1AS345678',
+            senha       => 'abc1A`S345678',
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         }
     )->status_is(200)->json_has('/session');
@@ -535,7 +608,7 @@ subtest_buffered 'Reset de senha' => sub {
         '/me',
         {'x-api-key' => $session},
         form => {
-            senha_atual => 'abc1AS345678',
+            senha_atual => 'abc1A`S345678',
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         }
     )->status_is(204);
@@ -550,7 +623,7 @@ subtest_buffered 'Reset de senha' => sub {
         '/login',
         form => {
             email       => $random_email,
-            senha       => 'abc1AS345678',
+            senha       => 'abc1A`S345678',
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         }
     )->status_is(200)->json_has('/session')->json_is('/deleted_scheduled', '1');

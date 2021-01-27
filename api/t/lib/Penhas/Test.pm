@@ -233,7 +233,7 @@ sub get_user_session {
                     nome_completo => 'Quiz User Name',
                     cpf           => $random_cpf,
                     email         => $random_email,
-                    senha         => 'ARUKEASSS',
+                    senha         => 'ARU 55 PASS',
                     cep           => '12345678',
                     dt_nasc       => '1994-01-31',
                     nome_social   => 'foobar lorem',
@@ -250,7 +250,7 @@ sub get_user_session {
             '/login',
             form => {
                 email       => $random_email,
-                senha       => 'ARUKEASSS',
+                senha       => 'ARU 55 PASS',
                 app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
             }
         )->status_is(200)->tx->res->json;

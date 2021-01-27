@@ -99,7 +99,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
             apelido       => 'suporte A',
             cpf           => $random_cpf,
             email         => $random_email,
-            senha         => 'WQ534565',
+            senha         => 'WQ534565^',
             cep           => '12345678',
             dt_nasc       => '1994-01-31',
             @other_fields,

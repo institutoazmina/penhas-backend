@@ -47,7 +47,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
             nome_completo => $nome_completo,
             cpf           => $random_cpf,
             email         => $random_email,
-            senha         => 'WSAA3456',
+            senha         => 'W^1SAA3456',
             cep           => '12345678',
             dt_nasc       => '1994-01-31',
             @other_fields,
@@ -581,7 +581,7 @@ do {
     $t->delete_ok(
         '/me',
         {'x-api-key' => $session},
-        form => {app_version => 'foo', senha_atual => 'WSAA3456',}
+        form => {app_version => 'foo', senha_atual => 'W^1SAA3456',}
     )->status_is(204);
 
     my $user_obj = get_schema2->resultset('Cliente')->find($cliente_id);
