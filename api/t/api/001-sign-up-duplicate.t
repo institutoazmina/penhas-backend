@@ -462,6 +462,19 @@ subtest_buffered 'Reset de senha' => sub {
         }
     )->status_is(400)->json_is('/error', 'form_error')->json_is('/field', 'senha');
 
+    my $rand_password = 'aS3lso34o*83m2' . rand;
+    $user_obj->update({senha_sha256 => sha256_hex($rand_password)});
+    $t->post_ok(
+        '/reset-password/write-new',
+        form => {
+            email       => $random_email,
+            dry         => 0,
+            token       => $forget->{token},
+            senha       => $rand_password,
+            app_version => '...',
+        }
+    )->status_is(400, 'not the same')->json_is('/error', 'pass_same_as_before', 'nao pode ser igual');
+
     $t->post_ok(
         '/reset-password/write-new',
         form => {
@@ -483,7 +496,6 @@ subtest_buffered 'Reset de senha' => sub {
             app_version => '...',
         }
     )->status_is(200, 'ok 2')->json_is('/success', '1', 'suc 2');
-
 
     $t->post_ok(
         '/reset-password/write-new',

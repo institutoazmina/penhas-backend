@@ -19,7 +19,7 @@ sub request_new {
     my $params = $c->req->params->to_hash;
 
     $c->validate_request_params(
-        email => {max_length => 200, required => 1, type => EmailAddress},
+        email       => {max_length => 200, required => 1, type => EmailAddress},
         app_version => {max_length => 800, required => 1, type => 'Str', min_length => 1},
     );
     my $email = lc(delete $params->{email});
@@ -171,6 +171,15 @@ sub write_new {
         );
     }
     elsif ($item) {
+        my $senha_hex = sha256_hex($params->{senha});
+        if (lc($item->cliente->senha_sha256) eq lc($senha_hex)) {
+            die {
+                error   => 'pass_same_as_before',
+                message => 'A nova senha não pode ser igual à anterior, use uma senha diferente.',
+                field   => 'senha',
+                reason  => 'invalid'
+            };
+        }
 
         $c->schema2->txn_do(
             sub {

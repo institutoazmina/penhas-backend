@@ -235,4 +235,5 @@ sub check_password_or_die {
     }
     return;
 }
+
 1;
