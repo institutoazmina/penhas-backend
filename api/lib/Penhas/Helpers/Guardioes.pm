@@ -614,13 +614,13 @@ sub cliente_alert_guards {
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
         }
     )->all;
-
+#8+51+52+3+9+9
     my $message_prepend = 'PenhaS: ';
     my $message_link    = ' adicionou um pedido de socorro. Entre em contato. ';
 
     my $com_posicao = 'com localização ';
     if ($alert->gps_lat && $alert->gps_long) {
-        $message_link .= 'Veja sua localizacao no mapa: https://maps.google.com/maps?q=' . join(
+        $message_link .= 'Veja sua localizacao no mapa maps.google.com/maps?q=' . join(
             '%2C',    # virgula url-encoded
             sprintf('%.12g', sprintf('%.5f', $alert->gps_lat)),
             sprintf('%.12g', sprintf('%.5f', $alert->gps_long)),
@@ -632,15 +632,15 @@ sub cliente_alert_guards {
     }
 
     # 130 no lugar de 140, pois o minimo reservado pro nome sao 10 chars
-    my $remaining_chars = 130 - length($message_prepend . $message_link);
+    #my $remaining_chars = 130 - length($message_prepend . $message_link);
 
     # se ficou menor, nao tem jeito, vamo ter dois SMS..
-    $remaining_chars += 140 if $remaining_chars < 0;
+    #$remaining_chars += 140 if $remaining_chars < 0;
 
     my $nome_sem_acento = $user_obj->nome_completo;
     $nome_sem_acento = $c->schema->unaccent($nome_sem_acento);
 
-    my $message_sms = $message_prepend . substr($nome_sem_acento, 0, $remaining_chars) . $message_link;
+    my $message_sms = $message_prepend . substr($nome_sem_acento, 0, 28) . $message_link;
 
     my $sms_enviados = 0;
 
