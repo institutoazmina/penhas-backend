@@ -618,7 +618,7 @@ sub cliente_alert_guards {
     my $message_prepend = 'PenhaS: ';
     my $message_link    = ' adicionou um pedido de socorro. Entre em contato. ';
 
-    my $com_posicao = 'com localização';
+    my $com_posicao = 'com localização ';
     if ($alert->gps_lat && $alert->gps_long) {
         $message_link .= 'Veja sua localizacao no mapa: https://maps.google.com/maps?q=' . join(
             '%2C',    # virgula url-encoded
@@ -627,7 +627,7 @@ sub cliente_alert_guards {
         );
     }
     else {
-        $com_posicao = 'SEM LOCALIZAÇÃO';
+        $com_posicao = 'SEM LOCALIZAÇÃO ';
         $message_link .= 'A localizacao nao foi recebida.';
     }
 
