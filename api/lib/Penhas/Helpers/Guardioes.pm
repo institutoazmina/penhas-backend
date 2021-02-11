@@ -637,7 +637,10 @@ sub cliente_alert_guards {
     # se ficou menor, nao tem jeito, vamo ter dois SMS..
     $remaining_chars += 140 if $remaining_chars < 0;
 
-    my $message_sms = $message_prepend . substr($user_obj->nome_completo, 0, $remaining_chars) . $message_link;
+    my $nome_sem_acento = $user_obj->nome_completo;
+    $nome_sem_acento = $c->schema->unaccent($nome_sem_acento);
+
+    my $message_sms = $message_prepend . substr($nome_sem_acento, 0, $remaining_chars) . $message_link;
 
     my $sms_enviados = 0;
 
