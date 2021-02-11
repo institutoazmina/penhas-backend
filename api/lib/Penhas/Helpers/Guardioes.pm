@@ -593,7 +593,7 @@ sub cliente_alert_guards {
         };
     }
 
-    my $limit_per_day = $ENV{MAX_GUARD_ALERT_PER_24H} || 5;
+    my $limit_per_day = $ENV{MAX_GUARD_ALERT_PER_24H} || 10;
     my $key           = 'GuardAlerts24h:' . $user_obj->id;
     my $reqcount      = $c->kv()->local_get_count_and_inc(key => $key, expires => 86400);
     if ($reqcount >= $limit_per_day) {
