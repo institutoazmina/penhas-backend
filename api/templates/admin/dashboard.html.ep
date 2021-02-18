@@ -1,5 +1,5 @@
 <div class="border-bottom">
-    <h1 class="h2">Dashboard</h1>
+    <h1 class="h2">Iteração com usuárias</h1>
 </div>
 
 % if ( !$c->req->params->param('next_page') ) {
