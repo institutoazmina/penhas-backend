@@ -200,4 +200,6 @@ sub test_faq {
       ->text_like('div[id=heading' . $c1->id . '] h5', qr/Cat1/, 'cat1 present')    #
       ->text_like('div[id=heading' . $c2->id . '] h5', qr/Cat2/, 'cat2 present');
 
+    $cats->search_related('faq_tela_sobres')->delete;
+    $cats->delete;
 }
