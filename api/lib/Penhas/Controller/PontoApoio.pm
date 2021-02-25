@@ -156,7 +156,12 @@ sub pa_aux_data {
 
                         (
                             $filter_projeto_id
-                            ? ('ponto_apoio_categoria2projetos.ponto_apoio_projeto_id' => $filter_projeto_id)
+                            ? (
+                                '-and' => [
+                                    {'ponto_apoio_categoria2projetos.ponto_apoio_projeto_id'    => $filter_projeto_id},
+                                    {'ponto_apoio_categoria2projetos.ponto_apoio_projeto_count' => {'>' => 0}}
+                                ]
+                              )
                             : ()
                         ),
                     },
