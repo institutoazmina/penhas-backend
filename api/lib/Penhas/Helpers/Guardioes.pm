@@ -295,17 +295,18 @@ sub cliente_upsert_guardioes {
 
     my $message_prepend = 'PenhaS: ';
     my $message_link
-      = ' convidou vc ser guardiao dela. p/ aceitar e mais informações acesse '
+      = ' convidou vc ser guardiao dela. p/ aceitar e mais informacoes acesse '
       . ($ENV{SMS_GUARD_LINK} || 'https://sms.penhas.com.br/')
       . $row->token();
 
-    # 130 no lugar de 140, pois o minimo reservado pro nome sao 10 chars
-    my $remaining_chars = 130 - length($message_prepend . $message_link);
+    # 150 no lugar de 160, pois o minimo reservado pro nome sao 10 chars
+    my $remaining_chars = 150 - length($message_prepend . $message_link);
 
     # se ficou menor, nao tem jeito, vamo ser dois SMS..
     $remaining_chars += 140 if $remaining_chars < 0;
 
-    my $message_sms = $message_prepend . substr($user_obj->nome_completo, 0, $remaining_chars) . $message_link;
+    my $nome_sem_acento = $c->schema->unaccent($user_obj->nome_completo);
+    my $message_sms     = $message_prepend . substr($nome_sem_acento, 0, $remaining_chars) . $message_link;
 
     my $job_id = $c->minion->enqueue(
         'send_sms',
@@ -614,6 +615,7 @@ sub cliente_alert_guards {
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
         }
     )->all;
+
 #8+51+52+3+9+9
     my $message_prepend = 'PenhaS: ';
     my $message_link    = ' adicionou um pedido de socorro. Entre em contato. ';
