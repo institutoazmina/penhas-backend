@@ -52,6 +52,21 @@ sub housekeeping {
         $ENV{LAST_DELETE_JOB_ID} = $job_id;
     }
 
+    my $dbh = $c->schema2->storage->dbh;
+    $dbh->do(
+        "UPDATE
+    ponto_apoio_categoria2projetos me
+INNER JOIN (
+    SELECT
+        a.id AS rel_id,
+        count(b.id) AS qtde_ponto_apoio
+    FROM
+        ponto_apoio_categoria2projetos a
+        JOIN ponto_apoio b ON b.categoria = a.ponto_apoio_categoria_id
+    GROUP BY a.id
+) AS subq ON subq.rel_id = me.id SET ponto_apoio_projeto_count = qtde_ponto_apoio;"
+    );
+
     return $c->render(json => {});
 }
 
