@@ -364,7 +364,7 @@ sub access_modules_as_config {
             polling_rate => '20',
         },
         modo_seguranca => {
-            numero              => '000',
+            numero              => '190',
             audio_each_duration => '901',
             audio_full_duration => '901',
 
