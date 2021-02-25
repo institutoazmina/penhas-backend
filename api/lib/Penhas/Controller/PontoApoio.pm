@@ -140,18 +140,20 @@ sub pa_aux_data {
 
     $c->render(
         json => {
-            projetos => [
-                $c->schema2->resultset('PontoApoioProjeto')->search(
-                    {
-                        status => 'prod',
-                    },
-                    {
-                        result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-                        order_by     => ['label'],
-                        columns      => [qw/id label/],
-                    }
-                )->all()
-            ],
+            projetos => (
+                $filter_projeto_id ? [] : [
+                    $c->schema2->resultset('PontoApoioProjeto')->search(
+                        {
+                            status => 'prod',
+                        },
+                        {
+                            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                            order_by     => ['label'],
+                            columns      => [qw/id label/],
+                        }
+                    )->all()
+                ]
+            ),
             categorias => [
                 $c->schema2->resultset('PontoApoioCategoria')->search(
                     {
