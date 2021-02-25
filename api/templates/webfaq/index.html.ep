@@ -22,7 +22,7 @@
     <p>Tire suas dúvidas sobre o PenhaS e saiba tudo sobre as funcionalidades do aplicativo.</p>
 
     <!--Accordion wrapper-->
-        <div class="accordion md-accordion" id="accordionEx" role="tablist" aria-multiselectable="true">
+        <div class="accordion md-accordion questinaries-accordion" id="accordionEx" role="tablist" aria-multiselectable="true">
 
           % for my $cat (@$cats) {
           <!-- Accordion card -->
@@ -55,7 +55,7 @@
         </div>
         <!-- Accordion wrapper -->
         <div class="text-center">
-            <a href="https://azmina.com.br/" target="_blank" class="btn btn-lg btn-acessar">Não encontrei o que preciso</a>
+            <a href="https://api.penhas.com.br/web/faq/_botao_contato_" target="_blank" class="btn btn-lg btn-acessar">Não encontrei o que preciso</a>
         </div>
     <!-- div white -->
     </div>

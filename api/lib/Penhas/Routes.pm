@@ -41,6 +41,9 @@ sub register {
     my $faq = $r->under('web/faq')->to(controller => 'WebFAQ', action => 'apply_rps');
     $faq->get()->to(action => 'webfaq_index');
 
+    # GET /web/faq/_botao_contato_
+    $faq->get('_botao_contato_')->to(action => 'webfaq_botao_contato');
+
     my $faq_detail = $r->under('web/faq/:faq_id')->to(controller => 'WebFAQ', action => 'apply_rps');
     $faq_detail->get()->to(action => 'webfaq_detail');
 

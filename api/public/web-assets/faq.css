@@ -12,7 +12,9 @@ html,body {
     color: #0a115f;
     padding: 1em;
 }
-
+.questinaries-accordion {
+    padding-bottom: 20px;
+}
 .h-need-help, div.card-header h5 {
     text-align: left;
     font-weight: 700;
@@ -44,7 +46,9 @@ a.faq-sobre-link, a.faq-sobre-link:visited, a.faq-sobre-link:hover, a.faq-sobre-
     background-image: url(/web-assets/left.svg);
     background-repeat: no-repeat;
     background-position: right;
-    font-size: 16px;
+    background-size: 15px;
+    font-size: 18px;
+    padding-top: 10px;
 }
 .card-header>a.collapsed h5 {
     background-image: url(/web-assets/down.svg);

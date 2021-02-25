@@ -82,5 +82,13 @@ sub webfaq_detail {
     return $c->render(html => {});
 }
 
+sub webfaq_botao_contato {
+    my $c = shift;
+
+    $c->stash(template => 'webfaq/botao_contato');
+
+    return $c->render(html => {});
+}
+
 
 1;
