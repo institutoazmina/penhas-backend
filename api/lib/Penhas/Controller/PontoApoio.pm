@@ -122,8 +122,11 @@ sub _pa_list {
 }
 
 sub pa_aux_data {
-    my $c    = shift;
-    my %opts = @_;
+    my $c = shift;
+
+    my $valid = $c->validate_request_params(
+        projeto => {required => 0, type => 'Str', max_length => 100},
+    );
 
     # limite de requests por segundo no IP
     # no maximo 30 request por minuto
@@ -133,7 +136,7 @@ sub pa_aux_data {
     $c->stash(apply_rps_on => 'pad:' . substr($remote_ip, 0, 18));
     $c->apply_request_per_second_limit(30, 60);
 
-    my $filter_projeto_id = $c->_project_id_by_label(%opts);
+    my $filter_projeto_id = $c->_project_id_by_label($valid->{projeto} ? (projeto => $valid->{projeto}) : ());
 
     $c->render(
         json => {
