@@ -38,11 +38,18 @@ sub register {
     $guardioes->post()->to(action => 'post');
 
     # GET /web/faq
-    my $faq = $r->under('web/faq')->to(controller => 'WebFAQ', action => 'apply_rps');
+    my $web = $r->under('web')->to(controller => 'WebFAQ', action => 'apply_rps');
+    my $faq = $web->any('faq');
     $faq->get()->to(action => 'webfaq_index');
 
     # GET /web/faq/_botao_contato_
     $faq->get('_botao_contato_')->to(action => 'webfaq_botao_contato');
+
+    # GET /web/termos-de-uso
+    $web->get('termos-de-uso')->to(action => 'web_termos_de_uso');
+
+    # GET /web/politica-privacidade
+    $web->get('politica-privacidade')->to(action => 'web_politica_privacidade');
 
     my $faq_detail = $r->under('web/faq/:faq_id')->to(controller => 'WebFAQ', action => 'apply_rps');
     $faq_detail->get()->to(action => 'webfaq_detail');

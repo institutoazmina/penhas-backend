@@ -90,5 +90,29 @@ sub webfaq_botao_contato {
     return $c->render(html => {});
 }
 
+sub web_politica_privacidade {
+    my $c = shift;
+
+    $c->stash(
+        texto => $c->schema2->resultset('Configuraco')->get_column('privacidade')->next()
+    );
+
+    $c->stash(template => 'webfaq/texto');
+
+    return $c->render(html => {});
+}
+
+sub web_termos_de_uso {
+    my $c = shift;
+
+    $c->stash(
+        texto => $c->schema2->resultset('Configuraco')->get_column('termos_de_uso')->next()
+    );
+
+    $c->stash(template => 'webfaq/texto');
+
+    return $c->render(html => {});
+}
+
 
 1;

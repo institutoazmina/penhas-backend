@@ -194,6 +194,14 @@ sub test_faq {
     );
 
     $t->get_ok(
+        '/web/termos-de-uso',
+    )->status_is(200, 'puxando termos_de_uso');
+
+    $t->get_ok(
+        '/web/politica-privacidade',
+    )->status_is(200, 'puxando politica-privacidade');
+
+    $t->get_ok(
         '/web/faq',
       )->status_is(200, 'puxando faq')    #
       ->element_count_is('a.faq-sobre-link', '3', '3 links faq')                    #

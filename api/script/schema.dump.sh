@@ -7,6 +7,12 @@ else
     source envfile.sh
 fi
 
+if ! command -v dbicdump &> /dev/null
+then
+    echo "dbicdump could not be found, run cpanm -n DBIx::Class::Schema::Loader "
+    exit
+fi
+
 cd $GIT_DIR/api/
 
 dbicdump -o dump_directory=./lib \
