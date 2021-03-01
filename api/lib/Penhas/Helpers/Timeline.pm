@@ -974,7 +974,7 @@ sub add_tweets_news {
                 $item->{_news}{$r->{id}} = $new_rendered;
             }
         }
-        die 'not matched' if $x != scalar @group_news_ids;
+        die 'not matched' if $x != scalar @group_news_ids && is_test();
 
         # percorre novamente a lista, colocando as noticias na ordem que apareceram
         foreach my $item ($opts{tweets}->@*) {
