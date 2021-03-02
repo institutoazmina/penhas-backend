@@ -1,20 +1,7 @@
 <main role="main">
 
     <div class="divgray">
-
-       <h4 class="h-need-help">Para entrar em contato é muito simples!</h4>
-
-       <img src="/web-assets/help-contato.jpg" alt="" style="width: 100%;"/>
-
-<br/>
-<br/>
-
-       <ol>
-            <li>Toque no icone 🗩 na barra inferior</li>
-            <li>Toque na aba "Conversas"</li>
-            <li>Toque no Suporte PenhaS para iniciar uma conversa</li>
-       </ol>
-
+    <%== stash('texto_faq_contato'); %>
     </div> <!-- divgray -->
 
     <div class="divgray">

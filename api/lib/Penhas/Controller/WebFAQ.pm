@@ -89,6 +89,9 @@ sub webfaq_detail {
 sub webfaq_botao_contato {
     my $c = shift;
 
+    $c->stash(
+        texto_faq_contato => $c->schema2->resultset('Configuraco')->get_column('texto_faq_contato')->next()
+    );
     $c->stash(template => 'webfaq/botao_contato');
 
     return $c->render(html => {});

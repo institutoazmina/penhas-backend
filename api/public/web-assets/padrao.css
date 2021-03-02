@@ -3,12 +3,8 @@
 a,
 a:focus,
 a:hover {
-  color: #fff;
-}
-.divwhite a,
-.divwhite a:focus,
-.divwhite a:hover {
   color: #007bff;
+  text-decoration: none;
 }
 
 /* Custom default button */
@@ -20,8 +16,6 @@ a:hover {
   background-color: #fff;
   border: .05rem solid #fff;
 }
-
-
 
 html,
 body {
