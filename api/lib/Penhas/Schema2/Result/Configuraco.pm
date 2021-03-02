@@ -22,6 +22,8 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 0 },
   "privacidade",
   { data_type => "text", is_nullable => 0 },
+  "texto_faq_index",
+  { data_type => "text", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 #>>>

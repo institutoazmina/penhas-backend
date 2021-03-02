@@ -21,6 +21,10 @@ sub apply_rps {
 
 sub webfaq_index {
     my $c    = shift;
+    $c->stash(
+        texto_faq_index => $c->schema2->resultset('Configuraco')->get_column('texto_faq_index')->next()
+    );
+
     my @faqs = $c->schema2->resultset('FaqTelaSobre')->search(
         {
             'me.status'             => 'published',
