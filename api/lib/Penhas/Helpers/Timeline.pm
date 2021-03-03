@@ -349,7 +349,7 @@ sub list_tweets {
     }
 
     slog_info(
-        'list_tweets category=%s after=%s before=%s parent_id=%s id=%s rows=%s tags=%s',
+        'list_tweets category=%s after=%s before=%s parent_id=%s id=%s tags=%s rows=%s',
         $category        || '-',
         $opts{after}     || '-',
         $opts{before}    || '-',
@@ -789,6 +789,8 @@ sub add_tweets_news {
         $expected_rows = 3 if $expected_rows < 3;
 
         log_info("asking for $expected_rows rows of Noticias");
+        log_info("\$news_added is " . dumper($news_added));
+
         my $cond = {
             'me.published' => is_test() ? 'published:testing' : 'published',
             'me.id'        => {'not in' => [keys %$news_added]},
