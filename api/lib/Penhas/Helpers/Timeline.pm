@@ -667,7 +667,7 @@ sub add_tweets_highlights {
                 if ($row->{is_regexp}) {
 
                     my $test = eval {
-                        die "não pode ter parenteses sem escape\n" if $match =~ /[^\\]\(/;
+                        #die "não pode ter parenteses sem escape\n" if $match =~ /[^\\]\(/;
                         qr/$match/i;
                     };
                     if ($@) {
