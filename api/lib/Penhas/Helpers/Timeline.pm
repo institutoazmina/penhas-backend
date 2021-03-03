@@ -372,7 +372,7 @@ sub list_tweets {
                 $opts{tags}
                 ? (
                     # retorna qualquer tweets que contem aquele tema
-                    {'-or' => [map { +{'me.tags_index' => {'like' => ",$_,"}} } split ',', $opts{tags}]}
+                    {'-or' => [map { +{'me.tags_index' => {'like' => "%,$_,%"}} } split ',', $opts{tags}]}
                   )
                 : ()
             ),
@@ -797,7 +797,7 @@ sub add_tweets_news {
             (
                 $tags
                 ? (
-                    '-and' => [{'-or' => [map { +{'me.tags_index' => {'like' => ",$_,"}} } split ',', $tags]}],
+                    '-and' => [{'-or' => [map { +{'me.tags_index' => {'like' => "%,$_,%"}} } split ',', $tags]}],
                   )
                 : (
                     'me.has_topic_tags' => '1',
