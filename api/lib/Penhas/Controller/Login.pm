@@ -82,7 +82,7 @@ sub post {
             goto LOGON;
         }
         elsif (lc($senha_md5) eq lc($found->{senha_sha256})) {
-            $found_obj->update({ senha_sha256 => $senha });
+            $found_obj->update({senha_sha256 => $senha});
             goto LOGON;
         }
         else {
@@ -160,6 +160,10 @@ sub post {
             created_at  => DateTime->now->datetime(' '),
         }
     );
+
+    # marca que o usuário esta fazendo um login, pra ser usado no GET /me pra ignorar o quiz
+    my $key = $ENV{REDIS_NS} . 'is_during_login:' . $directus_id;
+    $c->kv->redis->setex($key, 120, '1');
 
     $c->render(
         json => {

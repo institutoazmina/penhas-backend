@@ -109,6 +109,11 @@ sub setup {
             my ($c, %opts) = @_;
             my $user = $opts{user} or croak 'missing user';
 
+            # verifica se o usuário acabou de fazer um login,
+            # se sim, ignora o quiz
+            my $key = $ENV{REDIS_NS} . 'is_during_login:' . $user->{id};
+            return if $c->kv->redis->del($key);
+
             Log::Log4perl::NDC->push('user_get_quiz_session user_id:' . $user->{id});
             on_scope_exit { Log::Log4perl::NDC->pop };
 
