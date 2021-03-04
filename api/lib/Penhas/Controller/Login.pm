@@ -4,6 +4,7 @@ use utf8;
 
 use DateTime;
 use Digest::SHA qw/sha256_hex/;
+use Digest::MD5 qw/md5_hex/;
 use Penhas::Logger;
 use Penhas::Utils qw/random_string is_test/;
 use MooseX::Types::Email qw/EmailAddress/;
@@ -22,8 +23,10 @@ sub post {
         senha       => {max_length => 200, required => 1, type => 'Str'},
         app_version => {max_length => 800, required => 1, type => 'Str', min_length => 1},
     );
-    my $email = lc(delete $params->{email});
-    my $senha = sha256_hex(delete $params->{senha});
+    my $email      = lc(delete $params->{email});
+    my $senha_crua = delete $params->{senha};
+    my $senha      = sha256_hex($senha_crua);
+    my $senha_md5  = md5_hex($senha_crua);
 
     # limite de requests por segundo no IP
     # no maximo 3 request por minuto
@@ -76,6 +79,10 @@ sub post {
 
         # confere a senha
         if (lc($senha) eq lc($found->{senha_sha256})) {
+            goto LOGON;
+        }
+        elsif (lc($senha_md5) eq lc($found->{senha_sha256})) {
+            $found_obj->update({ senha_sha256 => $senha });
             goto LOGON;
         }
         else {
