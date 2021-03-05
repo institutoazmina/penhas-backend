@@ -29,7 +29,7 @@ sub post {
     eval { check_password_or_die($senha_crua) };
     if (length($senha_crua) < 8 || $@) {
         die {
-            error   => 200,
+            error   => 'wrongpassword_tooweak',
             message => 'Sua senha é fraca. Por favor, clique no botão "Esqueci minha senha" para resetar.',
             field   => 'password',
             reason  => 'invalid'
