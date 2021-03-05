@@ -25,8 +25,19 @@ sub post {
     );
     my $email      = lc(delete $params->{email});
     my $senha_crua = delete $params->{senha};
-    my $senha      = sha256_hex($senha_crua);
-    my $senha_md5  = md5_hex($senha_crua);
+
+    eval { check_password_or_die($senha_crua) };
+    if (length($senha_crua) < 8 || $@) {
+        die {
+            error   => 200,
+            message => 'Sua senha é fraca. Por favor, clique no botão "Esqueci minha senha" para resetar.',
+            field   => 'password',
+            reason  => 'invalid'
+        };
+    }
+
+    my $senha     = sha256_hex($senha_crua);
+    my $senha_md5 = md5_hex($senha_crua);
 
     # limite de requests por segundo no IP
     # no maximo 3 request por minuto
