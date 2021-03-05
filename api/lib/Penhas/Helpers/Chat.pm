@@ -138,7 +138,8 @@ sub chat_find_users {
 
     foreach (@rows) {
         my $user_skills = $_->{skills} ? $_->{skills} =~ /^\[/ ? from_json($_->{skills}) : [$_->{skills}] : undef;
-        $_->{skills} = join ', ', sort { $a cmp $b } grep {defined} $user_skills->@* if $user_skills;
+        $_->{skills} = join ',', sort { $a cmp $b } grep {defined} $user_skills->@* if $user_skills;
+        $_->{skills} =~ s/,/, /g;
 
         $_->{avatar_url} ||= $ENV{AVATAR_PADRAO_URL};
 
