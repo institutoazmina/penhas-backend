@@ -6,7 +6,7 @@ use DateTime;
 use Digest::SHA qw/sha256_hex/;
 use Digest::MD5 qw/md5_hex/;
 use Penhas::Logger;
-use Penhas::Utils qw/random_string is_test/;
+use Penhas::Utils qw/random_string is_test check_password_or_die/;
 use MooseX::Types::Email qw/EmailAddress/;
 
 use DateTime::Format::Pg;

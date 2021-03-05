@@ -279,7 +279,7 @@ subtest_buffered 'Login' => sub {
             senha       => '1AS34567',
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         }
-    )->status_is(400)->json_is('/error', 'wrongpassword');
+    )->status_is(400)->json_is('/error', 'wrongpassword_tooweak');
 
     my $res = $t->post_ok(
         '/login',
@@ -597,7 +597,7 @@ subtest_buffered 'Reset de senha' => sub {
             senha       => 'abc1A`S345678',
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         }
-    )->status_is(200)->json_has('/session');
+    )->status_is(200,'pass ok')->json_has('/session');
     is $user_obj->status, 'active', 'status active';
     my $session = last_tx_json()->{session};
     $t->get_ok(
