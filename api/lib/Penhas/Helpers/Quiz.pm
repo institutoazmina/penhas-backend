@@ -112,7 +112,7 @@ sub setup {
             # verifica se o usuário acabou de fazer um login,
             # se sim, ignora o quiz
             my $key = $ENV{REDIS_NS} . 'is_during_login:' . $user->{id};
-            return if $c->kv->redis->del($key);
+            return if $c->kv->redis->del($key) && !is_test();
 
             Log::Log4perl::NDC->push('user_get_quiz_session user_id:' . $user->{id});
             on_scope_exit { Log::Log4perl::NDC->pop };
