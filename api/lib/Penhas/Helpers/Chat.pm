@@ -553,6 +553,7 @@ sub _load_chat_room {
         -key    => decode_z85($chat_owner->{salt_key}) . decode_z85($session->{session_key}),
         -cipher => 'Rijndael',
         -header => 'salt',
+        -pbkdf  => 'pbkdf2'
     );
 
     my ($other_id) = grep { $_ != $user_obj->id } $session->participants->@*;
