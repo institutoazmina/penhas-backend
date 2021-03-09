@@ -33,7 +33,7 @@ sub webfaq_index {
         },
         {
             join         => 'fts_categoria',
-            columns      => [qw/fts_categoria.title fts_categoria.id me.id me.title/],
+            columns      => [qw/fts_categoria.title fts_categoria.id me.id me.title me.exibir_titulo_inline/],
             order_by     => ['fts_categoria.sort', 'me.sort'],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
@@ -45,7 +45,7 @@ sub webfaq_index {
     foreach my $faq (@faqs) {
         my $catname = $faq->{fts_categoria}{title};
         my $catid   = $faq->{fts_categoria}{id};
-        my $item    = {id => $faq->{id}, title => $faq->{title}};
+        my $item    = {id => $faq->{id}, title => $faq->{title}, inline => $faq->{exibir_titulo_inline}};
 
         if ($last_cat ne $catname) {
             $last_cat    = $catname;

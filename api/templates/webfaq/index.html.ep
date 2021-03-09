@@ -33,7 +33,11 @@
               data-parent="#accordionEx">
               <div class="card-body card-body-nopad">
               % for my $faq (@{$cat->{rows}}) {
-                <a class="faq-sobre-link" href="/web/faq/<%== $faq->{id} %>"><%= $faq->{title} %></a>
+                  % if ($faq->{inline} ){
+                      <p><%= $faq->{title} %></p>
+                  % } else {
+                    <a class="faq-sobre-link" href="/web/faq/<%== $faq->{id} %>"><%= $faq->{title} %></a>
+                   % }
               % }
               </div>
             </div>
