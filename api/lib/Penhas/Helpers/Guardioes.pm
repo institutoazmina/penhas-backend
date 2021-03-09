@@ -276,7 +276,7 @@ sub cliente_upsert_guardioes {
     )->update({deleted_at => \'NOW(4)'});
 
     # ~ 94 bilhoes de combinacoes
-    my $token = random_string_from('ASDFGHJKLQWERTYUIOPZXCVBNM0123456789-.,*_', 7);
+    my $token = random_string_from('ASDFGHJKLQWERTYUIOPZXCVBNM0123456789-._', 7);
     my $hash  = substr(md5_hex($ENV{GUARD_HASH_SALT} . $token), 0, 3);
 
     $row = $user_obj->clientes_guardioes_rs->create(
