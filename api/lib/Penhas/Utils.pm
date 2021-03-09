@@ -13,7 +13,7 @@ use Carp;
 use Time::HiRes qw//;
 use Text::Xslate;
 use POSIX ();
-
+use utf8;
 use vars qw(@ISA @EXPORT);
 
 use DateTime::Format::Pg;
