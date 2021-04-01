@@ -15,8 +15,7 @@ sub register {
 sub cliente_update_cep {
     my ($job, $user_id) = @_;
 
-    return $job->retry({delay => 30})
-      unless my $guard = $job->minion->guard('cliente_update_cep', 3600, {limit => 2});
+    sleep 1 until my $guard = $job->minion->guard('cliente_update_cep', 3600, {limit => 4});
 
     log_trace("minion:cliente_update_cep", $user_id);
 
