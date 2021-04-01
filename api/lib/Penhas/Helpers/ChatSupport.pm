@@ -376,8 +376,8 @@ sub support_clear_messages {
             $session->chat_support_messages->delete;
             $session->update(
                 {
-                    message     => undef,
-                    last_msg_by => undef,
+                    last_msg_preview => undef,
+                    last_msg_by      => undef,
                 }
             );
         }
