@@ -86,7 +86,7 @@ sub post {
     my $found  = $email ? $c->schema2->resultset('Cliente')->search({email => $email})->next : undef;
     if ($found) {
         die {
-            error => 'email_already_exists',
+            error   => 'email_already_exists',
             message =>
               'E-mail já possui uma conta. Por favor, faça o o login, ou utilize a função "Esqueci minha senha".',
             field  => 'email',
@@ -149,7 +149,7 @@ sub post {
     $found = $c->schema2->resultset('Cliente')->search({cpf_hash => $cpf_hash})->next;
     if ($found) {
         die {
-            error => 'cpf_already_exists',
+            error   => 'cpf_already_exists',
             message =>
               'Este CPF já possui uma conta. Entre em contato com o suporte caso não lembre do e-mail utilizado.',
             field  => 'cpf',
@@ -196,6 +196,13 @@ sub post {
             cliente_id  => $directus_id,
             app_version => $params->{app_version},
             created_at  => DateTime->now->datetime(' '),
+        }
+    );
+
+    $c->minion->enqueue(
+        'cliente_update_cep',
+        [$directus_id] => {
+            attempts => 5,
         }
     );
 
