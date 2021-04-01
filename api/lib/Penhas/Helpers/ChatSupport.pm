@@ -46,6 +46,7 @@ sub support_recent_messages {
     my $rs = $c->schema2->resultset('ChatSupport')->search(
         {
             ($include_answered ? () : (last_msg_is_support => 0)),
+            'me.last_msg_by' => {'!=' => undef},
         },
         {
             join    => 'cliente',

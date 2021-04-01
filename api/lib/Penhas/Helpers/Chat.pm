@@ -233,6 +233,7 @@ sub chat_list_sessions {
                 \['me.participants @> ARRAY[?]::int[]', $user_obj->id],    # @> is contains operator
                                                                            # true if left array contains right array
             ],
+            'me.last_message_by' => {'!=' => undef},
         },
         {
             columns      => [qw/id participants last_message_at last_message_by/],
