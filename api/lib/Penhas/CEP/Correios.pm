@@ -7,7 +7,7 @@ use feature 'state';
 sub name {'Correios'}
 
 sub _find {
-    state $cepper = WWW::Correios::CEP->new({post_content => 'tipoCEP=ALL&semelhante=N&relaxation='});
+    state $cepper = WWW::Correios::CEP->new();
     my $r = $cepper->find(pop);
 
     return if defined $r && ref $r eq 'HASH' && exists $r->{status} && $r->{status} =~ /erro/i;
