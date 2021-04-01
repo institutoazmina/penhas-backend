@@ -113,7 +113,7 @@ do {
       ->json_is('/data/is_accepted', '0')->json_like('/message', qr/Enviamos um SMS/);
 
     trace_popall;
-    ok(Penhas::Minion::Tasks::SendSMS::send_sms($job, test_get_minion_args_job(0)), 'send sms');
+    ok(Penhas::Minion::Tasks::SendSMS::send_sms($job, test_get_minion_args_job($ENV{LAST_SEND_SMS_JOB_ID})), 'send sms');
     do {
         my $text = trace_popall;
         like $text, qr/minion:send_sms,\+14842918467,SentSmsLog,/, 'logs looks ok';

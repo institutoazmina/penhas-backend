@@ -43,7 +43,7 @@ sub cliente_update_cep {
         }
     }
 
-    die 'cep não encontrado' unless $result;
+    die "cep $cep não encontrado" unless $result;
 
     $user->update(
         {

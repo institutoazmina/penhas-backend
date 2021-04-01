@@ -319,6 +319,7 @@ sub cliente_upsert_guardioes {
             priority => 0,
         }
     );
+    $ENV{LAST_SEND_SMS_JOB_ID} = $job_id;
   RENDER:
     $row->discard_changes;
     return {

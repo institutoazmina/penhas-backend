@@ -72,7 +72,7 @@ sub housekeeping {
         );
 
         slog_info('Adding job cliente_update_cep %s, job id %s', $r->id, $job_id);
-        $r->update({cep_estado => \'<minion>'});
+        $r->update({cep_estado => '<minion>'});
         $ENV{LAST_DELETE_JOB_ID} = $job_id;
     }
 
