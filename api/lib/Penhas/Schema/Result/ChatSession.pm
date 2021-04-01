@@ -40,6 +40,8 @@ __PACKAGE__->add_columns(
   },
   "last_message_by",
   { data_type => "integer", is_nullable => 0 },
+  "has_message",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -50,8 +52,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-23 16:10:29
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kpiTGgsN+HsNGVl5PsGxcg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-04-01 17:05:00
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DMmTNJ/L0E3nvK9EY86svw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
