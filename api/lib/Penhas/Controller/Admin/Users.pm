@@ -5,9 +5,11 @@ use JSON;
 use Penhas::Utils;
 use DateTime;
 use MooseX::Types::Email qw/EmailAddress/;
+use Mojo::Util qw/humanize_bytes/;
 
 sub au_search {
     my $c = shift;
+    $c->use_redis_flash();
     $c->stash(
         template => 'admin/list_users',
     );
@@ -25,7 +27,8 @@ sub au_search {
     my $rows  = $valid->{rows} || 10;
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
-    my $offset = 0;
+    my $is_detail = $valid->{cliente_id} && $c->accept_html();
+    my $offset    = 0;
     if ($valid->{next_page}) {
         my $tmp = eval { $c->decode_jwt($valid->{next_page}) };
         $c->reply_invalid_param('next_page')
@@ -49,10 +52,25 @@ sub au_search {
                   me.genero
                   me.genero_outro
                   me.status
-                  me.qtde_guardioes_ativos
-                  me.qtde_ligar_para_policia
-                  me.qtde_login_senha_normal
-                  /
+                  /,
+                (
+                    $is_detail
+                    ? (
+                        qw/
+                          me.qtde_guardioes_ativos
+                          me.qtde_ligar_para_policia
+                          me.qtde_login_senha_normal
+                          me.modo_camuflado_ativo
+                          me.modo_camuflado_atualizado_em
+                          me.modo_anonimo_ativo
+                          me.modo_anonimo_atualizado_em
+                          me.dt_nasc
+                          me.cep_cidade
+                          me.cep_estado
+                          /,
+                      )
+                    : ()
+                )
             ],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
@@ -79,22 +97,66 @@ sub au_search {
     }
 
     my ($total_count, @rows);
-    if ($valid->{cliente_id} && $c->accept_html()) {
+    if ($is_detail) {
         $rs = $rs->search({'me.id' => $valid->{cliente_id}});
+        my $cliente = $rs->next or $c->reply_item_not_found();
+
+
+        my @fields = (
+            [id                           => 'ID'],
+            [nome_completo                => 'Nome Completo'],
+            [status                       => 'Status'],
+            [genero                       => 'Gênero'],
+            [genero_outro                 => 'Gênero outro'],
+            [dt_nasc                      => 'Data de Nascimento', 'tz'],
+            [cep_cidade                   => 'Cidade'],
+            [cep_estado                   => 'Estado'],
+            [qtde_guardioes_ativos        => 'Nº Guardiãs ativas'],
+            [qtde_ligar_para_policia      => 'Nº Ligações policia'],
+            [qtde_login_senha_normal      => 'Nº Login'],
+            [modo_camuflado_ativo         => 'Menu "Modo Camuflado" Ativo?',                 'bool'],
+            [modo_camuflado_atualizado_em => '',                                             'tz'],
+            [modo_anonimo_ativo           => 'Menu "Estou em situação de violência" Ativo?', 'bool'],
+            [modo_anonimo_atualizado_em   => '',                                             'tz'],
+            [qtde_audio_aguardando        => 'Nº de aúdios aguardando liberação'],
+        );
+
+        foreach my $field (@fields) {
+            my ($key, $name, $type) = @$field;
+
+            if ($type && $type eq 'tz') {
+                $cliente->{$key} = pg_timestamp2human($cliente->{$key});
+            }
+            elsif ($type && $type eq 'bool') {
+                $cliente->{$key} = $cliente->{$key} ? 'Sim' : 'Não';
+            }
+        }
+
+        $cliente->{modo_anonimo_ativo} .= ' (atualizado em ' . $cliente->{modo_anonimo_atualizado_em} . ')'
+          if $cliente->{modo_anonimo_atualizado_em};
+        $cliente->{modo_camuflado_ativo} .= ' (atualizado em ' . $cliente->{modo_camuflado_atualizado_em} . ')'
+          if $cliente->{modo_camuflado_atualizado_em};
+        $cliente->{qtde_login_senha_normal} .= ' (modo camuflado incluso)';
+
+        my @audios = $c->schema2->resultset('ClientesAudiosEvento')->search(
+            {
+                'me.cliente_id'        => $cliente->{id},
+                'me.requested_by_user' => 1,
+                'me.status'            => 'blocked_access',
+            },
+            {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
+        )->all();
+
+        $_->{total_bytes} = humanize_bytes($_->{total_bytes}),
+          $_->{audio_duration} = int($_->{audio_duration}) for @audios;
+
+        $cliente->{qtde_audio_aguardando} = scalar @audios;
+
         $c->stash(
             template => 'admin/user_profile',
-            cliente  => $rs->next,
-            fields   => [
-                [id                      => 'ID'],
-                [nome_completo           => 'Nome Completo'],
-                [status                  => 'Status'],
-                [genero                  => 'Gênero'],
-                [genero_outro            => 'Gênero outro'],
-                [qtde_guardioes_ativos   => 'Nº Guardiãs ativas'],
-                [qtde_ligar_para_policia => 'Nº Ligações policia'],
-                [qtde_login_senha_normal => 'Nº Login'],
-
-            ]
+            cliente  => $cliente,
+            fields   => \@fields,
+            audios   => \@audios,
         );
 
     }
@@ -155,6 +217,35 @@ sub au_search {
             segment_id         => $segment ? $segment->id : undef,
         },
     );
+}
+
+sub au_audio_status {
+    my $c = shift;
+
+    $c->use_redis_flash();
+    my $valid = $c->validate_request_params(
+        audio_evento_id => {required => 1, type => 'Str'},
+    );
+
+    my $evento = $c->schema2->resultset('ClientesAudiosEvento')->find($valid->{audio_evento_id})
+      or $c->reply_item_not_found();
+
+    $evento->update({
+        status => 'free_access_by_admin'
+    });
+
+    if ($c->accept_html()) {
+        $c->flash_to_redis({success_message => 'Audio liberado com sucesso!'});
+        $c->redirect_to('/admin/users?cliente_id=' . $evento->cliente_id);
+
+        return 0;
+    }
+    else {
+        return $c->render(
+            json   => {ok => 1},
+            status => 200,
+        );
+    }
 }
 
 sub ua_send_message {

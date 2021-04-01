@@ -70,6 +70,7 @@ sub register {
     my $admin = $r->under('admin')->to(controller => 'Admin::Session', action => 'admin_check_authorization');
     $admin->get()->to(action => 'admin_dashboard');
     $admin->get('users')->to(controller => 'Admin::Users', action => 'au_search');
+    $admin->get('users-audio-status')->to(controller => 'Admin::Users', action => 'au_audio_status');
     $admin->post('send-message')->to(controller => 'Admin::Users', action => 'ua_send_message');
     $admin->get('user-messages')->to(controller => 'Admin::Users', action => 'ua_list_messages');
     $admin->post('add-notification')->to(controller => 'Admin::Notifications', action => 'unft_crud');

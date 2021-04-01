@@ -47,7 +47,7 @@
         <div class="navbar-collapse offcanvas-collapse" id="navbarsExampleDefault">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin">Dashboard</a>
+                    <a class="nav-link" href="/admin">Iteração com usuárias</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/admin/users">Usuários</a>

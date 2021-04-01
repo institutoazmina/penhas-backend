@@ -1,5 +1,5 @@
 <div class="border-bottom">
-    <h1 class="h2">Big numbers</h1>
+    <h1 class="h2">Dashboard</h1>
 </div>
 
 % if ( stash('results') ) {
@@ -16,7 +16,7 @@
                 </div>
             </div>
             <div class="card-footer d-flex align-items-center justify-content-between text-sm">
-                <%== $r->{comment} %>
+                <%== $r->{comment} || '' %>
             </div>
         </div>
 
