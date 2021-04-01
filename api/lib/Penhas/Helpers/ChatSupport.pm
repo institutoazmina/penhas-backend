@@ -374,6 +374,12 @@ sub support_clear_messages {
     $c->schema->txn_do(
         sub {
             $session->chat_support_messages->delete;
+            $session->update(
+                {
+                    message     => undef,
+                    last_msg_by => undef,
+                }
+            );
         }
     );
 
