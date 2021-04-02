@@ -231,7 +231,7 @@ sub add_tweet {
         # procura o tweet raiz
         while (1) {
             my $parent = $rs->search({id => $reply_to}, {columns => ['id', 'parent_id']})->next;
-            last if !$parent;
+            last                           if !$parent;
             $reply_to = $parent->parent_id if $parent->parent_id;
 
             last if !$parent->parent_id;
@@ -272,7 +272,7 @@ sub add_tweet {
                 'new_notification',
                 [
                     'new_comment',
-                    {tweet_id => $reply_to, subject_id => $subject_id, comment => $content}
+                    {tweet_id => $original_parent_id, subject_id => $subject_id, comment => $content}
                 ] => {
                     attempts => 5,
                 }
