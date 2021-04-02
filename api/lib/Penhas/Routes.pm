@@ -97,6 +97,10 @@ sub register {
     # GET /maintenance/tick-notifications
     $maintenance->get('tick-notifications')->to(controller => 'Maintenance', action => 'tick_notifications');
 
+    # GET /maintenance/fix_tweets_parent_id
+    $maintenance->get('fix_tweets_parent_id')->to(controller => 'Maintenance', action => 'fix_tweets_parent_id');
+
+
     # PRIVATE ENDPOINTS
     my $authenticated = $r->under()->to(controller => 'JWT', action => 'check_user_jwt');
 

@@ -225,17 +225,32 @@ sub add_tweet {
     my $id = $base . sprintf('%04d', $cur_seq);
     my $rs = $c->schema2->resultset('Tweet');
 
+    my $original_parent_id = $reply_to;
+    if ($original_parent_id && $ENV{SUBSUBCOMENT_DISABLED}) {
+
+        # procura o tweet raiz
+        while (1) {
+            my $parent = $rs->search({id => $reply_to}, {columns => ['id', 'parent_id']})->next;
+            last if !$parent;
+            $reply_to = $parent->parent_id if $parent->parent_id;
+
+            last if !$parent->parent_id;
+            last if $parent->parent_id == $parent->id;    # just in case
+        }
+    }
+
     my $anonimo = $user->{modo_anonimo_ativo} ? 1 : 0;
     my $tweet   = $rs->create(
         {
-            status       => 'published',
-            id           => $id,
-            content      => $content,
-            'cliente_id' => $user->{id},
-            anonimo      => $anonimo,
-            parent_id    => $reply_to,
-            created_at   => $now->datetime(' '),
-            media_ids    => $media_ids ? to_json($media_ids) : undef,
+            status             => 'published',
+            id                 => $id,
+            content            => $content,
+            cliente_id         => $user->{id},
+            anonimo            => $anonimo,
+            parent_id          => $reply_to,
+            created_at         => $now->datetime(' '),
+            media_ids          => $media_ids ? to_json($media_ids) : undef,
+            original_parent_id => $original_parent_id,
         }
     );
 
@@ -666,10 +681,7 @@ sub add_tweets_highlights {
                 my $match = $row->{match};
                 if ($row->{is_regexp}) {
 
-                    my $test = eval {
-                        #die "não pode ter parenteses sem escape\n" if $match =~ /[^\\]\(/;
-                        qr/$match/i;
-                    };
+                    my $test = eval {qr/$match/i};
                     if ($@) {
                         $rs->find($row->{id})->update({error_msg => "Regexp error: $@"});
                         next;

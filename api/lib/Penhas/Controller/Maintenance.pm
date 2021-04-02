@@ -179,4 +179,56 @@ sub _tick_notifications {
     return $c->render(json => {});
 }
 
+sub fix_tweets_parent_id {
+
+    my $c = shift;
+
+    my $rs = $c->schema2->resultset('Tweet')->search(
+        {
+            parent_id => {'!=' => undef},
+        },
+        {
+            columns => ['id', 'parent_id'],
+        }
+    );
+    while (my $r = $rs->next) {
+
+        my $reply_to = $r->parent_id;
+
+        # procura o tweet raiz
+        while (1) {
+            my $parent
+              = $c->schema2->resultset('Tweet')->search({id => $reply_to}, {columns => ['id', 'parent_id']})->next;
+            last if !$parent;
+            $reply_to = $parent->parent_id if $parent->parent_id;
+            last if !$parent->parent_id;
+            last if $parent->parent_id eq $parent->id;    # just in case
+        }
+        $r->update({parent_id => $reply_to});
+    }
+
+    $rs = $c->schema2->resultset('Tweet')->search(
+        {},
+        {
+            columns => ['id', 'parent_id'],
+        }
+    );
+
+    while (my $r = $rs->next) {
+
+        $rs->search({id => $r->id})->update(
+            {
+                qtde_comentarios     => \['(select count(1) from tweets where parent_id = ?)', $r->id],
+                ultimo_comentario_id => \[
+                    '(select max(id) from tweets where parent_id = ?)',
+                    $r->id
+                ],
+            }
+        );
+    }
+
+
+    return $c->render(json => {});
+}
+
 1;
