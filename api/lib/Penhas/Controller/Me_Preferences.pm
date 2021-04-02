@@ -16,6 +16,8 @@ sub list_preferences {
 
     my $user_obj = $c->stash('user_obj');
 
+    return $c->list_preferences_man() unless ($user_obj->is_female());
+
     my %prefs = map { $_->get_column('name') => $_->get_column('value') } $user_obj->clientes_preferences->search(
         undef,
         {
@@ -48,6 +50,15 @@ sub list_preferences {
 
     return $c->render(
         json   => {preferences => \@prefs},
+        status => 200,
+    );
+}
+
+sub list_preferences_man {
+    my $c = shift;
+
+    return $c->render(
+        json   => {preferences => []},
         status => 200,
     );
 }
