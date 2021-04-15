@@ -684,7 +684,8 @@ sub chat_send_message {
 
             #$message = decode 'utf-8', $message;
             my $buffer            = $message . '#';
-            my $buffer_compressed = length($message) > 48 ? Compress::Zlib::memGzip($message) : undef;
+            my $message_bytes     = encode('utf8', $message);
+            my $buffer_compressed = length($message_bytes) > 48 ? Compress::Zlib::memGzip($message_bytes) : undef;
             if ($buffer_compressed && length($buffer_compressed) < length($buffer)) {
                 $buffer        = $buffer_compressed;
                 $is_compressed = 1;

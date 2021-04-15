@@ -5,6 +5,7 @@ use Mojo::Base -strict;
 use FindBin qw($RealBin);
 use lib "$RealBin/../lib";
 use DateTime;
+use utf8;
 use Penhas::Test;
 use Penhas::Minion::Tasks::SendSMS;
 my $t = test_instance;
@@ -334,19 +335,21 @@ db_transaction {
         '/me/chats',
         {'x-api-key' => $session},
       )->status_is(200, 'lista as conversas')                                                  #
-      ->json_is('/rows/0/other_apelido',      'cliente C')                                     #
-      ->json_is('/rows/0/last_message_is_me', '1')                                             #
-      ->json_is('/rows/0/other_activity',     'online')                                        #
-      ->json_is('/rows/1/other_apelido',      'cliente B')                                     #
-      ->json_is('/rows/1/last_message_is_me', '1')                                             #
-      ->json_is('/rows/1/other_activity',     'online')                                        #
-      ->json_has('/rows/1/chat_auth', 'has chat_auth')                                         #
-      ->json_has('/rows/0/chat_auth', 'has chat_auth')                                         #
-      ->json_is('/has_more', '0')                                                              #
+          #->json_is('/rows/0/other_apelido',      'cliente C')                                     #
+          #->json_is('/rows/0/last_message_is_me', '1')                                             #
+          #->json_is('/rows/0/other_activity',     'online')                                        #
+          #->json_is('/rows/1/other_apelido',      'cliente B')                                     #
+          #->json_is('/rows/1/last_message_is_me', '1')                                             #
+          #->json_is('/rows/1/other_activity',     'online')                                        #
+          #->json_has('/rows/1/chat_auth', 'has chat_auth')                                         #
+          #->json_has('/rows/0/chat_auth', 'has chat_auth')                                         #
+      ->json_is('/has_more',  '0')    #
+      ->json_is('/rows',      [],    'no list empty rooms')                #
       ->json_is('/next_page', undef, 'tem next_page mesmo sendo undef');
 
     $ENV{NOTIFICATIONS_ENABLED} = 1;
-    my $hello_from_cli1 = 'hello from cliente 1! ' . rand . 'atenção';
+    my $hello_from_cli1 = (join '', ('hello from cliente 1! ') x 100) . rand . ' atenção にほんご';
+
     $t->post_ok(
         '/me/chats-messages',
         {'x-api-key' => $session},
@@ -354,7 +357,7 @@ db_transaction {
             chat_auth => $room2_same_room->{chat_auth},
             message   => $hello_from_cli1
         },
-      )->status_is(200, 'mandando mensagem')                                                   #
+      )->status_is(200, 'mandando mensagem')    #
       ->json_has('/id', 'we got an id!');
 
     &test_notifcations(other_id => $cliente_id3, cliente_id => $cliente_id);
@@ -366,7 +369,7 @@ db_transaction {
             chat_auth => $room2_same_room->{chat_auth},
             message   => '0'
         },
-      )->status_is(200, 'mandando mensagem com valor 0')                                       #
+      )->status_is(200, 'mandando mensagem com valor 0')    #
       ->json_has('/id', 'we got an id!');
 
     $t->get_ok(
@@ -375,10 +378,10 @@ db_transaction {
         form => {
             chat_auth => $room2_same_room->{chat_auth},
         },
-      )->status_is(200, 'listando mensagens')                                                  #
-      ->json_is('/messages/0/message', '0',              'message is zero')                    #
-      ->json_is('/messages/1/message', $hello_from_cli1, 'hello is there')                     #
-      ->json_is('/messages/0/is_me',   '1',              'is myself')                          #
+      )->status_is(200, 'listando mensagens')               #
+      ->json_is('/messages/0/message', '0',              'message is zero')    #
+      ->json_is('/messages/1/message', $hello_from_cli1, 'hello is there')     #
+      ->json_is('/messages/0/is_me',   '1',              'is myself')          #
       ->json_is('/messages/1/is_me',   '1',              'is myself');
 
     $t->get_ok(
@@ -387,7 +390,7 @@ db_transaction {
         form => {
             chat_auth => $room2_same_room->{chat_auth},
         },
-      )->status_is(400, 'nao pode listar msg usando o token de outro usuario')                 #
+      )->status_is(400, 'nao pode listar msg usando o token de outro usuario')    #
       ->json_is('/error', 'chat_auth_invalid_user');
 
 
@@ -397,12 +400,12 @@ db_transaction {
         form => {
             chat_auth => $room2_other_side->{chat_auth},
         },
-      )->status_is(200, 'listando mensagens')                                                  #
-      ->json_is('/messages/0/message', '0',              'message is zero')                    #
-      ->json_is('/messages/1/message', $hello_from_cli1, 'hello is there')                     #
-      ->json_is('/messages/0/is_me',   '0',              'is NOT myself')                      #
-      ->json_is('/messages/1/is_me',   '0',              'is NOT myself')                      #
-      ->json_is('/other/activity',     'online')                                               #
+      )->status_is(200, 'listando mensagens')                                     #
+      ->json_is('/messages/0/message', '0',              'message is zero')       #
+      ->json_is('/messages/1/message', $hello_from_cli1, 'hello is there')        #
+      ->json_is('/messages/0/is_me',   '0',              'is NOT myself')         #
+      ->json_is('/messages/1/is_me',   '0',              'is NOT myself')         #
+      ->json_is('/other/activity',     'online')                                  #
       ->json_is('/has_more',           '0', 'nao tem mais msg');
 
     $t->post_ok(
@@ -412,7 +415,7 @@ db_transaction {
             chat_auth => $room2_other_side->{chat_auth},
             message   => '0'
         },
-      )->status_is(400, 'nao pode mandar msg do lado errado tbm')                              #
+      )->status_is(400, 'nao pode mandar msg do lado errado tbm')                 #
       ->json_is('/error', 'chat_auth_invalid_user');
 
     $t->post_ok(
@@ -422,7 +425,7 @@ db_transaction {
             chat_auth => $room2_other_side->{chat_auth},
             message   => 'working'
         },
-      )->status_is(200, 'mandando mensagem usuario 3')                                         #
+      )->status_is(200, 'mandando mensagem usuario 3')                            #
       ->json_has('/id', 'we got an id!');
 
     $t->get_ok(
@@ -432,13 +435,13 @@ db_transaction {
             chat_auth => $room2_other_side->{chat_auth},
             rows      => 2,
         },
-      )->status_is(200, 'teste paginacao')                                                     #
-      ->json_is('/messages/0/message', 'working', 'last msg is the first')                     #
-      ->json_is('/messages/0/is_me',   '1',       'is me')                                     #
-      ->json_is('/messages/1/message', '0',       'other msg')                                 #
-      ->json_is('/messages/1/is_me',   '0',       'is not myself')                             #
-      ->json_is('/has_more',           '1',       'has more messages')                         #
-      ->json_has('/older', 'has older pagination')                                             #
+      )->status_is(200, 'teste paginacao')                                        #
+      ->json_is('/messages/0/message', 'working', 'last msg is the first')        #
+      ->json_is('/messages/0/is_me',   '1',       'is me')                        #
+      ->json_is('/messages/1/message', '0',       'other msg')                    #
+      ->json_is('/messages/1/is_me',   '0',       'is not myself')                #
+      ->json_is('/has_more',           '1',       'has more messages')            #
+      ->json_has('/older', 'has older pagination')                                #
       ->json_has('/newer', 'has newer pagination');
 
     my $older = last_tx_json()->{older};
@@ -450,11 +453,11 @@ db_transaction {
             chat_auth  => $room2_other_side->{chat_auth},
             pagination => $older,
         },
-      )->status_is(200, 'teste paginacao')                                                     #
-      ->json_is('/messages/0/message', $hello_from_cli1, 'expected message')                   #
-      ->json_is('/messages/1',         undef,            'no older msg')                       #
-      ->json_is('/has_more',           '0',              'no more messages')                   #
-      ->json_hasnt('/older', 'no older pagination')                                            #
+      )->status_is(200, 'teste paginacao')                                        #
+      ->json_is('/messages/0/message', $hello_from_cli1, 'expected message')      #
+      ->json_is('/messages/1',         undef,            'no older msg')          #
+      ->json_is('/has_more',           '0',              'no more messages')      #
+      ->json_hasnt('/older', 'no older pagination')                               #
       ->json_hasnt('/newer', 'no newer pagination');
 
     my $hey_long_msg = join ' ', ('hey!') x 100;
@@ -465,7 +468,7 @@ db_transaction {
             chat_auth => $room2->{chat_auth},
             message   => $hey_long_msg
         },
-      )->status_is(200, 'mandando mensagem nova')                                              #
+      )->status_is(200, 'mandando mensagem nova')                                 #
       ->json_has('/id', 'we got an id!');
     $t->post_ok(
         '/me/chats-messages',
@@ -474,7 +477,7 @@ db_transaction {
             chat_auth => $room2->{chat_auth},
             message   => 'me responde!'
         },
-      )->status_is(200, 'mandando mensagem nova')                                              #
+      )->status_is(200, 'mandando mensagem nova')                                 #
       ->json_has('/id', 'we got an id!');
 
     $t->get_ok(
@@ -484,12 +487,12 @@ db_transaction {
             chat_auth  => $room2_other_side->{chat_auth},
             pagination => $newer,
         },
-      )->status_is(200, 'teste paginacao (puxando novidades)')                                 #
-      ->json_is('/messages/0/message', 'me responde!', 'expected message')                     #
-      ->json_is('/messages/1/message', $hey_long_msg,  'expected message')                     #
-      ->json_is('/messages/2',         undef,          'no older msg')                         #
-      ->json_is('/has_more',           '0',            'no more messages')                     #
-      ->json_hasnt('/older', 'no older pagination')                                            #
+      )->status_is(200, 'teste paginacao (puxando novidades)')                    #
+      ->json_is('/messages/0/message', 'me responde!', 'expected message')        #
+      ->json_is('/messages/1/message', $hey_long_msg,  'expected message')        #
+      ->json_is('/messages/2',         undef,          'no older msg')            #
+      ->json_is('/has_more',           '0',            'no more messages')        #
+      ->json_hasnt('/older', 'no older pagination')                               #
       ->json_has('/newer', 'newer pagination');
     $newer = last_tx_json()->{newer};
     ok $t->app->decode_jwt($newer)->{after}, 'after is definded';
@@ -501,10 +504,10 @@ db_transaction {
             chat_auth  => $room2_other_side->{chat_auth},
             pagination => $newer,
         },
-      )->status_is(200, 'teste paginacao (puxando novidades, mas nao tem mais)')               #
-      ->json_is('/messages', [],  'no msg')                                                    #
-      ->json_is('/has_more', '0', 'no more messages')                                          #
-      ->json_hasnt('/older', 'no older pagination')                                            #
+      )->status_is(200, 'teste paginacao (puxando novidades, mas nao tem mais)')    #
+      ->json_is('/messages', [],  'no msg')                                         #
+      ->json_is('/has_more', '0', 'no more messages')                               #
+      ->json_hasnt('/older', 'no older pagination')                                 #
       ->json_has('/newer', 'newer pagination');
     $newer = last_tx_json()->{newer};
     ok $t->app->decode_jwt($newer)->{after}, 'after is definded';
@@ -713,7 +716,7 @@ sub test_notifcations {
         ('/me/notifications'),
         {'x-api-key' => $session3},
     )->status_is(200, 'notifications with chat');
-    is trace_popall, 'anon_user:cliente A,expand_screen='.$cliente_id, 'right code';
+    is trace_popall, 'anon_user:cliente A,expand_screen=' . $cliente_id, 'right code';
 
     $cliente->cliente_modo_anonimo_toggle(active => 0);
 
