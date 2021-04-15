@@ -24,6 +24,8 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 1 },
   "parent_id",
   { data_type => "varchar", is_nullable => 1, size => 20 },
+  "original_parent_id",
+  { data_type => "varchar", is_nullable => 1, size => 20 },
   "anonimo",
   {
     data_type => "tinyint",
