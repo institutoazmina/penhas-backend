@@ -28,7 +28,7 @@ sub news_indexer {
         {
             'me.id' => $news_id,
         }
-    ) or die 'news not found';
+    );
     my $news = $filter_rs->search(
         undef,
         {
@@ -38,7 +38,7 @@ sub news_indexer {
             ],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
-    )->next;
+    )->next or die 'news not found';
     if ($news->{indexed} && !is_test()) {
         log_info("already indexed... skipping work");
         return $job->finish('skipped');
