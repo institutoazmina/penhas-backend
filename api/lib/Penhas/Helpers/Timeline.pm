@@ -449,7 +449,7 @@ sub list_tweets {
           && !$opts{parent_id}
           && !$opts{skip_comments};    # nao tem parent, faz 'prefetch' do ultmo comentarios
 
-        my $item = &_fomart_tweet($user, $tweet, $remote_addr);
+        my $item = &_format_tweet($user, $tweet, $remote_addr);
 
         push @tweets, $item;
     }
@@ -465,7 +465,7 @@ sub list_tweets {
         delete $attr->{order_by};
         my @childs = $c->schema2->resultset('Tweet')->search({'me.id' => {in => \@comments}}, $attr)->all;
         foreach my $me (@childs) {
-            $last_reply{$me->{parent_id}} = &_fomart_tweet($user, $me, $remote_addr);
+            $last_reply{$me->{parent_id}} = &_format_tweet($user, $me, $remote_addr);
         }
     }
 
@@ -543,7 +543,7 @@ sub list_tweets {
     };
 }
 
-sub _fomart_tweet {
+sub _format_tweet {
     my ($user, $me, $remote_addr) = @_;
     my $avatar_anonimo = $ENV{AVATAR_ANONIMO_URL};
     my $avatar_default = $ENV{AVATAR_PADRAO_URL};
