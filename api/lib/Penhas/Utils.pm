@@ -203,7 +203,9 @@ sub pg_timestamp2human {
     $timestamp =~ s/Z$//;
     my $today   = DateTime->now->set_time_zone('America/Sao_Paulo')->dmy('/');
     my $is_date = $timestamp !~ /:/;
-    $timestamp = DateTime::Format::Pg->parse_datetime($is_date ? $timestamp : $timestamp . '+00')
+    $timestamp
+      = DateTime::Format::Pg->parse_datetime(
+        $is_date ? $timestamp : $timestamp =~ /\+/ ? $timestamp : $timestamp . '+00')
       ->set_time_zone('America/Sao_Paulo');
 
     $timestamp = $timestamp->dmy('/') . ($is_date ? '' : ' ' . $timestamp->hms(':'));
