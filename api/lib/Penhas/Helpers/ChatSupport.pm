@@ -325,7 +325,7 @@ sub support_list_message {
             id      => $row->{id},
             message => $row->{message},
             is_me   => $is_me,
-            time    => pg_timestamp2iso_8601($row->{created_at})
+            time    => pg_timestamp2iso_8601($row->{created_at}),
         };
     }
 

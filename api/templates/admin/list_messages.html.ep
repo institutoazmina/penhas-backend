@@ -48,7 +48,7 @@
                     <div class="row">
                         <div class="col-sm">
                             <span style="display: inline" class="time_date"> <%= $pg_timestamp2human->($r->{time}) %> </span>
-                            <a href="<%= $r->{del_link} %>" style="float:right; margin-top: 2px; padding: 2px;" class="btn btn-danger btn-sm">remover</a>
+                            <a href="/admin/user-messages-delete?message_id=<%= $r->{id} %>" style="float:right; margin-top: 2px; padding: 2px;" class="btn btn-danger btn-sm">remover</a>
                         </div>
                     </div>
                 </div>

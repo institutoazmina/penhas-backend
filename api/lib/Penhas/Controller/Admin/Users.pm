@@ -230,9 +230,7 @@ sub au_audio_status {
     my $evento = $c->schema2->resultset('ClientesAudiosEvento')->find($valid->{audio_evento_id})
       or $c->reply_item_not_found();
 
-    $evento->update({
-        status => 'free_access_by_admin'
-    });
+    $evento->update({status => 'free_access_by_admin'});
 
     if ($c->accept_html()) {
         $c->flash_to_redis({success_message => 'Audio liberado com sucesso!'});
@@ -246,6 +244,26 @@ sub au_audio_status {
             status => 200,
         );
     }
+}
+
+sub ua_delete_message {
+    my $c = shift;
+
+    $c->use_redis_flash();
+    my $valid = $c->validate_request_params(
+        message_id => {required => 1, type => 'Int'},
+    );
+
+    my $message = $c->schema2->resultset('ChatSupportMessage')->find($valid->{message_id})
+      or $c->reply_item_not_found();
+
+    my $cliente_id = $message->cliente_id;
+
+    $message->delete;
+
+    $c->flash_to_redis({success_message => 'Mensagem removida com sucesso!'});
+    $c->redirect_to('/admin/user-messages?cliente_id=' . $cliente_id . '&rows=5');
+
 }
 
 sub ua_send_message {

@@ -72,6 +72,7 @@ sub register {
     $admin->get('users')->to(controller => 'Admin::Users', action => 'au_search');
     $admin->get('users-audio-status')->to(controller => 'Admin::Users', action => 'au_audio_status');
     $admin->post('send-message')->to(controller => 'Admin::Users', action => 'ua_send_message');
+    $admin->get('user-messages-delete')->to(controller => 'Admin::Users', action => 'ua_delete_message');
     $admin->get('user-messages')->to(controller => 'Admin::Users', action => 'ua_list_messages');
     $admin->post('add-notification')->to(controller => 'Admin::Notifications', action => 'unft_crud');
     $admin->get('add-notification')->to(controller => 'Admin::Notifications', action => 'unft_new_template');
