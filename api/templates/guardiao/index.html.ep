@@ -6,7 +6,7 @@
 
     % if (my $message = stash ('message') ) {
     <div class="alert alert-danger" role="alert">
-      <%== $message %>
+      <%= $message %>
     </div>
     % }
 
@@ -14,12 +14,12 @@
 
     <form method="post" action="/web/guardiao" class="text-center">
 
-    <input type="hidden" name="token" value="<%== stash ('token') %>" / >
+    <input type="hidden" name="token" value="<%= stash ('token') %>" / >
 
-        <span class="bem-vindo-nome">Olá, <%== $guardiao->{nome} %>!</span>
+        <span class="bem-vindo-nome">Olá, <%= $guardiao->{nome} %>!</span>
 
         %if ( $guardiao->{is_pending} ) {
-        <p class="lead">Você foi convidado por <%== $cliente->{apelido} %> para se tornar uma guardiã.</p>
+        <p class="lead">Você foi convidado por <%= $cliente->{apelido} %> para se tornar uma guardiã.</p>
 
         <p class="lead">
 
@@ -32,18 +32,18 @@
         % }
 
         %if ( $guardiao->{is_expired} ) {
-        <p class="lead">Este convite já foi expirou, peça um novo convite para a <%== $cliente->{apelido} %>.</p>
+        <p class="lead">Este convite já foi expirou, peça um novo convite para a <%= $cliente->{apelido} %>.</p>
         % }
 
         %if ( $guardiao->{is_accepted} ) {
-        <p class="lead">Você faz parte das guardiãs da <%== $cliente->{apelido} %>!</p>
+        <p class="lead">Você faz parte das guardiãs da <%= $cliente->{apelido} %>!</p>
         <p class="lead">
 
           <button name="action" value="refuse" class="btn btn-lg btn-danger">deixar de ser guardiã</button>
 
           </p>
         % } elsif ( !$guardiao->{is_pending} && !$guardiao->{is_expired} ) {
-        <p class="lead">Você não faz mais parte das guardiãs da <%== $cliente->{apelido} %>, mas pode retornar usando o botão abaixo</p>
+        <p class="lead">Você não faz mais parte das guardiãs da <%= $cliente->{apelido} %>, mas pode retornar usando o botão abaixo</p>
 
         <p class="lead">
           <button name="action" value="accept" class="btn btn-lg btn-secondary">voltar a ser guardiã</button>
@@ -65,20 +65,20 @@
           <div class="card">
 
             <!-- Card header -->
-            <div class="card-header" role="tab" id="heading<%== $faq->{id} %>">
-              <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx" href="#collapse<%== $faq->{id} %>"
-                aria-expanded="false" aria-controls="collapse<%== $faq->{id} %>">
+            <div class="card-header" role="tab" id="heading<%= $faq->{id} %>">
+              <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx" href="#collapse<%= $faq->{id} %>"
+                aria-expanded="false" aria-controls="collapse<%= $faq->{id} %>">
                 <h5 class="mb-0">
-                  <%== $faq->{title} %>
+                  <%= $faq->{title} %>
                 </h5>
               </a>
             </div>
 
             <!-- Card body -->
-            <div id="collapse<%== $faq->{id} %>" class="collapse" role="tabpanel" aria-labelledby="heading<%== $faq->{id} %>"
+            <div id="collapse<%= $faq->{id} %>" class="collapse" role="tabpanel" aria-labelledby="heading<%= $faq->{id} %>"
               data-parent="#accordionEx">
               <div class="card-body">
-                <%== $faq->{content_html} %>
+                <%= $faq->{content_html} %>
               </div>
             </div>
 

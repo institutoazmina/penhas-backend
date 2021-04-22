@@ -3,21 +3,21 @@
 </div>
 <br />
 % if ( $c->req->params->param('nome') ) {
-<h2><%== stash('total_count') %>
-    resultados para 「<%== $c->req->params->param('nome') %>」</h2>
+<h2><%= stash('total_count') %>
+    resultados para 「<%= $c->req->params->param('nome') %>」</h2>
 % }else{
-<h2><%== stash('total_count') %>
+<h2><%= stash('total_count') %>
     resultados
 </h2>
 
 % if ( stash('segment') ) {
-<h4>Filtro aplicado 「<%== stash('segment')->label %>」</h4>
+<h4>Filtro aplicado 「<%= stash('segment')->label %>」</h4>
 % }
 %}
 
 % if ( stash('segment_id') ) {
 <div class="text-right">
-    <a class="btn btn-outline-dark" href="/admin/add-notification?segment_id=<%== stash('segment_id')%>">Criar
+    <a class="btn btn-outline-dark" href="/admin/add-notification?segment_id=<%= stash('segment_id')%>">Criar
         notificação</a>
 </div>
 % }
@@ -36,21 +36,21 @@
         <tbody>
             % for my $r (@{stash('rows') || []}) {
             <tr>
-                <td style="width: 5em"><%== $r->{id} %></td>
+                <td style="width: 5em"><%= $r->{id} %></td>
                 <td style="width: 25em">
-                    <a href="/admin/users?cliente_id=<%== $r->{id} %>"><%== $r->{apelido} %>
-                        (<%== $r->{nome_completo} %>)</a>
+                    <a href="/admin/users?cliente_id=<%= $r->{id} %>"><%= $r->{apelido} %>
+                        (<%= $r->{nome_completo} %>)</a>
                     % if ($r->{status} ne 'active') {
-                    <span class="badge badge-warning"><%==$r->{status}%></span>
+                    <span class="badge badge-warning"><%=$r->{status}%></span>
                     % }
                 </td>
-                <td style="width: 25em"><%== $r->{email} %></td>
+                <td style="width: 25em"><%= $r->{email} %></td>
                 <td>
-                    <%== $r->{genero} %>
+                    <%= $r->{genero} %>
                 </td>
                 <td class="text-right">
-                    <a href="/admin/users?cliente_id=<%== $r->{id} %>" class="btn btn-warning btn-sm">perfil</a>
-                    <a href="/admin/user-messages?cliente_id=<%== $r->{id} %>&rows=5"
+                    <a href="/admin/users?cliente_id=<%= $r->{id} %>" class="btn btn-warning btn-sm">perfil</a>
+                    <a href="/admin/user-messages?cliente_id=<%= $r->{id} %>&rows=5"
                         class="btn btn-primary btn-sm">chat</a>
                 </td>
             </tr>
@@ -63,7 +63,7 @@
     %}
 
     % if ( stash('has_more') ) {
-    <a href="/admin/users?next_page=<%== stash('next_page') %>" class="btn btn-outline-dark btn-sm">carregar próxima
+    <a href="/admin/users?next_page=<%= stash('next_page') %>" class="btn btn-outline-dark btn-sm">carregar próxima
         página</a>
     % }
 
@@ -74,8 +74,8 @@
         <div class="form-group">
             <select name="segment_id" class="form-control">
                 % for my $r (@{stash('segments') || []}) {
-                <option <%= $r->{id} == (stash('segment_id') || 0) ? 'selected' : '' %> value="<%== $r->{id} %>">
-                    <%== $r->{label} . ' ----- ' . $r->{last_count} . ' resultados, contado em ' . $pg_timestamp2human->($r->{last_run_at}) %>
+                <option <%= $r->{id} == (stash('segment_id') || 0) ? 'selected' : '' %> value="<%= $r->{id} %>">
+                    <%= $r->{label} . ' ----- ' . $r->{last_count} . ' resultados, contado em ' . $pg_timestamp2human->($r->{last_run_at}) %>
                 </option>
                 % }
             </select>

@@ -4,11 +4,11 @@
 
 % if ( !$c->req->params->param('next_page') ) {
 <a href="/admin/"
-    class="btn btn-outline-dark btn-sm <%== $c->req->params->param('include_answered') ? '' : 'active' %>">últimas
+    class="btn btn-outline-dark btn-sm <%= $c->req->params->param('include_answered') ? '' : 'active' %>">últimas
     mensagens não
     respondidas</a>
 <a href="/admin?include_answered=1"
-    class="btn btn-outline-dark btn-sm <%== $c->req->params->param('include_answered') ? 'active' : '' %>">todas as
+    class="btn btn-outline-dark btn-sm <%= $c->req->params->param('include_answered') ? 'active' : '' %>">todas as
     mensagens</a>
 % } else {
 % if ( $c->req->params->param('include_answered') == '1' ) {
@@ -31,13 +31,13 @@
         <tbody>
             % for my $r (@{$last_messages->{rows}}) {
             <tr>
-                <td style="width: 15em"><%== $r->{cliente}->{nome_completo} %></td>
-                <td style="width: 12em"><%== $r->{last_msg_at_human} %></td>
-                <td style="width: 15em"><%== $r->{last_msg_by} %></td>
+                <td style="width: 15em"><%= $r->{cliente}->{nome_completo} %></td>
+                <td style="width: 12em"><%= $r->{last_msg_at_human} %></td>
+                <td style="width: 15em"><%= $r->{last_msg_by} %></td>
                 <td>
-                    <a href="/admin/user-messages?cliente_id=<%== $r->{cliente}->{id} %>&rows=5"
+                    <a href="/admin/user-messages?cliente_id=<%= $r->{cliente}->{id} %>&rows=5"
                         class="btn btn-primary btn-sm">Abrir</a>
-                    <%== $r->{last_msg_preview} %>
+                    <%= $r->{last_msg_preview} %>
                 </td>
             </tr>
             % }
@@ -49,7 +49,7 @@
     %}
 
     % if ( $last_messages->{has_more} ) {
-    <a href="/admin/?next_page=<%== $last_messages->{next_page} %>&amp;include_answered=<%== $c->req->params->param('include_answered') ? '1' : '0' %>"
+    <a href="/admin/?next_page=<%= $last_messages->{next_page} %>&amp;include_answered=<%= $c->req->params->param('include_answered') ? '1' : '0' %>"
         class="btn btn-outline-dark btn-sm">carregar
         próxima página</a>
     % }

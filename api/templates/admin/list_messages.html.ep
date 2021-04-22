@@ -10,16 +10,16 @@
                 <div class="card flex-md-row mb-4 box-shadow">
                     <div class="card-body d-flex flex-column align-items-start">
                         <h3 class="mb-0">
-                            <span class="text-muted"><%==$cliente->apelido()%></span>
-                            <span class="text-dark" href="#">(<%==$cliente->nome_completo()%>)</span>
+                            <span class="text-muted"><%=$cliente->apelido()%></span>
+                            <span class="text-dark" href="#">(<%=$cliente->nome_completo()%>)</span>
                         </h3>
 
                         <div class="mb-1 text-muted">Criou conta em
-                            <%== $pg_timestamp2human->($cliente->get_column('created_on'))%> </div>
-                        <p class="card-text mb-auto"><%== $cliente->minibio() || 'sem minibio'%></p>
-                        <a href="/admin/users?cliente_id=<%==$cliente->id()%>">carregar perfil completo</a>
+                            <%= $pg_timestamp2human->($cliente->get_column('created_on'))%> </div>
+                        <p class="card-text mb-auto"><%= $cliente->minibio() || 'sem minibio'%></p>
+                        <a href="/admin/users?cliente_id=<%=$cliente->id()%>">carregar perfil completo</a>
 
-                        <strong>última vez visto em <%== $pg_timestamp2human->( $other->{activity} ) %></strong>
+                        <strong>última vez visto em <%= $pg_timestamp2human->( $other->{activity} ) %></strong>
                     </div>
                 </div>
             </div>
@@ -30,7 +30,7 @@
     <div class="mesgs">
         <div id="msg_history" class="msg_history">
             % if (my $older = stash('older')) {
-            <a href="/admin/user-messages?cliente_id=<%==$cliente->id()%>&rows=100&pagination=<%==$older%>"
+            <a href="/admin/user-messages?cliente_id=<%=$cliente->id()%>&rows=100&pagination=<%=$older%>"
                 class="btn btn-outline-dark btn-sm btn_load_older_messages">Carregar
                 mensagens mais antigas</a>
             % }
@@ -44,8 +44,13 @@
             % if ($r->{is_me}){
             <div class="outgoing_msg">
                 <div class="sent_msg">
-                    <p><%== $r->{message} %></p>
-                    <span class="time_date"> <%== $pg_timestamp2human->($r->{time}) %> </span>
+                    <p><%= $r->{message} %></p>
+                    <div class="row">
+                        <div class="col-sm">
+                            <span style="display: inline" class="time_date"> <%= $pg_timestamp2human->($r->{time}) %> </span>
+                            <a href="<%= $r->{del_link} %>" style="float:right; margin-top: 2px; padding: 2px;" class="btn btn-danger btn-sm">remover</a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -54,13 +59,13 @@
             <div class="incoming_msg">
 
                 <div class="incoming_msg_img">
-                    <img src="<%==$cliente->avatar_url_or_default()%>" alt="sunil">
+                    <img src="<%=$cliente->avatar_url_or_default()%>" alt="sunil">
                 </div>
 
                 <div class="received_msg">
                     <div class="received_withd_msg">
-                        <p><%== $r->{message} %></p>
-                        <span class="time_date"> <%== $pg_timestamp2human->($r->{time}) %> </span>
+                        <p><%= $r->{message} %></p>
+                        <span class="time_date"> <%= $pg_timestamp2human->($r->{time}) %> </span>
                     </div>
                 </div>
             </div>
@@ -84,7 +89,7 @@
         % if (!$c->req->params->param('pagination')) {
         <div class="type_msg">
             <form class="form-signin" method="POST" action="/admin/send-message">
-                <input type="hidden" name="cliente_id" value="<%== $cliente->id() %>">
+                <input type="hidden" name="cliente_id" value="<%= $cliente->id() %>">
                 <div class="input_msg_write">
                     <input type="text" name="message" class="write_msg" placeholder="Escreva a mensagem">
                     <button class="msg_send_btn" type="submit">
@@ -96,7 +101,7 @@
         % } else {
         <div class="type_msg load_recent_msg">
 
-            <a href="/admin/user-messages?cliente_id=<%==$cliente->id()%>" class="btn btn-outline-primary">Carregar
+            <a href="/admin/user-messages?cliente_id=<%=$cliente->id()%>" class="btn btn-outline-primary">Carregar
                 últimas mensagens</a>
         </div>
         %}

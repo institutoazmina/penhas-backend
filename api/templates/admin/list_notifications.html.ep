@@ -20,15 +20,15 @@
         <tbody>
             % for my $r (@{stash('rows') || []}) {
             <tr>
-                <td style="width: 3.5em"><%== $r->{id} %></td>
-                <td title="<%== $r->{title} %>" style="max-width: 6em;overflow: hidden;text-overflow: ellipsis">
-                    <%== $r->{title} %>
+                <td style="width: 3.5em"><%= $r->{id} %></td>
+                <td title="<%= $r->{title} %>" style="max-width: 6em;overflow: hidden;text-overflow: ellipsis">
+                    <%= $r->{title} %>
                 </td>
-                <td title="<%== $r->{content_text} %>" style="max-width: 9em;overflow: hidden;text-overflow: ellipsis">
-                    <%== $r->{content_text} %>
+                <td title="<%= $r->{content_text} %>" style="max-width: 9em;overflow: hidden;text-overflow: ellipsis">
+                    <%= $r->{content_text} %>
                 </td>
                 <td class="text-right">
-                    <a href="/admin/message-detail?id=<%== $r->{id} %>"
+                    <a href="/admin/message-detail?id=<%= $r->{id} %>"
                         class="btn btn-primary btn-sm">editar</a>
                 </td>
             </tr>
@@ -41,7 +41,7 @@
     %}
 
     % if ( stash('has_more') ) {
-    <a href="/admin/notifications?next_page=<%== stash('next_page') %>" class="btn btn-outline-dark btn-sm">carregar próxima
+    <a href="/admin/notifications?next_page=<%= stash('next_page') %>" class="btn btn-outline-dark btn-sm">carregar próxima
         página</a>
     % }
 

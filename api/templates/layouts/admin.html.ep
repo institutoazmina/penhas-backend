@@ -13,12 +13,12 @@
 
     % my $version = 1;
     % if (stash('is_login')) {
-    <link rel="stylesheet" href="/web-assets/login.css?v=<%==$version%>" />
+    <link rel="stylesheet" href="/web-assets/login.css?v=<%=$version%>" />
     % } elsif (stash('is_chat')) {
-    <link rel="stylesheet" href="/web-assets/chat.css?v=<%==$version%>" />
-    <link rel="stylesheet" href="/web-assets/admin.css?v=<%==$version%>" />
+    <link rel="stylesheet" href="/web-assets/chat.css?v=<%=$version%>" />
+    <link rel="stylesheet" href="/web-assets/admin.css?v=<%=$version%>" />
     % } else {
-    <link rel="stylesheet" href="/web-assets/admin.css?v=<%==$version%>" />
+    <link rel="stylesheet" href="/web-assets/admin.css?v=<%=$version%>" />
     % }
 
     % if (stash('add_editor')) {
@@ -60,7 +60,7 @@
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown01" data-toggle="dropdown"
-                        aria-haspopup="true" aria-expanded="false"><%== stash('admin_user')->first_name() %></a>
+                        aria-haspopup="true" aria-expanded="false"><%= stash('admin_user')->first_name() %></a>
                     <div class="dropdown-menu" aria-labelledby="dropdown01">
                         <a class="dropdown-item" href="/admin/logout">Sair</a>
                     </div>
@@ -81,12 +81,12 @@
     <div role="main" class="container">
         % if (my $message = stash ('message')) {
         <div class="alert alert-danger" role="alert">
-            <%== $message %>
+            <%= $message %>
         </div>
         % }
         % if (my $success = stash ('success_message') ) {
         <div class="alert alert-success" role="alert">
-            <%== $success %>
+            <%= $success %>
         </div>
         % }
 
@@ -107,9 +107,9 @@
         feather.replace()
     </script>
     % if (stash('is_chat')) {
-    <script src="/web-assets/chat.js?v=<%==$version%>"></script>
+    <script src="/web-assets/chat.js?v=<%=$version%>"></script>
     % }
-    <script src="/web-assets/offcanvas.js?v=<%==$version%>"></script>
+    <script src="/web-assets/offcanvas.js?v=<%=$version%>"></script>
 </body>
 
 </html>

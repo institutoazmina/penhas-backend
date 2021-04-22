@@ -2,7 +2,7 @@
 % my $params = $c->stash('params');
 % my $notification_message = $c->stash('notification_message');
 <div class="border-bottom">
-    <h1 class="h2"> <%== $notification_message ?  'Editar notificação' : 'Criar nova notificação' %></h1>
+    <h1 class="h2"> <%= $notification_message ?  'Editar notificação' : 'Criar nova notificação' %></h1>
 </div>
 <br />
 <form method="POST" action="/admin/add-notification">
@@ -10,30 +10,30 @@
 
         % if ( stash('segment_id') ) {
         <select name="segment_id" class="form-control" id="exampleFormControlSelect1" readonly>
-            <option selected value="<%== stash('segment_id') %>">
-                <%== stash('segment')->label . ' - ' . stash('segment')->last_count . ' resultados, contado em ' . $pg_timestamp2human->(stash('segment')->last_run_at) %>
+            <option selected value="<%= stash('segment_id') %>">
+                <%= stash('segment')->label . ' - ' . stash('segment')->last_count . ' resultados, contado em ' . $pg_timestamp2human->(stash('segment')->last_run_at) %>
             </option>
         </select>
         % }
         % if ( stash('segments') ) {
         <select name="segment_id" class="form-control">
                 % for my $r (@{stash('segments') || []}) {
-                <option <%= $r->{id} == ($params->{segment_id} || 0) ? 'selected' : '' %> value="<%== $r->{id} %>">
-                    <%== $r->{label} . ' ----- ' . $r->{last_count} . ' resultados, contado em ' . $pg_timestamp2human->($r->{last_run_at}) %>
+                <option <%= $r->{id} == ($params->{segment_id} || 0) ? 'selected' : '' %> value="<%= $r->{id} %>">
+                    <%= $r->{label} . ' ----- ' . $r->{last_count} . ' resultados, contado em ' . $pg_timestamp2human->($r->{last_run_at}) %>
                 </option>
                 % }
             </select>
         % }
 
         % if ($notification_message){
-        <pre><%== $notification_message->meta %></pre>
-        <input type="hidden" name="notification_message_id" value="<%==$notification_message->id %>" />
+        <pre><%= $notification_message->meta %></pre>
+        <input type="hidden" name="notification_message_id" value="<%=$notification_message->id %>" />
         % }
 
         <div class="form-group">
             <label for="exampleInputEmail1">Título</label>
             <input required
-                value="<%== $params->{message_title} || ($notification_message ? $notification_message->title : '') %>"
+                value="<%= $params->{message_title} || ($notification_message ? $notification_message->title : '') %>"
                 name="message_title" class="form-control" id="imessage_title" aria-describedby="title"
                 placeholder="Novidades!">
         </div>
@@ -41,7 +41,7 @@
 
         <div class="form-group">
             <textarea name="message_content"
-                id="editor"><%== $params->{message_content} || ($notification_message ? $notification_message->content : '') %></textarea>
+                id="editor"><%= $params->{message_content} || ($notification_message ? $notification_message->content : '') %></textarea>
         </div>
 
         <script>
@@ -79,7 +79,7 @@
 
     </div>
 
-    <button type="submit" class="btn btn-primary"> <%== $notification_message ?'Salvar' : 'Criar' %> </button>
+    <button type="submit" class="btn btn-primary"> <%= $notification_message ?'Salvar' : 'Criar' %> </button>
     % if ($notification_message){
         <hr />
         <div class="text-right">
