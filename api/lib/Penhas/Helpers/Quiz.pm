@@ -871,7 +871,7 @@ sub _init_questionnaire_stash {
                 $ref->{_skills}{$counter} = $skill->{id};
                 push @{$ref->{options}}, {
                     display => $skill->{skill},
-                    index   => $counter,
+                    index   => "$counter", # manter como string, garantido, pq se nao quebra o parser do app
                 };
                 $counter++;
             }
