@@ -15,54 +15,51 @@ services:
 #    command: mysqld --innodb-buffer-pool-size=256M
 
   directus:
-    image: directus/directus:v8-apache
+    image: directus/directus:v9.0.0-rc.69
     restart: unless-stopped
-    networks:
-        - external_network
+    network_mode: "bridge"
     #depends_on:
     #    - db
     ports:
-      - "172.17.0.1:${DIRECTUS_API_LISTEN}:80"
+      - "172.17.0.1:${DIRECTUS_API_LISTEN}:8055"
     environment:
-      DIRECTUS_APP_ENV: "production"
-      DIRECTUS_AUTH_PUBLICKEY: "${DIRECTUS_AUTH_PUBLICKEY}"
-      DIRECTUS_AUTH_SECRETKEY: "${DIRECTUS_AUTH_SECRETKEY}"
-      DIRECTUS_DATABASE_HOST: "${DIRECTUS_DATABASE_HOST}"
-      DIRECTUS_DATABASE_PORT: "${DIRECTUS_DATABASE_PORT}"
-      DIRECTUS_DATABASE_NAME: "${DIRECTUS_DATABASE_NAME}"
-      DIRECTUS_DATABASE_USERNAME: "${DIRECTUS_DATABASE_USERNAME}"
-      DIRECTUS_DATABASE_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
-      DIRECTUS_MAIL_DEFAULT_TRANSPORT: "smtp"
-      DIRECTUS_MAIL_DEFAULT_FROM: "${SMTP_FROM}"
-      DIRECTUS_MAIL_DEFAULT_HOST: "${SMTP_HOST}"
-      DIRECTUS_MAIL_DEFAULT_PORT: "587"
-      DIRECTUS_MAIL_DEFAULT_USERNAME: "${SMTP_USER}"
-      DIRECTUS_MAIL_DEFAULT_PASSWORD: "${SMTP_PASSWORD}"
-      DIRECTUS_MAIL_DEFAULT_ENCRYPTION: "tls"
-    volumes:
-        - ./directus/data/config:/var/directus/config
-        - ./directus/data/uploads:/var/directus/public/uploads
+      PUBLIC_URL: "${DIRECTUS_PUBLIC_URL}"
+      KEY: "${DIRECTUS_KEY}"
+      SECRET: "${DIRECTUS_SECRET}"
+      DB_CLIENT: 'pg'
+      DB_HOST: "${DIRECTUS_DATABASE_HOST}"
+      DB_PORT: "${DIRECTUS_DATABASE_PORT}"
+      DB_DATABASE: "${DIRECTUS_DATABASE_NAME}"
+      DB_USER: "${DIRECTUS_DATABASE_USERNAME}"
+      DB_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
+      EMAIL_FROM: "${SMTP_FROM}"
+      EMAIL_TRANSPORT: 'smtp'
+      EMAIL_SMTP_HOST: "${SMTP_HOST}"
+      EMAIL_SMTP_PORT: '465'
+      EMAIL_SMTP_USER: "${SMTP_USER}"
+      EMAIL_SMTP_PASSWORD: "${SMTP_PASSWORD}"
+      EMAIL_SMTP_SECURE: 'true'
     #links:
     #    - db:mysql
 
-  penhas_api:
-    image: azminas/penhas_api
-    restart: unless-stopped
-    ports:
-      - "172.17.0.1:${PENHAS_API_LISTEN}:8080"
-    environment:
-      REDIS_SERVER: "${REDIS_SERVER}"
-      REDIS_NS: "${REDIS_NS}"
-      MYSQL_HOST: "${DIRECTUS_DATABASE_HOST}"
-      MYSQL_PORT: "${DIRECTUS_DATABASE_PORT}"
-      MYSQL_DBNAME: "${DIRECTUS_DATABASE_NAME}"
-      MYSQL_USER: "${DIRECTUS_DATABASE_USERNAME}"
-      MYSQL_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
-    volumes:
-        - ../data/:/data/
-        - ./api/:/src/
-    networks:
-        - external_network
+#  penhas_api:
+#    image: azminas/penhas_api
+#    restart: unless-stopped
+#    ports:
+#      - "172.17.0.1:${PENHAS_API_LISTEN}:8080"
+#    environment:
+#      REDIS_SERVER: "${REDIS_SERVER}"
+#      REDIS_NS: "${REDIS_NS}"
+#      MYSQL_HOST: "${DIRECTUS_DATABASE_HOST}"
+#      MYSQL_PORT: "${DIRECTUS_DATABASE_PORT}"
+#      MYSQL_DBNAME: "${DIRECTUS_DATABASE_NAME}"
+#      MYSQL_USER: "${DIRECTUS_DATABASE_USERNAME}"
+#      MYSQL_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
+#    volumes:
+#        - ../data/:/data/
+#        - ./api/:/src/
+#    networks:
+#        - external_network
     #depends_on:
     #    - directus
     #links:
