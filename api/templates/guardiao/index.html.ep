@@ -78,7 +78,7 @@
             <div id="collapse<%= $faq->{id} %>" class="collapse" role="tabpanel" aria-labelledby="heading<%= $faq->{id} %>"
               data-parent="#accordionEx">
               <div class="card-body">
-                <%= $faq->{content_html} %>
+                <%== $faq->{content_html} %>
               </div>
             </div>
 
