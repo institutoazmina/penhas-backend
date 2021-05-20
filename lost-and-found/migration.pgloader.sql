@@ -66,11 +66,122 @@ alter table delete_log alter column data drop default;
 alter table delete_log alter column data type json using data::json;
 alter table delete_log alter column data set default '{}';
 
+
+alter table ponto_apoio_sugestoes alter column metainfo drop default;
+alter table ponto_apoio_sugestoes alter column metainfo type json using metainfo::json;
+alter table ponto_apoio_sugestoes alter column metainfo set default '{}';
+
 alter table "faq_tela_guardiao" drop column "owner";
 alter table "faq_tela_guardiao" add column "owner" uuid null;
 
 alter table "faq_tela_guardiao" drop column "modified_by";
 alter table "faq_tela_guardiao" add column "modified_by" uuid null;
+
+alter table "faq_tela_sobre_categoria" drop column "owner";
+alter table "faq_tela_sobre_categoria" add column "owner" uuid null;
+
+alter table "faq_tela_sobre_categoria" drop column "modified_by";
+alter table "faq_tela_sobre_categoria" add column "modified_by" uuid null;
+
+
+alter table "rss_feeds" drop column "owner";
+alter table "rss_feeds" add column "owner" uuid null;
+
+alter table "rss_feeds" drop column "modified_by";
+alter table "rss_feeds" add column "modified_by" uuid null;
+
+create table "rss_feeds_tags" ("id" serial primary key);
+alter table "rss_feeds_tags" add column "tags_id" bigint null;
+alter table "rss_feeds_tags" add column "rss_feeds_id" bigint null;
+insert into rss_feeds_tags (tags_id, rss_feeds_id) select tag_id, rss_feed_id from rss_feed_forced_tags;
+drop table rss_feed_forced_tags;
+
+create table "noticias_tags" ("id" serial primary key)
+alter table "noticias_tags" add column "noticias_id" bigint null
+alter table "noticias_tags" add column "tags_id" bigint null
+
+insert into noticias_tags (noticias_id, tags_id) select noticias_id, tag_id from public.noticias2tags;
+drop table public.noticias2tags;
+
+
+alter table "faq_tela_sobre" drop column "owner";
+alter table "faq_tela_sobre" add column "owner" uuid null;
+
+alter table "faq_tela_sobre" drop column "modified_by";
+alter table "faq_tela_sobre" add column "modified_by" uuid null;
+
+alter table "skills" drop column "owner";
+alter table "skills" add column "owner" uuid null;
+
+alter table "skills" drop column "modified_by";
+alter table "skills" add column "modified_by" uuid null;
+
+
+alter table "admin_clientes_segments" drop column "owner";
+alter table "admin_clientes_segments" add column "owner" uuid null;
+
+alter table "admin_clientes_segments" drop column "modified_by";
+alter table "admin_clientes_segments" add column "modified_by" uuid null;
+
+alter table "tags_highlight" drop column "owner";
+alter table "tags_highlight" add column "owner" uuid null;
+
+alter table "tags_highlight" drop column "modified_by";
+alter table "tags_highlight" add column "modified_by" uuid null;
+
+alter table "tag_indexing_config" drop column "owner";
+alter table "tag_indexing_config" add column "owner" uuid null;
+
+alter table "tag_indexing_config" drop column "modified_by";
+alter table "tag_indexing_config" add column "modified_by" uuid null;
+
+
+alter table "skills" alter column skill type varchar(100);
+alter table "skills" alter column sort type int;
+
+alter table noticias alter column hyperlink type varchar;
+alter table noticias alter column fonte type varchar;
+alter table noticias alter column image_hyperlink type varchar;
+
+
+alter table noticias alter column info drop default;
+alter table noticias alter column info type json using info::json;
+alter table noticias alter column info set default '{}';
+
+
+
+alter table "questionnaires" drop column "owner";
+alter table "questionnaires" add column "owner" uuid null;
+
+alter table "questionnaires" drop column "modified_by";
+alter table "questionnaires" add column "modified_by" uuid null;
+
+alter table "questionnaires" alter column "condition" set default '0';
+
+
+alter table clientes_quiz_session alter column stash drop default;
+alter table clientes_quiz_session alter column stash type json using stash::json;
+alter table clientes_quiz_session alter column stash set default '{}';
+
+alter table clientes_quiz_session alter column responses drop default;
+alter table clientes_quiz_session alter column responses type json using responses::json;
+alter table clientes_quiz_session alter column responses set default '{}';
+
+alter table quiz_config alter column yesnogroup drop default;
+alter table quiz_config alter column yesnogroup type json using yesnogroup::json;
+alter table quiz_config alter column yesnogroup set default '{}';
+
+alter table quiz_config alter column intro drop default;
+alter table quiz_config alter column intro type json using intro::json;
+alter table quiz_config alter column intro set default '{}';
+
+alter table "quiz_config" drop column "modified_by";
+alter table "quiz_config" add column "modified_by" uuid null;
+
+alter table "quiz_config" alter column code type varchar;
+
+
+
 
 
 
@@ -176,8 +287,8 @@ insert into directus_fields( collection, field, interface, options, display, dis
 
 
 insert into directus_relations( many_collection, many_field, many_primary, one_collection, one_primary) values
-('ponto_apoio', 'categoria', 'id', 'ponto_apoio_categoria', 'id');
+('quiz_config', 'questionnaire_id', 'id', 'questionnaires', 'id');
 insert into directus_fields( collection, field, interface, options, display, display_options, readonly, hidden, width) values
-('ponto_apoio', 'categoria', 'select-dropdown-m2o', '{"template":"({{id}})  "}', 'related-values', '{"template":"({{id}})"}',false, false, 'full');
+('quiz_config', 'questionnaire_id', 'select-dropdown-m2o', '{"template":"({{id}})  "}', 'related-values', '{"template":"({{id}})"}',false, false, 'full');
 
 
