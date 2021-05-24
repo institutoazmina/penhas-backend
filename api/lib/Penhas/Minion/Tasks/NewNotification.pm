@@ -48,7 +48,7 @@ sub new_notification_chat {
         content    => '',
         meta       => to_json({chat => 1}),
         subject_id => $opts->{subject_id},
-        created_at => \'now(6)',
+        created_at => \'now()',
         icon       => 1,
     };
 
@@ -75,7 +75,7 @@ sub new_notification_chat {
                         [
                             $_->{cliente_id},
                             $message_row->id,
-                            \'NOW(6)'
+                            \'NOW()'
                         ]
                     } @clientes
                 ]
@@ -136,7 +136,7 @@ sub new_notification_timeline {
         content    => $content,
         meta       => to_json({tweet_id => $tweet->id}),
         subject_id => $opts->{subject_id},
-        created_at => \'now(6)',
+        created_at => \'now()',
         icon       => $icon,
     };
 
@@ -162,7 +162,7 @@ sub new_notification_timeline {
                         [
                             $_->{cliente_id},
                             $message_row->id,
-                            \'NOW(6)'
+                            \'NOW()'
                         ]
                     } @clientes
                 ]
