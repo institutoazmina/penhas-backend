@@ -99,7 +99,7 @@ sub guardiao_update_by_token {
         $row->update(
             {
                 status        => 'accepted',
-                accepted_at   => \'NOW(4)',
+                accepted_at   => \'NOW()',
                 accepted_meta => $row->accepted_meta_merge_with(
                     {
                         ip => $c->remote_addr(),
@@ -137,7 +137,7 @@ sub guardiao_update_by_token {
                         ),
                     }
                 ),
-                refused_at => \'NOW(4)',
+                refused_at => \'NOW()',
 
             }
         );
@@ -222,7 +222,7 @@ sub cliente_upsert_guardioes {
     my $recent_refused = $filtered_rs->search(
         {
             'me.status'     => {in   => ['refused', 'removed_by_user']},
-            'me.refused_at' => {'>=' => \'date_sub(now(4), interval 7 day)'}
+            'me.refused_at' => {'>=' => \"now() - interval '7 days'"}
         },
         {
             'columns' => [qw/id refused_at/],
@@ -244,7 +244,7 @@ sub cliente_upsert_guardioes {
     my $recent_deleted = $filtered_rs->search(
         {
             status     => 'removed_by_user',
-            deleted_at => {'>=' => \'date_sub(now(4), interval 1 day)'}
+            deleted_at => {'>=' => \"now() - interval '1 day'"}
         },
         {
             'columns' => [qw/id deleted_at/],
@@ -273,7 +273,7 @@ sub cliente_upsert_guardioes {
         {
             status => 'expired_for_not_use',
         }
-    )->update({deleted_at => \'NOW(4)'});
+    )->update({deleted_at => \'NOW()'});
 
     # ~ 137 bilhoes de combinacoes
     my $token = random_string_from('ASDFGHJKLQWERTYUIOPZXCVBNM0123456789-._', 7);
@@ -282,12 +282,12 @@ sub cliente_upsert_guardioes {
     $row = $user_obj->clientes_guardioes_rs->create(
         {
             status                        => 'pending',
-            created_at                    => \'NOW(4)',
+            created_at                    => \'NOW()',
             celular_e164                  => $celular_e164,
             celular_formatted_as_national => $celular_national,
             nome                          => $nome,
             token                         => uc($token . $hash),
-            expires_at                    => \'date_add(now(4), interval 30 day)'
+            expires_at                    => \"now() + interval '30 day'"
         }
     );
 
@@ -342,7 +342,7 @@ sub cliente_delete_guardioes {
     $row->update(
         {
             status     => 'removed_by_user',
-            deleted_at => \'NOW(4)',
+            deleted_at => \'NOW()',
         }
     ) if $row->status ne 'removed_by_user';
 
@@ -577,7 +577,7 @@ sub cliente_alert_guards {
     my $alert = $user_obj->cliente_ativacoes_panicoes->create(
         {
             meta       => to_json($meta),
-            created_at => \'NOW(4)',
+            created_at => \'NOW()',
 
             %extra_db,
         }
