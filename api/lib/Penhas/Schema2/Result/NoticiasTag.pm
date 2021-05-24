@@ -19,15 +19,41 @@ __PACKAGE__->add_columns(
     sequence          => "noticias_tags_id_seq",
   },
   "noticias_id",
-  { data_type => "bigint", is_nullable => 1 },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
   "tags_id",
-  { data_type => "bigint", is_nullable => 1 },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->belongs_to(
+  "noticia",
+  "Penhas::Schema2::Result::Noticia",
+  { id => "noticias_id" },
+  {
+    is_deferrable => 0,
+    join_type     => "LEFT",
+    on_delete     => "CASCADE",
+    on_update     => "CASCADE",
+  },
+);
+__PACKAGE__->belongs_to(
+  "tag",
+  "Penhas::Schema2::Result::Tag",
+  { id => "tags_id" },
+  {
+    is_deferrable => 0,
+    join_type     => "LEFT",
+    on_delete     => "CASCADE",
+    on_update     => "CASCADE",
+  },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5QNj802Z9WBpDmN79kIQCg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 17:30:27
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:MFr/KjJTRYBn90XJsOZwZg
+
+# ALTER TABLE noticias_tags ADD FOREIGN KEY (tags_id) REFERENCES tags(id) ON DELETE CASCADE ON UPDATE cascade;
+# ALTER TABLE noticias_tags ADD FOREIGN KEY (noticias_id) REFERENCES noticias(id) ON DELETE CASCADE ON UPDATE cascade;
+
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

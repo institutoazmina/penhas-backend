@@ -79,6 +79,12 @@ __PACKAGE__->add_columns(
   { data_type => "boolean", default_value => \"false", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->has_many(
+  "noticias_tags",
+  "Penhas::Schema2::Result::NoticiasTag",
+  { "foreign.noticias_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 __PACKAGE__->belongs_to(
   "rss_feed",
   "Penhas::Schema2::Result::RssFeed",
@@ -92,8 +98,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DMjWNhFKr9oMGwr7YHPy6w
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 17:30:27
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:b/Ey43nWxyMTej1eUckV5w
 
 # ALTER TABLE noticias ADD FOREIGN KEY (rss_feed_id) REFERENCES rss_feeds(id) ON DELETE CASCADE ON UPDATE cascade;
 

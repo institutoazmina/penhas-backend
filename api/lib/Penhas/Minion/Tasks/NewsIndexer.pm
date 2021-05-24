@@ -33,8 +33,8 @@ sub news_indexer {
         undef,
         {
             prefetch => [
-                {'rss_feed' => 'rss_feed_forced_tags'},
-                'noticias2tags'
+                {'rss_feed' => 'rss_feeds_tags'},
+                'noticias_tags'
             ],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
@@ -105,13 +105,13 @@ sub news_indexer {
 
     my $tags = {};
     if ($news->{rss_feed}) {
-        my @feed_tags = @{$news->{rss_feed}{rss_feed_forced_tags} || []};
+        my @feed_tags = @{$news->{rss_feed}{rss_feeds_tags} || []};
         if (@feed_tags) {
             $logthis->('Adding tags from RSS feed (%d)', $news->{rss_feed}{id});
 
             foreach (@feed_tags) {
-                $tags->{$_->{tag_id}}++;
-                $logthis->('tag ' . $_->{tag_id} . ' added');
+                $tags->{$_->{tags_id}}++;
+                $logthis->('tag ' . $_->{tags_id} . ' added');
             }
         }
         else {
@@ -218,12 +218,12 @@ sub news_indexer {
 
     $schema->txn_do(
         sub {
-            $filter_rs->search_related_rs('noticias2tags')->delete;
+            $filter_rs->search_related_rs('noticias_tags')->delete;
             my @tags = keys %$tags;
             foreach my $tag_id (@tags) {
-                $filter_rs->search_related_rs('noticias2tags')->create(
+                $filter_rs->search_related_rs('noticias_tags')->create(
                     {
-                        tag_id      => $tag_id,
+                        tags_id     => $tag_id,
                         noticias_id => $news->{id},
                     }
                 );

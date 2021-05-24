@@ -46,7 +46,7 @@ my $forced_tag = $tags_rs->create(
         created_at => \'NOW()',
     }
 );
-$feed1->add_to_rss_feed_forced_tags({tag_id => $forced_tag->id});
+$feed1->add_to_rss_feeds_tags({tags_id => $forced_tag->id});
 
 my $tag1 = $tags_rs->create(
     {
@@ -168,7 +168,7 @@ do {
 
     is trace_popall, 'minion:news_indexer,' . $news[0]->id, 'job processed';
 
-    is [sort { $a <=> $b } map { $_->tag_id } $news[0]->noticias2tags->all], [$forced_tag->id, $topic1->id],
+    is [sort { $a <=> $b } map { $_->tags_id } $news[0]->noticias_tags->all], [$forced_tag->id, $topic1->id],
       'tags match expected [forced from feed + topic1 from rule because page_title_match match "de"]';
 
     $news[0]->discard_changes;
@@ -177,7 +177,7 @@ do {
     ok(Penhas::Minion::Tasks::NewsIndexer::news_indexer($job, test_get_minion_args_job(1)), 'indexing news 1');
     $minion_job_id++;
 
-    is [sort map { $_->tag_id } $news[1]->noticias2tags->all], [$forced_tag->id],
+    is [sort map { $_->tags_id } $news[1]->noticias_tags->all], [$forced_tag->id],
       'tags match expected [forced from feed only]';
     $news[0]->discard_changes;
     is $news[0]->published, 'published:testing', 'status is published';
@@ -245,7 +245,7 @@ do {
         $minion_job_id++;
         is trace_popall, 'minion:news_indexer,' . $news2[0]->id, 'job processed';
 
-        is [sort map { $_->tag_id } $news2[0]->noticias2tags->all], [$tag1->id],
+        is [sort map { $_->tags_id } $news2[0]->noticias_tags->all], [$tag1->id],
           'tags match expected [only tag1 from rule feed tags "TAG3RSSONLY"]';
 
         $news2[0]->discard_changes;

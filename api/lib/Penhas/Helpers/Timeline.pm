@@ -6,6 +6,7 @@ use Penhas::KeyValueStorage;
 use Scope::OnExit;
 use Digest::MD5 qw/md5_hex/;
 use Mojo::Util qw/trim xml_escape url_escape dumper/;
+use List::Util;
 
 use JSON;
 use Penhas::Logger;
@@ -654,22 +655,23 @@ sub add_tweets_highlights {
                     'me.error_msg'      => '',
                 },
                 {
-                    join    => {'tag' => {'noticias2tags' => 'noticia'}},
+                    join    => {'tag' => {'noticias_tags' => 'noticia'}},
                     columns => [
                         {
-                            noticias => \ "CONCAT('[', group_concat(
-                                JSON_OBJECT(
+                            noticias => \ "json_agg(
+                                json_build_object(
                                     'id',noticia.id,
                                     'title', noticia.title,
                                     'hyperlink', noticia.hyperlink,
-                                    'source', noticia.fonte
-                                ) ORDER BY noticia.display_created_time DESC SEPARATOR ',' LIMIT 15
-                            ), ']')"
+                                    'source', noticia.fonte,
+                                    'epoch', extract(epoch from noticia.created_at)
+                                )
+                            )"
                         },
-                        (qw/me.id me.is_regexp me.tag_id me.match/),
+                        (qw/me.id me.is_regexp me.tag_id me.match /),
                         {header => 'tag.title'}
                     ],
-                    group_by     => 'me.id',
+                    group_by     => ['me.id', 'tag.title'],
                     result_class => 'DBIx::Class::ResultClass::HashRefInflator'
                 }
             );
@@ -700,9 +702,12 @@ sub add_tweets_highlights {
 
                 push @regexps, $match;
 
+                my $noticias = [List::Util::shuffle List::Util::head 15,
+                    sort { $b->{epoch} <=> $a->{epoch} } @{from_json($row->{noticias})}];
+
                 push @highlights, {
                     regexp   => $match,
-                    noticias => from_json($row->{noticias}),
+                    noticias => $noticias,
                     id       => $row->{id},
                     tag_id   => $row->{tag_id},
                     header   => $row->{header},

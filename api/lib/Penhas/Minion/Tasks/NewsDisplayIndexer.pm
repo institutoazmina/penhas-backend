@@ -35,12 +35,12 @@ sub news_display_indexer {
             'noticia.published' => is_test() ? 'published:testing' : 'published',
         },
         {
-            join     => {'noticias2tags' => 'noticia'},
-            prefetch => 'noticias2tags',
+            join     => {'noticias_tags' => 'noticia'},
+            prefetch => 'noticias_tags',
             columns  => [
                 'me.id',
                 'me.title',
-                'noticias2tags.id',
+                'noticias_tags.id',
             ],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
             order_by     => ['me.topic_order', 'me.title', {'-desc' => 'noticia.display_created_time'}]
@@ -55,7 +55,7 @@ sub news_display_indexer {
 
         my $added = 0;
         foreach my $topic (@topic_news) {
-            my @group = splice($topic->{noticias2tags}->@*, 0, 3);
+            my @group = splice($topic->{noticias_tags}->@*, 0, 3);
 
             if (@group) {
 

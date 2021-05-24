@@ -59,7 +59,7 @@ sub redirect {
         $c->schema2->resultset('NoticiasAbertura')->create(
             {
                 track_id    => $valid_until . ':' . $trackid,
-                cliente_id  => $userid,
+                cliente_id  => int($userid),
                 noticias_id => $newsid,
                 created_at  => \'NOW()',
             }
