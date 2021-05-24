@@ -13,10 +13,10 @@ __PACKAGE__->table("ponto_apoio_projeto");
 __PACKAGE__->add_columns(
   "id",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
+    data_type         => "bigint",
     is_auto_increment => 1,
-    is_nullable => 0,
+    is_nullable       => 0,
+    sequence          => "ponto_apoio_projeto_id_seq",
   },
   "status",
   {
@@ -25,16 +25,12 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => 20,
   },
-  "owner",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "created_on",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "label",
   { data_type => "varchar", is_nullable => 0, size => 200 },
+  "owner",
+  { data_type => "uuid", is_nullable => 1, size => 16 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -45,8 +41,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-10-23 16:06:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:X/PmTb0HvcPoil56wr+ZCw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:A7+iTncDhCUfINlq/rs19g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

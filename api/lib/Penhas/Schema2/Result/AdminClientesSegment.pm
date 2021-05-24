@@ -13,10 +13,10 @@ __PACKAGE__->table("admin_clientes_segments");
 __PACKAGE__->add_columns(
   "id",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
+    data_type         => "bigint",
     is_auto_increment => 1,
-    is_nullable => 0,
+    is_nullable       => 0,
+    sequence          => "admin_clientes_segments_id_seq",
   },
   "status",
   {
@@ -25,56 +25,34 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => 20,
   },
-  "owner",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "created_on",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
-  "modified_by",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "modified_on",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "is_test",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
   "label",
   { data_type => "varchar", is_nullable => 0, size => 200 },
   "last_count",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "bigint", is_nullable => 1 },
   "last_run_at",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "cond",
-  { data_type => "text", default_value => "'{}'", is_nullable => 0 },
+  { data_type => "json", default_value => "{}", is_nullable => 0 },
   "attr",
-  { data_type => "text", default_value => "'{}'", is_nullable => 0 },
+  { data_type => "json", default_value => "{}", is_nullable => 0 },
   "sort",
-  {
-    data_type => "integer",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
+  { data_type => "bigint", default_value => 0, is_nullable => 0 },
+  "owner",
+  { data_type => "uuid", is_nullable => 1, size => 16 },
+  "modified_by",
+  { data_type => "uuid", is_nullable => 1, size => 16 },
 );
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-26 17:24:58
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:AUl6P9s95EpR3ZkezIxUyw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IdNqTw9rd6ygp7ZvL2BMQQ
 use JSON;
 
 sub apply_to_rs {

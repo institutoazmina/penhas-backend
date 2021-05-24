@@ -13,24 +13,15 @@ __PACKAGE__->table("tweets_likes");
 __PACKAGE__->add_columns(
   "id",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
+    data_type         => "bigint",
     is_auto_increment => 1,
-    is_nullable => 0,
+    is_nullable       => 0,
+    sequence          => "tweets_likes_id_seq",
   },
   "created_on",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "cliente_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "tweet_id",
   { data_type => "varchar", is_foreign_key => 1, is_nullable => 0, size => 20 },
 );
@@ -39,18 +30,18 @@ __PACKAGE__->belongs_to(
   "cliente",
   "Penhas::Schema2::Result::Cliente",
   { id => "cliente_id" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+  { is_deferrable => 0, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 __PACKAGE__->belongs_to(
   "tweet",
   "Penhas::Schema2::Result::Tweet",
   { id => "tweet_id" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+  { is_deferrable => 0, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-07-29 17:35:55
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cU5J21JoRPLLA4MspoIr+Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LmHSjI706hCUgOLExcxmGA
 
 # alter table tweets_likes modify column cliente_id  int(11) unsigned  not null;
 # delete from tweets_likes where cliente_id not in (select id from clientes);

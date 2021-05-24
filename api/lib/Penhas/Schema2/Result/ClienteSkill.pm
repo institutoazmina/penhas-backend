@@ -13,43 +13,33 @@ __PACKAGE__->table("cliente_skills");
 __PACKAGE__->add_columns(
   "id",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
+    data_type         => "bigint",
     is_auto_increment => 1,
-    is_nullable => 0,
+    is_nullable       => 0,
+    sequence          => "cliente_skills_id_seq",
   },
   "cliente_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "skill_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
   "cliente",
   "Penhas::Schema2::Result::Cliente",
   { id => "cliente_id" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+  { is_deferrable => 0, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 __PACKAGE__->belongs_to(
   "skill",
   "Penhas::Schema2::Result::Skill",
   { id => "skill_id" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+  { is_deferrable => 0, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-04 12:02:24
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:j473GGP2py1w7FL2EXQ7UA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3GcXP0rt1yHrcoUq9BiGAA
 
 
 # ALTER TABLE cliente_skills ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;

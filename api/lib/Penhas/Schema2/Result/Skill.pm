@@ -13,10 +13,10 @@ __PACKAGE__->table("skills");
 __PACKAGE__->add_columns(
   "id",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
+    data_type         => "bigint",
     is_auto_increment => 1,
-    is_nullable => 0,
+    is_nullable       => 0,
+    sequence          => "skills_id_seq",
   },
   "status",
   {
@@ -25,26 +25,18 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => 20,
   },
-  "owner",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "created_on",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
-  "modified_by",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "modified_on",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "skill",
-  { data_type => "tinytext", is_nullable => 1 },
+  { data_type => "varchar", is_nullable => 1, size => 100 },
   "sort",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  { data_type => "integer", is_nullable => 1 },
+  "owner",
+  { data_type => "uuid", is_nullable => 1, size => 16 },
+  "modified_by",
+  { data_type => "uuid", is_nullable => 1, size => 16 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -55,8 +47,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-04 12:02:24
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:b5YWPBxpkpPihaDqUtTGtw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XzH/Isaeqoy6rdGkq5IcQg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -13,33 +13,19 @@ __PACKAGE__->table("chat_support_message");
 __PACKAGE__->add_columns(
   "id",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
+    data_type         => "bigint",
     is_auto_increment => 1,
-    is_nullable => 0,
+    is_nullable       => 0,
+    sequence          => "chat_support_message_id_seq",
   },
   "cliente_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 1,
-  },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
   "created_at",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "chat_support_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "admin_user_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  { data_type => "bigint", is_nullable => 1 },
   "message",
   { data_type => "text", is_nullable => 0 },
 );
@@ -48,14 +34,14 @@ __PACKAGE__->belongs_to(
   "chat_support",
   "Penhas::Schema2::Result::ChatSupport",
   { id => "chat_support_id" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+  { is_deferrable => 0, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 __PACKAGE__->belongs_to(
   "cliente",
   "Penhas::Schema2::Result::Cliente",
   { id => "cliente_id" },
   {
-    is_deferrable => 1,
+    is_deferrable => 0,
     join_type     => "LEFT",
     on_delete     => "CASCADE",
     on_update     => "CASCADE",
@@ -63,8 +49,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-09-02 00:22:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:VQagXpWqmKjZeE/hQjZKAw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:g/ztDK9EbkMBFeBPMSPS1Q
 
 # ALTER TABLE chat_support_message ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 # ALTER TABLE chat_support_message ADD FOREIGN KEY (chat_support_id) REFERENCES chat_support(id) ON DELETE CASCADE ON UPDATE cascade;

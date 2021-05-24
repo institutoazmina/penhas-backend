@@ -13,49 +13,35 @@ __PACKAGE__->table("notification_log");
 __PACKAGE__->add_columns(
   "id",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
+    data_type         => "bigint",
     is_auto_increment => 1,
-    is_nullable => 0,
+    is_nullable       => 0,
+    sequence          => "notification_log_id_seq",
   },
   "created_at",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "cliente_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "notification_message_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
   "cliente",
   "Penhas::Schema2::Result::Cliente",
   { id => "cliente_id" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+  { is_deferrable => 0, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 __PACKAGE__->belongs_to(
   "notification_message",
   "Penhas::Schema2::Result::NotificationMessage",
   { id => "notification_message_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 0, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-11-10 18:26:21
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BIuHMUoxR0Tn/flxDJZkPw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Of05Bwftwp8Q4am7vKDfyA
 
 # ALTER TABLE notification_log ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE CASCADE;
 # ALTER TABLE notification_log ADD FOREIGN KEY (notification_message_id) REFERENCES notification_message(id) ON DELETE RESTRICT ON UPDATE RESTRICT;

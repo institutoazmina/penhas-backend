@@ -13,19 +13,13 @@ __PACKAGE__->table("tag_indexing_config");
 __PACKAGE__->add_columns(
   "id",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
+    data_type         => "bigint",
     is_auto_increment => 1,
-    is_nullable => 0,
+    is_nullable       => 0,
+    sequence          => "tag_indexing_config_id_seq",
   },
-  "owner",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "created_on",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "status",
   {
     data_type => "varchar",
@@ -34,14 +28,14 @@ __PACKAGE__->add_columns(
     size => 20,
   },
   "tag_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "description",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  {
+    data_type => "varchar",
+    default_value => \"null",
+    is_nullable => 1,
+    size => 200,
+  },
   "page_title_match",
   { data_type => "text", is_nullable => 1 },
   "page_title_not_match",
@@ -49,7 +43,12 @@ __PACKAGE__->add_columns(
   "html_article_match",
   { data_type => "text", is_nullable => 1 },
   "html_article_not_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  {
+    data_type => "varchar",
+    default_value => \"null",
+    is_nullable => 1,
+    size => 200,
+  },
   "page_description_match",
   { data_type => "text", is_nullable => 1 },
   "page_description_not_match",
@@ -63,49 +62,40 @@ __PACKAGE__->add_columns(
   "rss_feed_tags_not_match",
   { data_type => "text", is_nullable => 1 },
   "rss_feed_content_match",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  {
+    data_type => "varchar",
+    default_value => \"null",
+    is_nullable => 1,
+    size => 200,
+  },
   "rss_feed_content_not_match",
   { data_type => "text", is_nullable => 1 },
   "regexp",
-  {
-    data_type => "tinyint",
-    default_value => 1,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
+  { data_type => "boolean", default_value => \"true", is_nullable => 0 },
   "verified",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
   "error_msg",
-  { data_type => "text", default_value => "''", is_nullable => 1 },
+  { data_type => "text", default_value => "", is_nullable => 1 },
   "verified_at",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "modified_on",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
+  "owner",
+  { data_type => "uuid", is_nullable => 1, size => 16 },
+  "modified_by",
+  { data_type => "uuid", is_nullable => 1, size => 16 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
   "tag",
   "Penhas::Schema2::Result::Tag",
   { id => "tag_id" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+  { is_deferrable => 0, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-06-23 11:49:29
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:O+50eUEIK7ClwwCYGOO+Kg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yxsQZfddoU01JaCBPjXTxA
 
 # ALTER TABLE tag_indexing_config ADD FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE ON UPDATE cascade;
 

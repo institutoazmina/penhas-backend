@@ -13,10 +13,10 @@ __PACKAGE__->table("quiz_config");
 __PACKAGE__->add_columns(
   "id",
   {
-    data_type => "integer",
-    extra => { unsigned => 1 },
+    data_type         => "bigint",
     is_auto_increment => 1,
-    is_nullable => 0,
+    is_nullable       => 0,
+    sequence          => "quiz_config_id_seq",
   },
   "status",
   {
@@ -26,48 +26,48 @@ __PACKAGE__->add_columns(
     size => 20,
   },
   "sort",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
-  "modified_by",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  { data_type => "bigint", is_nullable => 1 },
   "modified_on",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
+  { data_type => "timestamp with time zone", is_nullable => 1 },
   "type",
   { data_type => "varchar", is_nullable => 0, size => 100 },
   "code",
-  { data_type => "tinytext", is_nullable => 0 },
+  {
+    data_type   => "text",
+    is_nullable => 0,
+    original    => { data_type => "varchar" },
+  },
   "question",
   { data_type => "varchar", is_nullable => 0, size => 800 },
   "questionnaire_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "yesnogroup",
-  { data_type => "text", is_nullable => 1 },
+  { data_type => "json", default_value => "{}", is_nullable => 1 },
   "intro",
-  { data_type => "text", is_nullable => 1 },
+  { data_type => "json", default_value => "{}", is_nullable => 1 },
   "relevance",
   { data_type => "varchar", default_value => 1, is_nullable => 0, size => 2000 },
   "button_label",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  {
+    data_type => "varchar",
+    default_value => \"null",
+    is_nullable => 1,
+    size => 200,
+  },
+  "modified_by",
+  { data_type => "uuid", is_nullable => 1, size => 16 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
   "questionnaire",
   "Penhas::Schema2::Result::Questionnaire",
   { id => "questionnaire_id" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+  { is_deferrable => 0, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-08-24 00:15:02
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zqBufQegWEDMUvDqInoPkQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:1cxBciz/EQxgSZvWUA+boA
 
 # ALTER TABLE quiz_config ADD FOREIGN KEY (questionnaire_id) REFERENCES questionnaires(id) ON DELETE CASCADE ON UPDATE cascade;
 =pod
