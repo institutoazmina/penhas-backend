@@ -123,8 +123,8 @@ sub _load_support_room {
             $session = $user_obj->create_related(
                 'chat_support',
                 {
-                    last_msg_at => \'now(6)',
-                    created_at  => \'now(6)',
+                    last_msg_at => \'now()',
+                    created_at  => \'now()',
                 }
             );
             $session->discard_changes;
@@ -185,7 +185,7 @@ sub support_send_message {
             my $db_info = $c->schema2->resultset('ChatSupport')->search(
                 {id => $session->id},
                 {
-                    columns      => ['me.last_msg_at', {db_now => \'now(6)'}],
+                    columns      => ['me.last_msg_at', {db_now => \'now()'}],
                     result_class => 'DBIx::Class::ResultClass::HashRefInflator',
                 }
             )->next;
