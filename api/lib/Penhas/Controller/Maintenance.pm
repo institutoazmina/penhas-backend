@@ -143,14 +143,14 @@ sub _tick_notifications {
 
         # 1x por request (minuto)
         # "esquece" as mais antigas, pra ser notificado de novo caso tenha nova mensagem
-        $rs->search({messaged_at => {'<=' => \'DATE_ADD(NOW(), INTERVAL -1 DAY)'}})->delete;
+        $rs->search({messaged_at => {'<=' => \"NOW() + INTERVAL '-1 DAY'"}})->delete;
     }
 
     # a cada 10 segundos (se tudo estiver correto)
     # cria as notificacoes novas
     my $pending = $rs->search(
         {
-            messaged_at          => {'<=' => \'DATE_ADD(NOW(), INTERVAL -5 MINUTE)'},
+            messaged_at          => {'<=' => \"NOW() + INTERVAL '-5 MINUTE'"},
             notification_created => '0',
         },
         {rows => 100}    # no maximo 100 duma vez
