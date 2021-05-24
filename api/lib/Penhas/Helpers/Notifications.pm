@@ -70,18 +70,20 @@ sub user_notifications {
         $not_in     = $tmp->{not_in};
     }
 
+    my $filter = {
+        'me.cliente_id' => $user_obj->id,
+        (
+            $older_than
+            ? (
+                'me.created_at' => {'<=' => $older_than},
+                ($not_in ? ('me.id' => {'not in' => $not_in}) : ())
+              )
+            : ()
+        ),
+    };
+
     my $rs = $c->schema2->resultset('NotificationLog')->search(
-        {
-            'me.cliente_id' => $user_obj->id,
-            (
-                $older_than
-                ? (
-                    'me.created_at' => {'<=' => $older_than},
-                    'me.id'         => {'!=' => $not_in}
-                  )
-                : ()
-            ),
-        },
+        $filter,
         {
             prefetch     => ['notification_message'],
             order_by     => \'me.created_at DESC',
