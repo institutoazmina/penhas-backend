@@ -385,7 +385,7 @@ sub cliente_modo_camuflado_toggle {
     $self->update(
         {
             modo_camuflado_ativo         => $active ? 1 : 0,
-            modo_camuflado_atualizado_em => \'NOW(4)',
+            modo_camuflado_atualizado_em => \'NOW()',
         }
     );
 }
@@ -397,7 +397,7 @@ sub cliente_modo_anonimo_toggle {
     $self->update(
         {
             modo_anonimo_ativo         => $active ? 1 : 0,
-            modo_anonimo_atualizado_em => \'NOW(4)',
+            modo_anonimo_atualizado_em => \'NOW()',
         }
     );
 
@@ -410,7 +410,7 @@ sub cliente_ja_foi_vitima_de_violencia_toggle {
     $self->update(
         {
             ja_foi_vitima_de_violencia               => $active ? 1 : 0,
-            ja_foi_vitima_de_violencia_atualizado_em => \'NOW(4)',
+            ja_foi_vitima_de_violencia_atualizado_em => \'NOW()',
         }
     );
 
@@ -422,13 +422,13 @@ sub quiz_detectou_violencia_toggle {
 
     $self->update(
         {
-            quiz_detectou_violencia_atualizado_em => \'NOW(4)',
+            quiz_detectou_violencia_atualizado_em => \'NOW()',
             quiz_detectou_violencia               => $active ? '1' : '0',
 
             # saber o status da primeira vez que saiu de NULL para algum valor
             primeiro_quiz_detectou_violencia => \['coalesce(primeiro_quiz_detectou_violencia, ?)', $active ? '1' : '0'],
             primeiro_quiz_detectou_violencia_atualizado_em => \
-              'coalesce(primeiro_quiz_detectou_violencia_atualizado_em, now(4))',
+              'coalesce(primeiro_quiz_detectou_violencia_atualizado_em, now())',
         }
     );
 
@@ -483,11 +483,11 @@ sub update_activity {
                 (
                     $is_timeline
                     ? (
-                        last_tm_activity => \'now(6)',    # MariaDB only now with precision
+                        last_tm_activity => \'now()',    # MariaDB only now with precision
                       )
                     : ()
                 ),
-                last_activity => \'now(6)',
+                last_activity => \'now()',
             }
         );
     }
@@ -495,8 +495,8 @@ sub update_activity {
         $self->create_related(
             'clientes_app_activity',
             {
-                last_activity    => \'now(6)',
-                last_tm_activity => \'now(6)',
+                last_activity    => \'now()',
+                last_tm_activity => \'now()',
             }
         );
     }
@@ -529,7 +529,7 @@ sub reset_all_questionnaires {
     $self->clientes_quiz_sessions->search({deleted_at => undef})->update(
         {
             deleted    => 1,
-            deleted_at => \'NOW(4)',
+            deleted_at => \'NOW()',
         }
     );
 }
