@@ -65,7 +65,7 @@ sub _get_cached {
         {
             key         => $key,
             value       => $result,
-            valid_until => \"DATE_ADD(NOW(), INTERVAL $ttl SECOND)",
+            valid_until => \"NOW()+ INTERVAL '$ttl seconds'",
             created_at  => \'NOW()'
         }
     );
