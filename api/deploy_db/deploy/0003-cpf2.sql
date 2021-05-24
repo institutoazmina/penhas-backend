@@ -17,4 +17,6 @@ CREATE TABLE cpf_cache (
 
 insert into penhas_config(name, value) values ('CPF_CACHE_HASH_SALT', md5(md5(random()::text)));
 
+alter table cpf_cache add column __created_at_real timestamp without time zone not null default now();
+
 COMMIT;
