@@ -269,7 +269,7 @@ sub me_delete {
                             ),
                         }
                     ),
-                    perform_delete_at => \'DATE_ADD(NOW(), INTERVAL + 30 DAY)'
+                    perform_delete_at => \"NOW() + INTERVAL '30 DAY'"
                 }
             );
 
