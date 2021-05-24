@@ -104,21 +104,30 @@ sub get_schema {
 
 
 sub get_connect_info2 {
-    my $host     = $ENV{MYSQL_HOST}     || '127.0.0.1';
-    my $port     = $ENV{MYSQL_PORT}     || 3306;
-    my $user     = $ENV{MYSQL_USER}     || 'root';
-    my $password = $ENV{MYSQL_PASSWORD} || 'pass';
-    my $dbname   = $ENV{MYSQL_DBNAME}   || 'directus';
+    my $host     = $ENV{POSTGRESQL_HOST}     || 'localhost';
+    my $port     = $ENV{POSTGRESQL_PORT}     || 5432;
+    my $user     = $ENV{POSTGRESQL_USER}     || 'postgres';
+    my $password = $ENV{POSTGRESQL_PASSWORD} || 'Penhas-pass';
+    my $dbname   = $ENV{POSTGRESQL_DBNAME}   || 'Penhas';
 
+    my $app_name = ($ENV{APP_NAME} || '') . ' ' . &_extract_basename($0) . ' ' . $$;
+
+    $app_name =~ s/[^A-Z0-9\- ]//g;
     return {
-        dsn                  => "dbi:mysql:dbname=$dbname;host=$host;port=$port",
-        user                 => $user,
-        password             => $password,
-        quote_names          => 1,
-        AutoCommit           => 1,
-        RaiseError           => 1,
-        mysql_enable_utf8mb4 => 1,
-        mysql_auto_reconnect => 1,
+        dsn               => "dbi:Pg:dbname=$dbname;host=$host;port=$port",
+        user              => $user,
+        password          => $password,
+        AutoCommit        => 1,
+        quote_char        => "\"",
+        name_sep          => ".",
+        auto_savepoint    => 1,
+        pg_server_prepare => $ENV{HARNESS_ACTIVE} || $0 =~ m{forkprove} ? 0 : 1,
+        pg_enable_utf8    => 1,
+        "on_connect_do"   => [
+            "SET client_encoding=UTF8",
+            "SET TIME ZONE 'UTC'",
+            "SET application_name TO '$app_name'"
+        ]
     };
 }
 

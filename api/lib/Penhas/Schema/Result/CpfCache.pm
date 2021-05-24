@@ -44,8 +44,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("cpf_hashed", "dt_nasc");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-04-01 17:05:00
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7HetIoRL1f+FOfwt691++w
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:56:31
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gcTzDnDCtM5KJk7Ot5oZ3g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
