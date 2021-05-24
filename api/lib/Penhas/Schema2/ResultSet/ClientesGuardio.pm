@@ -11,7 +11,7 @@ sub expires_pending_invites {
         {
             status     => 'pending',
             expires_at => {
-                '<=' => \'NOW(4)',
+                '<=' => \'NOW()',
             },
         }
     )->update({status => 'expired_for_not_use'});
