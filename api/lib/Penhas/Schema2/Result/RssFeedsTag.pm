@@ -19,15 +19,40 @@ __PACKAGE__->add_columns(
     sequence          => "rss_feeds_tags_id_seq",
   },
   "tags_id",
-  { data_type => "bigint", is_nullable => 1 },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
   "rss_feeds_id",
-  { data_type => "bigint", is_nullable => 1 },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->belongs_to(
+  "rss_feed",
+  "Penhas::Schema2::Result::RssFeed",
+  { id => "rss_feeds_id" },
+  {
+    is_deferrable => 0,
+    join_type     => "LEFT",
+    on_delete     => "CASCADE",
+    on_update     => "CASCADE",
+  },
+);
+__PACKAGE__->belongs_to(
+  "tag",
+  "Penhas::Schema2::Result::Tag",
+  { id => "tags_id" },
+  {
+    is_deferrable => 0,
+    join_type     => "LEFT",
+    on_delete     => "CASCADE",
+    on_update     => "CASCADE",
+  },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+5HgAQaFYCZEG/zOWCFUgg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 17:24:12
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jS9heNJ9y+xygrUVSqUc9A
+
+# ALTER TABLE rss_feeds_tags ADD FOREIGN KEY (tags_id) REFERENCES tags(id) ON DELETE CASCADE ON UPDATE cascade;
+# ALTER TABLE rss_feeds_tags ADD FOREIGN KEY (rss_feeds_id) REFERENCES rss_feeds(id) ON DELETE CASCADE ON UPDATE cascade;
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
