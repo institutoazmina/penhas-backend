@@ -25,7 +25,7 @@ sub send_sms {
             phonenumber => $phonenumber,
             message     => $message,
             notes       => to_json($notes),
-            created_at  => \'NOW(4)',
+            created_at  => \'NOW()',
         }
     );
     log_trace("SentSmsLog", $log->id);
