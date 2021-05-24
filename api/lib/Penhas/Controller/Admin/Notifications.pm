@@ -111,7 +111,7 @@ sub unft_crud {
                         [
                             $_,
                             $message_id,
-                            \'NOW(6)'
+                            \'NOW()'
                         ]
                     } @clientes
                 ]
