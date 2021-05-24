@@ -11,7 +11,7 @@ sub tick_audios_eventos_status {
     $self->search(
         {
             status     => 'free_access_by_admin',
-            created_at => {'<=' => \'DATE_ADD(NOW(), INTERVAL -40 DAY)'}
+            created_at => {'<=' => \"NOW() + INTERVAL '-40 DAY'"}
         }
     )->update({status => 'hidden'});
 
@@ -19,7 +19,7 @@ sub tick_audios_eventos_status {
     $self->search(
         {
             status     => 'blocked_access',
-            created_at => {'<=' => \'DATE_ADD(NOW(), INTERVAL -30 DAY)'}
+            created_at => {'<=' => \"NOW() + INTERVAL '-30 DAY'"}
         }
     )->update({status => 'hidden'});
 
@@ -27,7 +27,7 @@ sub tick_audios_eventos_status {
     $self->search(
         {
             status     => 'free_access',
-            created_at => {'<=' => \'DATE_ADD(NOW(), INTERVAL -3 DAY)'}
+            created_at => {'<=' => \"NOW() + INTERVAL '-3 DAY'"}
         }
     )->update({status => 'blocked_access'});
 

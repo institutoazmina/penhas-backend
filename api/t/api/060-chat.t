@@ -679,7 +679,7 @@ sub test_notifcations {
 
     is $row->discard_changes->notification_created, '0', 'still not notified';
 
-    $row->update({messaged_at => \'DATE_ADD(NOW(), INTERVAL -6 MINUTE)'});
+    $row->update({messaged_at => \"NOW() + INTERVAL '-6 MINUTE'"});
 
     is $ENV{LAST_CHAT_JOB_ID}, undef, 'no LAST_CHAT_JOB_ID yet';
     $t->get_ok('/maintenance/tick-notifications', form => {secret => $ENV{MAINTENANCE_SECRET}})->status_is(200);
@@ -704,7 +704,7 @@ sub test_notifcations {
     is $user->notification_logs->count, 1, 'inserted';
     is trace_popall, 'minion:new_notification,new_message,NOTIFY_CHAT_NEW_MESSAGES,1', 'expected code path';
 
-    $row->update({messaged_at => \'DATE_ADD(NOW(), INTERVAL -2 DAY)'});
+    $row->update({messaged_at => \"NOW() + INTERVAL '-2 DAY'"});
 
     $t->get_ok('/maintenance/tick-notifications', form => {secret => $ENV{MAINTENANCE_SECRET}})->status_is(200);
     is $rs->count, '0', 'deleted because too old';
