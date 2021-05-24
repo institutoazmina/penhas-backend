@@ -180,7 +180,7 @@ alter table "quiz_config" add column "modified_by" uuid null;
 
 alter table "quiz_config" alter column code type varchar;
 
-
+alter table clientes_audios_eventos  alter  COLUMN event_id type varchar(200);
 
 
 

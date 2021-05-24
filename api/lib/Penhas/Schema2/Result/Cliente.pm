@@ -446,7 +446,7 @@ sub recalc_qtde_guardioes_ativos {
         {
             qtde_guardioes_ativos => \[
                 "(select count(1) from clientes_guardioes cg where cg.cliente_id = ? and cg.status= 'accepted')",
-                [$self->id()]
+                $self->id()
             ]
         }
     );

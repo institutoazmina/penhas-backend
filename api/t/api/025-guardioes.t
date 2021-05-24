@@ -198,8 +198,8 @@ do {
         # atualiza a data que ele deve vencer:
         $row_to_be_removed->update(
             {
-                created_at => \'date_sub(now(), interval 30 day)',
-                expires_at => \'date_sub(now(), interval 1 second)',
+                created_at => \"now() - interval '30 day' ",
+                expires_at => \"now() - interval '1 second' ",
                 nome       => 'Expiraldo Silva'
             }
         );
@@ -217,7 +217,7 @@ do {
       ->json_like('/message', qr/Enviamos um SMS/);
     ok(my $id3  = $t->tx->res->json->{data}{id},                      'has id');
     ok(my $row3 = $schema2->resultset('ClientesGuardio')->find($id3), 'row found');
-    $row3->update({created_at => \'date_sub(now(), interval 10 day)'});
+    $row3->update({created_at => \"now() - interval '10 day'"});
 
     # testa GET
     $t->get_ok(
@@ -284,8 +284,8 @@ do {
         is $row4->status, 'pending', 'status do row4 eh pending';
         $row4->update(
             {
-                created_at => \'date_sub(now(), interval 30 day)',
-                expires_at => \'date_sub(now(), interval 1 second)',
+                created_at => \"now() - interval '30 day'",
+                expires_at => \"now() - interval '1 second'",
                 nome       => 'expirando durante aceite'
             }
         );
