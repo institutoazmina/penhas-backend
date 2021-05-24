@@ -471,7 +471,7 @@ subtest_buffered 'update' => sub {
 
     my @rand_skills
       = map { $_->id() } get_schema2->resultset('Skill')             #
-      ->search(undef, {rows => 1 + int(rand() * 3), order_by => \'rand()'})->all;
+      ->search(undef, {rows => 1 + int(rand() * 3), order_by => \'random()'})->all;
 
     $t->put_ok(
         '/me',
