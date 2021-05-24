@@ -25,11 +25,10 @@ sub get_jwt_key {
 
     my $secret = delete $ENV{JWT_SECRET_KEY};
     die 'ENV variables not loaded' unless ++$_variables_loaded;
-
     # Se não estiverem configuradas, vamos iniciar uma.
     if (!$secret) {
 
-        my $secret = random_string(64);
+        $secret = random_string(64);
 
         $self->txn_do(
             sub {
@@ -45,6 +44,7 @@ SQL_QUERY
             }
         );
     }
+use DDP; p $secret;
 
     return $secret;
 }
