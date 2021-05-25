@@ -27,7 +27,7 @@ sub au_search {
     my $rows  = $valid->{rows} || 10;
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
-    my $is_detail = $valid->{cliente_id} && $c->accept_html();
+    my $render_detail = $valid->{cliente_id} && $c->accept_html();
     my $offset    = 0;
     if ($valid->{next_page}) {
         my $tmp = eval { $c->decode_jwt($valid->{next_page}) };
@@ -54,7 +54,7 @@ sub au_search {
                   me.status
                   /,
                 (
-                    $is_detail
+                    $render_detail
                     ? (
                         qw/
                           me.qtde_guardioes_ativos
@@ -97,10 +97,8 @@ sub au_search {
     }
 
     my ($total_count, @rows);
-    if ($is_detail) {
-        $rs = $rs->search({'me.id' => $valid->{cliente_id}});
+    if ($render_detail) {
         my $cliente = $rs->next or $c->reply_item_not_found();
-
 
         my @fields = (
             [id                           => 'ID'],
