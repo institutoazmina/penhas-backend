@@ -9,3 +9,4 @@
 0006-has_message [0005-chat] 2021-04-01T20:02:37Z renato,,, <renato@renato-MS-7A34> # has_message
 0007-view_user_preferences [0006-has_message] 2021-05-24T20:16:18Z renato,,, <renato@renato-MS-7A34> # add view_user_preferences to sqitch
 0008-postgis [0007-view_user_preferences] 2021-05-25T06:23:18Z renato,,, <renato@renato-MS-7A34> # postgis
+0009-trigger-ponto-apoio-reindex [0008-postgis] 2021-05-25T07:13:15Z renato,,, <renato@renato-MS-7A34> # triggers
