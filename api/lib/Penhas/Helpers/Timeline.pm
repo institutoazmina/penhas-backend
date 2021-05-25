@@ -650,23 +650,30 @@ sub add_tweets_highlights {
             my $rs       = $c->schema2->resultset('TagsHighlight');
             my $query_rs = $rs->search(
                 {
-                    'noticia.published' => is_test() ? 'published:testing' : 'published',
-                    'me.status'         => is_test() ? 'test'              : 'prod',
-                    'me.error_msg'      => '',
+                    'me.status'    => is_test() ? 'test' : 'prod',
+                    'me.error_msg' => '',
                 },
                 {
-                    join    => {'tag' => {'noticias_tags' => 'noticia'}},
+                    # join    => {'tag' => {'noticias_tags' => 'noticia'}},
+                    join    => 'tag',
                     columns => [
                         {
-                            noticias => \ "json_agg(
-                                json_build_object(
-                                    'id',noticia.id,
-                                    'title', noticia.title,
-                                    'hyperlink', noticia.hyperlink,
-                                    'source', noticia.fonte,
-                                    'epoch', extract(epoch from noticia.created_at)
-                                )
-                            )"
+                            noticias => \[
+                                "(select json_agg(sub) from (
+                                            select
+                                                noticia.id,
+                                                noticia.title,
+                                                noticia.hyperlink,
+                                                noticia.fonte as source
+                                            FROM noticias noticia
+                                            JOIN noticias_tags n2t ON n2t.noticias_id = noticia.id
+                                                                  AND n2t.tags_id     = me.tag_id
+                                            WHERE noticia.published = ?
+                                            ORDER BY noticia.created_at DESC
+                                            LIMIT 15
+                                ) sub
+                            )", is_test() ? 'published:testing' : 'published'
+                            ]
                         },
                         (qw/me.id me.is_regexp me.tag_id me.match /),
                         {header => 'tag.title'}
@@ -701,13 +708,9 @@ sub add_tweets_highlights {
                 }
 
                 push @regexps, $match;
-
-                my $noticias = [List::Util::shuffle List::Util::head 15,
-                    sort { $b->{epoch} <=> $a->{epoch} } @{from_json($row->{noticias})}];
-
                 push @highlights, {
                     regexp   => $match,
-                    noticias => $noticias,
+                    noticias => from_json($row->{noticias}),
                     id       => $row->{id},
                     tag_id   => $row->{tag_id},
                     header   => $row->{header},

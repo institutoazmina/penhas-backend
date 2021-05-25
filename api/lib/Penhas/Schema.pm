@@ -44,7 +44,6 @@ SQL_QUERY
             }
         );
     }
-use DDP; p $secret;
 
     return $secret;
 }
