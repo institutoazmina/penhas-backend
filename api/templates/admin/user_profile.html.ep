@@ -8,7 +8,7 @@
 % if ( $cliente ) {
 <div class="text-right">
     <a class="btn btn-outline-dark" target="_blank"
-        href="https://elasv2-directus.appcivico.com/admin/#/_/collections/clientes/<%=$cliente->{id}%>">Abrir
+        href="https://cp9.penhas.com.br/admin/collections/clientes/<%=$cliente->{id}%>">Abrir
         no directus</a>
 
     <a class="btn btn-primary" href="/admin/user-messages?cliente_id=<%=$cliente->{id}%>">chat</a>
