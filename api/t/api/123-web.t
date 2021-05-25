@@ -59,7 +59,7 @@ sub test_cli_seg {
     my $password    = 'k8Mw9)wj3H';
 
     # ID do role de test
-    my $role_id = 7;
+    my $role_id = '8bad4430-dd52-440a-864d-f31bc8654f2d';
     my $admin   = $schema2->resultset('DirectusUser')->search(
         {
             status => 'active',
