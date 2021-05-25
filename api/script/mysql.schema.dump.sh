@@ -22,7 +22,7 @@ dbicdump -o dump_directory=./lib \
              -o 'generate_pod'=0 \
              -o result_base_class='Penhas::Schema::Base' \
              -o db_schema=public \
-             -o exclude='qr/^(directus|_?antigo_|penhas_config|emaildb_|cpf_cache|chat_message|chat_session)/i' \
+             -o exclude='qr/^(directus|_?antigo_|penhas_config|emaildb_|cpf_cache|chat_message|chat_session|Geography_Column|Geometry_Column|Raster_Column|Raster_Overview|Spatial_Ref_Sys)/i' \
              -o filter_generated_code='sub {my ( $type, $class, $text ) = @_; return "#<<<\n$text#>>>"; }' \
              Penhas::Schema2 \
              "dbi:Pg:dbname=${POSTGRESQL_DBNAME};host=${POSTGRESQL_HOST};port=${POSTGRESQL_PORT}" $POSTGRESQL_USER $POSTGRESQL_PASSWORD

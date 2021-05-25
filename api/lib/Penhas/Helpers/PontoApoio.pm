@@ -133,7 +133,7 @@ sub ponto_apoio_list {
     log_debug('ponto_apoio_list args: ' . $c->app->dumper(\%opts));
 
     my $user_obj  = $opts{user_obj};
-    my $is_web    = $opts{is_web} ? 1 : 0;
+
     my $latitude  = $opts{latitude};
     my $longitude = $opts{longitude};
     my $as_csv    = $opts{as_csv};
@@ -181,7 +181,7 @@ sub ponto_apoio_list {
         $latitude  = undef;
         $longitude = undef;
     }
-    if ($max_distance == 5000 || ($is_web && !$latitude)) {
+    if ($max_distance == 5000) {
         $rows = -1;
     }
 
@@ -189,12 +189,12 @@ sub ponto_apoio_list {
     # o ideal é fazer isso tudo no postgres, com postgis, pois lá o suporte a index é bem mais simples
     # mas o chato é manter as bases sincronizadas (pelo menos lat/long+categorias+textos indexados)
     # se você é acredita que a terra é plana, pode ignorar o comentario acima, *ta tudo bem*
-    my $distance_in_km = defined $latitude
-      ? qq| 111.111 * DEGREES(ACOS(LEAST(1.0, COS(RADIANS(me.latitude))
-     * COS(RADIANS( $latitude ))
-     * COS(RADIANS(me.longitude - $longitude))
-     + SIN(RADIANS(me.latitude))
-     * SIN(RADIANS( $latitude ))))) AS distance_in_km|
+    my $distance_in_km_where = defined $latitude
+      ? qq| ST_DWithin(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography, (($max_distance+1) * 1000) - 1)  |
+      : '';
+
+    my $distance_in_km_column = defined $latitude
+      ? qq| floor(ST_Distance(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography ) / 1000 ) |
       : '';
 
     my $search = {
@@ -204,17 +204,21 @@ sub ponto_apoio_list {
         'me.status' => 'active',
 
         ($categorias ? ('me.categoria' => {in => $categorias}) : ()),
+
+        ($distance_in_km_where ? (
+             '-and' => [
+                 \$distance_in_km_where,            ]
+            ) : ()),
     };
     my $attr = {
         ($as_csv ? '+columns' : 'columns') => [
             (
                 $rows == -1 ? () : (
-                    {distance_in_km => \$distance_in_km},
+                    {distance_in_km => \"$distance_in_km_column AS distance_in_km"},
                 )
             ),
             {categoria_nome => 'categoria.label'},
             {categoria_cor  => 'categoria.color'},
-            ,
             {categoria_id => 'categoria.id'},
             {categoria_id => 'categoria.id'},
             ($user_obj ? ({cliente_avaliacao => 'cliente_ponto_apoio_avaliacaos.avaliacao'}) : ()),
@@ -234,7 +238,6 @@ sub ponto_apoio_list {
               )
             : (
                 order_by => \'distance_in_km ASC',
-                having   => [\['distance_in_km < ?', $max_distance + 1]],
                 rows     => $rows + 1,
                 offset   => $offset,
             )
@@ -250,21 +253,19 @@ sub ponto_apoio_list {
         $keywords = $c->schema->unaccent($keywords);
         $keywords = lc($keywords);
         log_debug("keywords after unaccent: $keywords");
-        $rs = $rs->search({'index' => {like => "% $keywords%"}});
+        $rs = $rs->search({'index' => {ilike => "% $keywords%"}});
     }
 
-    $rs = $rs->search({'index' => {like => "%`P$filter_projeto_id]]%"}})
+    $rs = $rs->search({'index' => {like => "%`p$filter_projeto_id]]%"}})
       if defined $filter_projeto_id;
-    $rs = $rs->search({'index' => {like => "`WEB]]%"}}) if $is_web;
 
     $rs = $rs->search({'eh_24h'             => $eh_24h ? 1 : 0})     if defined $eh_24h;
     $rs = $rs->search({'dias_funcionamento' => $dias_funcionamento}) if defined $dias_funcionamento;
 
     if ($as_csv) {
-        my $max_updated_at = $rs->get_column('updated_at')->max();
+        my $max_updated_at = $rs->search(undef,{order_by => undef})->get_column('updated_at')->max();
         my $filename       = $max_updated_at . 'v1';
         $filename .= "proj$filter_projeto_id"     if defined $filter_projeto_id;
-        $filename .= "web$is_web"                 if defined $is_web;
         $filename .= $eh_24h ? "eh24h" : '!eh24h' if defined $eh_24h;
         $filename .= $dias_funcionamento          if defined $dias_funcionamento;
         $filename .= $keywords                    if defined $keywords;
@@ -288,6 +289,7 @@ sub ponto_apoio_list {
         $cur_count--;
     }
     foreach (@rows) {
+        use DDP; p $_;
         $_->{avaliacao} = sprintf('%.01f', $_->{avaliacao});
         $_->{avaliacao} =~ s/\./,/;
         $_->{avaliacao} = 'n/a' if delete $_->{qtde_avaliacao} == 0;
@@ -636,10 +638,9 @@ sub tick_ponto_apoio_index {
     my $now  = time();
     while (my $ponto = $rs->next) {
         my $index = '';
-        $index .= '`WEB]]' if $ponto->categoria->show_on_web;    # precisa ser a primeira coisa
         my @projetos = map { $_->ponto_apoio_projeto_id() } $ponto->categoria->ponto_apoio_categoria2projetos->all;
         foreach my $projeto_id (@projetos) {
-            $index .= '`P' . $projeto_id . ']]';
+            $index .= '`p' . $projeto_id . ']]';
         }
         $index .= ' ' . $ponto->categoria->label;
 

@@ -36,8 +36,6 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => 7,
   },
-  "show_on_web",
-  { data_type => "boolean", default_value => \"true", is_nullable => 0 },
   "owner",
   { data_type => "uuid", is_nullable => 1, size => 16 },
 );
@@ -56,8 +54,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:sKLVio4evmPd8eqJl54sMA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-25 04:03:12
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BIHwEnemBiNn2v2Z21jhcQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

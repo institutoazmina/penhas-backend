@@ -119,7 +119,7 @@ do {
             status => 'prod',
         },
         {
-            order_by => \'RAND()',
+            order_by => \'RANDOM()',
             rows     => 1,
         }
     )->next();
@@ -431,11 +431,10 @@ do {
             'latitude'  => '-23.589893',
             'longitude' => '-46.633462',
             'keywords'  => $avaliar_ponto_apoio->nome,
-            'is_web'    => $rand_cat->show_on_web ? '1' : '0',
         }
-      )->status_is(200)    #
-      ->json_is('/rows/0/cliente_avaliacao', $rand_zero_to_five)           #
+      )->status_is(200, 'test line 436 ish')    #
       ->json_is('/rows/0/id',                $avaliar_ponto_apoio->id)     #
+      ->json_is('/rows/0/cliente_avaliacao', $rand_zero_to_five)           #
       ->json_is('/rows/0/avaliacao',         $rand_zero_to_five . ',0')    #
       ->json_is('/rows/1',                   undef, 'nao tem mais')        #
       ->json_is('/has_more',                 0);
@@ -539,19 +538,14 @@ do {
     $avaliar_ponto_apoio->discard_changes;
     is $avaliar_ponto_apoio->qtde_avaliacao, 0, 'nao te mais avaliacao';
 
-    # web pode puxar sem passar lat/lng
+    # precisa de lat/lng pra puxar quando nao é CSV
     $t->get_ok(
         '/pontos-de-apoio',
         {'x-api-key' => $session},
         form => {
             'keywords' => $avaliar_ponto_apoio->nome,
-            'is_web'   => 1,
         }
-      )->status_is(200)    #
-      ->json_is('/rows/0/id', $avaliar_ponto_apoio->id)    #
-      ->json_is('/rows/1',    undef, 'nao tem mais')       #
-      ->json_is('/has_more',  0);
-
+    )->status_is(400, 'must have lat/longitude');
 
     $t->get_ok(
         '/pontos-de-apoio',
@@ -561,7 +555,7 @@ do {
             location_token => $token1->{location_token},
             rows           => 1,
         }
-      )->status_is(200)                                    #
+      )->status_is(200, 'filtro projeto')    #
       ->json_is('/rows/0/id', $ponto_apoio1->id, 'has cat1 id')             #
       ->json_is('/has_more',  0,                 'so tem um pa no cat1');
 

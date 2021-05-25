@@ -160,6 +160,8 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 1 },
   "owner",
   { data_type => "uuid", is_nullable => 1, size => 16 },
+  "geog",
+  { data_type => "geography", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -176,8 +178,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SBSM5I4YAxnk6/kNKCjhgQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-25 03:33:20
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:AnlpcWOtInStREMu2ehW3w
 
 # ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id);
 
