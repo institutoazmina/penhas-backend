@@ -79,6 +79,8 @@ sub register {
     $admin->get('message-detail')->to(controller => 'Admin::Notifications', action => 'unft_explore');
     $admin->get('notifications')->to(controller => 'Admin::Notifications', action => 'unft_list');
     $admin->get('bignum')->to(controller => 'Admin::BigNum', action => 'abignum_get');
+    $admin->post('schedule-delete')->to(controller => 'Admin::Users', action => 'au_schedule_delete');
+    $admin->get('unschedule-delete')->to(controller => 'Admin::Users', action => 'au_unschedule_delete');
 
 
     # INTERNAL ENDPOINTS

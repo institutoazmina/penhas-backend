@@ -6,6 +6,7 @@ use Penhas::Utils;
 use DateTime;
 use MooseX::Types::Email qw/EmailAddress/;
 use Mojo::Util qw/humanize_bytes/;
+use Penhas::Types qw/DateStr/;
 
 sub au_search {
     my $c = shift;
@@ -20,6 +21,8 @@ sub au_search {
         next_page  => {required => 0, type => 'Str'},
         nome       => {required => 0, type => 'Str', empty_is_valid => 1, max_length => 99},
         segment_id => {required => 0, type => 'Int'},
+
+        load_delete_form => {required => 0, type => 'Bool'},
     );
 
     my $dirty = 0;
@@ -28,7 +31,7 @@ sub au_search {
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
     my $render_detail = $valid->{cliente_id} && $c->accept_html();
-    my $offset    = 0;
+    my $offset        = 0;
     if ($valid->{next_page}) {
         my $tmp = eval { $c->decode_jwt($valid->{next_page}) };
         $c->reply_invalid_param('next_page')
@@ -67,6 +70,7 @@ sub au_search {
                           me.dt_nasc
                           me.cep_cidade
                           me.cep_estado
+                          me.perform_delete_at
                           /,
                       )
                     : ()
@@ -155,6 +159,8 @@ sub au_search {
             cliente  => $cliente,
             fields   => \@fields,
             audios   => \@audios,
+
+            load_delete_form => $valid->{load_delete_form},
         );
 
     }
@@ -215,6 +221,72 @@ sub au_search {
             segment_id         => $segment ? $segment->id : undef,
         },
     );
+}
+
+sub au_schedule_delete {
+    my $c = shift;
+
+    $c->use_redis_flash();
+    my $valid = $c->validate_request_params(
+        cliente_id  => {required => 1, type => 'Int'},
+        delete_date => {required => 1, type => DateStr},
+    );
+
+    my $cliente = $c->schema2->resultset('Cliente')->find($valid->{cliente_id})
+      or $c->reply_item_not_found();
+
+    $cliente->clientes_active_sessions->delete;
+    $cliente->update(
+        {
+            status            => 'deleted_scheduled',
+            perform_delete_at => $valid->{delete_date} . ' 12:00:00',
+        }
+    );
+
+    if ($c->accept_html()) {
+        $c->flash_to_redis({success_message => 'Agendamento de remoção agendado com sucesso!'});
+        $c->redirect_to('/admin/users?cliente_id=' . $cliente->id);
+
+        return 0;
+    }
+    else {
+        return $c->render(
+            json   => {ok => 1},
+            status => 200,
+        );
+    }
+}
+
+sub au_unschedule_delete {
+    my $c = shift;
+
+    $c->use_redis_flash();
+    my $valid = $c->validate_request_params(
+        cliente_id => {required => 1, type => 'Int'},
+    );
+
+    my $cliente = $c->schema2->resultset('Cliente')->find($valid->{cliente_id})
+      or $c->reply_item_not_found();
+
+    $cliente->update(
+        {
+            status            => 'active',
+            perform_delete_at => undef,
+        }
+    );
+
+    if ($c->accept_html()) {
+        $c->flash_to_redis({success_message => 'Cancelamento do agendamento de remoção executado com sucesso!'});
+        $c->redirect_to('/admin/users?cliente_id=' . $cliente->id);
+
+        return 0;
+    }
+    else {
+        return $c->render(
+            json   => {ok => 1},
+            status => 200,
+        );
+    }
 }
 
 sub au_audio_status {
