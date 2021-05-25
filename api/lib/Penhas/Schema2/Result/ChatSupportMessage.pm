@@ -24,10 +24,12 @@ __PACKAGE__->add_columns(
   { data_type => "timestamp with time zone", is_nullable => 1 },
   "chat_support_id",
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
-  "admin_user_id",
+  "admin_user_id_directus8",
   { data_type => "bigint", is_nullable => 1 },
   "message",
   { data_type => "text", is_nullable => 0 },
+  "admin_user_id",
+  { data_type => "uuid", is_nullable => 1, size => 16 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -49,8 +51,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:g/ztDK9EbkMBFeBPMSPS1Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-25 04:34:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:v/KRJLnpgbxxYsiGbdeP6Q
 
 # ALTER TABLE chat_support_message ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 # ALTER TABLE chat_support_message ADD FOREIGN KEY (chat_support_id) REFERENCES chat_support(id) ON DELETE CASCADE ON UPDATE cascade;

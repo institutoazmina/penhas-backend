@@ -217,6 +217,9 @@ sub pg_timestamp2human {
 sub db_epoch_to_etag {
     my ($timestamp) = @_;
 
+    # remove timestamp
+    $timestamp =~ s/\+\d+$//;
+
     die "$timestamp is not in expected format"
       unless $timestamp =~ /^2\d{3}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}(\.\d{1,8})?$/;
 

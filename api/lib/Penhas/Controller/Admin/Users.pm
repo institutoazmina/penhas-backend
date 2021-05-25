@@ -27,6 +27,7 @@ sub au_search {
     my $rows  = $valid->{rows} || 10;
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
+use DDP; p $valid;
     my $is_detail = $valid->{cliente_id} && $c->accept_html();
     my $offset    = 0;
     if ($valid->{next_page}) {
@@ -38,7 +39,11 @@ sub au_search {
     }
 
     my $rs = $c->schema2->resultset('Cliente')->search(
-        undef,
+        {
+            ($valid->{cliente_id} ? (
+                'me.id' => $valid->{cliente_id}
+            ) : ())
+        },
         {
             join     => 'clientes_app_activity',
             order_by => \'last_tm_activity DESC',

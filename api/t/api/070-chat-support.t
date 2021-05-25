@@ -25,7 +25,7 @@ my $admin_email = 'tests.automatic@example.com';
 my $password    = 'k8Mw9(wj3H';
 do {
     # ID do role de test
-    my $role_id = 7;
+    my $role_id = '8bad4430-dd52-440a-864d-f31bc8654f2d';
     my $admin   = $schema2->resultset('DirectusUser')->search(
         {
             status => 'active',
@@ -167,8 +167,9 @@ do {
         '/admin/users',
         form => {cliente_id => $cliente_id}
       )->status_is(200, 'filtro do usuario')    #
-      ->json_is('/rows/0/nome_completo', $nome_completo, 'nome ok')    #
-      ->json_is('/rows/0/id',            $cliente_id,    'id ok');
+      ->json_is('/rows/0/nome_completo', $nome_completo, 'nome ok')         #
+      ->json_is('/rows/0/id',            $cliente_id,    'id ok')           #
+      ->json_is('/rows/1',               undef,          'only one row');
 
     my $reply_msg = 'reply from support' . rand;
     $t->post_ok(
@@ -217,7 +218,7 @@ do {
                 chat_auth => $cliente->support_chat_auth(),
                 message   => "Num $i"
             },
-          )->status_is(200, "mandando mensagem com valor $i")             #
+          )->status_is(200, "mandando mensagem com valor $i")    #
           ->json_has('/id', 'we got an id!');
     }
 
@@ -229,11 +230,11 @@ do {
             pagination => $newer,
             rows       => 2,
         },
-      )->status_is(200, 'puxando duas novas mensagens')                   #
-      ->json_is('/messages/0/message', 'Num 3', 'msg=3')                  #
-      ->json_is('/messages/1/message', 'Num 2', 'msg=2')                  #
-      ->json_has('/newer', 'ainda vem newer')                             #
-      ->json_has('/older', 'ainda tem older')                             #
+      )->status_is(200, 'puxando duas novas mensagens')    #
+      ->json_is('/messages/0/message', 'Num 3', 'msg=3')   #
+      ->json_is('/messages/1/message', 'Num 2', 'msg=2')   #
+      ->json_has('/newer', 'ainda vem newer')              #
+      ->json_has('/older', 'ainda tem older')              #
       ->json_is('/has_more', 1, 'has_more true');
 
     my $older = last_tx_json()->{older};
@@ -245,11 +246,11 @@ do {
             pagination => $older,
             rows       => 2,
         },
-      )->status_is(200, 'puxando duas novas mensagens')                   #
-      ->json_is('/messages/0/message', 'Num 1',    'msg=1')               #
-      ->json_is('/messages/1/message', $reply_msg, 'msg do suporte')      #
-      ->json_hasnt('/newer', 'nao vem newer pq ta pagiando pra tras')     #
-      ->json_has('/older', 'ainda tem older')                             #
+      )->status_is(200, 'puxando duas novas mensagens')    #
+      ->json_is('/messages/0/message', 'Num 1',    'msg=1')              #
+      ->json_is('/messages/1/message', $reply_msg, 'msg do suporte')     #
+      ->json_hasnt('/newer', 'nao vem newer pq ta pagiando pra tras')    #
+      ->json_has('/older', 'ainda tem older')                            #
       ->json_is('/has_more', 1, 'has_more true');
     $older = last_tx_json()->{older};
     $t->get_ok(
@@ -260,10 +261,10 @@ do {
             pagination => $older,
             rows       => 2,
         },
-      )->status_is(200, 'puxando athe o has_more false')                  #
-      ->json_is('/messages/0/message', '0', 'msg inicial')                #
-      ->json_hasnt('/newer', 'nao vem newer pq ta pagiando pra tras')     #
-      ->json_hasnt('/older', 'ainda tem older pq acabou a pagina')        #
+      )->status_is(200, 'puxando athe o has_more false')                 #
+      ->json_is('/messages/0/message', '0', 'msg inicial')               #
+      ->json_hasnt('/newer', 'nao vem newer pq ta pagiando pra tras')    #
+      ->json_hasnt('/older', 'ainda tem older pq acabou a pagina')       #
       ->json_is('/has_more', 0, 'has_more false');
     my $current_date = DateTime->now->ymd('-');
     $t->get_ok(
@@ -271,13 +272,13 @@ do {
         form => {
             cliente_id => $cliente_id,
         }
-      )->status_is(200, 'lista de mensagens')                             #
-      ->json_is('/messages/0/message', 'Num 3')                           #
-      ->json_is('/messages/1/message', 'Num 2')                           #
-      ->json_is('/messages/2/message', 'Num 1')                           #
-      ->json_is('/messages/2/is_me',   '0', 'nao eh o admin')             #
-      ->json_is('/messages/3/message', $reply_msg)                        #
-      ->json_is('/messages/3/is_me',   1, 'sou eu, o admin')              #
+      )->status_is(200, 'lista de mensagens')                            #
+      ->json_is('/messages/0/message', 'Num 3')                          #
+      ->json_is('/messages/1/message', 'Num 2')                          #
+      ->json_is('/messages/2/message', 'Num 1')                          #
+      ->json_is('/messages/2/is_me',   '0', 'nao eh o admin')            #
+      ->json_is('/messages/3/message', $reply_msg)                       #
+      ->json_is('/messages/3/is_me',   1, 'sou eu, o admin')             #
       ->json_like('/other/activity', qr/$current_date/, 'vem o horario');
 
     $t->delete_ok(

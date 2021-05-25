@@ -40,28 +40,15 @@ __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("idx_users_email", ["email"]);
 #>>>
 
-__PACKAGE__->load_components("PassphraseColumn");
-__PACKAGE__->remove_column("password");
-__PACKAGE__->add_column(
-    password => {
-        data_type               => "text",
-        passphrase              => 'crypt',
-        passphrase_class        => "BlowfishCrypt",
-        passphrase_args         => {cost => 8, salt_random => 1,},
-        passphrase_check_method => "check_password",
-        is_nullable             => 0,
-    },
-);
+use feature 'state';
+use Crypt::Passphrase::Argon2;
 
-sub get_column {
-    my ($self, $col, @other) = @_;
+sub check_password {
+    my ($self, $password) = @_;
 
-    return $self->SUPER::get_column($col, @other) if $col ne 'password';
+    state $passphrase = Crypt::Passphrase::Argon2->new();
 
-    my $text = $self->SUPER::get_column($col, @other);
-    $text =~ s{\$2y\$}{\$2a\$};
-    return $text;
+    return $passphrase->verify_password($password, $self->get_column('password'));
 }
-
 
 1;
