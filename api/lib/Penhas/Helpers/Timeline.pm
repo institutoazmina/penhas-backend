@@ -574,7 +574,7 @@ sub _format_tweet {
         media            => $media_ref,
         icon             => $anonimo ? $avatar_anonimo : $me->{cliente_avatar_url} || $avatar_default,
         name             => $anonimo ? 'Anônimo'       : $me->{cliente_apelido},
-        created_at       => $me->{created_at},
+        created_at       => pg_timestamp2iso_8601($me->{created_at}),
         _tags_index      => $me->{tags_index},
         ($anonimo ? (cliente_id => 0) : (cliente_id => $me->{cliente_id})),
 
