@@ -707,6 +707,7 @@ sub add_tweets_highlights {
                     $match = $new_regex;
                 }
 
+                next unless $row->{noticias};
                 push @regexps, $match;
                 push @highlights, {
                     regexp   => $match,
