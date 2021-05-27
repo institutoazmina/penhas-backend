@@ -47,6 +47,7 @@ state $text_xslate = Text::Xslate->new(
   trunc_to_meter
 
   pg_timestamp2iso_8601
+  pg_timestamp2iso_8601_second
   db_epoch_to_etag
   pg_timestamp2human
   notifications_enabled
@@ -192,6 +193,16 @@ sub pg_timestamp2iso_8601 {
     $timestamp =~ s/\..+$//;
 
     $timestamp .= 'Z';
+    return $timestamp;
+}
+
+sub pg_timestamp2iso_8601_second {
+    my ($timestamp) = @_;
+
+    $timestamp =~ s/ /T/;
+    $timestamp =~ s/\+.+$//;
+    $timestamp =~ s/\..+$//;
+
     return $timestamp;
 }
 
