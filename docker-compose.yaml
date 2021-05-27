@@ -50,11 +50,6 @@ services:
     environment:
       REDIS_SERVER: "${REDIS_SERVER}"
       REDIS_NS: "${REDIS_NS}"
-      MYSQL_HOST: "${DIRECTUS_DATABASE_HOST}"
-      MYSQL_PORT: "${DIRECTUS_DATABASE_PORT}"
-      MYSQL_DBNAME: "${DIRECTUS_DATABASE_NAME}"
-      MYSQL_USER: "${DIRECTUS_DATABASE_USERNAME}"
-      MYSQL_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
     volumes:
         - ../data/:/data/
         - ./api/:/src/
