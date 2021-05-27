@@ -190,6 +190,7 @@ sub pg_timestamp2iso_8601 {
     my ($timestamp) = @_;
 
     $timestamp =~ s/ /T/;
+    $timestamp =~ s/\+.+$//;
     $timestamp =~ s/\..+$//;
 
     $timestamp .= 'Z';
