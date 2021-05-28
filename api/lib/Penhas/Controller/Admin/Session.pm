@@ -116,6 +116,12 @@ sub admin_check_authorization {
     }
     return $c->reply_forbidden() unless $c->session->{admin_user_id};
 
+    if ($c->session->{admin_user_id} =~ /^\d+$/) {
+        $c->session(expires => 1);
+        $c->redirect_to('/admin/login');
+        return 0;
+    }
+
     my $admin = $c->schema2->resultset('DirectusUser')->search(
         {id => $c->session->{admin_user_id}, status => 'active'},
     )->next;
