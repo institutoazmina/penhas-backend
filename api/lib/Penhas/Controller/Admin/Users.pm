@@ -44,7 +44,7 @@ sub au_search {
         {($valid->{cliente_id} ? ('me.id' => $valid->{cliente_id}) : ())},
         {
             join     => 'clientes_app_activity',
-            order_by => \'last_tm_activity DESC',
+            order_by => \'last_tm_activity DESC NULLS LAST',
             columns  => [
                 {activity => 'clientes_app_activity.last_tm_activity'},
                 qw/
