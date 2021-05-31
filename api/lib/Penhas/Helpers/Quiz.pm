@@ -78,6 +78,7 @@ sub setup {
                             map {
                                 $_->{yesnogroup} and $_->{yesnogroup} = from_json($_->{yesnogroup});
                                 $_->{intro}      and $_->{intro}      = from_json($_->{intro});
+                                $_->{options}    and $_->{options}    = from_json($_->{options});
                                 $_
                             } $c->schema2->resultset('QuizConfig')->search(
                                 {
@@ -667,6 +668,26 @@ sub process_quiz_session {
                 }
 
             }
+            elsif ($msg->{type} eq 'onlychoice') {
+
+                # index de ate 999999
+                if (defined $val && length $val <= 6 && $val =~ /^[0-9]+$/a && defined $msg->{_db_option}[$val]) {
+
+                    my $reverse_index = {map { $_->{index} => $_->{display} } $msg->{options}->@*};
+
+                    my $output_human = $reverse_index->{$val};
+                    my $output       = $msg->{_db_option}[$val];
+
+                    $responses->{$code} = $output;
+                    $msg->{display_response} = $output_human;
+                    $have_new_responses++;
+
+                }
+                else {
+                    push @preprend_msg, &_new_displaytext_error(sprintf('Campo %s deve um número', $ref));
+                }
+
+            }
             elsif ($msg->{type} eq 'button') {
 
                 log_info("msg type button");
@@ -793,6 +814,7 @@ sub _init_questionnaire_stash {
 
         my $relevance = $qc->{relevance};
         if (exists $qc->{intro} && $qc->{intro}) {
+            use DDP; p $qc;
             foreach my $intro ($qc->{intro}->@*) {
                 push @questions, {
                     type       => 'displaytext',
@@ -871,7 +893,7 @@ sub _init_questionnaire_stash {
                 $ref->{_skills}{$counter} = $skill->{id};
                 push @{$ref->{options}}, {
                     display => $skill->{skill},
-                    index   => "$counter", # manter como string, garantido, pq se nao quebra o parser do app
+                    index   => "$counter",        # manter como string, garantido, pq se nao quebra o parser do app
                 };
                 $counter++;
             }
@@ -920,6 +942,32 @@ sub _init_questionnaire_stash {
                 _code      => $qc->{code},
                 _end_chat  => 1,
             };
+
+        }
+        elsif ($qc->{type} eq 'onlychoice') {
+
+            my $ref = {
+                type       => 'onlychoice',
+                content    => $qc->{question},
+                ref        => 'OC' . $qc->{id},
+                _code      => $qc->{code},
+                _relevance => $relevance,
+                options    => [],
+            };
+
+            my $counter = 0;
+            foreach my $option ($qc->{options}->@*) {
+                my $value = $option->{value};
+                $value =~ s/\,/\\\,/;
+                $ref->{_db_option}[$counter] = $value;
+
+                push @{$ref->{options}}, {
+                    display => $option->{label},
+                    index   => $counter,
+                };
+                $counter++;
+            }
+            push @questions, $ref;
 
         }
 

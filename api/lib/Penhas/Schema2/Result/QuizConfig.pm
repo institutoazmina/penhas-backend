@@ -56,6 +56,8 @@ __PACKAGE__->add_columns(
   },
   "modified_by",
   { data_type => "uuid", is_nullable => 1, size => 16 },
+  "options",
+  { data_type => "json", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -66,8 +68,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:1cxBciz/EQxgSZvWUA+boA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-31 11:55:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pguDhXSX/uUmXBph/2XcIA
 
 # ALTER TABLE quiz_config ADD FOREIGN KEY (questionnaire_id) REFERENCES questionnaires(id) ON DELETE CASCADE ON UPDATE cascade;
 =pod

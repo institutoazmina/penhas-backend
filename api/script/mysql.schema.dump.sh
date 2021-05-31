@@ -27,6 +27,10 @@ dbicdump -o dump_directory=./lib \
              Penhas::Schema2 \
              "dbi:Pg:dbname=${POSTGRESQL_DBNAME};host=${POSTGRESQL_HOST};port=${POSTGRESQL_PORT}" $POSTGRESQL_USER $POSTGRESQL_PASSWORD
 
+rm lib/Penhas/Schema2/Result/MinionJob.pm
+rm lib/Penhas/Schema2/Result/MinionLock.pm
+rm lib/Penhas/Schema2/Result/MinionWorker.pm
+rm lib/Penhas/Schema2/Result/MojoMigration.pm
 
 
 cd $CWD
