@@ -26,6 +26,7 @@ my %WriteMakefileArgs = (
     "Config::General" => 0,
     "Convert::Z85" => 0,
     "Cpanel::JSON::XS" => "4.18",
+    "Crypt::Passphrase::Argon2" => '0',
     "Crypt::CBC" => "2.33",
     "Crypt::JWT" => 0,
     "Crypt::OpenSSL::RSA" => 0,
