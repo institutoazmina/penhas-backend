@@ -11,3 +11,4 @@
 0008-postgis [0007-view_user_preferences] 2021-05-25T06:23:18Z renato,,, <renato@renato-MS-7A34> # postgis
 0009-trigger-ponto-apoio-reindex [0008-postgis] 2021-05-25T07:13:15Z renato,,, <renato@renato-MS-7A34> # triggers
 0010-fix-chat_support_message [0009-trigger-ponto-apoio-reindex] 2021-05-25T07:32:35Z renato,,, <renato@renato-MS-7A34> # chat_support_message
+0011-field-options [0010-fix-chat_support_message] 2021-05-31T14:51:31Z renato,,, <renato@renato-Inspiron-7580> # field-options
