@@ -5,7 +5,7 @@ BEGIN;
 
 alter  table quiz_config alter column yesnogroup set default '[]';
 alter  table quiz_config alter column intro set default '[]';
-alter table quiz_config add column options json;
+alter table quiz_config add column options json not null default '[]';
 
 update "directus_fields"
 set

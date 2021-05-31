@@ -23,5 +23,13 @@ $t->get_ok(
 )->status_is(200, 'valid response')->json_is('/questionnaires/0/name', 'anon-test')
   ->json_is('/questionnaires/0/id', 2, 'loaded correct questionnaire');
 
+$t->post_ok(
+    '/anon-questionnaires/new',
+    form => {
+        token     => 'validtoken',  questionnaire_id => 2,
+        remote_id => 'test-remote', init_responses   => '{"foo":"bar"}'
+    }
+)->status_is(200, 'valid response');
+
 
 done_testing();

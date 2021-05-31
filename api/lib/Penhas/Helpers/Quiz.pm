@@ -243,7 +243,17 @@ sub load_quiz_session {
 
     $opts{caller_is_post} ||= 0;
 
-    my $user    = $opts{user}    or croak 'missing user';
+    my $session_rs = 'ClientesQuizSession';
+    my $user       = $opts{user};
+    my $is_anon    = $opts{is_anon} ? 1 : 0;
+
+    croak 'missing user' if !$is_anon && !$user;
+
+    if ($is_anon) {
+        $session_rs = 'AnonymousQuizSession';
+        $user       = {};
+    }
+
     my $session = $opts{session} or croak 'missing session';
 
     my $update_db    = $opts{update_db} || 0;
@@ -400,10 +410,10 @@ sub load_quiz_session {
     # e tambem para evitar que ele avance o chat ou receber uma resposta sem sentido mas avançar o chat
     if ($update_db) {
 
-        slog_info("updating stash to %s",     to_json($stash));
-        slog_info("updating responses to %s", to_json($responses));
+        slog_info('updating %s stash to %s',     $session_rs, to_json($stash));
+        slog_info('updating %s responses to %s', $session_rs, to_json($responses));
 
-        my $rs = $c->schema2->resultset('ClientesQuizSession');
+        my $rs = $c->schema2->resultset($session_rs);
         $rs->search({id => $session->{id}})->update(
             {
                 stash     => to_json($stash),
@@ -420,7 +430,7 @@ sub load_quiz_session {
     if (exists $stash->{is_finished} && $stash->{is_finished}) {
 
         my $end_screen = '';
-        $c->ensure_questionnaires_loaded( penhas => 1 );
+        $c->ensure_questionnaires_loaded(penhas => $is_anon ? 0 : 1);
         foreach my $q ($c->stash('questionnaires')->@*) {
             next unless $q->{id} == $session->{questionnaire_id};
             $end_screen = $q->{end_screen};
@@ -699,7 +709,7 @@ sub process_quiz_session {
 
                 # reiniciar o fluxo
                 if ($msg->{_reset}) {
-                    $c->ensure_questionnaires_loaded( penhas => 1 );
+                    $c->ensure_questionnaires_loaded(penhas => 1);
                     foreach my $q ($c->stash('questionnaires')->@*) {
                         next unless $q->{id} == $session->{questionnaire_id};
                         $stash     = &_init_questionnaire_stash($q, $c);
@@ -819,8 +829,6 @@ sub _init_questionnaire_stash {
 
         my $relevance = $qc->{relevance};
         if (exists $qc->{intro} && $qc->{intro}) {
-            use DDP;
-            p $qc;
             foreach my $intro ($qc->{intro}->@*) {
                 push @questions, {
                     type       => 'displaytext',
