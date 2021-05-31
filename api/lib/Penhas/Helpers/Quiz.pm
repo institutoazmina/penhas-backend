@@ -33,7 +33,7 @@ sub _new_displaytext_normal {
 }
 
 sub setup {
-    my $self = shift;
+    my ($self, %opts) = @_;
 
     $self->helper(
         'ensure_questionnaires_loaded' => sub {
@@ -49,6 +49,11 @@ sub setup {
                             ? ('me.id' => {in => [split ',', $ENV{FILTER_QUESTIONNAIRE_IDS}]})
                             : ('me.active' => '1')
                         ),
+                        (
+                            $opts{penhas}
+                            ? ('me.penhas_start_automatically' => 1)
+                            : ('me.penhas_cliente_required' => 0),
+                        )
                     },
                     {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
                 )->all
@@ -118,7 +123,7 @@ sub setup {
             Log::Log4perl::NDC->push('user_get_quiz_session user_id:' . $user->{id});
             on_scope_exit { Log::Log4perl::NDC->pop };
 
-            $c->ensure_questionnaires_loaded();
+            $c->ensure_questionnaires_loaded(penhas => 1);
 
             my @available_quiz;
             my $vars = &_quiz_get_vars($user);
@@ -415,7 +420,7 @@ sub load_quiz_session {
     if (exists $stash->{is_finished} && $stash->{is_finished}) {
 
         my $end_screen = '';
-        $c->ensure_questionnaires_loaded();
+        $c->ensure_questionnaires_loaded( penhas => 1 );
         foreach my $q ($c->stash('questionnaires')->@*) {
             next unless $q->{id} == $session->{questionnaire_id};
             $end_screen = $q->{end_screen};
@@ -694,7 +699,7 @@ sub process_quiz_session {
 
                 # reiniciar o fluxo
                 if ($msg->{_reset}) {
-                    $c->ensure_questionnaires_loaded();
+                    $c->ensure_questionnaires_loaded( penhas => 1 );
                     foreach my $q ($c->stash('questionnaires')->@*) {
                         next unless $q->{id} == $session->{questionnaire_id};
                         $stash     = &_init_questionnaire_stash($q, $c);
@@ -814,7 +819,8 @@ sub _init_questionnaire_stash {
 
         my $relevance = $qc->{relevance};
         if (exists $qc->{intro} && $qc->{intro}) {
-            use DDP; p $qc;
+            use DDP;
+            p $qc;
             foreach my $intro ($qc->{intro}->@*) {
                 push @questions, {
                     type       => 'displaytext',

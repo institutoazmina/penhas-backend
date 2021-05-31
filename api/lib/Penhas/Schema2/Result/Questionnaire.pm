@@ -39,8 +39,18 @@ __PACKAGE__->add_columns(
   { data_type => "uuid", is_nullable => 1, size => 16 },
   "modified_by",
   { data_type => "uuid", is_nullable => 1, size => 16 },
+  "penhas_start_automatically",
+  { data_type => "boolean", default_value => \"true", is_nullable => 0 },
+  "penhas_cliente_required",
+  { data_type => "boolean", default_value => \"true", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->has_many(
+  "anonymous_quiz_sessions",
+  "Penhas::Schema2::Result::AnonymousQuizSession",
+  { "foreign.questionnaire_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 __PACKAGE__->has_many(
   "quiz_configs",
   "Penhas::Schema2::Result::QuizConfig",
@@ -49,8 +59,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6Win/cGGz81uuZOuW5UPnQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-31 15:13:36
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BwXh0aVH9ZzBT62SlFgwQg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
