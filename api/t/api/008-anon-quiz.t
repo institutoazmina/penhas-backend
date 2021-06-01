@@ -58,7 +58,7 @@ ok $input, 'has input';
 is $input->{type},    'onlychoice', 'is onlychoice';
 ok $input->{ref},     'has ref';
 is $input->{content}, 'choose one', 'content ok';
-
+is $input->{code},    'chooseone',  'has code (because it is anon)';
 
 # responde o choose one
 my $res_second = $t->post_ok(
@@ -74,8 +74,9 @@ $input = $res_second->{quiz_session}{current_msgs}[-1];
 ok $input, 'has input';
 is $input->{type},    'button', 'is button';
 ok $input->{ref},     'has ref';
-is $input->{content}, 'fim',    'content ok';
-is $input->{label},   'Enviar', 'label ok';
+is $input->{content}, 'fim',       'content ok';
+is $input->{label},   'Enviar',    'label ok';
+is $input->{code},    'botao_fim', 'has code (because it is anon)';
 
 
 my $res_end = $t->post_ok(

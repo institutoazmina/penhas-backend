@@ -69,7 +69,7 @@ sub anon_new_quiz_session {
 
 
     log_info('Running _init_questionnaire_stash');
-    my $stash = eval { &Penhas::Helpers::Quiz::_init_questionnaire_stash($available_quiz, $c) };
+    my $stash = eval { &Penhas::Helpers::Quiz::_init_questionnaire_stash($available_quiz, $c, 1) };
     if ($@) {
         my $err = $@;
         slog_error('Running _init_questionnaire_stash FAILED: %s', $err);

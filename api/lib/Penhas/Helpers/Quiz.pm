@@ -179,7 +179,7 @@ sub setup {
                 )->next;
                 if (!$session) {
                     log_info('Running _init_questionnaire_stash');
-                    my $stash = eval { &_init_questionnaire_stash($q, $c) };
+                    my $stash = eval { &_init_questionnaire_stash($q, $c, 0) };
                     if ($@) {
                         my $err = $@;
                         slog_error('Running _init_questionnaire_stash FAILED: %s', $err);
@@ -722,7 +722,7 @@ sub process_quiz_session {
                     $c->ensure_questionnaires_loaded(penhas => 1);
                     foreach my $q ($c->stash('questionnaires')->@*) {
                         next unless $q->{id} == $session->{questionnaire_id};
-                        $stash     = &_init_questionnaire_stash($q, $c);
+                        $stash     = &_init_questionnaire_stash($q, $c, $is_anon);
                         $responses = {start_time => time()};
                         $have_new_responses++;
                         last;
@@ -834,6 +834,7 @@ sub any_has_relevance {
 sub _init_questionnaire_stash {
     my $questionnaire = shift;
     my $c             = shift;
+    my $is_anon       = shift;
 
     die "AnError\n" if exists $ENV{DIE_ON_QUIZ};
 
@@ -859,6 +860,7 @@ sub _init_questionnaire_stash {
                 ref        => 'YN' . $qc->{id},
                 _relevance => $relevance,
                 _code      => $qc->{code},
+                ($is_anon ? (code => $qc->{code}) : ()),
             };
         }
         elsif ($qc->{type} eq 'text') {
@@ -868,6 +870,7 @@ sub _init_questionnaire_stash {
                 ref        => 'FT' . $qc->{id},
                 _relevance => $relevance,
                 _code      => $qc->{code},
+                ($is_anon ? (code => $qc->{code}) : ()),
             };
         }
         elsif ($qc->{type} eq 'yesnogroup') {
@@ -878,10 +881,11 @@ sub _init_questionnaire_stash {
                 $counter++;
 
                 push @questions, {
-                    type       => 'yesno',
-                    content    => $subq->{question},
-                    ref        => 'YN' . $qc->{id} . '_' . $counter,
-                    _code      => $qc->{code},
+                    type    => 'yesno',
+                    content => $subq->{question},
+                    ref     => 'YN' . $qc->{id} . '_' . $counter,
+                    _code   => $qc->{code},
+                    ($is_anon ? (code => $qc->{code} . '_' . $subq->{referencia}) : ()),
                     _relevance => $relevance,
                     _sub       => {
                         ref  => $qc->{code} . '_' . $subq->{referencia},
@@ -907,10 +911,11 @@ sub _init_questionnaire_stash {
                 )->all
             ];
             my $ref = {
-                type       => 'multiplechoices',
-                content    => $qc->{question},
-                ref        => 'MC' . $qc->{id},
-                _code      => $qc->{code},
+                type    => 'multiplechoices',
+                content => $qc->{question},
+                ref     => 'MC' . $qc->{id},
+                _code   => $qc->{code},
+                ($is_anon ? (code => $qc->{code}) : ()),
                 _relevance => $relevance,
                 options    => [],
             };
@@ -954,6 +959,7 @@ sub _init_questionnaire_stash {
                 label              => $qc->{button_label} || 'Visualizar',
                 _relevance         => $relevance,
                 _code              => $qc->{code},
+                ($is_anon ? (code => $qc->{code}) : ()),
             };
 
         }
@@ -967,17 +973,19 @@ sub _init_questionnaire_stash {
                 label      => $qc->{button_label} || 'Enviar',
                 _relevance => $relevance,
                 _code      => $qc->{code},
-                _end_chat  => 1,
+                ($is_anon ? (code => $qc->{code}) : ()),
+                _end_chat => 1,
             };
 
         }
         elsif ($qc->{type} eq 'onlychoice') {
 
             my $ref = {
-                type       => 'onlychoice',
-                content    => $qc->{question},
-                ref        => 'OC' . $qc->{id},
-                _code      => $qc->{code},
+                type    => 'onlychoice',
+                content => $qc->{question},
+                ref     => 'OC' . $qc->{id},
+                _code   => $qc->{code},
+                ($is_anon ? (code => $qc->{code}) : ()),
                 _relevance => $relevance,
                 options    => [],
             };
@@ -991,6 +999,7 @@ sub _init_questionnaire_stash {
                 push @{$ref->{options}}, {
                     display => $option->{label},
                     index   => $counter,
+                    ($is_anon ? (code_value => $value) : ()),
                 };
                 $counter++;
             }
