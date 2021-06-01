@@ -32,6 +32,8 @@ my $res_first = $t->post_ok(
 )->status_is(200, 'valid response')->tx->res->json;
 ok $res_first->{quiz_session}{session_id}, 'has session_id';
 
+is trace_popall(), 'anon_new_quiz_session:created', 'quiz_session was created';
+
 $t->get_ok(
     '/anon-questionnaires/history',
     form => {
@@ -48,6 +50,7 @@ my $res_history = $t->get_ok(
     }
 )->status_is(200, 'valid response')->tx->res->json;
 
+is trace_popall(), 'anon_load_quiz_session:loaded', 'quiz_session was loaded';
 is $res_first, $res_history, 'is the same response';
 
 my $input = $res_first->{quiz_session}{current_msgs}[-1];
