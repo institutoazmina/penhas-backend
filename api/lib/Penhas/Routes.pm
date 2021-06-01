@@ -34,6 +34,8 @@ sub register {
     my $anon_quiz = $r->under('anon-questionnaires')->to(controller => 'AnonQuestionnaire', action => 'verify_anon_token');
     $anon_quiz->get()->to(action => 'aq_list_get');
     $anon_quiz->post('new')->to(action => 'aq_list_post');
+    $anon_quiz->get('history')->to(action => 'aq_history_get');
+    $anon_quiz->post('process')->to(action => 'aq_process_post');
 
 
     # Convite de guardiões

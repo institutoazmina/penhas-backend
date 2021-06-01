@@ -66,5 +66,48 @@ sub aq_list_post {
 
 }
 
+sub aq_history_get {
+    my $c = shift;
+
+    my $params = $c->req->params->to_hash;
+    use DDP; p $params;
+    my $valid = $c->validate_request_params(
+        session_id => {required => 1, type => 'Int'},
+    );
+
+    my $quiz_session = $c->anon_load_quiz_session(%$valid);
+    $c->load_quiz_session(session => $quiz_session, is_anon => 1);
+
+    $c->log->info(to_json($c->stash('quiz_session')));
+
+    return $c->render(
+        json => {quiz_session => $c->stash('quiz_session')},
+    );
+
+}
+
+sub aq_process_post {
+    my $c = shift;
+
+    my $params = $c->req->params->to_hash;
+    my $valid = $c->validate_request_params(
+        session_id => {required => 1, type => 'Int'},
+    );
+
+    my $quiz_session = $c->anon_load_quiz_session(%$valid);
+
+    my %return;
+    $c->process_quiz_session(is_anon => 1, session => $quiz_session, params => $params);
+    $return{quiz_session} = $c->stash('quiz_session');
+
+    use JSON;
+    $c->log->info(to_json($return{quiz_session}));
+
+    return $c->render(
+        json   => \%return,
+        status => 200,
+    );
+
+}
 
 1;

@@ -13,8 +13,28 @@ sub setup {
     my ($self, %opts) = @_;
 
 
-    $self->helper('anon_new_quiz_session' => sub { &anon_new_quiz_session(@_) });
+    $self->helper('anon_new_quiz_session'  => sub { &anon_new_quiz_session(@_) });
+    $self->helper('anon_load_quiz_session' => sub { &anon_load_quiz_session(@_) });
 
+}
+
+sub anon_load_quiz_session {
+    my ($c, %opts) = @_;
+
+    my $session_id = $opts{session_id} // croak 'missing session_id';
+
+    my $session = $c->schema2->resultset('AnonymousQuizSession')->search({'me.id' => $session_id})->next;
+    if (!$session) {
+        $c->reply_invalid_param('session_id não encontrada', 'session_id_invalid', 'session_id');
+    }
+    $session = {$session->get_columns};
+    log_trace('anon_load_quiz_session:loaded');
+    slog_info('Created session anon_load_quiz_session.id:%s', $session->{id});
+
+    $session->{stash}     = from_json($session->{stash});
+    $session->{responses} = from_json($session->{responses});
+
+    return $session;
 }
 
 sub anon_new_quiz_session {

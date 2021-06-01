@@ -559,10 +559,20 @@ sub process_quiz_assistant {
 sub process_quiz_session {
     my ($c, %opts) = @_;
 
-    my $user     = $opts{user}          or croak 'missing user';
-    my $user_obj = $opts{user_obj}      or croak 'missing user_obj';
-    my $session  = $opts{session}       or croak 'missing session';
-    my $params   = delete $opts{params} or croak 'missing params';
+    my $is_anon = $opts{is_anon};
+    my $user;
+    my $user_obj;
+
+    if (!$is_anon) {
+        $user     = $opts{user}     or croak 'missing user';
+        $user_obj = $opts{user_obj} or croak 'missing user_obj';
+    }
+    else {
+        $user = {};
+    }
+
+    my $session = $opts{session}       or croak 'missing session';
+    my $params  = delete $opts{params} or croak 'missing params';
 
     log_info("process_quiz_session " . to_json($params));
 
@@ -773,11 +783,11 @@ sub process_quiz_session {
         $opts{update_db} = 1;
 
         # chegou ate aqui, sem dar crash, vamos atualizar os skills do usuario
-        if (defined $update_user_skills->{set}) {
+        if ($user_obj && defined $update_user_skills->{set}) {
             $c->cliente_set_skill(user => $user, skills => [keys $update_user_skills->{set}->%*]);
         }
 
-        if (defined $set_modo_camuflado) {
+        if ($user_obj && defined $set_modo_camuflado) {
 
             # se for 1, eh pra ativar
             # sefor 0, nao ativa, mas precisa manter ligar o do mesmo jeito anonimo
@@ -785,7 +795,10 @@ sub process_quiz_session {
             $user_obj->cliente_modo_anonimo_toggle(active => 1);
             $user_obj->quiz_detectou_violencia_toggle(active => 1);
         }
-        else {
+        elsif ($user_obj) {
+
+            # atualmente só tem um quiz no Penhas, por isso seta pra falso quando nao estiver defined
+            # o melhor será criar um campo 'type' no questionnaire pra saber qual
             $user_obj->quiz_detectou_violencia_toggle(active => 0);
         }
 
