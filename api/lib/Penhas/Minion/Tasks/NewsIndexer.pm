@@ -234,8 +234,8 @@ sub news_indexer {
                     indexed_at      => \'NOW()',
                     published       => is_test() ? 'published:testing' : 'published',
                     indexed         => 'true',
-                    logs            => \["CONCAT(COALESCE(logs,''), ?)",            $log],
-                    image_hyperlink => \["COALESCE(nullif(image_hyperlink,''), ?)", $og_image],
+                    logs            => \["CONCAT(COALESCE(logs,''), ?::text)",            $log],
+                    image_hyperlink => \["COALESCE(nullif(image_hyperlink,''), ?::text)", $og_image],
                     has_topic_tags  => (
                         scalar @tags
                         ? \[
