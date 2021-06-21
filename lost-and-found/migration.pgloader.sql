@@ -96,9 +96,9 @@ alter table "rss_feeds_tags" add column "rss_feeds_id" bigint null;
 insert into rss_feeds_tags (tags_id, rss_feeds_id) select tag_id, rss_feed_id from rss_feed_forced_tags;
 drop table rss_feed_forced_tags;
 
-create table "noticias_tags" ("id" serial primary key)
-alter table "noticias_tags" add column "noticias_id" bigint null
-alter table "noticias_tags" add column "tags_id" bigint null
+create table "noticias_tags" ("id" serial primary key);
+alter table "noticias_tags" add column "noticias_id" bigint null;;
+alter table "noticias_tags" add column "tags_id" bigint null;
 
 insert into noticias_tags (noticias_id, tags_id) select noticias_id, tag_id from public.noticias2tags;
 drop table public.noticias2tags;
