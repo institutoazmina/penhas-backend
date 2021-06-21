@@ -1,25 +1,12 @@
-version: "3"
+version: "3.5"
 services:
-#  db:
-#    image: mariadb:10.5.1-bionic
-#    restart: always
-#    volumes:
-#        - db_data:/var/lib/mysql
-#    networks:
-#        - external_network
-#    environment:
-#        MYSQL_DATABASE: "directus"
-#        MYSQL_USER: "directus"
-#        MYSQL_PASSWORD: "directus"
-#        MYSQL_ROOT_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
-#    command: mysqld --innodb-buffer-pool-size=256M
 
   directus:
     image: directus/directus:v9.0.0-rc.69
     restart: unless-stopped
-    network_mode: "bridge"
-    #depends_on:
-    #    - db
+    networks:
+        - db_network
+        - external_network
     ports:
       - "172.17.0.1:${DIRECTUS_API_LISTEN}:8055"
     environment:
@@ -39,8 +26,6 @@ services:
       EMAIL_SMTP_USER: "${SMTP_USER}"
       EMAIL_SMTP_PASSWORD: "${SMTP_PASSWORD}"
       EMAIL_SMTP_SECURE: 'true'
-    #links:
-    #    - db:mysql
 
   penhas_api:
     image: azminas/penhas_api
@@ -55,16 +40,9 @@ services:
         - ./api/:/src/
     networks:
         - external_network
-    #depends_on:
-    #    - directus
-    #links:
-    #    - db:mysql
-
-#volumes:
-#    db_data: {}
-#    penhas_api_data: {}
+        - db_network
 
 networks:
     external_network:
-
-# ALTER USER 'directus'@'172.19.0.4' IDENTIFIED WITH mysql_native_password;
+    db_network:
+        name: penhas_db_pg_network
