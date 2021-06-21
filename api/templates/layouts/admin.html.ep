@@ -11,7 +11,7 @@
         integrity="sha512-tDXPcamuZsWWd6OsKFyH6nAqh/MjZ/5Yk88T5o+aMfygqNFPan1pLyPFAndRzmOWHKT+jSDzWpJv8krj6x1LMA=="
         crossorigin="anonymous" />
 
-    % my $version = 1;
+    % my $version = 2;
     % if (stash('is_login')) {
     <link rel="stylesheet" href="/web-assets/login.css?v=<%=$version%>" />
     % } elsif (stash('is_chat')) {
@@ -101,10 +101,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"
         integrity="sha512-Ah5hWYPzDsVHf9i2EejFBFrG2ZAPmpu4ZJtW4MfSgpZacn+M9QHDt+Hd/wL1tEkk1UgbzqepJr6KnhZjFKB+0A=="
         crossorigin="anonymous"></script>
+    <script src="/web-assets/iframeResizer.min.js"></script>
+
     <!-- Icons -->
     <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
     <script>
-        feather.replace()
+        feather.replace();
+        jQuery(document).ready(function () {
+
+        $('body').delegate('#input_base_url', 'change', function () {
+            $("#metabase_iframe")[0].src = $("#input_base_url").val();
+            iFrameResize({
+                resizedCallback: function () {
+                    if (inIframe()){
+                        sendMessage({ contentHeight: document.body.scrollHeight });
+                    }
+                }
+            }, '#metabase_iframe');
+            return true;
+        });
+
+        $('#input_base_url').change();
+    });
     </script>
     % if (stash('is_chat')) {
     <script src="/web-assets/chat.js?v=<%=$version%>"></script>

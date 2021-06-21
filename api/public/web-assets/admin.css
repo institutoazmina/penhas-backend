@@ -127,3 +127,10 @@ body {
 .text-xl {
   font-size: 2.5rem !important;
 }
+.metabase_iframe {
+    display: block;
+    width: 1px;
+    min-width: 100%;
+    margin: 0;
+    overflow: scroll;
+}

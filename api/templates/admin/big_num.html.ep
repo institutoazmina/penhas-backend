@@ -2,6 +2,26 @@
     <h1 class="h2">Dashboard</h1>
 </div>
 
+% my $reports = stash('reports');
+
+
+<form class="form-inline p-sm-2">
+  <label class="mr-sm-2" for="input_base_url">Relatório</label>
+  <select class="custom-select mr-sm-2" id="input_base_url">
+   % for my $r (@{$reports}) {
+    <option value="<%= $r->{url} %>"><%= $r->{name} %></option>
+   % }
+  </select>
+</form>
+
+<iframe
+    src="#"
+    frameborder="0"
+    id="metabase_iframe"
+    class="metabase_iframe"
+    allowtransparency
+></iframe>
+
 % if ( stash('results') ) {
 <div class="row">
     % for my $r (@{stash('results') || []}) {
@@ -26,6 +46,5 @@
 
 </div>
 <hr/>
-<p>Tempo de execução total das queries <%= $elapsed %> segundos</p>
 
 % }
