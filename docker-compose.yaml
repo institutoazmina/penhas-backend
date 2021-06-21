@@ -4,9 +4,9 @@ services:
   directus:
     image: directus/directus:v9.0.0-rc.69
     restart: unless-stopped
-    network_mode: "bridge"
     networks:
         - db_network
+        - external_network
     ports:
       - "172.17.0.1:${DIRECTUS_API_LISTEN}:8055"
     environment:
