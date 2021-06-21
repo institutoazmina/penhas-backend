@@ -44,6 +44,5 @@ services:
 
 networks:
     external_network:
-networks:
     db_network:
         name: penhas_db_pg_network
