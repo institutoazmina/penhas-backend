@@ -233,7 +233,7 @@ sub news_indexer {
                 {
                     indexed_at      => \'NOW()',
                     published       => is_test() ? 'published:testing' : 'published',
-                    indexed         => '1',
+                    indexed         => 'true',
                     logs            => \["CONCAT(COALESCE(logs,''), ?)",            $log],
                     image_hyperlink => \["COALESCE(nullif(image_hyperlink,''), ?)", $og_image],
                     has_topic_tags  => (
@@ -244,7 +244,7 @@ sub news_indexer {
                               . ") AND t.is_topic = TRUE) > 0",
                             @tags
                           ]
-                        : '0'
+                        : 'false'
                     ),
                     tags_index => ',' . join(',', @tags) . ',',
                 }
