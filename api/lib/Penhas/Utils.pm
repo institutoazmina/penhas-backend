@@ -257,7 +257,7 @@ sub check_password_or_die {
     if ($pass =~ /^(12345.*|picture1|password|111111.*|123123.*|senha)$/i) {
         die {
             error   => 'pass_too_weak',
-            message => 'A senha utilizada é muito simples, utlize uma senha melhor.',
+            message => 'A senha utilizada é muito simples, utilize uma senha melhor.',
             field   => 'senha',
             reason  => 'invalid'
         };
