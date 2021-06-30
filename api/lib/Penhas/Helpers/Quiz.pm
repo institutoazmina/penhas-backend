@@ -35,198 +35,197 @@ sub _new_displaytext_normal {
 sub setup {
     my ($self, %opts) = @_;
 
-    $self->helper(
-        'ensure_questionnaires_loaded' => sub {
-            my ($c, %opts) = @_;
 
-            return 1 if $c->stash('questionnaires');
+    $self->helper('ensure_questionnaires_loaded' => sub { &ensure_questionnaires_loaded(@_) });
+    $self->helper('load_quiz_config'             => sub { &load_quiz_config(@_) });
 
-            my $questionnaires = [
-                $c->schema2->resultset('Questionnaire')->search(
-                    {
-                        (
-                            $ENV{FILTER_QUESTIONNAIRE_IDS}
-                            ? ('me.id' => {in => [split ',', $ENV{FILTER_QUESTIONNAIRE_IDS}]})
-                            : ('me.active' => '1')
-                        ),
-                        (
-                            $opts{penhas}
-                            ? ('me.penhas_start_automatically' => 1)
-                            : ('me.penhas_cliente_required' => 0),
-                        )
-                    },
-                    {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
-                )->all
-            ];
-            foreach my $q (@{$questionnaires}) {
-                $q->{quiz_config}
-                  = $c->load_quiz_config(questionnaire_id => $q->{id}, cachekey => $q->{modified_on});
-            }
-            $c->stash(questionnaires => $questionnaires);
-        }
-    );
-
-    $self->helper(
-        'load_quiz_config' => sub {
-            my ($c, %opts) = @_;
-
-            my $id       = $opts{questionnaire_id};
-            my $kv       = Penhas::KeyValueStorage->instance;
-            my $cachekey = "QuizConfig:$id:" . $opts{cachekey};
-
-            Readonly::Array my @config => @{
-                $kv->redis_get_cached_or_execute(
-                    $cachekey,
-                    86400 * 7,    # 7 days
-                    sub {
-                        return [
-                            map {
-                                $_->{yesnogroup} and $_->{yesnogroup} = from_json($_->{yesnogroup});
-                                $_->{intro}      and $_->{intro}      = from_json($_->{intro});
-                                $_->{options}    and $_->{options}    = from_json($_->{options});
-                                $_
-                            } $c->schema2->resultset('QuizConfig')->search(
-                                {
-                                    'status'           => 'published',
-                                    'questionnaire_id' => $id,
-
-                                },
-                                {
-
-                                    order_by     => ['sort', 'id'],
-                                    result_class => 'DBIx::Class::ResultClass::HashRefInflator'
-                                }
-                            )->all
-                        ];
-
-                    }
-                )
-            };
-
-            #use DDP;
-            #p \@config;
-            return \@config;
-        }
-    );
-
-
-    $self->helper(
-        'user_get_quiz_session' => sub {
-            my ($c, %opts) = @_;
-            my $user = $opts{user} or croak 'missing user';
-
-            # verifica se o usuário acabou de fazer um login,
-            # se sim, ignora o quiz
-            my $key = $ENV{REDIS_NS} . 'is_during_login:' . $user->{id};
-            return if $c->kv->redis->del($key) && !is_test();
-
-            Log::Log4perl::NDC->push('user_get_quiz_session user_id:' . $user->{id});
-            on_scope_exit { Log::Log4perl::NDC->pop };
-
-            $c->ensure_questionnaires_loaded(penhas => 1);
-
-            my @available_quiz;
-            my $vars = &_quiz_get_vars($user);
-
-            foreach my $q ($c->stash('questionnaires')->@*) {
-                if (tt_test_condition($q->{condition}, $vars)) {
-                    push @available_quiz, $q;
-                    slog_info('questionnaires_id:%s criteria matched "%s"', $q->{id}, $q->{condition});
-                }
-                else {
-                    slog_info('questionnaires_id:%s criteria NOT matched "%s"', $q->{id}, $q->{condition});
-                }
-            }
-
-            log_info('user has no quiz available'), return if !@available_quiz;
-
-            # tem algum quiz true, entao vamos remover os que o usuario ja completou
-            my $rs = $c->schema2->resultset('ClientesQuizSession')->search(
-                {
-                    'deleted_at' => undef,
-                }
-            );
-            my %is_finished = map { $_->{questionnaire_id} => 1 } $rs->search(
-                {
-                    'finished_at'      => {'!=' => undef},
-                    'cliente_id'       => $user->{id},
-                    'questionnaire_id' => {'in' => [map { $_->{id} } @available_quiz]},
-                },
-                {
-                    # só precisamos deste campo
-                    'columns'    => ['questionnaire_id'],
-                    result_class => 'DBIx::Class::ResultClass::HashRefInflator'
-                }
-            )->all;
-
-            # esta muito simples por enquanto, vou ordenar pelo nome
-            # e deixar apenas um ativo questionario por vez
-            foreach my $q (sort { $a->{name} cmp $b->{name} } @available_quiz) {
-
-                Log::Log4perl::NDC->push('questionnaires_id:' . $q->{id});
-                on_scope_exit { Log::Log4perl::NDC->pop };
-
-                # pula se ja respondeu tudo
-                log_info('is already finished'), next if $is_finished{$q->{id}};
-
-                # procura pela session deste quiz, se nao existir precisamos criar uma
-                my $session = $rs->search(
-                    {
-                        'cliente_id'       => $user->{id},
-                        'questionnaire_id' => $q->{id},
-                    },
-                    {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
-                )->next;
-                if (!$session) {
-                    log_info('Running _init_questionnaire_stash');
-                    my $stash = eval { &_init_questionnaire_stash($q, $c, 0) };
-                    if ($@) {
-                        my $err = $@;
-                        slog_error('Running _init_questionnaire_stash FAILED: %s', $err);
-                        die $@ if is_test();
-
-                        #use DDP; p $@;
-                        $stash = &_get_error_questionnaire_stash($err, $c);
-                    }
-
-                    slog_info('Create new session with stash=%s', to_json($stash));
-
-                    $session = $rs->create(
-                        {
-                            cliente_id       => $user->{id},
-                            questionnaire_id => $q->{id},
-                            stash            => to_json($stash),
-                            responses        => to_json({start_time => time()}),
-                            created_at       => DateTime->now->datetime(' '),
-                        }
-                    );
-                    $session = {$session->get_columns};
-                    log_trace('clientes_quiz_session:created');
-                    slog_info('Created session clientes_quiz_session.id:%s', $session->{id});
-                }
-                else {
-                    log_trace('clientes_quiz_session:loaded');
-                    slog_info(
-                        'Loaded session clientes_quiz_session.id:%s with stash=%s', $session->{id},
-                        $session->{stash}
-                    );
-                }
-
-                $session->{stash}     = from_json($session->{stash});
-                $session->{responses} = from_json($session->{responses});
-
-                return $session;
-            }
-
-            # todos os quiz estao finished
-            return;
-        }
-    );
-
-
+    $self->helper('user_get_quiz_session'  => sub { &user_get_quiz_session(@_) });
     $self->helper('load_quiz_session'      => sub { &load_quiz_session(@_) });
     $self->helper('process_quiz_session'   => sub { &process_quiz_session(@_) });
     $self->helper('process_quiz_assistant' => sub { &process_quiz_assistant(@_) });
+
+}
+
+sub ensure_questionnaires_loaded {
+    my ($c, %opts) = @_;
+
+    return 1 if $c->stash('questionnaires');
+
+    my $questionnaires = [
+        $c->schema2->resultset('Questionnaire')->search(
+            {
+                (
+                    $ENV{FILTER_QUESTIONNAIRE_IDS}
+                    ? ('me.id' => {in => [split ',', $ENV{FILTER_QUESTIONNAIRE_IDS}]})
+                    : ('me.active' => '1')
+                ),
+                (
+                    $opts{penhas}
+                    ? ('me.penhas_start_automatically' => 1)
+                    : ('me.penhas_cliente_required' => 0),
+                )
+            },
+            {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
+        )->all
+    ];
+    foreach my $q (@{$questionnaires}) {
+        $q->{quiz_config}
+          = $c->load_quiz_config(questionnaire_id => $q->{id}, cachekey => $q->{modified_on});
+    }
+    $c->stash(questionnaires => $questionnaires);
+}
+
+sub load_quiz_config {
+    my ($c, %opts) = @_;
+
+    my $id       = $opts{questionnaire_id};
+    my $kv       = Penhas::KeyValueStorage->instance;
+    my $cachekey = "QuizConfig:$id:" . $opts{cachekey};
+
+    Readonly::Array my @config => @{
+        $kv->redis_get_cached_or_execute(
+            $cachekey,
+            86400 * 7,    # 7 days
+            sub {
+                return [
+                    map {
+                        $_->{yesnogroup} and $_->{yesnogroup} = from_json($_->{yesnogroup});
+                        $_->{intro}      and $_->{intro}      = from_json($_->{intro});
+                        $_->{options}    and $_->{options}    = from_json($_->{options});
+                        $_
+                    } $c->schema2->resultset('QuizConfig')->search(
+                        {
+                            'status'           => 'published',
+                            'questionnaire_id' => $id,
+
+                        },
+                        {
+
+                            order_by     => ['sort', 'id'],
+                            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+                        }
+                    )->all
+                ];
+
+            }
+        )
+    };
+
+    #use DDP;
+    #p \@config;
+    return \@config;
+}
+
+
+sub user_get_quiz_session {
+    my ($c, %opts) = @_;
+    my $user = $opts{user} or croak 'missing user';
+
+    # verifica se o usuário acabou de fazer um login,
+    # se sim, ignora o quiz
+    my $key = $ENV{REDIS_NS} . 'is_during_login:' . $user->{id};
+    return if $c->kv->redis->del($key) && !is_test();
+
+    Log::Log4perl::NDC->push('user_get_quiz_session user_id:' . $user->{id});
+    on_scope_exit { Log::Log4perl::NDC->pop };
+
+    $c->ensure_questionnaires_loaded(penhas => 1);
+
+    my @available_quiz;
+    my $vars = &_quiz_get_vars($user);
+
+    foreach my $q ($c->stash('questionnaires')->@*) {
+        if (tt_test_condition($q->{condition}, $vars)) {
+            push @available_quiz, $q;
+            slog_info('questionnaires_id:%s criteria matched "%s"', $q->{id}, $q->{condition});
+        }
+        else {
+            slog_info('questionnaires_id:%s criteria NOT matched "%s"', $q->{id}, $q->{condition});
+        }
+    }
+
+    log_info('user has no quiz available'), return if !@available_quiz;
+
+    # tem algum quiz true, entao vamos remover os que o usuario ja completou
+    my $rs = $c->schema2->resultset('ClientesQuizSession')->search(
+        {
+            'deleted_at' => undef,
+        }
+    );
+    my %is_finished = map { $_->{questionnaire_id} => 1 } $rs->search(
+        {
+            'finished_at'      => {'!=' => undef},
+            'cliente_id'       => $user->{id},
+            'questionnaire_id' => {'in' => [map { $_->{id} } @available_quiz]},
+        },
+        {
+            # só precisamos deste campo
+            'columns'    => ['questionnaire_id'],
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+        }
+    )->all;
+
+    # esta muito simples por enquanto, vou ordenar pelo nome
+    # e deixar apenas um ativo questionario por vez
+    foreach my $q (sort { $a->{name} cmp $b->{name} } @available_quiz) {
+
+        Log::Log4perl::NDC->push('questionnaires_id:' . $q->{id});
+        on_scope_exit { Log::Log4perl::NDC->pop };
+
+        # pula se ja respondeu tudo
+        log_info('is already finished'), next if $is_finished{$q->{id}};
+
+        # procura pela session deste quiz, se nao existir precisamos criar uma
+        my $session = $rs->search(
+            {
+                'cliente_id'       => $user->{id},
+                'questionnaire_id' => $q->{id},
+            },
+            {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
+        )->next;
+        if (!$session) {
+            log_info('Running _init_questionnaire_stash');
+            my $stash = eval { &_init_questionnaire_stash($q, $c, 0) };
+            if ($@) {
+                my $err = $@;
+                slog_error('Running _init_questionnaire_stash FAILED: %s', $err);
+                die $@ if is_test();
+
+                #use DDP; p $@;
+                $stash = &_get_error_questionnaire_stash($err, $c);
+            }
+
+            slog_info('Create new session with stash=%s', to_json($stash));
+
+            $session = $rs->create(
+                {
+                    cliente_id       => $user->{id},
+                    questionnaire_id => $q->{id},
+                    stash            => to_json($stash),
+                    responses        => to_json({start_time => time()}),
+                    created_at       => DateTime->now->datetime(' '),
+                }
+            );
+            $session = {$session->get_columns};
+            log_trace('clientes_quiz_session:created');
+            slog_info('Created session clientes_quiz_session.id:%s', $session->{id});
+        }
+        else {
+            log_trace('clientes_quiz_session:loaded');
+            slog_info(
+                'Loaded session clientes_quiz_session.id:%s with stash=%s', $session->{id},
+                $session->{stash}
+            );
+        }
+
+        $session->{stash}     = from_json($session->{stash});
+        $session->{responses} = from_json($session->{responses});
+
+        return $session;
+    }
+
+    # todos os quiz estao finished
+    return;
 
 }
 

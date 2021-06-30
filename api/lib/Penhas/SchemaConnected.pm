@@ -20,7 +20,7 @@ sub get_connect_info {
     my $port     = $ENV{POSTGRESQL_PORT}     || 5432;
     my $user     = $ENV{POSTGRESQL_USER}     || 'postgres';
     my $password = $ENV{POSTGRESQL_PASSWORD} || 'Penhas-pass';
-    my $dbname   = $ENV{POSTGRESQL_DBNAME}   || 'Penhas';
+    my $dbname   = $ENV{POSTGRESQL_DBNAME}   || 'penhas_dev';
 
     sub _extract_basename {
         my ($path) = @_;
@@ -151,7 +151,7 @@ sub get_mojo_pg {
             $ENV{POSTGRESQL_PASSWORD} || 'Penhas-pass',
             $ENV{POSTGRESQL_HOST}     || 'localhost',
             $ENV{POSTGRESQL_PORT}     || 5432,
-            $ENV{POSTGRESQL_DBNAME}   || 'Penhas',
+            $ENV{POSTGRESQL_DBNAME}   || 'penhas_dev',
         )
     );
     return $pg;
