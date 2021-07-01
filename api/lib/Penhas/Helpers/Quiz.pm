@@ -457,6 +457,10 @@ sub load_quiz_session {
 
                 if ($vars->{cep_results}) {
 
+                    $q->{content} = 'Este são os resultados que encontrei para [% human_address %]';
+                    my $render = &_render_question($q, $vars);
+                    push @real_frontend_msg, $render;
+
                     foreach my $current_line (@{from_json($vars->{cep_results})}) {
                         $q->{content} = $current_line;
                         my $render = &_render_question($q, $vars);
