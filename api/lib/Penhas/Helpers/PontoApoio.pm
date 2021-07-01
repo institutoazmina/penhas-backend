@@ -137,6 +137,7 @@ sub ponto_apoio_list {
     my $latitude  = $opts{latitude};
     my $longitude = $opts{longitude};
     my $as_csv    = $opts{as_csv};
+    my $all_columns    = $opts{all_columns};
 
     # just in case, pra nao rolar sql injection, mas aqui já deve ter validado isso no controller
     confess '$latitude is not valid'
@@ -174,7 +175,7 @@ sub ponto_apoio_list {
     }
 
     my $rows = $opts{rows} || 100;
-    $rows = 100 if !is_test() && ($rows > 5000 || $rows < 100);
+    $rows = 100 if !is_test() && ($rows > 5000 || $rows < 3);
 
     if ($as_csv) {
         $rows      = -1;
@@ -211,7 +212,7 @@ sub ponto_apoio_list {
             ) : ()),
     };
     my $attr = {
-        ($as_csv ? '+columns' : 'columns') => [
+        (($as_csv || $all_columns) ? '+columns' : 'columns') => [
             (
                 $rows == -1 ? () : (
                     {distance_in_km => \"$distance_in_km_column AS distance_in_km"},

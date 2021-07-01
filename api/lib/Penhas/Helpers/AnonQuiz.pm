@@ -15,7 +15,46 @@ sub setup {
 
     $self->helper('anon_new_quiz_session'  => sub { &anon_new_quiz_session(@_) });
     $self->helper('anon_load_quiz_session' => sub { &anon_load_quiz_session(@_) });
+    $self->helper('anon_ponto_apoio_json'  => sub { &anon_ponto_apoio_json(@_) });
 
+}
+
+sub anon_ponto_apoio_json {
+    my ($c, %opts) = @_;
+
+    my $lat = $opts{latitude};
+    my $lng = $opts{longitude};
+
+    my $pontos_apoios = $c->ponto_apoio_list(
+        latitude  => $lat,
+        longitude => $lng,
+
+        max_distance => 50,
+        rows         => 3,
+        all_columns  => 1,
+    );
+    my $success = scalar @{$pontos_apoios->{rows}};
+    my $ret     = [];
+
+    foreach my $ponto_apoio (@{$pontos_apoios->{rows}}) {
+
+        my $str = $ponto_apoio->{nome};
+        $str .= ' ' . $ponto_apoio->{categoria}{nome} if $ponto_apoio->{categoria}{nome};
+
+        if ($ponto_apoio->{ddd} && $ponto_apoio->{telefone1}) {
+            $str .= ' telefone +55' . $ponto_apoio->{ddd} . $ponto_apoio->{telefone1};
+            $str .= ' e +55' . $ponto_apoio->{ddd} . $ponto_apoio->{telefone2} if $ponto_apoio->{telefone2};
+        }
+
+        if ($ponto_apoio->{tipo_logradouro} && $ponto_apoio->{nome_logradouro}) {
+            $str .= ' localizado na ' . $ponto_apoio->{tipo_logradouro} . ' ' . $ponto_apoio->{nome_logradouro};
+            $str .= defined $ponto_apoio->{numero} ? ', ' . $ponto_apoio->{numero} : ' sem número';
+        }
+
+        push @$ret, $str;
+    }
+
+    return ($success, to_json($ret));
 }
 
 sub anon_load_quiz_session {

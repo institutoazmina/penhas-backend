@@ -32,18 +32,22 @@ sub _new_displaytext_normal {
     }
 }
 
+sub _skip_empty_msg {
+    my ($question) = @_;
+    return exists $question->{content} && $question->{type} ne 'button' ? $question->{content} ? 1 : 0 : 1;
+}
+
 sub setup {
     my ($self, %opts) = @_;
 
 
     $self->helper('ensure_questionnaires_loaded' => sub { &ensure_questionnaires_loaded(@_) });
     $self->helper('load_quiz_config'             => sub { &load_quiz_config(@_) });
-
-    $self->helper('user_get_quiz_session'  => sub { &user_get_quiz_session(@_) });
-    $self->helper('load_quiz_session'      => sub { &load_quiz_session(@_) });
-    $self->helper('process_quiz_session'   => sub { &process_quiz_session(@_) });
-    $self->helper('process_quiz_assistant' => sub { &process_quiz_assistant(@_) });
-
+    $self->helper('user_get_quiz_session'        => sub { &user_get_quiz_session(@_) });
+    $self->helper('load_quiz_session'            => sub { &load_quiz_session(@_) });
+    $self->helper('process_quiz_session'         => sub { &process_quiz_session(@_) });
+    $self->helper('process_quiz_assistant'       => sub { &process_quiz_assistant(@_) });
+    $self->helper('process_cep_address_lookup'   => sub { &process_cep_address_lookup(@_) });
 }
 
 sub ensure_questionnaires_loaded {
@@ -82,7 +86,8 @@ sub load_quiz_config {
     my $kv       = Penhas::KeyValueStorage->instance;
     my $cachekey = "QuizConfig:$id:" . $opts{cachekey};
 
-    Readonly::Array my @config => @{
+    #Readonly::Array my @config => @{
+    my @config = @{
         $kv->redis_get_cached_or_execute(
             $cachekey,
             86400 * 7,    # 7 days
@@ -343,7 +348,7 @@ sub load_quiz_session {
         );
 
         if ($has) {
-            push @frontend_msg, &_render_question($q, $vars);
+            push @frontend_msg, $q;
         }
     }
 
@@ -444,13 +449,39 @@ sub load_quiz_session {
         );
     }
     else {
+        my @real_frontend_msg;
+        foreach my $q (@frontend_msg) {
+            if (exists $q->{_show_cep_results}) {
+
+                $q->{type} = 'displaytext';
+
+                if ($vars->{cep_results}) {
+
+                    foreach my $current_line (@{from_json($vars->{cep_results})}) {
+                        $q->{content} = $current_line;
+                        my $render = &_render_question($q, $vars);
+                        push @real_frontend_msg, $render;
+                    }
+                }
+                else {
+                    $q->{content} = 'erro: faltando cep_results';
+                }
+            }
+            else {
+                push @real_frontend_msg, &_render_question($q, $vars);
+            }
+        }
+
         $c->stash(
             'quiz_session' => {
-                current_msgs => [@preprend_msg, @frontend_msg],
+                current_msgs => [grep { &_skip_empty_msg($_) } @preprend_msg, @real_frontend_msg],
                 session_id   => $session->{id},
                 prev_msgs    => $opts{caller_is_post}
                 ? undef
-                : [map { &_render_question($_, $vars) } $stash->{prev_msgs}->@*],
+                : [
+                    grep { &_skip_empty_msg($_) }
+                    map  { &_render_question($_, $vars) } $stash->{prev_msgs}->@*
+                ],
             }
         );
     }
@@ -583,7 +614,7 @@ sub process_quiz_session {
 
     my $set_modo_camuflado;
     my $update_user_skills;
-    my $have_new_responses;
+    my $have_new_responses = 0;
     log_info("testing reverse... order of messages.." . to_json($current_msgs));
   QUESTIONS:
     foreach my $msg (reverse $current_msgs->@*) {
@@ -650,10 +681,26 @@ sub process_quiz_session {
             }
             elsif ($msg->{type} eq 'text') {
 
-                $responses->{$code} = $val;
-                $msg->{display_response} = $val;
-                $have_new_responses++;
+                if ($msg->{_cep_address_lookup}) {
+                    my ($update, $preprend) = $c->process_cep_address_lookup(
+                        msg       => $msg,
+                        responses => $responses,
+                        value     => $val
+                    );
 
+                    if ($update) {
+                        $have_new_responses++;
+                    }
+                    else {
+                        push @preprend_msg, @$preprend;
+                    }
+
+                }
+                else {
+                    $responses->{$code} = $val;
+                    $msg->{display_response} = $val;
+                    $have_new_responses++;
+                }
             }
             elsif ($msg->{type} eq 'multiplechoices') {
 
@@ -939,6 +986,7 @@ sub _init_questionnaire_stash {
                 style      => 'normal',
                 content    => $qc->{question},
                 _relevance => $relevance,
+                ($is_anon ? (code => $qc->{code}) : ()),
             };
 
         }
@@ -1004,6 +1052,27 @@ sub _init_questionnaire_stash {
             }
             push @questions, $ref;
 
+        }
+        elsif ($qc->{type} eq 'cep_address_lookup') {
+            push @questions, {
+                type                => 'text',
+                _cep_address_lookup => 1,
+                content             => $qc->{question},
+                ref                 => 'CEP' . $qc->{id},
+                _relevance          => $relevance,
+                _code               => $qc->{code},
+                ($is_anon ? (code => $qc->{code}) : ()),
+            };
+            push @questions, {
+                type              => 'displaytext',
+                _show_cep_results => 1,
+                _relevance        => $relevance,
+                _code             => $qc->{code} . '_show_results',
+                ($is_anon ? (code => $qc->{code}) : ()),
+            };
+        }
+        else {
+            die sprintf 'FATAL ERROR: question type "%s" is not supported!\n', $qc->{type};
         }
 
     }
@@ -1086,6 +1155,79 @@ sub _get_error_questionnaire_stash {
         ]
     };
 
+}
+
+sub process_cep_address_lookup {
+    my ($c, %opts) = @_;
+
+    my $responses = $opts{responses};
+
+    my ($success, $preprend) = (0, []);
+
+    my $help  = 'Digite novamente no formato 00000-000';
+    my $value = $opts{value} // '';
+
+    log_debug("process_cep_address_lookup: $value");
+    $value =~ s/[^0-9]//g;
+
+    if ($value eq '') {
+
+        push @$preprend, &_new_displaytext_error("Não encontrei os dígitos para buscar o CEP! $help");
+
+        goto RETURN;
+    }
+    elsif (length($value) < 8) {
+
+        push @$preprend,
+          &_new_displaytext_error("Não encontrei dígitos suficiente para começar uma buscar pelo CEP! $help");
+
+        goto RETURN;
+    }
+    elsif (length($value) > 8) {
+
+        push @$preprend, &_new_displaytext_error("Encontrei dígitos demais para buscar o CEP! $help");
+
+        goto RETURN;
+    }
+
+    my $latlng = $c->geo_code_cached($value);
+    my ($lat, $lng) = split /,/, $latlng;
+    if (!$latlng) {
+        my $cep_fmt = join '-', substr($value, 0, 5), substr($value, 5, 3);
+        push @$preprend,
+          &_new_displaytext_error(
+            sprintf 'Não encontrei a rua do CEP %s! O CEP precisa estar localizado no Brasil.',
+            $cep_fmt
+          );
+        goto RETURN;
+    }
+
+    my $label = $c->reverse_geo_code_cached($latlng);
+    if (!$label) {
+        $label = "a latitude $lat e longitude $lng";
+    }
+    $responses->{human_address} = $label;
+    $responses->{latlng}        = $latlng;
+
+    my ($success_ponto, $json) = $c->anon_ponto_apoio_json(
+        latitude  => $lat,
+        longitude => $lng,
+    );
+
+    if (!$success_ponto) {
+        push @$preprend,
+          &_new_displaytext_error(
+            sprintf 'Não encontrei serviço de atendimento num raio de 50 km de %s! Digite outro cep',
+            $label
+          );
+        goto RETURN;
+    }
+
+    $responses->{cep_results} = $json;
+    $success = 1;
+
+  RETURN:
+    return ($success, $preprend);
 }
 
 1;
