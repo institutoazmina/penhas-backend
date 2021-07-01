@@ -35,6 +35,12 @@ $t->get_ok(
 )->status_is(200, 'valid response')->json_is('/questionnaires/0/name', 'anon-test')
   ->json_is('/questionnaires/0/id', 2, 'loaded correct questionnaire');
 
+
+$t->get_ok(
+    '/anon-questionnaires/config',
+    form => {token => 'validtoken'}
+)->status_is(200, 'valid response');
+
 my $res_first = $t->post_ok(
     '/anon-questionnaires/new',
     form => {
@@ -130,18 +136,19 @@ my $res_results = $t->post_ok(
         $input->{ref} => '03610-020',
     }
   )->status_is(200, 'invalid response')    #
-  ->json_like('/quiz_session/current_msgs/0/content', qr/ana rosa/)    #
-  ->json_like('/quiz_session/current_msgs/1/content', qr/kazu/)        #
-  ->json_like('/quiz_session/current_msgs/2/content', qr/trianon/)     #
-  ->tx->res->json;                                                     #
+  ->json_like('/quiz_session/current_msgs/0/content', qr/resultados que encontrei/)    #
+  ->json_like('/quiz_session/current_msgs/1/content', qr/ana rosa/)                    #
+  ->json_like('/quiz_session/current_msgs/2/content', qr/kazu/)                        #
+  ->json_like('/quiz_session/current_msgs/3/content', qr/trianon/)                     #
+  ->tx->res->json;                                                                     #
 
 # btn-fim
 $input = $res_results->{quiz_session}{current_msgs}[-1];
 ok $input, 'has input';
 is $input->{type},    'button', 'is button';
 ok $input->{ref},     'has ref';
-is $input->{content}, '',          'content empty';
-is $input->{label},   'Obrigado',  'label ok';
+ok $input->{content}, 'has content';
+is $input->{label},   'Finalizar',  'label ok';
 is $input->{code},    'botao_fim', 'has code (because it is anon)';
 
 my $res_end = $t->post_ok(

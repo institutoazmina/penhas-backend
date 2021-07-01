@@ -19,6 +19,15 @@ sub verify_anon_token {
     return 0;
 }
 
+sub aq_config_get {
+    my $c = shift;
+
+    my $config = $c->schema2->resultset('TwitterBotConfig')->next;
+
+    return $c->render(
+        json => $config ? from_json($config->config) : {},
+    );
+}
 
 sub aq_list_get {
     my $c = shift;
@@ -70,7 +79,8 @@ sub aq_history_get {
     my $c = shift;
 
     my $params = $c->req->params->to_hash;
-    use DDP; p $params;
+    use DDP;
+    p $params;
     my $valid = $c->validate_request_params(
         session_id => {required => 1, type => 'Int'},
     );
@@ -90,7 +100,7 @@ sub aq_process_post {
     my $c = shift;
 
     my $params = $c->req->params->to_hash;
-    my $valid = $c->validate_request_params(
+    my $valid  = $c->validate_request_params(
         session_id => {required => 1, type => 'Int'},
     );
 
@@ -100,7 +110,6 @@ sub aq_process_post {
     $c->process_quiz_session(is_anon => 1, session => $quiz_session, params => $params);
     $return{quiz_session} = $c->stash('quiz_session');
 
-    use JSON;
     $c->log->info(to_json($return{quiz_session}));
 
     return $c->render(
