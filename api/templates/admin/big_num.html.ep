@@ -15,7 +15,6 @@
 </form>
 
 <iframe
-    src="#"
     frameborder="0"
     id="metabase_iframe"
     class="metabase_iframe"
