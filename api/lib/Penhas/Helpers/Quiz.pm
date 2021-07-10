@@ -689,7 +689,8 @@ sub process_quiz_session {
                     my ($update, $preprend) = $c->process_cep_address_lookup(
                         msg       => $msg,
                         responses => $responses,
-                        value     => $val
+                        value     => $val,
+                        code      => $code,
                     );
 
                     if ($update) {
@@ -1165,10 +1166,11 @@ sub process_cep_address_lookup {
     my ($c, %opts) = @_;
 
     my $responses = $opts{responses};
+    my $code      = $opts{code};
 
     my ($success, $preprend) = (0, []);
 
-    my $help  = 'Digite novamente no formato 00000-000';
+    my $help  = 'Digite novamente no formato 00000-000 ou escreva "Sair" para desistir.';
     my $value = $opts{value} // '';
 
     log_debug("process_cep_address_lookup: $value");
@@ -1221,13 +1223,16 @@ sub process_cep_address_lookup {
     if (!$success_ponto) {
         push @$preprend,
           &_new_displaytext_error(
-            sprintf 'Não encontrei serviço de atendimento num raio de 50 km de %s! Digite outro cep',
+            sprintf
+              'Não encontrei serviço de atendimento num raio de 50 km de %s! Digite outro cep our "Sair" para acabar a conversa',
             $label
           );
         goto RETURN;
     }
 
     $responses->{cep_results} = $json;
+    $responses->{$code} = $value;
+
     $success = 1;
 
   RETURN:
