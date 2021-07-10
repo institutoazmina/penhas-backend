@@ -79,8 +79,7 @@ sub aq_history_get {
     my $c = shift;
 
     my $params = $c->req->params->to_hash;
-    use DDP;
-    p $params;
+
     my $valid = $c->validate_request_params(
         session_id => {required => 1, type => 'Int'},
     );

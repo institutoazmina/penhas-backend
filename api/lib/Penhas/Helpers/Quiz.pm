@@ -1,6 +1,6 @@
 package Penhas::Helpers::Quiz;
 use common::sense;
-use Carp qw/croak/;
+use Carp qw/croak confess/;
 use Digest::MD5 qw/md5_hex/;
 use Penhas::Utils qw/tt_test_condition tt_render is_test/;
 use JSON;
@@ -15,21 +15,29 @@ use Scope::OnExit;
 use Penhas::KeyValueStorage;
 
 sub _new_displaytext_error {
+    my ($text, $code) = @_;
+    confess 'missing code for _new_displaytext_error' unless $code;
     {
         type       => 'displaytext',
-        content    => $_[0],
+        content    => $text,
         style      => 'error',
         _relevance => '1',
-    }
+        _code      => $code,
+
+    };
 }
 
 sub _new_displaytext_normal {
+    my ($text, $code) = @_;
+    confess 'missing code for _new_displaytext_normal' unless $code;
     {
         type       => 'displaytext',
-        content    => $_[0],
+        content    => $text,
         style      => 'normal',
         _relevance => '1',
-    }
+        _code      => $code,
+
+    };
 }
 
 sub _skip_empty_msg {
@@ -280,8 +288,9 @@ sub load_quiz_session {
         $c->stash(
             quiz_session => {
                 session_id   => $session->{id},
-                current_msgs => [&_new_displaytext_error('Loop no quiz detectado, entre em contato com o suporte')],
-                prev_msgs    => $stash->{prev_msgs}
+                current_msgs =>
+                  [&_new_displaytext_error('Loop no quiz detectado, entre em contato com o suporte', 'err')],
+                prev_msgs => $stash->{prev_msgs}
             }
         );
         return;
@@ -452,11 +461,8 @@ sub load_quiz_session {
         my @real_frontend_msg;
         foreach my $q (@frontend_msg) {
             if (exists $q->{_show_cep_results}) {
-
                 $q->{type} = 'displaytext';
-
                 if ($vars->{cep_results}) {
-
                     $q->{content} = 'Este são os resultados que encontrei para [% human_address %]';
                     my $render = &_render_question($q, $vars);
                     push @real_frontend_msg, $render;
@@ -566,7 +572,7 @@ sub process_quiz_assistant {
             };
         }
         else {
-            push @preprend_msg, &_new_displaytext_error('Valor para reset_questionnaire precisa ser Y ou N');
+            push @preprend_msg, &_new_displaytext_error('Valor para reset_questionnaire precisa ser Y ou N', 'err');
         }
     }
     elsif (exists $params->{BT_RETURN} && $params->{BT_RETURN} eq '1') {
@@ -578,7 +584,7 @@ sub process_quiz_assistant {
         };
     }
     else {
-        push @preprend_msg, &_new_displaytext_error('Não entendo outros campos.');
+        push @preprend_msg, &_new_displaytext_error('Não entendo outros campos.', 'err');
     }
 
     return {
@@ -654,7 +660,8 @@ sub process_quiz_session {
                                     sprintf(
                                         'Erro na configuração do quiz! code `%s` já tem um valor não númerico, logo não pode-se somar uma resposta de power2',
                                         $code
-                                    )
+                                    ),
+                                    $code
                                   );
                                 last QUESTIONS;
                             }
@@ -680,7 +687,7 @@ sub process_quiz_session {
                     $have_new_responses++;
                 }
                 else {
-                    push @preprend_msg, &_new_displaytext_error(sprintf('Campo %s deve ser Y ou N', $ref));
+                    push @preprend_msg, &_new_displaytext_error(sprintf('Campo %s deve ser Y ou N', $ref), $code);
                 }
             }
             elsif ($msg->{type} eq 'text') {
@@ -740,7 +747,8 @@ sub process_quiz_session {
 
                 }
                 else {
-                    push @preprend_msg, &_new_displaytext_error(sprintf('Campo %s deve uma lista de números', $ref));
+                    push @preprend_msg,
+                      &_new_displaytext_error(sprintf('Campo %s deve uma lista de números', $ref), $code);
                 }
 
             }
@@ -760,7 +768,7 @@ sub process_quiz_session {
 
                 }
                 else {
-                    push @preprend_msg, &_new_displaytext_error(sprintf('Campo %s deve um número', $ref));
+                    push @preprend_msg, &_new_displaytext_error(sprintf('Campo %s deve um número', $ref), $code);
                 }
 
             }
@@ -796,12 +804,13 @@ sub process_quiz_session {
 
             }
             else {
-                push @preprend_msg, &_new_displaytext_error(sprintf('typo %s não foi programado!', $msg->{type}));
+                push @preprend_msg,
+                  &_new_displaytext_error(sprintf('typo %s não foi programado!', $msg->{type}), $code);
             }
 
         }
         else {
-            push @preprend_msg, &_new_displaytext_error(sprintf('Campo %s nao foi enviado', $ref));
+            push @preprend_msg, &_new_displaytext_error(sprintf('Campo %s nao foi enviado', $ref), 'err');
         }
 
         # vai embora, pois so devemos ter 1 resposta por vez
@@ -898,13 +907,14 @@ sub _init_questionnaire_stash {
     my @questions;
     foreach my $qc ($questionnaire->{quiz_config}->@*) {
 
-        my $relevance = $qc->{relevance};
+        my $debug_value = $ENV{USE_DEBUG_QUIZ} ? '[' . $qc->{code} . '] ' : '';
+        my $relevance   = $qc->{relevance};
         if (exists $qc->{intro} && $qc->{intro}) {
             foreach my $intro ($qc->{intro}->@*) {
                 push @questions, {
                     type       => 'displaytext',
                     style      => 'normal',
-                    content    => '[' . $qc->{code} . '] '. $intro->{text},
+                    content    => $debug_value . $intro->{text},
                     _code      => $qc->{code},
                     _relevance => $relevance,
                 };
@@ -996,8 +1006,9 @@ sub _init_questionnaire_stash {
             push @questions, {
                 type       => 'displaytext',
                 style      => 'normal',
-                content    => '[' . $qc->{code} . '] '. $qc->{question},
+                content    => '[' . $qc->{code} . '] ' . $qc->{question},
                 _relevance => $relevance,
+                _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
             };
 
@@ -1026,7 +1037,7 @@ sub _init_questionnaire_stash {
 
             push @questions, {
                 type       => 'button',
-                content    => '[' . $qc->{code} . '] '. $qc->{question},
+                content    => '[' . $qc->{code} . '] ' . $qc->{question},
                 action     => 'none',
                 ref        => 'BT' . $qc->{id},
                 label      => $qc->{button_label} || 'Enviar',
@@ -1041,7 +1052,7 @@ sub _init_questionnaire_stash {
 
             my $ref = {
                 type    => 'onlychoice',
-                content => '[' . $qc->{code} . '] '.$qc->{question},
+                content => $qc->{question},
                 ref     => 'OC' . $qc->{id},
                 _code   => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
@@ -1056,7 +1067,7 @@ sub _init_questionnaire_stash {
                 $ref->{_db_option}[$counter] = $value;
 
                 push @{$ref->{options}}, {
-                    display => $option->{label},
+                    display => ($ENV{USE_DEBUG_QUIZ} ? '[' . $value . ']' : '') . $option->{label},
                     index   => $counter,
                     ($is_anon ? (code_value => $value) : ()),
                 };
@@ -1069,7 +1080,7 @@ sub _init_questionnaire_stash {
             push @questions, {
                 type                => 'text',
                 _cep_address_lookup => 1,
-                content             => '[' . $qc->{code} . '] '. $qc->{question},
+                content             => $debug_value . $qc->{question},
                 ref                 => 'CEP' . $qc->{id},
                 _relevance          => $relevance,
                 _code               => $qc->{code},
@@ -1079,7 +1090,7 @@ sub _init_questionnaire_stash {
                 type              => 'displaytext',
                 _show_cep_results => 1,
                 _relevance        => $relevance,
-                _code             => $qc->{code} . '_show_results',
+                _code             => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
             };
         }
@@ -1151,8 +1162,8 @@ sub _get_error_questionnaire_stash {
     my $stash = {
         prev_msgs => [],
         pending   => [
-            &_new_displaytext_error('Encontramos um problema para montar o questionário!'),
-            &_new_displaytext_error($err . ''),
+            &_new_displaytext_error('Encontramos um problema para montar o questionário!', 'err'),
+            &_new_displaytext_error($err . '',                                             'err'),
             {
                 type                     => 'button',
                 content                  => 'Tente novamente mais tarde, e entre em contato caso o erro persista.',
@@ -1185,20 +1196,20 @@ sub process_cep_address_lookup {
 
     if ($value eq '') {
 
-        push @$preprend, &_new_displaytext_error("Não encontrei os dígitos para buscar o CEP! $help");
+        push @$preprend, &_new_displaytext_error("Não encontrei os dígitos para buscar o CEP! $help", $code);
 
         goto RETURN;
     }
     elsif (length($value) < 8) {
 
         push @$preprend,
-          &_new_displaytext_error("Não encontrei dígitos suficiente para começar uma buscar pelo CEP! $help");
+          &_new_displaytext_error("Não encontrei dígitos suficiente para começar uma buscar pelo CEP! $help", $code);
 
         goto RETURN;
     }
     elsif (length($value) > 8) {
 
-        push @$preprend, &_new_displaytext_error("Encontrei dígitos demais para buscar o CEP! $help");
+        push @$preprend, &_new_displaytext_error("Encontrei dígitos demais para buscar o CEP! $help", $code);
 
         goto RETURN;
     }
@@ -1209,8 +1220,11 @@ sub process_cep_address_lookup {
         my $cep_fmt = join '-', substr($value, 0, 5), substr($value, 5, 3);
         push @$preprend,
           &_new_displaytext_error(
-            sprintf 'Não encontrei a rua do CEP %s! O CEP precisa estar localizado no Brasil.',
-            $cep_fmt
+            sprintf(
+                'Não encontrei a rua do CEP %s! O CEP precisa estar localizado no Brasil.',
+                $cep_fmt
+            ),
+            $code
           );
         goto RETURN;
     }
@@ -1230,9 +1244,11 @@ sub process_cep_address_lookup {
     if (!$success_ponto) {
         push @$preprend,
           &_new_displaytext_error(
-            sprintf
-              'Não encontrei serviço de atendimento num raio de 50 km de %s! Digite outro cep our "Sair" para acabar a conversa',
-            $label
+            sprintf(
+                'Não encontrei serviço de atendimento num raio de 50 km de %s! Digite outro cep our "Sair" para acabar a conversa',
+                $label
+            ),
+            $code
           );
         goto RETURN;
     }
