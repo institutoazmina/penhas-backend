@@ -904,7 +904,7 @@ sub _init_questionnaire_stash {
                 push @questions, {
                     type       => 'displaytext',
                     style      => 'normal',
-                    content    => $intro->{text},
+                    content    => '[' . $qc->{code} . '] '. $intro->{text},
                     _code      => $qc->{code},
                     _relevance => $relevance,
                 };
@@ -996,7 +996,7 @@ sub _init_questionnaire_stash {
             push @questions, {
                 type       => 'displaytext',
                 style      => 'normal',
-                content    => $qc->{question},
+                content    => '[' . $qc->{code} . '] '. $qc->{question},
                 _relevance => $relevance,
                 ($is_anon ? (code => $qc->{code}) : ()),
             };
@@ -1026,7 +1026,7 @@ sub _init_questionnaire_stash {
 
             push @questions, {
                 type       => 'button',
-                content    => $qc->{question},
+                content    => '[' . $qc->{code} . '] '. $qc->{question},
                 action     => 'none',
                 ref        => 'BT' . $qc->{id},
                 label      => $qc->{button_label} || 'Enviar',
@@ -1041,7 +1041,7 @@ sub _init_questionnaire_stash {
 
             my $ref = {
                 type    => 'onlychoice',
-                content => $qc->{question},
+                content => '[' . $qc->{code} . '] '.$qc->{question},
                 ref     => 'OC' . $qc->{id},
                 _code   => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
@@ -1069,7 +1069,7 @@ sub _init_questionnaire_stash {
             push @questions, {
                 type                => 'text',
                 _cep_address_lookup => 1,
-                content             => $qc->{question},
+                content             => '[' . $qc->{code} . '] '. $qc->{question},
                 ref                 => 'CEP' . $qc->{id},
                 _relevance          => $relevance,
                 _code               => $qc->{code},
