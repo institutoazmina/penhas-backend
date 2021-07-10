@@ -1052,7 +1052,7 @@ sub _init_questionnaire_stash {
 
             my $ref = {
                 type    => 'onlychoice',
-                content => $qc->{question},
+                content => $debug_value . $qc->{question},
                 ref     => 'OC' . $qc->{id},
                 _code   => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
