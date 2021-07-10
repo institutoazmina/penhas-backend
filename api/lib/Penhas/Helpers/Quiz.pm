@@ -863,13 +863,17 @@ sub process_quiz_session {
 
 }
 
+
 sub has_relevance {
     my ($vars, $msg) = @_;
 
     return 1 if $msg->{_relevance} eq '1';
+    die '_self already exists!!' if exists $vars->{_self};
+    local $vars->{_self} = $msg->{_code};
     return 1 if tt_test_condition($msg->{_relevance}, $vars);
     return 0;
 }
+
 
 sub any_has_relevance {
     my ($vars, $msgs) = @_;
