@@ -867,8 +867,10 @@ sub process_quiz_session {
 sub has_relevance {
     my ($vars, $msg) = @_;
 
-    return 1 if $msg->{_relevance} eq '1';
+    return 1                     if $msg->{_relevance} eq '1';
     die '_self already exists!!' if exists $vars->{_self};
+    use DDP;
+    p $msg;
     local $vars->{_self} = $msg->{_code};
     return 1 if tt_test_condition($msg->{_relevance}, $vars);
     return 0;
@@ -903,6 +905,7 @@ sub _init_questionnaire_stash {
                     type       => 'displaytext',
                     style      => 'normal',
                     content    => $intro->{text},
+                    _code      => $qc->{code},
                     _relevance => $relevance,
                 };
             }

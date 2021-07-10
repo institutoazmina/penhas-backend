@@ -140,6 +140,7 @@ my $res_results = $t->post_ok(
   ->json_like('/quiz_session/current_msgs/1/content', qr/ana rosa/)                    #
   ->json_like('/quiz_session/current_msgs/2/content', qr/kazu/)                        #
   ->json_like('/quiz_session/current_msgs/3/content', qr/trianon/)                     #
+  ->json_is('/quiz_session/current_msgs/4/content', 'olá')                             #
   ->tx->res->json;                                                                     #
 
 # btn-fim
@@ -148,7 +149,7 @@ ok $input, 'has input';
 is $input->{type},    'button', 'is button';
 ok $input->{ref},     'has ref';
 ok $input->{content}, 'has content';
-is $input->{label},   'Finalizar',  'label ok';
+is $input->{label},   'Finalizar', 'label ok';
 is $input->{code},    'botao_fim', 'has code (because it is anon)';
 
 my $res_end = $t->post_ok(
