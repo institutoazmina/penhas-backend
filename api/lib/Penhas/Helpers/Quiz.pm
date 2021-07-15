@@ -907,14 +907,13 @@ sub _init_questionnaire_stash {
     my @questions;
     foreach my $qc ($questionnaire->{quiz_config}->@*) {
 
-        my $debug_value = $ENV{USE_DEBUG_QUIZ} ? '[' . $qc->{code} . '] ' : '';
         my $relevance   = $qc->{relevance};
         if (exists $qc->{intro} && $qc->{intro}) {
             foreach my $intro ($qc->{intro}->@*) {
                 push @questions, {
                     type       => 'displaytext',
                     style      => 'normal',
-                    content    => $debug_value . $intro->{text},
+                    content    => $intro->{text},
                     _code      => $qc->{code},
                     _relevance => $relevance,
                 };
@@ -1052,7 +1051,7 @@ sub _init_questionnaire_stash {
 
             my $ref = {
                 type    => 'onlychoice',
-                content => $debug_value . $qc->{question},
+                content => $qc->{question},
                 ref     => 'OC' . $qc->{id},
                 _code   => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
@@ -1067,7 +1066,7 @@ sub _init_questionnaire_stash {
                 $ref->{_db_option}[$counter] = $value;
 
                 push @{$ref->{options}}, {
-                    display => ($ENV{USE_DEBUG_QUIZ} ? '[' . $value . ']' : '') . $option->{label},
+                    display => $option->{label},
                     index   => $counter,
                     ($is_anon ? (code_value => $value) : ()),
                 };
@@ -1080,7 +1079,7 @@ sub _init_questionnaire_stash {
             push @questions, {
                 type                => 'text',
                 _cep_address_lookup => 1,
-                content             => $debug_value . $qc->{question},
+                content             => $qc->{question},
                 ref                 => 'CEP' . $qc->{id},
                 _relevance          => $relevance,
                 _code               => $qc->{code},
