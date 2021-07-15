@@ -1005,7 +1005,7 @@ sub _init_questionnaire_stash {
             push @questions, {
                 type       => 'displaytext',
                 style      => 'normal',
-                content    => '[' . $qc->{code} . '] ' . $qc->{question},
+                content    => $qc->{question},
                 _relevance => $relevance,
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
@@ -1036,7 +1036,7 @@ sub _init_questionnaire_stash {
 
             push @questions, {
                 type       => 'button',
-                content    => '[' . $qc->{code} . '] ' . $qc->{question},
+                content    => $qc->{question},
                 action     => 'none',
                 ref        => 'BT' . $qc->{id},
                 label      => $qc->{button_label} || 'Enviar',
