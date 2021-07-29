@@ -4,6 +4,7 @@ use Penhas::SchemaConnected;
 use Penhas::Controller;
 use Penhas::Helpers::CPF;
 use Penhas::Helpers::Quiz;
+use Penhas::Helpers::AnonQuiz;
 use Penhas::Helpers::ClienteSetSkill;
 use Penhas::Helpers::Timeline;
 use Penhas::Helpers::RSS;
@@ -24,6 +25,7 @@ sub setup {
     my $c = shift;
 
     Penhas::Helpers::Quiz::setup($c);
+    Penhas::Helpers::AnonQuiz::setup($c);
     Penhas::Helpers::Guardioes::setup($c);
     Penhas::Helpers::CPF::setup($c);
     Penhas::Helpers::Timeline::setup($c);

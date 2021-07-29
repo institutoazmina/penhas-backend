@@ -1,3 +1,7 @@
+#!/usr/bin/perl
+#!/usr/bin/perl
+# HARNESS-CONFLICTS  PONTO_APOIO
+
 use Mojo::Base -strict;
 use FindBin qw($RealBin);
 use lib "$RealBin/../lib";

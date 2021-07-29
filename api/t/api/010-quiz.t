@@ -65,8 +65,8 @@ subtest_buffered 'Testar envio de campo boolean com valor invalido + interpolati
     is $first_msg->{style},     'error',                         'type is error';
 
 
-    is $second_msg->{content}, 'intro1',                 'question intro is working';
-    is $third_msg->{content},  'HELLOQuiz User Name!',   'question intro interpolation is working';
+    is $second_msg->{content}, 'intro1',                                     'question intro is working';
+    is $third_msg->{content},  'HELLOQuiz User Name!',                       'question intro interpolation is working';
     is $input_msg->{content},  'yesno question☺️⚠️👍👭🤗🤳', 'yesno question question is present';
 };
 
@@ -234,6 +234,28 @@ subtest_buffered 'group de questoes boolean' => sub {
     is $cliente->modo_camuflado_ativo, 1, 'modo_camuflado_ativo=TRUE';
     ok $cliente->modo_camuflado_atualizado_em, 'modo_camuflado_atualizado_em is date';
 
+    is $input_msg->{type},    'onlychoice', 'is a onlychoice';
+    is $input_msg->{content}, 'choose one', 'onlychoice has content';
+    is $input_msg->{action},  undef,        'button action is undef [not a button]';
+    is $input_msg->{options}[0]{display}, 'option a', 'options a is ok';
+    is $input_msg->{options}[1]{display}, 'option b', 'options a is ok';
+    is $input_msg->{options}[0]{index},   0,          'index a is ok';
+    is $input_msg->{options}[1]{index},   1,          'index b is ok';
+
+
+    # apertando o botao "onlychoise" = 1
+    $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
+    $json      = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {
+            session_id => $cadastro->{quiz_session}{session_id},
+            $field_ref => 1,
+        }
+    )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+    $first_msg = $json->{quiz_session}{current_msgs}[0];
+    $input_msg = $json->{quiz_session}{current_msgs}[-1];
+
     is $input_msg->{type},    'button', 'is a button';
     is $input_msg->{content}, 'final',  'button has content';
     is $input_msg->{action},  'none',   'button action is none [btn-fim]';
@@ -251,7 +273,7 @@ subtest_buffered 'group de questoes boolean' => sub {
             ok $prev->{display_response}, 'has display_response';
         }
     }
-    is scalar @$prev_msgs, 11, '11 prev questions';
+    is scalar @$prev_msgs, 13, '13 prev questions';
 
     # apertando o botao botao_tela_socorro
     $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
@@ -271,6 +293,28 @@ subtest_buffered 'group de questoes boolean' => sub {
         {'x-api-key' => $session}
     )->status_is(200, 'profile is ok')->json_is('/user_profile/modo_camuflado_ativo', 1, 'modo_camuflado_ativo is 1')
       ->json_is('/user_profile/modo_anonimo_ativo', 1, 'modo_anonimo_ativo is 1');
+
+
+    my $session   = get_schema2->resultset('ClientesQuizSession')->find($cadastro->{quiz_session}{session_id});
+    my $responses = from_json($session->responses);
+
+    is $responses->{btn_camuflado1},        0,                           'ok value';
+    is $responses->{btn_camuflado1_action}, "botao_tela_modo_camuflado", 'ok value';
+    is $responses->{btn_camuflado2},        1,                           'ok value';
+    is $responses->{btn_camuflado2_action}, "botao_tela_modo_camuflado", 'ok value';
+    is $responses->{btn_fim},               1,                           'ok value';
+    is $responses->{btn_fim_action},        "none",                      'ok value';
+    is $responses->{chooseone},             "b",                         'ok value';
+    is $responses->{freetext},              $choose_rand, 'ok value';
+    is $responses->{groupq},                4,     'ok value';
+    is $responses->{groupq_2},              "N",   'ok value';
+    is $responses->{groupq_4},              "Y",   'ok value';
+    is $responses->{groupq_reb},            "Y",   'ok value';
+    is $responses->{groupq_refa},           "N",   'ok value';
+    is $responses->{skill},                 "[0]", 'ok value';
+    ok $responses->{start_time},            'has value';
+    is $responses->{yesno1},                "Y", 'ok value';
+
 
 };
 
@@ -310,7 +354,7 @@ subtest_buffered 'reiniciando o quiz' => sub {
     my $first_msg = $json->{quiz_session}{current_msgs}[0];
     my $input_msg = $json->{quiz_session}{current_msgs}[-1];
 
-    is $first_msg->{type},      'button',  'button';
+    is $first_msg->{type},      'button',   'button';
     like $first_msg->{content}, qr/única/, 'unica função';
 
     # apertando o botao "BT_RETURN" = 1
@@ -321,7 +365,8 @@ subtest_buffered 'reiniciando o quiz' => sub {
             session_id => $json->{quiz_session}{session_id},
             BT_RETURN  => 1,
         }
-    )->status_is(200)->json_is('/quiz_session/finished', 1)->json_is('/quiz_session/end_screen', '/mainboard?page=chat');
+    )->status_is(200)->json_is('/quiz_session/finished', 1)
+      ->json_is('/quiz_session/end_screen', '/mainboard?page=chat');
 
     # apertando o botao "reset_questionnaire" = Y
     $json = $t->post_ok(
