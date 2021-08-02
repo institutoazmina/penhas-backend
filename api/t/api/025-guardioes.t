@@ -4,6 +4,7 @@ use lib "$RealBin/../lib";
 use DateTime;
 use Penhas::Test;
 use Penhas::Minion::Tasks::SendSMS;
+use Penhas::Minion::Tasks::DeleteAudio;
 use Penhas::Minion::Tasks::DeleteUser;
 my $t = test_instance;
 use Business::BR::CPF qw/random_cpf/;
@@ -113,7 +114,8 @@ do {
       ->json_is('/data/is_accepted', '0')->json_like('/message', qr/Enviamos um SMS/);
 
     trace_popall;
-    ok(Penhas::Minion::Tasks::SendSMS::send_sms($job, test_get_minion_args_job($ENV{LAST_SEND_SMS_JOB_ID})), 'send sms');
+    ok(Penhas::Minion::Tasks::SendSMS::send_sms($job, test_get_minion_args_job($ENV{LAST_SEND_SMS_JOB_ID})),
+        'send sms');
     do {
         my $text = trace_popall;
         like $text, qr/minion:send_sms,\+14842918467,SentSmsLog,/, 'logs looks ok';
@@ -571,12 +573,38 @@ do {
     $t->delete_ok(
         '/me/audios/' . $event_id,
         {'x-api-key' => $session}
-    )->status_is(204);
+    )->status_is(204, 'set audio to removed by user');
+
+    $event->discard_changes;
+    ok $event->deleted_at, 'deleted by user';
+
+    # mais de 5 anos
+    $event->update({created_at => '2002-01-02'});
+
+    trace_popall;
+    $ENV{MAINTENANCE_SECRET} = '1234';
+    $t->get_ok(
+        '/maintenance/housekeeping',
+        form => {secret => $ENV{MAINTENANCE_SECRET}}
+    )->status_is(200);
+
+    $event->discard_changes;
+    is $event->status, 'delete_from_s3', 'will be deleted';
+    ok $ENV{LAST_AUDIO_DELETE_JOB_ID}, 'has $ENV{LAST_AUDIO_DELETE_JOB_ID}';
+    ok(
+        Penhas::Minion::Tasks::DeleteAudio::delete_audio(
+            $job, test_get_minion_args_job($ENV{LAST_AUDIO_DELETE_JOB_ID})
+        ),
+        'delete audio'
+    );
+    my $text = trace_popall;
+    is $text, "minion:delete_audio," . $event->id, 'logs looks ok';
 
     $t->get_ok(
         '/me/audios/' . $event_id,
         {'x-api-key' => $session}
-    )->status_is(400)->json_has('/error', 'invalid')->json_has('/message', 'evento não encontrado');
+    )->status_is(400, 'not found after')->json_has('/error', 'invalid')
+      ->json_has('/message', 'evento não encontrado');
 
     $t->delete_ok(
         '/me',
@@ -591,7 +619,6 @@ do {
         }
     );
     trace_popall;
-    $ENV{MAINTENANCE_SECRET} = '1234';
     $t->get_ok(
         '/maintenance/housekeeping',
         form => {secret => $ENV{MAINTENANCE_SECRET}}
