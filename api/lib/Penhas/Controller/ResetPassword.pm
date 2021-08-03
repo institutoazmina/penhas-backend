@@ -55,8 +55,9 @@ sub request_new {
     # se restar pelo menos 6% do tempo restante, nao envia outro email
     my $item = $c->schema2->resultset('ClientesResetPassword')->search(
         {
-            'created_at' => {'>' => DateTime->now->add(seconds => $min_ttl_retry)->datetime(' ')},
-            'cliente_id' => $directus_id,
+            'created_at'      => {'>' => DateTime->now->add(seconds => $min_ttl_retry)->datetime(' ')},
+            'cliente_id'      => $directus_id,
+            'used_by_remote_ip' => undef
         }
     )->next;
     if ($item) {
