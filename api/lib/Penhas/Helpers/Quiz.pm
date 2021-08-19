@@ -1187,7 +1187,7 @@ sub process_cep_address_lookup {
 
     my ($success, $preprend) = (0, []);
 
-    my $help  = 'Digite novamente no formato 00000-000 ou escreva "Sair" para desistir.';
+    my $help  = 'Digite outro CEP no formato 00000-000 ou use o botão "Sair" para encerrar a conversa.';
     my $value = $opts{value} // '';
 
     log_debug("process_cep_address_lookup: $value");

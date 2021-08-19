@@ -38,7 +38,6 @@ sub register {
     $anon_quiz->get('history')->to(action => 'aq_history_get');
     $anon_quiz->post('process')->to(action => 'aq_process_post');
 
-
     # Convite de guardiões
     # GET /guardiao?token=
     # POST /guardiao?token=&action=
@@ -65,6 +64,8 @@ sub register {
 
     # GET /geocode
     $r->get('geocode')->to(controller => 'PontoApoio', action => 'public_geocode');
+
+    $r->get('ponto-apoio-unlimited')->to(controller => 'PontoApoio', action => 'pa_list_unlimited');
 
     # Admin endpoints
 

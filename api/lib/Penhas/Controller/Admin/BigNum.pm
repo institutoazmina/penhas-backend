@@ -36,7 +36,10 @@ sub abignum_get {
     }
     $c->stash(elapsed => tv_interval($t0));
 
-    my @rows            = ({name => 'Panel geral', resource => {dashboard => 4}, params => {}});
+    my @rows = (
+        {name => 'Aplicativo PenhaS', resource => {dashboard => 4}, params => {}},
+        {name => 'Twitter Penha',     resource => {dashboard => 5}, params => {}},
+    );
     my $metabase_secret = $ENV{METABASE_SECRET} || 'secret';
     my @ret             = ();
     foreach my $payload (@rows) {

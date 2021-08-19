@@ -51,6 +51,7 @@ sub housekeeping {
         $r->update({deletion_started_at => \'now()'});
         $ENV{LAST_DELETE_JOB_ID} = $job_id;
     }
+
     if (!is_test()) {
         my $update_cep = $c->schema2->resultset('Cliente')->search(
             {

@@ -11,6 +11,37 @@ use Penhas::Controller::Me;
 
 use DateTime::Format::Pg;
 
+sub pa_list_unlimited {
+    my $c = shift;
+
+    my $valid = $c->validate_request_params(
+        token => {required => 1, type => 'Str', max_length => 100,},
+    );
+
+    if ($ENV{PONTO_APOIO_SECRET} && $valid->{token} && $valid->{token} eq $ENV{PONTO_APOIO_SECRET}) {
+
+        my $valid = $c->validate_request_params(
+            latitude     => {max_length => 20, required => 1, type => Latitute},
+            longitude    => {max_length => 20, required => 1, type => Longitude},
+            max_distance => {max_length => 20, required => 1, type => 'Int'},
+            rows         => {max_length => 20, required => 1, type => 'Int'},
+        );
+
+        my $ponto_apoio_list = $c->ponto_apoio_list(
+            %$valid,
+            all_columns => 1,
+        );
+
+        return $c->render(
+            json   => $ponto_apoio_list,
+            status => 200,
+        );
+
+    }
+
+    return $c->reply_invalid_param('invalid token', 'token_invalid', 'token');
+}
+
 sub pa_list {
     my $c = shift;
 
