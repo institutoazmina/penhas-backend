@@ -445,7 +445,7 @@ sub ponto_apoio_suggest {
                 subject   => 'PenhaS - Nova sugestão de ponto de apoio',
                 variables => encode_json(
                     {
-                        id => $row->{id},
+                        id => $row->id(),
                     }
                 ),
             }
