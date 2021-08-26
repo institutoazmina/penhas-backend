@@ -436,6 +436,22 @@ sub ponto_apoio_suggest {
 
     my $row = $c->schema2->resultset('PontoApoioSugestoe')->create($fields);
 
+    if ($ENV{EMAIL_PONTO_APOIO_SUGESTAO}){
+        $c->schema->resultset('EmaildbQueue')->create(
+            {
+                config_id => 1,
+                template  => 'ponto_apoio_sugestao.html',
+                to        => $ENV{EMAIL_PONTO_APOIO_SUGESTAO},
+                subject   => 'PenhaS - Nova sugestão de ponto de apoio',
+                variables => encode_json(
+                    {
+                        id => $row->{id},
+                    }
+                ),
+            }
+        );
+    }
+
     return {
         success => 1,
         message => 'Sua sugestão será avaliada antes de ser publicada.',
