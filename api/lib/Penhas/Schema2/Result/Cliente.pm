@@ -207,6 +207,12 @@ __PACKAGE__->might_have(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "clientes_app_activity_logs",
+  "Penhas::Schema2::Result::ClientesAppActivityLog",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "clientes_app_notifications",
   "Penhas::Schema2::Result::ClientesAppNotification",
   { "foreign.cliente_id" => "self.id" },
@@ -298,8 +304,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cqfsR02+QIHXkHEXQ+JP7Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-08-26 11:22:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:K0gkPb6xF+I9dG+XERIAtA
 
 use Carp qw/confess/;
 
