@@ -551,6 +551,8 @@ sub _format_tweet {
 
     my $anonimo = $me->{anonimo} || $me->{cliente_modo_anonimo_ativo};
 
+    my $eh_admin = defined $user && $user->{eh_admin};
+
     my $media_ref = [];
 
     if ($me->{media_ids} && $me->{media_ids} =~ /^\[/) {
@@ -568,15 +570,19 @@ sub _format_tweet {
         },
         id               => $me->{id},
         content          => $me->{disable_escape} ? $me->{content} : &_linkfy(&_nl2br(xml_escape($me->{content}))),
-        anonimo          => $anonimo              ? 1              : 0,
+        anonimo          => $anonimo && !$eh_admin             ? 1              : 0,
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
         media            => $media_ref,
-        icon             => $anonimo ? $avatar_anonimo : $me->{cliente_avatar_url} || $avatar_default,
-        name             => $anonimo ? 'Anônimo'       : $me->{cliente_apelido},
-        created_at       => pg_timestamp2iso_8601_second($me->{created_at}),
-        _tags_index      => $me->{tags_index},
-        ($anonimo ? (cliente_id => 0) : (cliente_id => $me->{cliente_id})),
+        icon             => $anonimo && !$eh_admin ? $avatar_anonimo : $me->{cliente_avatar_url} || $avatar_default,
+        name             => (
+            $anonimo
+            ? ($eh_admin ? $me->{cliente_apelido} . ' (Anônimo)' : 'Anônimo')
+            : $me->{cliente_apelido}
+        ),
+        created_at  => pg_timestamp2iso_8601_second($me->{created_at}),
+        _tags_index => $me->{tags_index},
+        ($anonimo && !$eh_admin ? (cliente_id => 0) : (cliente_id => $me->{cliente_id})),
 
     };
 }
@@ -708,7 +714,7 @@ sub add_tweets_highlights {
                 }
 
                 next unless $row->{noticias};
-                push @regexps, $match;
+                push @regexps,    $match;
                 push @highlights, {
                     regexp   => $match,
                     noticias => from_json($row->{noticias}),
