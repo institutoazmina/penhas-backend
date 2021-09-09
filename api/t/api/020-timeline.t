@@ -19,6 +19,7 @@ goto AGAIN2 if cpf_already_exists($random_cpf2);
 
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
 $ENV{SKIP_END_NEWS}            = '1';
+delete $ENV{SUBSUBCOMENT_DISABLED};
 
 my @other_fields = (
     raca        => 'pardo',
@@ -126,6 +127,7 @@ do {
         }
     )->status_is(200)->tx->res->json;
     my $tweet_id = $res->{id};
+use DDP; $a= ["parent is " , $tweet_id]; p $a;
 
     &_test_notifications(tweet_id => $tweet_id);
     $ENV{NOTIFICATIONS_ENABLED} = 0;
@@ -384,6 +386,7 @@ sub _test_notifications {
             {'x-api-key' => $session},
             form => {content => 'test1'}
         )->status_is(200)->tx->res->json;
+        is $comment->{meta}{tweet_depth_test_only}, 2, '2nd level [subcoment]';
 
         is $user->notification_logs->count, 0, 'no logs';
         trace_popall;
@@ -442,6 +445,9 @@ sub _test_notifications {
             {'x-api-key' => $session},
             form => {content => 'subcomment'}
         )->status_is(200)->tx->res->json;
+
+        is $comment2_subcomment->{meta}{tweet_depth_test_only}, 3, '3nd level [comment of a comment]';
+        is $comment2_subcomment->{meta}{can_reply}, 0, '3nd level is not allowed to comment';
 
         trace_popall;
         ok(

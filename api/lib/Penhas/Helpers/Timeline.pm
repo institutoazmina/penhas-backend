@@ -226,17 +226,34 @@ sub add_tweet {
     my $id = $base . sprintf('%04d', $cur_seq);
     my $rs = $c->schema2->resultset('Tweet');
 
+    my $depth              = 1;
     my $original_parent_id = $reply_to;
+
     if ($original_parent_id && $ENV{SUBSUBCOMENT_DISABLED}) {
 
-        # procura o tweet raiz
+        # procura o tweet raiz [e conta o depth]
         while (1) {
             my $parent = $rs->search({id => $reply_to}, {columns => ['id', 'parent_id']})->next;
             last                           if !$parent;
             $reply_to = $parent->parent_id if $parent->parent_id;
+            $depth++;
 
             last if !$parent->parent_id;
-            last if $parent->parent_id == $parent->id;    # just in case
+            last if $parent->parent_id eq $parent->id;    # just in case
+        }
+    }
+    elsif ($original_parent_id) {
+        my $tmp_parent_id = $reply_to;
+
+        # procura o tweet raiz para contar o depth
+        while (1) {
+            my $parent = $rs->search({id => $tmp_parent_id}, {columns => ['id', 'parent_id']})->next;
+            last                                if !$parent;
+            $tmp_parent_id = $parent->parent_id if $parent->parent_id;
+
+            $depth++;
+            last if !$parent->parent_id;
+            last if $parent->parent_id eq $parent->id;    # just in case
         }
     }
 
@@ -252,6 +269,7 @@ sub add_tweet {
             created_at         => $now->datetime(' '),
             media_ids          => $media_ids ? to_json($media_ids) : undef,
             original_parent_id => $original_parent_id,
+            tweet_depth        => $depth,
         }
     );
 
@@ -566,11 +584,14 @@ sub _format_tweet {
 
     return {
         meta => {
-            owner => $user->{id} == $me->{cliente_id} ? 1 : 0,
+            owner     => $user->{id} == $me->{cliente_id} ? 1 : 0,
+            can_reply => $me->{tweet_depth} < 3 && $me->{tweet_depth} > 0 ? 1 : 0,
+
+            (is_test() ? (tweet_depth_test_only => $me->{tweet_depth}) : ())
         },
         id               => $me->{id},
-        content          => $me->{disable_escape} ? $me->{content} : &_linkfy(&_nl2br(xml_escape($me->{content}))),
-        anonimo          => $anonimo && !$eh_admin             ? 1              : 0,
+        content          => $me->{disable_escape}  ? $me->{content} : &_linkfy(&_nl2br(xml_escape($me->{content}))),
+        anonimo          => $anonimo && !$eh_admin ? 1              : 0,
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
         media            => $media_ref,
