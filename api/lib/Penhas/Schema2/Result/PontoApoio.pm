@@ -158,10 +158,10 @@ __PACKAGE__->add_columns(
   { data_type => "timestamp with time zone", is_nullable => 1 },
   "index",
   { data_type => "text", is_nullable => 1 },
-  "owner",
-  { data_type => "uuid", is_nullable => 1, size => 16 },
   "geog",
   { data_type => "geography", is_nullable => 1 },
+  "owner",
+  { data_type => "uuid", is_nullable => 1, size => 16 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -178,8 +178,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-25 03:33:20
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:AnlpcWOtInStREMu2ehW3w
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:40:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EPOprlPDpeSBnEVmjsgKEg
 
 # ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id);
 

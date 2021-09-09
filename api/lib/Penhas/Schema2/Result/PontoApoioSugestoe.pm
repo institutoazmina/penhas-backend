@@ -32,6 +32,13 @@ __PACKAGE__->add_columns(
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "metainfo",
   { data_type => "json", default_value => "{}", is_nullable => 0 },
+  "status",
+  {
+    data_type     => "text",
+    default_value => "pending",
+    is_nullable   => 0,
+    original      => { data_type => "varchar" },
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -42,8 +49,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pMJWj6FzzMjtiCflo+cb7w
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:40:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SELYsGDFnGj8jM74W5emsg
 
 # ALTER TABLE ponto_apoio_sugestoes ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

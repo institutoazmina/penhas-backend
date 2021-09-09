@@ -26,7 +26,7 @@ __PACKAGE__->add_columns(
   { data_type => "timestamp with time zone", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
-__PACKAGE__->add_unique_constraint("idx_236652_cliente_id", ["cliente_id"]);
+__PACKAGE__->add_unique_constraint("idx_25942_cliente_id", ["cliente_id"]);
 __PACKAGE__->belongs_to(
   "cliente",
   "Penhas::Schema2::Result::Cliente",
@@ -35,8 +35,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xABw0Dj6jXc2GyKbS5pBRA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:40:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:y7joTR4lFSortpgX31UXuA
 
 # ALTER TABLE clientes_app_activity ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 # alter table  clientes_app_activity modify column last_tm_activity datetime(6);

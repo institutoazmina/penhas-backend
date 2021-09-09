@@ -39,9 +39,9 @@ __PACKAGE__->add_columns(
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "exibir_titulo_inline",
   { data_type => "boolean", default_value => \"false", is_nullable => 1 },
-  "modified_by",
-  { data_type => "uuid", is_nullable => 1, size => 16 },
   "owner",
+  { data_type => "uuid", is_nullable => 1, size => 16 },
+  "modified_by",
   { data_type => "uuid", is_nullable => 1, size => 16 },
 );
 __PACKAGE__->set_primary_key("id");
@@ -53,8 +53,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:eHK375fIai4KPs8usReL6A
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:40:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Z0M7LpXYvzWgUsHv2BFrmg
 
 # ALTER TABLE faq_tela_sobre ADD FOREIGN KEY (fts_categoria_id) REFERENCES faq_tela_sobre_categoria (id) ON DELETE RESTRICT ON UPDATE RESTRICT;
 

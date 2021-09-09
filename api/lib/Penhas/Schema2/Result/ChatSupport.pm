@@ -42,7 +42,7 @@ __PACKAGE__->add_columns(
   },
 );
 __PACKAGE__->set_primary_key("id");
-__PACKAGE__->add_unique_constraint("idx_236601_idx_uniq_chat_support_cliente", ["cliente_id"]);
+__PACKAGE__->add_unique_constraint("idx_25891_idx_uniq_chat_support_cliente", ["cliente_id"]);
 __PACKAGE__->has_many(
   "chat_support_messages",
   "Penhas::Schema2::Result::ChatSupportMessage",
@@ -57,8 +57,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xh/8UJZQ6E5y624IxtnyBA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:40:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LrsbzBZFPpXNUt1TaFlBYg
 
 # ALTER TABLE chat_support ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 # alter table chat_support modify column created_at datetime(6);

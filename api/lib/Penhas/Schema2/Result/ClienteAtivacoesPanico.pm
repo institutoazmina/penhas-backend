@@ -23,7 +23,7 @@ __PACKAGE__->add_columns(
   "created_at",
   { data_type => "timestamp with time zone", is_nullable => 0 },
   "alert_sent_to",
-  { data_type => "text", default_value => "{}", is_nullable => 0 },
+  { data_type => "json", default_value => "{}", is_nullable => 0 },
   "gps_lat",
   {
     data_type => "varchar",
@@ -52,8 +52,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BQduvNnn13D7Mz4Br56eVQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:40:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:C1m15PWCw3UGO62/0xJ66w
 
 # ALTER TABLE cliente_ativacoes_panico ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

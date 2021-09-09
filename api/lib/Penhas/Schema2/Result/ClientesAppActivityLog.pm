@@ -33,12 +33,12 @@ __PACKAGE__->belongs_to(
   "cliente",
   "Penhas::Schema2::Result::Cliente",
   { id => "cliente_id" },
-  { is_deferrable => 0, on_delete => "NO ACTION", on_update => "NO ACTION" },
+  { is_deferrable => 0, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-08-26 11:22:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:fBw3pe4TNbEH+fvRZAh6Lg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:40:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:B7KZYYmhKzAfMuYLPy3ADg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
