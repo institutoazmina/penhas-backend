@@ -49,8 +49,14 @@
         </div>
         <!-- Accordion wrapper -->
         <div class="text-center">
+            <a class="btn btn-lg btn-acessar" href="/web/termos-de-uso">Termos de uso</a>
+            <br><br>
+            <a class="btn btn-lg btn-acessar" href="/web/politica-privacidade">Política de Privacidade</a>
+            <br><br>
             <a href="https://api.penhas.com.br/web/faq/_botao_contato_" target="_blank" class="btn btn-lg btn-acessar">Não encontrei o que preciso</a>
         </div>
+
+
     <!-- div white -->
     </div>
     % }
