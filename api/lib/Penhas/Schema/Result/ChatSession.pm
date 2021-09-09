@@ -19,7 +19,7 @@ __PACKAGE__->add_columns(
     sequence          => "chat_session_id_seq",
   },
   "session_key",
-  { data_type => "char", is_nullable => 0, size => 30 },
+  { data_type => "char", is_nullable => 0, size => 10 },
   "participants",
   { data_type => "integer[]", is_nullable => 0 },
   "session_started_by",
@@ -52,8 +52,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:56:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:i0w8JOKpVm9iuH9BTID9Mg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:39:55
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9t/nfsb6uS0RV/IOJQPjQg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
