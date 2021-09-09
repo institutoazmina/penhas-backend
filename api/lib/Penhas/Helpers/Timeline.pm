@@ -574,7 +574,7 @@ sub _format_tweet {
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
         media            => $media_ref,
-        icon             => $anonimo && !$eh_admin ? $avatar_anonimo : $me->{cliente_avatar_url} || $avatar_default,
+        icon             => $anonimo ? $avatar_anonimo : $me->{cliente_avatar_url} || $avatar_default,
         name             => (
             $anonimo
             ? ($eh_admin ? $me->{cliente_apelido} . ' (Anônimo) ID ' . $me->{id} : 'Anônimo')
