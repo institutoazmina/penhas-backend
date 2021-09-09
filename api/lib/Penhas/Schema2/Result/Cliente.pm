@@ -142,10 +142,12 @@ __PACKAGE__->add_columns(
   { data_type => "bigint", default_value => 0, is_nullable => 0 },
   "support_chat_messages_sent",
   { data_type => "bigint", default_value => 0, is_nullable => 0 },
+  "eh_admin",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
-__PACKAGE__->add_unique_constraint("idx_236619_cpf_hash", ["cpf_hash"]);
-__PACKAGE__->add_unique_constraint("idx_236619_email", ["email"]);
+__PACKAGE__->add_unique_constraint("idx_25909_cpf_hash", ["cpf_hash"]);
+__PACKAGE__->add_unique_constraint("idx_25909_email", ["email"]);
 __PACKAGE__->has_many(
   "chat_clientes_notifications",
   "Penhas::Schema2::Result::ChatClientesNotification",
@@ -304,8 +306,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-08-26 11:22:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:K0gkPb6xF+I9dG+XERIAtA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:44:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ORTb9BEjOK6T6TLyHO9Srw
 
 use Carp qw/confess/;
 
