@@ -676,8 +676,8 @@ sub cliente_alert_guards {
                                 deleted_at => undef,
                             },
                             {
-                                columns  => ['status', \'count(1)'],
-                                group_by => 'status',
+                                columns      => ['status', {qtde => \'count(1)'}],
+                                group_by     => 'status',
                                 result_class => 'DBIx::Class::ResultClass::HashRefInflator'
                             }
                         )->all,
