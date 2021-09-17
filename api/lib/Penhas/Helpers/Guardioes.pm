@@ -678,7 +678,12 @@ sub cliente_alert_guards {
             ? sprintf('Alerta ' . $com_posicao . ' disparado com sucesso para %d guardiões.', $sms_enviados)
             : $sms_enviados == 1 ? 'Alerta ' . $com_posicao . 'disparado com sucesso para 1 guardião.'
             :                      'Não há guardiões cadastros! Nenhum alerta foi enviado.'
-        )
+        ),
+        title => (
+              $sms_enviados > 1  ? sprintf('%s alertas enviados!', $sms_enviados)
+            : $sms_enviados == 1 ? 'Alerta enviado!'
+            :                      'Atenção ❗'
+        ),
     };
 }
 
