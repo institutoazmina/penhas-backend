@@ -677,7 +677,7 @@ sub cliente_alert_guards {
                             },
                             {
                                 columns  => ['status', \'count(1)'],
-                                group_by => \'2'
+                                group_by => 'status'
                             }
                         )->all,
                     ]
