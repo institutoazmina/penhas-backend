@@ -667,7 +667,22 @@ sub cliente_alert_guards {
     $alert->update(
         {
             sms_enviados  => $sms_enviados,
-            alert_sent_to => to_json({celulares => \@celulares}),
+            alert_sent_to => to_json(
+                {
+                    celulares => \@celulares,
+                    guardioes => [
+                        $user_obj->clientes_guardioes_rs->search(
+                            {
+                                deleted_at => undef,
+                            },
+                            {
+                                columns  => ['status', \'count(1)'],
+                                group_by => \'2'
+                            }
+                        )->all,
+                    ]
+                }
+            ),
         }
     );
 
