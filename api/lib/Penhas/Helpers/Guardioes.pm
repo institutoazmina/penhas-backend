@@ -189,7 +189,7 @@ sub cliente_upsert_guardioes {
         );
     }
 
-    my ($message, $row);
+    my ($message, $row, $title);
 
     my $already_sent_msg
       = 'O seu guardião pode aceitar o seu convite utilizando o mesmo link que foi enviado anteriormente.';
@@ -205,6 +205,7 @@ sub cliente_upsert_guardioes {
 
         $row = $exists_active;
 
+        $title   = 'Número já existe!';
         $message = sprintf(
             'O número %s %s',
             $celular_national,
@@ -261,6 +262,7 @@ sub cliente_upsert_guardioes {
         );
         $row = $recent_deleted;
 
+        $title   = 'Convite reativado';
         $message = sprintf(
             "O convite para o número %s foi reativado! $already_sent_msg",
             $celular_national,
@@ -291,6 +293,7 @@ sub cliente_upsert_guardioes {
         }
     );
 
+    $title   = 'Convite enviado!';
     $message = 'Enviamos um SMS com um link para que o guardião aceite o seu convite.';
 
     my $message_prepend = 'PenhaS: ';
@@ -323,6 +326,7 @@ sub cliente_upsert_guardioes {
   RENDER:
     $row->discard_changes;
     return {
+        title   => $title,
         message => $message,
         data    => &_format_guard_row($c, $user_obj, $row),
     };

@@ -455,6 +455,7 @@ sub ponto_apoio_suggest {
     return {
         success => 1,
         message => 'Sua sugestão será avaliada antes de ser publicada.',
+        title => 'Sugestão recebida',
         (is_test() ? (id => $row->id) : ()),
     };
 }
