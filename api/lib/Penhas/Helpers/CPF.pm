@@ -34,7 +34,7 @@ sub setup {
             my $tx = &exec_tx_with_retry(
                 sub {
                     $self->ua->get(
-                        'http://ws.iweb-service.com/CPF/' => {} => form => {
+                        'http://ws.iwebservice.com.br/CPF/' => {} => form => {
                             chave          => $ENV{IWEB_SERVICE_CHAVE},
                             cpf            => $cpf,
                             dataNascimento => $dataNascimento,
