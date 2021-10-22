@@ -13,6 +13,7 @@ use Crypt::PRNG qw(random_bytes);
 use Penhas::Types qw/CEP CPF DateStr Genero Nome Raca/;
 use MooseX::Types::Email qw/EmailAddress/;
 use Text::Unaccent::PurePerl qw(unac_string);
+use Penhas::CEP;
 
 my $max_errors_in_24h = $ENV{MAX_CPF_ERRORS_IN_24H} || 20;
 
@@ -68,6 +69,36 @@ sub post {
     my $cep   = delete $params->{cep};
     my $cpf   = delete $params->{cpf};
     my $email = $dry ? undef : lc(delete $params->{email});
+
+    if ($cep) {
+        my $err;
+        my $logger = $c->app->log;
+        my $cep_copy =~ s/[^0-9]//go;
+        my $result;
+        eval {
+            foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(Postmon Correios)) {
+                my @_address_fields = qw(city state);
+                $result = $backend->find($cep_copy);
+                if ($result) {
+
+                    # pula proximo backend se todos os campos estão preenchidos
+                    last if (grep { length $result->{$_} } @_address_fields) == @_address_fields;
+                }
+            }
+            if (!$result) {
+                $err = {
+                    error   => 'cep_invalid',
+                    message => "Não conseguimos localizar o endereço do CEP $cep!",
+                    field   => 'cep',
+                    reason  => 'invalid'
+                };
+            }
+        };
+        if ($@) {
+            $c->log->error("Error during cep test: $@");
+        }
+        die $err if defined $err;
+    }
 
     # limite de requests por segundo no IP
     # no maximo 3 request por minuto
