@@ -70,18 +70,15 @@ sub post {
     my $cpf   = delete $params->{cpf};
     my $email = $dry ? undef : lc(delete $params->{email});
 
-    if ($cep) {
+    if ($cep && !is_test()) {
         my $err;
-        my $logger = $c->app->log;
-        my $cep_copy =~ s/[^0-9]//go;
         my $result;
         eval {
             foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(Postmon Correios)) {
                 my @_address_fields = qw(city state);
-                $result = $backend->find($cep_copy);
+                $result = $backend->find($cep);
                 if ($result) {
-
-                    # pula proximo backend se todos os campos estão preenchidos
+                    # para o teste dos backend se todos os campos estão preenchidos
                     last if (grep { length $result->{$_} } @_address_fields) == @_address_fields;
                 }
             }
