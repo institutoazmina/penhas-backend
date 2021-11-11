@@ -235,20 +235,20 @@ sub user_notifications {
 
         if ($meta->{chat}) {
             if ($subject_id == -1) {
-                $r->{expand_screen} = '/mainboard/chat?token=' . $user_obj->support_chat_auth();
+                $r->{expand_screen} = '/mainboard/chat/' . $user_obj->support_chat_auth();
             }
             else {
                 my $open_chat = eval { $c->chat_open_session(user_obj => $user_obj, cliente_id => $subject_id) };
                 if ($@) {
                     $c->log->error("chat_open_session returned error: " . $c->app->dumper($@));
                 }
-                $r->{expand_screen} = '/mainboard/chat?token=' . $open_chat->{chat_auth}
+                $r->{expand_screen} = '/mainboard/chat/' . $open_chat->{chat_auth}
                   if $open_chat && ref $open_chat eq 'HASH';
                 log_trace("expand_screen=" . $subject_id);
             }
         }
         elsif ($meta->{tweet_id}) {
-            $r->{expand_screen} = '/mainboard/detail?tweet_id=' . $meta->{tweet_id};
+            $r->{expand_screen} = '/mainboard/tweet/' . $meta->{tweet_id};
         }
     }
 
