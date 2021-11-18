@@ -11,7 +11,8 @@ BEGIN
     UPDATE
         ponto_apoio
     SET
-        indexed_at = NULL;
+        indexed_at = NULL
+    WHERE indexed_at IS NOT NULL;
     RETURN NULL;
 END;
 $body$
@@ -19,7 +20,7 @@ LANGUAGE plpgsql;
 
 CREATE TRIGGER trigger_ponto_apoio_projeto_inserted
     AFTER INSERT OR UPDATE OR DELETE ON ponto_apoio_categoria2projetos
-    FOR EACH STATEMENT
+    FOR EACH ROW
     EXECUTE PROCEDURE ft_ponto_apoio_reindex_all ();
 
 CREATE OR REPLACE FUNCTION public.f_tgr_quiz_config_after_update() RETURNS trigger
