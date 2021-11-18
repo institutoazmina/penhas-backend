@@ -823,7 +823,7 @@ sub chat_list_message {
         $message = decode 'utf-8', $message;
 
         $message = xml_escape($message);
-        $row->{message} =~ s/\n/<br>/g;
+        $message =~ s/\n/<br>/g;
 
         push @messages, {
             id      => $row->{id},
