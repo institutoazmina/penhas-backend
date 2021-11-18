@@ -11,7 +11,7 @@
         integrity="sha512-tDXPcamuZsWWd6OsKFyH6nAqh/MjZ/5Yk88T5o+aMfygqNFPan1pLyPFAndRzmOWHKT+jSDzWpJv8krj6x1LMA=="
         crossorigin="anonymous" />
 
-    % my $version = 2;
+    % my $version = 3;
     % if (stash('is_login')) {
     <link rel="stylesheet" href="/web-assets/login.css?v=<%=$version%>" />
     % } elsif (stash('is_chat')) {
