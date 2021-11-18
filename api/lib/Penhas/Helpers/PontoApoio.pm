@@ -92,7 +92,7 @@ sub _ponto_apoio_csv {
         ['delegacia_mulher',       'Delegacia Mulher'],
         ['endereco_correto',       'Endereço correto', 'bool'],
         ['horario_correto',        'Horário correto',  'bool'],
-        ['telefone_correto',       'Telefone correto', 'bool'],
+        ['telefone_correto',       'Telefone correto',  'bool'],
         ['observacao',             'Observação'],
         ['id',                     'ID']
     );
@@ -132,12 +132,12 @@ sub ponto_apoio_list {
     local $Data::Dumper::Maxdepth = 2;
     log_debug('ponto_apoio_list args: ' . $c->app->dumper(\%opts));
 
-    my $user_obj  = $opts{user_obj};
+    my $user_obj = $opts{user_obj};
 
-    my $latitude  = $opts{latitude};
-    my $longitude = $opts{longitude};
-    my $as_csv    = $opts{as_csv};
-    my $all_columns    = $opts{all_columns};
+    my $latitude    = $opts{latitude};
+    my $longitude   = $opts{longitude};
+    my $as_csv      = $opts{as_csv};
+    my $all_columns = $opts{all_columns};
 
     # just in case, pra nao rolar sql injection, mas aqui já deve ter validado isso no controller
     confess '$latitude is not valid'
@@ -190,11 +190,13 @@ sub ponto_apoio_list {
     # o ideal é fazer isso tudo no postgres, com postgis, pois lá o suporte a index é bem mais simples
     # mas o chato é manter as bases sincronizadas (pelo menos lat/long+categorias+textos indexados)
     # se você é acredita que a terra é plana, pode ignorar o comentario acima, *ta tudo bem*
-    my $distance_in_km_where = defined $latitude
+    my $distance_in_km_where
+      = defined $latitude
       ? qq| ST_DWithin(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography, (($max_distance+1) * 1000) - 1)  |
       : '';
 
-    my $distance_in_km_column = defined $latitude
+    my $distance_in_km_column
+      = defined $latitude
       ? qq| floor(ST_Distance(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography ) / 1000 ) |
       : '';
 
@@ -206,10 +208,7 @@ sub ponto_apoio_list {
 
         ($categorias ? ('me.categoria' => {in => $categorias}) : ()),
 
-        ($distance_in_km_where ? (
-             '-and' => [
-                 \$distance_in_km_where,            ]
-            ) : ()),
+        ($distance_in_km_where ? ('-and' => [\$distance_in_km_where,]) : ()),
     };
     my $attr = {
         (($as_csv || $all_columns) ? '+columns' : 'columns') => [
@@ -220,8 +219,8 @@ sub ponto_apoio_list {
             ),
             {categoria_nome => 'categoria.label'},
             {categoria_cor  => 'categoria.color'},
-            {categoria_id => 'categoria.id'},
-            {categoria_id => 'categoria.id'},
+            {categoria_id   => 'categoria.id'},
+            {categoria_id   => 'categoria.id'},
             ($user_obj ? ({cliente_avaliacao => 'cliente_ponto_apoio_avaliacaos.avaliacao'}) : ()),
             qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf me.qtde_avaliacao/,
         ],
@@ -251,10 +250,20 @@ sub ponto_apoio_list {
 
     if ($keywords) {
         log_debug("keywords original: $keywords");
-        $keywords = $c->schema->unaccent($keywords);
-        $keywords = lc($keywords);
-        log_debug("keywords after unaccent: $keywords");
-        $rs = $rs->search({'index' => {ilike => "% $keywords%"}});
+        $rs = $rs->search(
+            {
+                '-and' => [
+                    \[
+                        "to_tsvector('pg_catalog.portuguese', index)
+                        @@
+                        plainto_tsquery('pg_catalog.portuguese',
+                            unaccent(?::text)
+                        )",
+                        $keywords
+                    ]
+                ]
+            }
+        );
     }
 
     $rs = $rs->search({'index' => {like => "%`p$filter_projeto_id]]%"}})
@@ -264,7 +273,7 @@ sub ponto_apoio_list {
     $rs = $rs->search({'dias_funcionamento' => $dias_funcionamento}) if defined $dias_funcionamento;
 
     if ($as_csv) {
-        my $max_updated_at = $rs->search(undef,{order_by => undef})->get_column('updated_at')->max();
+        my $max_updated_at = $rs->search(undef, {order_by => undef})->get_column('updated_at')->max();
         my $filename       = $max_updated_at . 'v1';
         $filename .= "proj$filter_projeto_id"     if defined $filter_projeto_id;
         $filename .= $eh_24h ? "eh24h" : '!eh24h' if defined $eh_24h;
@@ -290,7 +299,8 @@ sub ponto_apoio_list {
         $cur_count--;
     }
     foreach (@rows) {
-        use DDP; p $_;
+        use DDP;
+        p $_;
         $_->{avaliacao} = sprintf('%.01f', $_->{avaliacao});
         $_->{avaliacao} =~ s/\./,/;
         $_->{avaliacao} = 'n/a' if delete $_->{qtde_avaliacao} == 0;
@@ -436,7 +446,7 @@ sub ponto_apoio_suggest {
 
     my $row = $c->schema2->resultset('PontoApoioSugestoe')->create($fields);
 
-    if ($ENV{EMAIL_PONTO_APOIO_SUGESTAO}){
+    if ($ENV{EMAIL_PONTO_APOIO_SUGESTAO}) {
         $c->schema->resultset('EmaildbQueue')->create(
             {
                 config_id => 1,
@@ -455,7 +465,7 @@ sub ponto_apoio_suggest {
     return {
         success => 1,
         message => 'Sua sugestão será avaliada antes de ser publicada.',
-        title => 'Sugestão recebida',
+        title   => 'Sugestão recebida',
         (is_test() ? (id => $row->id) : ()),
     };
 }
@@ -655,7 +665,7 @@ sub tick_ponto_apoio_index {
     my $rows = 0;
     my $now  = time();
     while (my $ponto = $rs->next) {
-        my $index = '';
+        my $index    = '';
         my @projetos = map { $_->ponto_apoio_projeto_id() } $ponto->categoria->ponto_apoio_categoria2projetos->all;
         foreach my $projeto_id (@projetos) {
             $index .= '`p' . $projeto_id . ']]';
