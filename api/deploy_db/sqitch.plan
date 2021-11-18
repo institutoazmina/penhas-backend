@@ -17,3 +17,4 @@
 0014-ponto_apoio_sug [0013-clientes_activity] 2021-09-02T17:27:56Z renato,,, <renato@renato-MS-7A34> # sug
 0015-cliente_eh_admin [0014-ponto_apoio_sug] 2021-09-09T11:44:13Z renato,,, <renato@renato-Inspiron-7580> # eh_admin
 0016-tweet_depth [0015-cliente_eh_admin] 2021-09-09T13:08:30Z renato,,, <renato@renato-Inspiron-7580> # tweet_depth
+0017-add-tsvector [0016-tweet_depth] 2021-11-18T18:19:52Z renato,,, <renato@renato-Inspiron-7580> # add-tsvector
