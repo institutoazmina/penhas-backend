@@ -91,7 +91,7 @@
             <form class="form-signin" method="POST" action="/admin/send-message">
                 <input type="hidden" name="cliente_id" value="<%= $cliente->id() %>">
                 <div class="input_msg_write">
-                    <input type="text" name="message" class="write_msg" placeholder="Escreva a mensagem">
+                    <textarea name="message" class="write_msg" placeholder="Escreva a mensagem"></textarea>
                     <button class="msg_send_btn" type="submit">
                         <span data-feather="send"></span>
                     </button>
