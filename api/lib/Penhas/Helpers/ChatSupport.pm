@@ -320,6 +320,7 @@ sub support_list_message {
         $is_me = $is_me ? 0 : 1 if $logged_as_admin;
 
         $row->{message} = xml_escape($row->{message});
+        $row->{message} =~ s/\n/<br>/g;
 
         push @messages, {
             id      => $row->{id},
