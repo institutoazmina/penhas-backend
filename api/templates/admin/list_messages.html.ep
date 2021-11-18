@@ -44,8 +44,8 @@
             % if ($r->{is_me}){
             <div class="outgoing_msg">
                 <div class="sent_msg">
-                    <p><%= $r->{message} %></p>
-                    <div class="row">
+                    <p><%== $r->{message} %></p>
+                    <div c/lass="row">
                         <div class="col-sm">
                             <span style="display: inline" class="time_date"> <%= $pg_timestamp2human->($r->{time}) %> </span>
                             <a href="/admin/user-messages-delete?message_id=<%= $r->{id} %>" style="float:right; margin-top: 2px; padding: 2px;" class="btn btn-danger btn-sm">remover</a>
@@ -64,7 +64,7 @@
 
                 <div class="received_msg">
                     <div class="received_withd_msg">
-                        <p><%= $r->{message} %></p>
+                        <p><%== $r->{message} %></p>
                         <span class="time_date"> <%= $pg_timestamp2human->($r->{time}) %> </span>
                     </div>
                 </div>
