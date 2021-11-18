@@ -686,7 +686,7 @@ sub tick_ponto_apoio_index {
 
         $ponto->update(
             {
-                indexed_at => $ponto->get_column('updated_at'),
+                indexed_at => \'updated_at',
                 index      => $index
             }
         );
