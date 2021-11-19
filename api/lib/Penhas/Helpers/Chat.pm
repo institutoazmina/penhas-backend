@@ -822,7 +822,7 @@ sub chat_list_message {
         # set internal flag as UTF-8 hint
         $message = decode 'utf-8', $message;
 
-        $message = linkfy(nl2br(xml_escape($message)));
+        $message = nl2br(xml_escape($message));
 
         push @messages, {
             id      => $row->{id},

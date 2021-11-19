@@ -319,7 +319,7 @@ sub support_list_message {
         my $is_me = $row->{admin_user_id} ? 0 : 1;
         $is_me = $is_me ? 0 : 1 if $logged_as_admin;
 
-        $row->{message} = linkfy(nl2br(xml_escape($row->{message})));
+        $row->{message} = nl2br(xml_escape($row->{message}));
 
         push @messages, {
             id      => $row->{id},
