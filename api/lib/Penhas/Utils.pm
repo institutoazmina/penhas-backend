@@ -52,6 +52,9 @@ state $text_xslate = Text::Xslate->new(
   pg_timestamp2human
   notifications_enabled
   check_password_or_die
+
+  linkfy
+  nl2br
 );
 
 
@@ -303,5 +306,23 @@ sub check_password_or_die {
 
     return;
 }
+
+
+sub linkfy {
+    my ($text) = @_;
+
+    # se nao encontrar o http, mas encontarr www, entao troca por https
+    $text
+      =~ s/(https?:\/\/(?:www\.|(?!www))[^\s.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})/my $href =$1; $href = "https:\/\/$href" unless $href =~ \/^http\/; "<a href=\"$href\">$href<\/a>"/ge;
+    return $text;
+}
+
+sub nl2br {
+    my ($text) = @_;
+    $text =~ s/(\r\n|\n\r|\n|\r)/<br\/>$1/g;
+    $text =~ s/\s\s/&nbsp;&nbsp;/g;
+    return $text;
+}
+
 
 1;

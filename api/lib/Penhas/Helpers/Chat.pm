@@ -4,7 +4,7 @@ use Carp qw/confess/;
 use utf8;
 use JSON;
 use Penhas::Logger;
-use Penhas::Utils qw/is_test pg_timestamp2iso_8601 db_epoch_to_etag notifications_enabled/;
+use Penhas::Utils;
 use Mojo::Util qw/trim xml_escape/;
 use Scope::OnExit;
 use Crypt::CBC;
@@ -822,8 +822,7 @@ sub chat_list_message {
         # set internal flag as UTF-8 hint
         $message = decode 'utf-8', $message;
 
-        $message = xml_escape($message);
-        $message =~ s/\n/<br>/g;
+        $message = linkfy(nl2br(xml_escape($message)));
 
         push @messages, {
             id      => $row->{id},

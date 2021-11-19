@@ -4,7 +4,7 @@ use Carp qw/confess/;
 use utf8;
 use JSON;
 use Penhas::Logger;
-use Penhas::Utils qw/is_test pg_timestamp2iso_8601 db_epoch_to_etag pg_timestamp2human notifications_enabled/;
+use Penhas::Utils;
 use Mojo::Util qw/trim xml_escape/;
 use Scope::OnExit;
 use Crypt::CBC;
@@ -319,8 +319,7 @@ sub support_list_message {
         my $is_me = $row->{admin_user_id} ? 0 : 1;
         $is_me = $is_me ? 0 : 1 if $logged_as_admin;
 
-        $row->{message} = xml_escape($row->{message});
-        $row->{message} =~ s/\n/<br>/g;
+        $row->{message} = linkfy(nl2br(xml_escape($row->{message})));
 
         push @messages, {
             id      => $row->{id},
