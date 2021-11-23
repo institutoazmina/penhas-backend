@@ -229,6 +229,7 @@ sub add_tweet {
     my $depth              = 1;
     my $original_parent_id = $reply_to;
 
+    my $topmost_tweet_id;
     if ($original_parent_id && $ENV{SUBSUBCOMENT_DISABLED}) {
 
         # procura o tweet raiz [e conta o depth]
@@ -255,6 +256,7 @@ sub add_tweet {
             last if !$parent->parent_id;
             last if $parent->parent_id eq $parent->id;    # just in case
         }
+        $topmost_tweet_id = $tmp_parent_id;
     }
 
     my $anonimo = $user->{modo_anonimo_ativo} ? 1 : 0;
@@ -291,7 +293,14 @@ sub add_tweet {
                 'new_notification',
                 [
                     'new_comment',
-                    {tweet_id => $original_parent_id, subject_id => $subject_id, comment => $content}
+                    {
+                        tweet_id         => $original_parent_id,
+
+                        comment_id       => $tweet->id,
+                        subject_id       => $subject_id,
+                        comment          => $content,
+                        topmost_tweet_id => $topmost_tweet_id,
+                    }
                 ] => {
                     attempts => 5,
                 }
@@ -584,13 +593,13 @@ sub _format_tweet {
 
     return {
         meta => {
-            owner     => $user->{id} == $me->{cliente_id} ? 1 : 0,
+            owner     => $user->{id} == $me->{cliente_id}                 ? 1 : 0,
             can_reply => $me->{tweet_depth} < 3 && $me->{tweet_depth} > 0 ? 1 : 0,
 
             (is_test() ? (tweet_depth_test_only => $me->{tweet_depth}) : ())
         },
         id               => $me->{id},
-        content          => $me->{disable_escape}  ? $me->{content} : &_linkfy(&_nl2br(xml_escape($me->{content}))),
+        content          => $me->{disable_escape}  ? $me->{content} : linkfy(nl2br(xml_escape($me->{content}))),
         anonimo          => $anonimo && !$eh_admin ? 1              : 0,
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
@@ -606,22 +615,6 @@ sub _format_tweet {
         ($anonimo && !$eh_admin ? (cliente_id => 0) : (cliente_id => $me->{cliente_id})),
 
     };
-}
-
-sub _linkfy {
-    my ($text) = @_;
-
-    # se nao encontrar o http, mas encontarr www, entao troca por https
-    $text
-      =~ s/(https?:\/\/(?:www\.|(?!www))[^\s.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})/my $href =$1; $href = "https:\/\/$href" unless $href =~ \/^http\/; "<a href=\"$href\">$href<\/a>"/ge;
-    return $text;
-}
-
-sub _nl2br {
-    my ($text) = @_;
-    $text =~ s/(\r\n|\n\r|\n|\r)/<br\/>$1/g;
-    $text =~ s/\s\s/&nbsp;&nbsp;/g;
-    return $text;
 }
 
 sub _gen_uniq_media_url {
