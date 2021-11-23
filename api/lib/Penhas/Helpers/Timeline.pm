@@ -613,6 +613,7 @@ sub _format_tweet {
         : &_linkfy(&_nl2br(xml_escape(&_remove_phone_number($me->{content})))),
         anonimo => $anonimo && !$eh_admin ? 1 : 0,
 
+
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
         media            => $media_ref,
