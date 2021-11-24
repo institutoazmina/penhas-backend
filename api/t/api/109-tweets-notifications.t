@@ -5,134 +5,26 @@ use lib "$RealBin/../lib";
 use Penhas::Test;
 
 my $t = test_instance;
-use Business::BR::CPF qw/random_cpf/;
+
 use Penhas::Minion::Tasks::NewNotification;
 
-AGAIN:
-my $random_cpf   = random_cpf();
-my $random_email = 'email' . $random_cpf . '@something.com';
-goto AGAIN if cpf_already_exists($random_cpf);
-AGAIN2:
-my $random_cpf2   = random_cpf();
-my $random_email2 = 'email' . $random_cpf2 . '@something.com';
-goto AGAIN2 if cpf_already_exists($random_cpf2);
-AGAIN3:
-my $random_cpf3   = random_cpf();
-my $random_email3 = 'email' . $random_cpf3 . '@something.com';
-goto AGAIN2 if cpf_already_exists($random_cpf3);
+my ($cliente_id, $session, $user) = get_new_user();
+on_scope_exit { user_cleanup(user_id => $cliente_id); };
+
+my ($cliente_id2, $session2, $user2) = get_new_user();
+on_scope_exit { user_cleanup(user_id => $cliente_id2); };
+
+my ($cliente_id3, $session3, $user3) = get_new_user();
+on_scope_exit { user_cleanup(user_id => $cliente_id3); };
+
+my ($cliente_id4, $session4, $user4) = get_new_user();
+on_scope_exit { user_cleanup(user_id => $cliente_id4); };
 
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
 $ENV{SKIP_END_NEWS}            = '1';
 delete $ENV{SUBSUBCOMENT_DISABLED};
 
-my @other_fields = (
-    raca        => 'pardo',
-    apelido     => 'oshiete yo',
-    app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
-    dry         => 0,
-);
-
-my $nome_completo  = 'xpto aaa';
-my $nome_completo2 = 'xpto boo';
-my $nome_completo3 = 'xpto zoo';
-get_schema->resultset('CpfCache')->find_or_create(
-    {
-        cpf_hashed  => cpf_hash_with_salt($random_cpf),
-        dt_nasc     => '1994-01-31',
-        nome_hashed => cpf_hash_with_salt(uc $nome_completo),
-        situacao    => '',
-    }
-);
-get_schema->resultset('CpfCache')->find_or_create(
-    {
-        cpf_hashed  => cpf_hash_with_salt($random_cpf2),
-        dt_nasc     => '1994-01-31',
-        nome_hashed => cpf_hash_with_salt(uc $nome_completo2),
-        situacao    => '',
-    }
-);
-get_schema->resultset('CpfCache')->find_or_create(
-    {
-        cpf_hashed  => cpf_hash_with_salt($random_cpf3),
-        dt_nasc     => '1994-01-31',
-        nome_hashed => cpf_hash_with_salt(uc $nome_completo3),
-        situacao    => '',
-    }
-);
-
-my ($cliente_id, $session);
-subtest_buffered 'Cadastro com sucesso' => sub {
-    my $res = $t->post_ok(
-        '/signup',
-        form => {
-            nome_completo => $nome_completo,
-            cpf           => $random_cpf,
-            email         => $random_email,
-            senha         => '1:W456a588',
-            cep           => '12345678',
-            dt_nasc       => '1994-01-31',
-            nome_social   => 'foobar lorem',
-            @other_fields,
-            genero => 'Feminino',
-
-        },
-    )->status_is(200)->tx->res->json;
-
-    $cliente_id = $res->{_test_only_id};
-    $session    = $res->{session};
-};
-
-
-my ($cliente_id2, $session2);
-subtest_buffered 'Cadastro2 com sucesso' => sub {
-    my $res = $t->post_ok(
-        '/signup',
-        form => {
-            nome_completo => $nome_completo2,
-            cpf           => $random_cpf2,
-            email         => $random_email2,
-            senha         => '1:W456a588',
-            cep           => '12345678',
-            dt_nasc       => '1994-01-31',
-            @other_fields,
-            genero => 'Feminino',
-
-        },
-    )->status_is(200)->tx->res->json;
-
-    $cliente_id2 = $res->{_test_only_id};
-    $session2    = $res->{session};
-};
-
-
-my ($cliente_id3, $session3);
-subtest_buffered 'Cadastro3 com sucesso' => sub {
-    my $res = $t->post_ok(
-        '/signup',
-        form => {
-            nome_completo => $nome_completo3,
-            cpf           => $random_cpf3,
-            email         => $random_email3,
-            senha         => '1:W456a588',
-            cep           => '12345678',
-            dt_nasc       => '1994-01-31',
-            @other_fields,
-            genero => 'Feminino',
-
-        },
-    )->status_is(200)->tx->res->json;
-
-    $cliente_id3 = $res->{_test_only_id};
-    $session3    = $res->{session};
-};
-
-$Penhas::Helpers::Timeline::ForceFilterClientes = [$cliente_id, $cliente_id2, $cliente_id3];
-on_scope_exit { user_cleanup(user_id => $Penhas::Helpers::Timeline::ForceFilterClientes); };
-
-
-my $user = get_schema2->resultset('Cliente')->find($cliente_id);
-my $user2 = get_schema2->resultset('Cliente')->find($cliente_id2);
-my $user3 = get_schema2->resultset('Cliente')->find($cliente_id3);
+$Penhas::Helpers::Timeline::ForceFilterClientes = [$cliente_id, $cliente_id2, $cliente_id3, $cliente_id4];
 
 my $tweet_rs = app->schema2->resultset('Tweet');
 my $job      = Minion::Job->new(
@@ -141,21 +33,18 @@ my $job      = Minion::Job->new(
     task   => 'testmocked',
     notes  => {hello => 'mock'}
 );
-do {
 
-    $ENV{NOTIFICATIONS_ENABLED} = 1;
-    my $res = $t->post_ok(
-        '/me/tweets',
-        {'x-api-key' => $session},
-        form => {
-            content => 'root tweet',
-        }
-    )->status_is(200)->tx->res->json;
-    my $tweet_id = $res->{id};
+$ENV{NOTIFICATIONS_ENABLED} = 1;
+my $res = $t->post_ok(
+    '/me/tweets',
+    {'x-api-key' => $session},
+    form => {
+        content => 'root tweet',
+    }
+)->status_is(200)->tx->res->json;
+my $tweet_id = $res->{id};
 
-
-    &_test_notifications(tweet_id => $tweet_id);
-};
+&_test_notifications(tweet_id => $tweet_id);
 
 done_testing();
 
@@ -344,4 +233,5 @@ sub _test_notifications {
     )->status_is(200)->json_is('/count', 0, '0 unread notifications');
 
 =cut
+
 }
