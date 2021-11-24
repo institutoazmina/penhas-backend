@@ -48,6 +48,7 @@ use Penhas::Logger;
 use Business::BR::CPF qw/random_cpf/;
 use Digest::SHA qw/sha256_hex/;
 my $redis_ns;
+use feature 'state';
 
 sub END {
     if (defined $redis_ns) {
@@ -305,7 +306,7 @@ sub get_new_user() {
         app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         dry         => 0,
     );
-    my $nome_completo = 'xpto ' . $name_seq;
+    my $nome_completo = 'xpto ' . $name_seq++;
     get_schema->resultset('CpfCache')->find_or_create(
         {
             cpf_hashed  => cpf_hash_with_salt($random_cpf),

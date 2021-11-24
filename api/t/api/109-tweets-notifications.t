@@ -83,7 +83,7 @@ sub _test_notifications {
         {'x-api-key' => $session2},
         form => {content => 'comment from other'}
     )->status_is(200)->tx->res->json;
-    is $comment->{meta}{tweet_depth_test_only}, 2, '2nd level [subcoment]';
+    is $comment_user2->{meta}{tweet_depth_test_only}, 2, '2nd level [subcoment]';
 
     is $user->notification_logs->count, 0, 'no logs yet, no job run!';
     run_notification_job();
@@ -92,12 +92,13 @@ sub _test_notifications {
     is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
     is $user2->notification_logs->count, 0, 'no notification yet';
 
+use DDP; p $user; p $user2;
     my $subcomment_user = $t->post_ok(
         (join '/', '/timeline', $comment_user2->{id}, 'comment'),
         {'x-api-key' => $session},
         form => {content => 'subcomment from post owner'}
     )->status_is(200)->tx->res->json;
-    is $comment->{meta}{tweet_depth_test_only}, 3, '3nd level [sub-subcoment]';
+    is $subcomment_user->{meta}{tweet_depth_test_only}, 3, '3nd level [sub-subcoment]';
 
     is $user->notification_logs->count, 1, 'no logs yet, no job run!';
     run_notification_job();
@@ -109,10 +110,10 @@ sub _test_notifications {
 
     my $subcomment_user3 = $t->post_ok(
         (join '/', '/timeline', $comment_user2->{id}, 'comment'),
-        {'x-api-key' => $session},
+        {'x-api-key' => $session3},
         form => {content => 'subcomment from yet another user'}
     )->status_is(200)->tx->res->json;
-    is $comment->{meta}{tweet_depth_test_only}, 3, '3nd level [sub-subcoment]';
+    is $subcomment_user3->{meta}{tweet_depth_test_only}, 3, '3nd level [sub-subcoment]';
 
     is $user->notification_logs->count, 1, 'no logs yet, no job run!';
     run_notification_job();
@@ -120,6 +121,21 @@ sub _test_notifications {
     is $user->notification_logs->count, 2, 'one new notification';
     is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
     is $user2->notification_logs->count, 2, 'other user too gets an notification';
+
+
+    my $comment_user4 = $t->post_ok(
+        (join '/', '/timeline', $tweet_id, 'comment'),
+        {'x-api-key' => $session4},
+        form => {content => 'comment from yet another user 4'}
+    )->status_is(200)->tx->res->json;
+    is $comment_user4->{meta}{tweet_depth_test_only}, 2, '2nd level [sub-subcoment]';
+
+    run_notification_job();
+
+    is $user->notification_logs->count,  3, 'one new notification';
+    is $user2->notification_logs->count, 3, 'one new notification';
+    is $user3->notification_logs->count, 0, 'no notification for user 3 (he is inside a subcomment)';
+    is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
 
 
 =pod
