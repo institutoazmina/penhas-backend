@@ -16,6 +16,10 @@ AGAIN2:
 my $random_cpf2   = random_cpf();
 my $random_email2 = 'email' . $random_cpf2 . '@something.com';
 goto AGAIN2 if cpf_already_exists($random_cpf2);
+AGAIN3:
+my $random_cpf3   = random_cpf();
+my $random_email3 = 'email' . $random_cpf3 . '@something.com';
+goto AGAIN2 if cpf_already_exists($random_cpf3);
 
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
 $ENV{SKIP_END_NEWS}            = '1';
@@ -30,6 +34,7 @@ my @other_fields = (
 
 my $nome_completo  = 'xpto aaa';
 my $nome_completo2 = 'xpto boo';
+my $nome_completo3 = 'xpto zoo';
 get_schema->resultset('CpfCache')->find_or_create(
     {
         cpf_hashed  => cpf_hash_with_salt($random_cpf),
@@ -43,6 +48,14 @@ get_schema->resultset('CpfCache')->find_or_create(
         cpf_hashed  => cpf_hash_with_salt($random_cpf2),
         dt_nasc     => '1994-01-31',
         nome_hashed => cpf_hash_with_salt(uc $nome_completo2),
+        situacao    => '',
+    }
+);
+get_schema->resultset('CpfCache')->find_or_create(
+    {
+        cpf_hashed  => cpf_hash_with_salt($random_cpf3),
+        dt_nasc     => '1994-01-31',
+        nome_hashed => cpf_hash_with_salt(uc $nome_completo3),
         situacao    => '',
     }
 );
@@ -91,8 +104,35 @@ subtest_buffered 'Cadastro2 com sucesso' => sub {
     $session2    = $res->{session};
 };
 
-$Penhas::Helpers::Timeline::ForceFilterClientes = [$cliente_id, $cliente_id2];
+
+my ($cliente_id3, $session3);
+subtest_buffered 'Cadastro3 com sucesso' => sub {
+    my $res = $t->post_ok(
+        '/signup',
+        form => {
+            nome_completo => $nome_completo3,
+            cpf           => $random_cpf3,
+            email         => $random_email3,
+            senha         => '1:W456a588',
+            cep           => '12345678',
+            dt_nasc       => '1994-01-31',
+            @other_fields,
+            genero => 'Feminino',
+
+        },
+    )->status_is(200)->tx->res->json;
+
+    $cliente_id3 = $res->{_test_only_id};
+    $session3    = $res->{session};
+};
+
+$Penhas::Helpers::Timeline::ForceFilterClientes = [$cliente_id, $cliente_id2, $cliente_id3];
 on_scope_exit { user_cleanup(user_id => $Penhas::Helpers::Timeline::ForceFilterClientes); };
+
+
+my $user = get_schema2->resultset('Cliente')->find($cliente_id);
+my $user2 = get_schema2->resultset('Cliente')->find($cliente_id2);
+my $user3 = get_schema2->resultset('Cliente')->find($cliente_id3);
 
 my $tweet_rs = app->schema2->resultset('Tweet');
 my $job      = Minion::Job->new(
@@ -134,14 +174,12 @@ sub _test_notifications {
     my (%opts) = @_;
     my $tweet_id = $opts{tweet_id};
 
-    my $user = get_schema2->resultset('Cliente')->find($cliente_id);
-
     is $ENV{LAST_NTF_COMMENT_JOB_ID}, undef, 'no LAST_NTF_COMMENT_JOB_ID yet';
 
     my $comment = $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'comment'),
         {'x-api-key' => $session},
-        form => {content => 'test1'}
+        form => {content => 'comment from owner'}
     )->status_is(200)->tx->res->json;
     is $comment->{meta}{tweet_depth_test_only}, 2, '2nd level [subcoment]';
 
@@ -150,6 +188,50 @@ sub _test_notifications {
 
     is $user->notification_logs->count, 0, 'no notifications about ownself';
     is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
+
+    my $comment_user2 = $t->post_ok(
+        (join '/', '/timeline', $tweet_id, 'comment'),
+        {'x-api-key' => $session2},
+        form => {content => 'comment from other'}
+    )->status_is(200)->tx->res->json;
+    is $comment->{meta}{tweet_depth_test_only}, 2, '2nd level [subcoment]';
+
+    is $user->notification_logs->count, 0, 'no logs yet, no job run!';
+    run_notification_job();
+
+    is $user->notification_logs->count, 1, 'one notification about the other comment';
+    is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
+    is $user2->notification_logs->count, 0, 'no notification yet';
+
+    my $subcomment_user = $t->post_ok(
+        (join '/', '/timeline', $comment_user2->{id}, 'comment'),
+        {'x-api-key' => $session},
+        form => {content => 'subcomment from post owner'}
+    )->status_is(200)->tx->res->json;
+    is $comment->{meta}{tweet_depth_test_only}, 3, '3nd level [sub-subcoment]';
+
+    is $user->notification_logs->count, 1, 'no logs yet, no job run!';
+    run_notification_job();
+
+    is $user->notification_logs->count, 1, 'still just one notification';
+    is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
+    is $user2->notification_logs->count, 1, 'now there is one notification for the user 2';
+
+
+    my $subcomment_user3 = $t->post_ok(
+        (join '/', '/timeline', $comment_user2->{id}, 'comment'),
+        {'x-api-key' => $session},
+        form => {content => 'subcomment from yet another user'}
+    )->status_is(200)->tx->res->json;
+    is $comment->{meta}{tweet_depth_test_only}, 3, '3nd level [sub-subcoment]';
+
+    is $user->notification_logs->count, 1, 'no logs yet, no job run!';
+    run_notification_job();
+
+    is $user->notification_logs->count, 2, 'one new notification';
+    is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
+    is $user2->notification_logs->count, 2, 'other user too gets an notification';
+
 
 =pod
     $t->post_ok(
