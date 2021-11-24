@@ -99,6 +99,11 @@ sub new_notification_like {
     my $tweet      = $schema2->resultset('Tweet')->find($opts->{tweet_id}) or return;
     my $has_parent = $tweet->parent_id ? 1 : 0;
 
+    if ($tweet->cliente_id == $opts->{subject_id}){
+        $logger->info("skipping... tweet.cliente_id is same as subject_id...");
+        return;
+    }
+
     my $titles = {
         new_like => $has_parent ? 'curtiu seu comentário' : 'curtiu sua publicação',
     };
@@ -208,22 +213,23 @@ sub new_notification_comment {
 
     # lista de quem recebeu push, pra limpar o cache do notifications
     my @clientes;
+    $logger->info(sprintf "new_comment id %s in reply_to: %s", $opts->{comment_id}, $reply_to_tweet->id);
 
-    $logger->info(sprintf "new_comment, reply_to: %s root: %s", $reply_to_tweet->id, $root_tweet->id);
+    $logger->info(sprintf "reply_to: %s root: %s", $reply_to_tweet->id, $root_tweet->id);
     $logger->info(
-        sprintf "new_comment, reply_to.cliente_id: %s root.cliente_id %s", $reply_to_tweet->cliente_id,
+        sprintf "reply_to.cliente_id: %s root.cliente_id %s", $reply_to_tweet->cliente_id,
         $root_tweet->cliente_id
     );
 
     # lista todos os usuarios que comentaram no mesmo nivel daquele tweet, naquela thread
-    # ou que é o post root (post)
+    # ou que é o post root (dono)
+    # ou quem foi que criou o comentario que recebeu o subcomentario
     my @ntf_clientes_ids = map { $_->{cliente_id} } $schema2->resultset('Tweet')->search(
         {
             '-or' => [
                 {'me.parent_id' => $reply_to_tweet->id},
                 {'me.id'        => $root_tweet->id},
                 {'me.id'        => $reply_to_tweet->id},
-
             ]
         },
         {
@@ -232,21 +238,13 @@ sub new_notification_comment {
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
     )->all;
-    $logger->info("ntf_clientes_ids: @ntf_clientes_ids");
-    my $x = $schema2->resultset('Tweet')->search({
-        parent_id => $reply_to_tweet->id
-    })->count;
-    use DDP; p $x;
-
-    $x = [$schema2->resultset('Tweet')->search({
-        parent_id => $reply_to_tweet->id
-    })->all];
-    use DDP; p $x;
 
     my $message_cache = {};
     foreach my $user_id (@ntf_clientes_ids) {
-        $logger->info("skipping cliente_id: $user_id - same as subject_id"), next
-          if $user_id == $subject_id;    # pula o proprio sujeito (se for anonimo, vai enviar mesmo assim)
+        if ($user_id == $subject_id) {
+            $logger->info("skipping cliente_id: $user_id - same as subject_id");
+            next;    # pula o proprio sujeito (se for anonimo, vai enviar mesmo assim)
+        }
 
         $logger->info("notify cliente_id: $user_id");
 
@@ -262,8 +260,10 @@ sub new_notification_comment {
                 cliente_id => $user_id,
             }
         )->next;
-        $logger->info("skipping cliente_id: $user_id - notifications disabled"), next
-          unless $cliente;    # nao quer receber notificacao
+        if (!$cliente) {
+            $logger->info("skipping cliente_id: $user_id - notifications disabled");
+            next;    # nao quer receber notificacao
+        }
 
         push @clientes, $cliente;
 

@@ -44,7 +44,13 @@ my $res = $t->post_ok(
 )->status_is(200)->tx->res->json;
 my $tweet_id = $res->{id};
 
-&_test_notifications(tweet_id => $tweet_id);
+db_transaction2 {
+    &_test_notifications(tweet_id => $tweet_id);
+};
+
+db_transaction2 {
+    &_test_notification_paging(tweet_id => $tweet_id);
+};
 
 done_testing();
 
@@ -92,7 +98,6 @@ sub _test_notifications {
     is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
     is $user2->notification_logs->count, 0, 'no notification yet';
 
-use DDP; p $user; p $user2;
     my $subcomment_user = $t->post_ok(
         (join '/', '/timeline', $comment_user2->{id}, 'comment'),
         {'x-api-key' => $session},
@@ -138,7 +143,26 @@ use DDP; p $user; p $user2;
     is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
 
 
-=pod
+    my $comment_user3 = $t->post_ok(
+        (join '/', '/timeline', $tweet_id, 'comment'),
+        {'x-api-key' => $session3},
+        form => {content => 'comment from yet another user 3'}
+    )->status_is(200)->tx->res->json;
+    is $comment_user3->{meta}{tweet_depth_test_only}, 2, '2nd level [sub-subcoment]';
+
+    is $user4->notification_logs->count, 0, 'no notification yet';
+
+    run_notification_job();
+
+    is $user->notification_logs->count,  4, 'one new notification';
+    is $user2->notification_logs->count, 4, 'one new notification';
+    is $user3->notification_logs->count, 0, 'no notification for user 3 (he is commenting)';
+    is $user4->notification_logs->count, 1, 'new notification for user 4';
+    is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
+
+
+    # now test permissions
+    # desliga os notification sobre os comentarios no post
     $t->post_ok(
         '/me/preferences', {'x-api-key' => $session},
         form => {
@@ -149,21 +173,46 @@ use DDP; p $user; p $user2;
         '/me/preferences', {'x-api-key' => $session},
     );
 
+    # e desliga os notifications sobre comentarios no user 4
+    $t->post_ok(
+        '/me/preferences', {'x-api-key' => $session4},
+        form => {
+            'NOTIFY_COMMENTS_POSTS_COMMENTED' => 0,
+        }
+    )->status_is(204);
+
+    my $comment_user3_again = $t->post_ok(
+        (join '/', '/timeline', $tweet_id, 'comment'),
+        {'x-api-key' => $session3},
+        form => {content => 'comment from yet another user 3 again'}
+    )->status_is(200)->tx->res->json;
+    is $comment_user3_again->{meta}{tweet_depth_test_only}, 2, '2nd level [sub-subcoment]';
+
+    is $user4->notification_logs->count, 1, 'just one notification from before';
+
+    run_notification_job();
+
+    is $user->notification_logs->count,  4, 'no new notifications';
+    is $user2->notification_logs->count, 5, 'one new notification';
+    is $user3->notification_logs->count, 0, 'no notification for user 3 (he is commenting)';
+    is $user4->notification_logs->count, 1, 'no new notification for user 4';
+    is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
+
+}
+
+sub _test_notification_paging {
+
+
     my $comment2 = $t->post_ok(
         (join '/', '/timeline', $tweet_id, 'comment'),
-        {'x-api-key' => $session},
+        {'x-api-key' => $session2},
         form => {content => 'comment'}
     )->status_is(200)->tx->res->json;
 
-    trace_popall;
-    ok(
-        Penhas::Minion::Tasks::NewNotification::new_notification(
-            $job, test_get_minion_args_job($ENV{LAST_NTF_COMMENT_JOB_ID})
-        ),
-        'job'
-    );
-    is trace_popall, 'minion:new_notification,new_comment,NOTIFY_COMMENTS_POSTS_CREATED,0', 'expected code path';
-    is $user->notification_logs->count, 1, 'still only one notification, yay!';
+    run_notification_job();
+
+    is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
+    is $user->notification_logs->count, 1, 'only one notification, yay!';
 
     is $ENV{LAST_NTF_LIKE_JOB_ID}, undef, 'no LAST_NTF_LIKE_JOB_ID yet';
     $t->post_ok(
@@ -177,31 +226,12 @@ use DDP; p $user; p $user2;
         ),
         'job'
     );
-    is trace_popall, 'minion:new_notification,new_like,NOTIFY_LIKES_POSTS_CREATED,1', 'expected code path';
-    is $user->notification_logs->count, 2, 'new notifications';
-
-    my $comment2_subcomment = $t->post_ok(
-        (join '/', '/timeline', $comment2->{id}, 'comment'),
-        {'x-api-key' => $session},
-        form => {content => 'subcomment'}
-    )->status_is(200)->tx->res->json;
-
-    is $comment2_subcomment->{meta}{tweet_depth_test_only}, 3, '3nd level [comment of a comment]';
-    is $comment2_subcomment->{meta}{can_reply},             0, '3nd level is not allowed to comment';
-
-    trace_popall;
-    ok(
-        Penhas::Minion::Tasks::NewNotification::new_notification(
-            $job, test_get_minion_args_job($ENV{LAST_NTF_COMMENT_JOB_ID})
-        ),
-        'job'
-    );
-    is trace_popall, 'minion:new_notification,new_comment,NOTIFY_COMMENTS_POSTS_COMMENTED,1', 'expected code path';
-    is $user->notification_logs->count, 3, 'new notifications';
+    is trace_popall, 'minion:new_notification,new_like', 'expected code path';
+    is $user->notification_logs->count, 1, 'no notifications (same user liked)';
 
     $t->post_ok(
-        (join '/', '/timeline', $comment2_subcomment->{id}, 'like'),
-        {'x-api-key' => $session},
+        (join '/', '/timeline', $tweet_id, 'like'),
+        {'x-api-key' => $session2},
     )->status_is(200);
     trace_popall;
     ok(
@@ -210,44 +240,75 @@ use DDP; p $user; p $user2;
         ),
         'job'
     );
+    is trace_popall, 'minion:new_notification,new_like,NOTIFY_LIKES_POSTS_CREATED,1', 'expected code path';
+    is $user->notification_logs->count, 2, 'new notification';
+
+
+    my $comment2_subcomment = $t->post_ok(
+        (join '/', '/timeline', $comment2->{id}, 'comment'),
+        {'x-api-key' => $session3},
+        form => {content => 'subcomment'}
+    )->status_is(200)->tx->res->json;
+
+    is $comment2_subcomment->{meta}{tweet_depth_test_only}, 3, '3nd level [comment of a comment]';
+    is $comment2_subcomment->{meta}{can_reply},             0, '3nd level is not allowed to comment';
+
+    trace_popall;
+    run_notification_job();
+    is trace_popall, 'minion:new_notification,new_comment', 'expected code path';
+    is $user->notification_logs->count, 3, 'new notifications (user 3 posted a subcomment)';
+
+    $t->post_ok(
+        (join '/', '/timeline', $comment2_subcomment->{id}, 'like'),
+        {'x-api-key' => $session2},
+    )->status_is(200);
+    is $user3->notification_logs->count, 0, 'no notifications yet';
+    trace_popall;
+    ok(
+        Penhas::Minion::Tasks::NewNotification::new_notification(
+            $job, test_get_minion_args_job($ENV{LAST_NTF_LIKE_JOB_ID})
+        ),
+        'job'
+    );
     is trace_popall, 'minion:new_notification,new_like,NOTIFY_LIKES_POSTS_COMMENTED,1', 'expected code path';
-    is $user->notification_logs->count, 4, 'new notifications';
+    is $user3->notification_logs->count, 1, 'notification for new like';
 
     $t->get_ok(
         ('/me/unread-notif-count'),
         {'x-api-key' => $session},
-    )->status_is(200)->json_is('/count', 4, '4 unread notifications');
+    )->status_is(200)->json_is('/count', 3, '3 unread notifications');
 
     $t->get_ok(
         ('/me/notifications'),
         {'x-api-key' => $session},
-        form => {rows => 3}
+        form => {rows => 2}
       )->status_is(200, 'notifications page1')    #
-      ->json_is('/has_more', 1, 'has more')                                       #
-      ->json_has('/next_page', 'next_page')                                       #
-      ->json_is('/rows/0/content', 'subcomment')                                  #
-      ->json_is('/rows/0/title',   'curtiu seu comentário')                      #
-      ->json_like('/rows/0/icon', qr/3\.svg/, 'icon ok')                          #
-      ->json_is('/rows/1/content', '❝subcomment❞ na publicação comment')    #
-      ->json_is('/rows/1/title',   'comentou seu comentário')                    #
-      ->json_like('/rows/1/icon', qr/2\.svg/, 'icon ok')                          #
-      ->json_is('/rows/2/content', 'ijime dame zettai')                           #
-      ->json_is('/rows/2/title',   'curtiu sua publicação');
+      ->json_is('/has_more', 1, 'has more')                                   #
+      ->json_has('/next_page', 'next_page')                                   #
+      ->json_is('/rows/0/content', '❝subcomment❞ na publicação ❝comment❞')    #
+      ->json_is('/rows/0/title',   'comentou sua publicação')                 #
+      ->json_is('/rows/0/name',    'xpto c')                                  #
+      ->json_like('/rows/0/icon', qr/2\.svg/, 'icon ok')                      #
+      ->json_is('/rows/1/content', 'root tweet')                              #
+      ->json_is('/rows/1/name',    'xpto b')                                  #
+      ->json_like('/rows/1/icon', qr/3\.svg/, 'icon ok')                      #
+      ->json_is('/rows/1/title', 'curtiu sua publicação')                     #
+      ->json_is('/rows/2', undef, 'just 2 rows asked');
 
     $t->get_ok(
         ('/me/notifications'),
         {'x-api-key' => $session},
         form => {next_page => last_tx_json->{next_page}}
-      )->status_is(200, 'notifications next_page')                                #
-      ->json_is('/has_more',       0,     'has more')                                  #
-      ->json_is('/next_page',      undef, 'next_page not defined')                     #
-      ->json_is('/rows/0/content', '❝test1❞ na publicação ijime dame zettai')    #
+      )->status_is(200, 'notifications next_page')                            #
+      ->json_is('/has_more',       0,     'has more')                         #
+      ->json_is('/next_page',      undef, 'next_page not defined')            #
+      ->json_is('/rows/0/content', '❝comment❞ na publicação ❝root tweet❞') #
       ->json_is('/rows/0/title',   'comentou sua publicação');
+
     $t->get_ok(
         ('/me/unread-notif-count'),
         {'x-api-key' => $session},
     )->status_is(200)->json_is('/count', 0, '0 unread notifications');
 
-=cut
 
 }

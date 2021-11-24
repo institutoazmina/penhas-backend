@@ -299,13 +299,6 @@ sub get_new_user() {
     my $random_email = 'email' . $random_cpf . '@something.com';
     goto AGAIN if cpf_already_exists($random_cpf);
 
-
-    my @other_fields = (
-        raca        => 'pardo',
-        apelido     => 'oshiete yo',
-        app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
-        dry         => 0,
-    );
     my $nome_completo = 'xpto ' . $name_seq++;
     get_schema->resultset('CpfCache')->find_or_create(
         {
@@ -318,6 +311,7 @@ sub get_new_user() {
     my $res = $t->post_ok(
         '/signup',
         form => {
+            apelido       => $nome_completo,
             nome_completo => $nome_completo,
             cpf           => $random_cpf,
             email         => $random_email,
@@ -325,9 +319,10 @@ sub get_new_user() {
             cep           => '12345678',
             dt_nasc       => '1994-01-31',
             nome_social   => 'foobar lorem',
-            @other_fields,
-            genero => 'Feminino',
-
+            raca          => 'pardo',
+            app_version   => 'Versao Ios ou Android, Modelo Celular, Versao do App',
+            dry           => 0,
+            genero        => 'Feminino',
         },
     )->status_is(200)->tx->res->json;
 
