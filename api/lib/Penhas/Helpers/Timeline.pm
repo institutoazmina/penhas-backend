@@ -619,7 +619,7 @@ sub _replace_number {
 sub _remove_phone_number {
     my ($content) = @_;
 
-    $content =~ s/((?:\(?\d{2}\)?\s*)?\b\s*\d{4,5}-?\d{4}\s)/&_replace_number($1)/ge;
+    $content =~ s/((?:\(?\d{2}\)?\s*)?\b\s*\d{4,5}.?\d{4}\s)/&_replace_number($1)/ge;
 
     return $content;
 }
