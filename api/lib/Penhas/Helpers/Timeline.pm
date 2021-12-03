@@ -612,6 +612,9 @@ sub _format_tweet {
 
 sub _replace_number {
     my ($content) = @_;
+
+    return $content if $content =~ /^[^\d]*0800/;
+
     $content =~ s/\d/*/g;
     return $content;
 }
