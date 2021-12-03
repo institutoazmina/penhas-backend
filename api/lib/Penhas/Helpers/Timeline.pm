@@ -584,14 +584,16 @@ sub _format_tweet {
 
     return {
         meta => {
-            owner     => $user->{id} == $me->{cliente_id} ? 1 : 0,
+            owner     => $user->{id} == $me->{cliente_id}                 ? 1 : 0,
             can_reply => $me->{tweet_depth} < 3 && $me->{tweet_depth} > 0 ? 1 : 0,
 
             (is_test() ? (tweet_depth_test_only => $me->{tweet_depth}) : ())
         },
-        id               => $me->{id},
-        content          => $me->{disable_escape}  ? $me->{content} : &_linkfy(&_nl2br(xml_escape($me->{content}))),
-        anonimo          => $anonimo && !$eh_admin ? 1              : 0,
+        id      => $me->{id},
+        content => $me->{disable_escape}
+        ? $me->{content}
+        : &_linkfy(&_nl2br(xml_escape(&_remove_phone_number($me->{content})))),
+        anonimo          => $anonimo && !$eh_admin ? 1 : 0,
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
         media            => $media_ref,
@@ -606,6 +608,20 @@ sub _format_tweet {
         ($anonimo && !$eh_admin ? (cliente_id => 0) : (cliente_id => $me->{cliente_id})),
 
     };
+}
+
+sub _replace_number {
+    my ($content) = @_;
+    $content =~ s/\d/*/g;
+    return $content;
+}
+
+sub _remove_phone_number {
+    my ($content) = @_;
+
+    $content =~ s/((?:\(?\d{2}\)?\s*)?\b\s*\d{4,5}-?\d{4}\s)/&_replace_number($1)/ge;
+
+    return $content;
 }
 
 sub _linkfy {
