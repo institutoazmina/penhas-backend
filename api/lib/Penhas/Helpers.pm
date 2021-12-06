@@ -41,11 +41,12 @@ sub setup {
     Penhas::Helpers::WebHelpers::setup($c);
 
     state $kv = Penhas::KeyValueStorage->instance;
-    $c->helper(kv                    => sub {$kv});
-    $c->helper(schema                => \&Penhas::SchemaConnected::get_schema);
-    $c->helper(schema2               => \&Penhas::SchemaConnected::get_schema2);
-    $c->helper(sum_cpf_errors        => \&sum_cpf_errors);
-    $c->helper(rs_user_by_preference => \&rs_user_by_preference);
+    $c->helper(kv                        => sub {$kv});
+    $c->helper(schema                    => \&Penhas::SchemaConnected::get_schema);
+    $c->helper(schema2                   => \&Penhas::SchemaConnected::get_schema2);
+    $c->helper(sum_cpf_errors            => \&sum_cpf_errors);
+    $c->helper(rs_user_by_preference     => \&rs_user_by_preference);
+    $c->helper(user_preference_is_active => \&user_preference_is_active);
 
     $c->helper(
         assert_user_has_module => sub {
@@ -148,6 +149,19 @@ sub rs_user_by_preference {
     );
     return $rs;
 
+}
+
+sub user_preference_is_active {
+    my ($c, $cliente_id, $preference_name) = @_;
+
+    # se tiver resultado, deu match, entao esta ativo
+    my $rs = $c->rs_user_by_preference($preference_name, '1')->search(
+        {
+            cliente_id => $cliente_id,
+        }
+    )->next;
+
+    return defined $r ? 1 : 0;
 }
 
 1;

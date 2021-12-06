@@ -72,6 +72,8 @@ __PACKAGE__->add_columns(
   },
   "tweet_depth",
   { data_type => "smallint", default_value => 1, is_nullable => 0 },
+  "use_penhas_avatar",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -88,8 +90,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 10:23:58
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YxK/kH4RgJtN9F2NCRYa0Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-12-06 10:18:55
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wzK0b6Oz9KOI8CS8mzkTaQ
 
 # alter table tweets modify column cliente_id  int(11) unsigned  not null;
 # ALTER TABLE tweets ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
