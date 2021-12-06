@@ -19,10 +19,10 @@ sub add {
         content   => {required => 1, type => 'Str', max_length => $ENV{TWEET_CONTENT_MAX_LENGTH} || 2200},
         media_ids => {required => 0, type => 'Str', max_length => 500},
     );
-    my $user = $c->stash('user');
 
     my $tweet = $c->add_tweet(
-        user      => $user,
+        user      => $c->stash('user'),
+        user_obj  => $c->stash('user_obj'),
         content   => $params->{content},
         media_ids => $params->{media_ids},
         reply_to  => $c->stash('reply_to'),
