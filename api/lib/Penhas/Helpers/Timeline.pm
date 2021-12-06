@@ -232,7 +232,7 @@ sub add_tweet {
     my $depth              = 1;
     my $original_parent_id = $reply_to;
 
-    my $root_tweet_id;
+    my $topmost_tweet_id;
     if ($original_parent_id && $ENV{SUBSUBCOMENT_DISABLED}) {
 
         # procura o tweet raiz [e conta o depth]
@@ -247,7 +247,7 @@ sub add_tweet {
         }
 
         # pra nao bugar o app se rodar com SUBSUBCOMENT_DISABLED=1
-        $root_tweet_id = $reply_to;
+        $topmost_tweet_id = $reply_to;
     }
     elsif ($original_parent_id) {
         my $tmp_parent_id = $reply_to;
@@ -261,7 +261,7 @@ sub add_tweet {
             last if !$parent->parent_id;
             last if $parent->parent_id eq $parent->id;    # just in case
         }
-        $root_tweet_id = $tmp_parent_id;
+        $topmost_tweet_id = $tmp_parent_id;
     }
 
     my $anonimo = $user->{modo_anonimo_ativo} ? 1 : 0;
@@ -280,9 +280,6 @@ sub add_tweet {
             use_penhas_avatar  => $post_as_admin,
         }
     );
-
-    use DDP;
-    p $reply_to;
 
     if ($reply_to) {
 
@@ -303,11 +300,12 @@ sub add_tweet {
                 [
                     'new_comment',
                     {
-                        tweet_id      => $original_parent_id,
-                        comment_id    => $tweet->id,
-                        subject_id    => $subject_id,
-                        comment       => $content,
-                        root_tweet_id => $root_tweet_id,
+                        tweet_id         => $original_parent_id,
+
+                        comment_id       => $tweet->id,
+                        subject_id       => $subject_id,
+                        comment          => $content,
+                        topmost_tweet_id => $topmost_tweet_id,
                     }
                 ] => {
                     attempts => 5,
@@ -608,6 +606,7 @@ sub _format_tweet {
 
             (is_test() ? (tweet_depth_test_only => $me->{tweet_depth}) : ())
         },
+
         id      => $me->{id},
         content => $me->{disable_escape}
         ? $me->{content}
@@ -637,6 +636,7 @@ sub _format_tweet {
         ),
     };
 }
+
 
 sub _replace_number {
     my ($content) = @_;
