@@ -631,7 +631,8 @@ sub _format_tweet {
             ? (
                 cliente_id => 0,
                 anonimo    => 1,
-                icon       => $avatar_penhas
+                icon       => $avatar_penhas,
+                name => 'Admin PenhaS',
               )
             : ()
         ),

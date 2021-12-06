@@ -17,8 +17,9 @@ ALTER TABLE tweets
 --insert into penhas_config (name,value,valid_from,valid_to)
 --values ('AVATAR_ANONIMO_URL', 'https://api.penhas.com.br/avatar/penhas_avatar.png', now(), 'infinity');
 
+-- delete from penhas_config where "name"='AVATAR_PENHAS_URL';
 insert into penhas_config (name,value,valid_from,valid_to)
-values ('AVATAR_PENHAS_URL', 'https://dev-penhas-api.appcivico.com/avatar/penhas_avatar.png', now(), 'infinity');
+values ('AVATAR_PENHAS_URL', 'https://dev-penhas-api.appcivico.com/avatar/penhas_avatar.svg', now(), 'infinity');
 
 COMMIT;
 
