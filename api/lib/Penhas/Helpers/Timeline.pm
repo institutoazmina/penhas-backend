@@ -201,7 +201,7 @@ sub add_tweet {
         }
     }
 
-    # die {message => 'O conteúdo precisa ser menor que 500 caracteres', error => 'tweet_too_long'}
+    # die {message => 'O conteÃºdo precisa ser menor que 500 caracteres', error => 'tweet_too_long'}
     #   if length $content > 500; Validado no controller
     slog_info(
         'add_tweet content=%s reply_to=%s',
@@ -220,7 +220,7 @@ sub add_tweet {
         expires => 60
     );
 
-    # permite até 9999 tweets em 1 segundo, acho que ta ok pra este app!
+    # permite atÃ© 9999 tweets em 1 segundo, acho que ta ok pra este app!
     # se tiver tudo isso de tweet em um segundo, aguarda o proximo segundo!
     if ($cur_seq == 9999) {
         sleep 1;
@@ -232,7 +232,7 @@ sub add_tweet {
     my $depth              = 1;
     my $original_parent_id = $reply_to;
 
-    my $topmost_tweet_id;
+    my $root_tweet_id;
     if ($original_parent_id && $ENV{SUBSUBCOMENT_DISABLED}) {
 
         # procura o tweet raiz [e conta o depth]
@@ -247,7 +247,7 @@ sub add_tweet {
         }
 
         # pra nao bugar o app se rodar com SUBSUBCOMENT_DISABLED=1
-        $topmost_tweet_id = $reply_to;
+        $root_tweet_id = $reply_to;
     }
     elsif ($original_parent_id) {
         my $tmp_parent_id = $reply_to;
@@ -261,7 +261,7 @@ sub add_tweet {
             last if !$parent->parent_id;
             last if $parent->parent_id eq $parent->id;    # just in case
         }
-        $topmost_tweet_id = $tmp_parent_id;
+        $root_tweet_id = $tmp_parent_id;
     }
 
     my $anonimo = $user->{modo_anonimo_ativo} ? 1 : 0;
@@ -300,12 +300,11 @@ sub add_tweet {
                 [
                     'new_comment',
                     {
-                        tweet_id         => $original_parent_id,
-
-                        comment_id       => $tweet->id,
-                        subject_id       => $subject_id,
-                        comment          => $content,
-                        topmost_tweet_id => $topmost_tweet_id,
+                        tweet_id      => $original_parent_id,
+                        comment_id    => $tweet->id,
+                        subject_id    => $subject_id,
+                        comment       => $content,
+                        root_tweet_id => $root_tweet_id,
                     }
                 ] => {
                     attempts => 5,
@@ -317,6 +316,7 @@ sub add_tweet {
 
     return &_get_tweet_by_id($c, $user, $tweet->id);
 }
+
 
 sub report_tweet {
     my ($c, %opts) = @_;
@@ -610,7 +610,7 @@ sub _format_tweet {
         id      => $me->{id},
         content => $me->{disable_escape}
         ? $me->{content}
-        : &_linkfy(&_nl2br(xml_escape(&_remove_phone_number($me->{content})))),
+        : &linkfy(&nl2br(xml_escape(&_remove_phone_number($me->{content})))),
         anonimo => $anonimo && !$eh_admin ? 1 : 0,
 
 
