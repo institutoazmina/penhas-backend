@@ -588,9 +588,10 @@ sub _format_tweet {
         }
     }
 
+    my $is_owner = $user->{id} == $me->{cliente_id} ? 1 : 0;
     return {
         meta => {
-            owner     => $user->{id} == $me->{cliente_id}                 ? 1 : 0,
+            owner     => $is_owner,
             can_reply => $me->{tweet_depth} < 3 && $me->{tweet_depth} > 0 ? 1 : 0,
 
             (is_test() ? (tweet_depth_test_only => $me->{tweet_depth}) : ())
@@ -598,7 +599,7 @@ sub _format_tweet {
         id      => $me->{id},
         content => $me->{disable_escape}
         ? $me->{content}
-        : &_linkfy(&_nl2br(xml_escape(&_remove_phone_number($me->{content})))),
+        : &_linkfy(&_nl2br(xml_escape($is_owner ? $me->{content} : &_remove_phone_number($me->{content})))),
         anonimo          => $anonimo && !$eh_admin ? 1 : 0,
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
@@ -618,7 +619,7 @@ sub _format_tweet {
                 cliente_id => 0,
                 anonimo    => 1,
                 icon       => $avatar_penhas,
-                name => 'Admin PenhaS',
+                name       => 'Admin PenhaS',
               )
             : ()
         ),
