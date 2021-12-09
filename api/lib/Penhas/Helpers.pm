@@ -161,7 +161,7 @@ sub user_preference_is_active {
         }
     )->next;
 
-    return defined $r ? 1 : 0;
+    return defined $rs ? 1 : 0;
 }
 
 1;
