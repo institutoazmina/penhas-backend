@@ -37,7 +37,7 @@ services:
     ports:
       - "172.17.0.1:${PENHAS_API_LISTEN}:8080"
     environment:
-      REDIS_SERVER: "redis"
+      REDIS_SERVER: "redis:6379"
       REDIS_NS: ""
     volumes:
         - ../data/:/data/
