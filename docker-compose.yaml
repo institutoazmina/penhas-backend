@@ -26,7 +26,11 @@ services:
       EMAIL_SMTP_USER: "${SMTP_USER}"
       EMAIL_SMTP_PASSWORD: "${SMTP_PASSWORD}"
       EMAIL_SMTP_SECURE: 'true'
-
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "${LOG_MAX_FILE}"
+        max-size: "${LOG_MAX_SIZE}"
   penhas_api:
     image: azminas/penhas_api
     restart: unless-stopped
@@ -42,6 +46,11 @@ services:
         - external_network
         - db_network
         - cache
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "${LOG_MAX_FILE}"
+        max-size: "${LOG_MAX_SIZE}"
   redis:
     container_name: penhas_redis
     restart: unless-stopped
