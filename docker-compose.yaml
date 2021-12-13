@@ -33,16 +33,33 @@ services:
     ports:
       - "172.17.0.1:${PENHAS_API_LISTEN}:8080"
     environment:
-      REDIS_SERVER: "${REDIS_SERVER}"
-      REDIS_NS: "${REDIS_NS}"
+      REDIS_SERVER: "redis"
+      REDIS_NS: ""
     volumes:
         - ../data/:/data/
         - ./api/:/src/
     networks:
         - external_network
         - db_network
-
+        - cache
+  redis:
+    container_name: penhas_redis
+    restart: unless-stopped
+    image: docker.io/bitnami/redis:6.2
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_PASSWORD=""
+    networks:
+      - cache
+    volumes:
+      - ${REDIS_STORAGE}:/bitnami/redis/data
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "${LOG_MAX_FILE}"
+        max-size: "${LOG_MAX_SIZE}"
 networks:
     external_network:
+    cache:
     db_network:
         name: penhas_db_pg_network
