@@ -45,7 +45,15 @@ sub setup {
                 },
                 tries => 3
             );
+            slog_info('Resposta para consulta %s: CODE=%s BODY=%s', $cpf, $tx->res->code, $tx->res->body);
             my $json = $tx->res->json;
+
+            if ($tx->res->code == 500) {
+                die {
+                    error   => 'cpf_offline',
+                    message => 'Não conseguimos consultar o seu CPF no momento, tente novamente mais tarde.',
+                };
+            }
 
             # dados encontrados e da match na data de nascimento
             if ($json->{RetornoCpf}{msg}{Resultado} == 1) {
