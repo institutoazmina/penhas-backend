@@ -18,8 +18,15 @@ sub setup {
 
             my $cpf_hashed = cpf_hash_with_salt($cpf);
 
-            my $found
-              = $self->schema->resultset('CpfCache')->search({cpf_hashed => $cpf_hashed, dt_nasc => $dt_nasc})->next;
+            my $found = $self->schema->resultset('CpfCache')->search(
+                {cpf_hashed => $cpf_hashed, dt_nasc => $dt_nasc},
+                {'+columns' => [{age => "extract('epoch' from now() - me.__created_at_real)"}]}
+            )->next;
+
+            if ($found && $found->nome_hashed eq '404' && $found->get_column('age') > 300) {
+                $found->delete; # apaga por causa da PK
+                $found = undef; # faz novamente a consulta
+            }
 
             return $found if $found;
 
