@@ -20,7 +20,7 @@ sub setup {
 
             my $found = $self->schema->resultset('CpfCache')->search(
                 {cpf_hashed => $cpf_hashed, dt_nasc => $dt_nasc},
-                {'+columns' => [{age => "extract('epoch' from now() - me.__created_at_real)"}]}
+                {'+columns' => [{age => \"extract('epoch' from now() - me.__created_at_real)"}]}
             )->next;
 
             if ($found && $found->nome_hashed eq '404' && $found->get_column('age') > 300) {
