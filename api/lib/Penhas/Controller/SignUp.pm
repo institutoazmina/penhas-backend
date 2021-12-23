@@ -147,8 +147,6 @@ sub post {
                 ? ' Caso os dados estejam corretos, tente novamente após 5 minutos.'
                 : ''
               ),
-            field  => 'dt_nasc',
-            reason => 'invalid',
         };
     }
 
@@ -186,8 +184,6 @@ sub post {
             error   => 'cpf_already_exists',
             message =>
               'Este CPF já possui uma conta. Entre em contato com o suporte caso não lembre do e-mail utilizado.',
-            field  => 'cpf',
-            reason => 'duplicate'
         };
     }
 
