@@ -94,7 +94,11 @@ sub housekeeping {
         WHERE subq.rel_id = me.id and ponto_apoio_projeto_count != qtde_ponto_apoio"
     );
 
-    return $c->render(json => {});
+    return $c->render(
+        json => {
+            redis => Penhas::KeyValueStorage->instance->redis->ping(),
+        }
+    );
 }
 
 # cria notificacoes do chat (nao leu em X tempo)
