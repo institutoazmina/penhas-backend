@@ -111,7 +111,7 @@ my %WriteMakefileArgs = (
     "Scope::OnExit" => 0,
     "Sereal" => 0,
     "Test2::Harness" => 0,
-    "Test::Mojo::Role::StopOnFail" => 0,
+
     "Text::CSV_XS" => 0,
     "Text::Unaccent::PurePerl" => 0,
     "Text::Xslate" => 0,
@@ -259,7 +259,6 @@ my %FallbackPrereqs = (
   "Test2::Tools::Subtest" => 0,
   "Test2::V0" => 0,
   "Test::Mojo" => 0,
-  "Test::Mojo::Role::StopOnFail" => 0,
   "Test::More" => 0,
   "Text::CSV_XS" => 0,
   "Text::Unaccent::PurePerl" => 0,
