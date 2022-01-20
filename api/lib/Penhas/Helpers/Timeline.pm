@@ -486,7 +486,13 @@ sub list_tweets {
         # para fazer a pesquisa dos comentarios, nao importa a ordem, nem podemos limitar as linhas
         delete $attr->{rows};
         delete $attr->{order_by};
-        my @childs = $c->schema2->resultset('Tweet')->search({'me.id' => {in => \@comments}}, $attr)->all;
+        my @childs = $c->schema2->resultset('Tweet')->search(
+            {
+                'me.id'     => {in => \@comments},
+                'me.status' => 'published'
+            },
+            $attr
+        )->all;
         foreach my $me (@childs) {
             $last_reply{$me->{parent_id}} = &_format_tweet($user, $me, $remote_addr);
         }
