@@ -489,7 +489,9 @@ sub list_tweets {
         my @childs = $c->schema2->resultset('Tweet')->search(
             {
                 'me.id'     => {in => \@comments},
-                'me.status' => 'published'
+                'me.status' => 'published',
+                'me.escondido'   => 'false',
+                'cliente.status' => 'active',
             },
             $attr
         )->all;
