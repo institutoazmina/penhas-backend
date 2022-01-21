@@ -134,7 +134,7 @@ sub cliente_list_events_audio {
 
     my $filtered_rs = $user_obj->clientes_audios_eventos->search_rs(
         {
-            'me.status'     => {in => [qw/free_access blocked_access free_access_by_admin/]},
+            #'me.status'     => {in => [qw/free_access blocked_access free_access_by_admin/]},
             'me.deleted_at' => undef,
             (defined $event_id ? ('me.event_id' => $user_obj->id_composed_fk($event_id)) : ()),
         },

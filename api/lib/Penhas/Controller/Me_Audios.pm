@@ -131,11 +131,11 @@ sub audio_download {
         as_resultclass => 1,
     );
 
-    die {
-        error   => 'audio_blocked_access',
-        message => "Você não pode fazer o download deste evento. Entre em contato com o administrador.",
-        status  => 400,
-    } unless $audios->{event}->is_download_granted();
+#    die {
+#        error   => 'audio_blocked_access',
+#        message => "Você não pode fazer o download deste evento. Entre em contato com o administrador.",
+##        status  => 400,
+#    } unless $audios->{event}->is_download_granted();
 
 
     my @downloads_rows;
