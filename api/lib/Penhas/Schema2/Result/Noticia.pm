@@ -96,7 +96,12 @@ __PACKAGE__->belongs_to(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:z7NykPJYZMKLYaeOW/ipFA
 
 # ALTER TABLE noticias ADD FOREIGN KEY (rss_feed_id) REFERENCES rss_feeds(id) ON DELETE CASCADE ON UPDATE cascade;
-
+__PACKAGE__->has_many(
+  "noticias_tags",
+  "Penhas::Schema2::Result::NoticiasTag",
+  { "foreign.noticias_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;
