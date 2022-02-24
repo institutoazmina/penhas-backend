@@ -24,7 +24,7 @@ goto AGAIN if cpf_already_exists($random_cpf);
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
 $ENV{SKIP_END_NEWS}            = '1';
 
-$ENV{FILTER_PONTO_APOIO_CATS} = '';
+$ENV{FILTER_PONTO_APOIO_PROJETO_WEB} = '';
 
 my @other_fields = (
     raca        => 'branco',
@@ -174,6 +174,7 @@ do {
         status                  => 'active',
         created_on              => \'now()',
         updated_at              => \'now()',
+        abrangencia             => 'Local',
     };
 
     my $cat1o = $schema2->resultset('PontoApoioCategoria')->create(
@@ -203,7 +204,7 @@ do {
             status => 'test',
         }
     );
-    $cat1o->ponto_apoio_categoria2projetos->create({ponto_apoio_projeto_id => $proj->id});
+    #$cat1o->ponto_apoio_categoria2projetos->create({ponto_apoio_projeto_id => $proj->id});
 
     my $avaliar_ponto_apoio;
     foreach my $code (1 .. 3) {
@@ -245,6 +246,7 @@ do {
         $ponto_apoio2 = $tmp if $code == 2;
         $ponto_apoio3 = $tmp if $code == 3;
     }
+    $ponto_apoio1->add_to_ponto_apoio2projetos({ponto_apoio_projeto_id => $proj->id});
     $t->app->tick_ponto_apoio_index();
 
     $avaliar_ponto_apoio = $ponto_apoio3;
@@ -393,7 +395,7 @@ do {
         form => {
             'latitude'  => '-23.589893',
             'longitude' => '-46.633462',
-            'keywords'  => 'kaz',
+            'keywords'  => 'kazu',
         }
       )->status_is(200)                                                                    #
       ->json_is('/rows/0/nome', 'kazu', 'kazu eh o resultado pra busca')                   #

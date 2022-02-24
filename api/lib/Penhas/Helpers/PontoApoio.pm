@@ -76,6 +76,8 @@ sub _ponto_apoio_csv {
         ['ddd',                    'ddd'],
         ['telefone1',              'telefone1'],
         ['telefone2',              'telefone2'],
+        ['ramal1',                 'ramal1'],
+        ['ramal2',                 'ramal2'],
         ['email',                  'e-mail'],
         ['eh_24h',                 '24horas', 'bool'],
         ['horario_inicio',         'Horário início'],
@@ -92,9 +94,12 @@ sub _ponto_apoio_csv {
         ['delegacia_mulher',       'Delegacia Mulher'],
         ['endereco_correto',       'Endereço correto', 'bool'],
         ['horario_correto',        'Horário correto',  'bool'],
-        ['telefone_correto',       'Telefone correto',  'bool'],
+        ['telefone_correto',       'Telefone correto', 'bool'],
         ['observacao',             'Observação'],
-        ['id',                     'ID']
+        ['eh_whatsapp',            'Whatsapp', 'bool'],
+        ['abrangencia',            'Abrangencia',],
+        ['cod_ibge',               'cod_ibge',],
+        ['id',                     'ID'],
     );
     $csv->say($fh, [map { $_->[1] } @fields]);
 
@@ -158,8 +163,9 @@ sub ponto_apoio_list {
 
     my $filter_projeto_id = $c->_project_id_by_label(%opts);
 
-    $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}]
-      if $ENV{FILTER_PONTO_APOIO_CATS} && !$as_csv && !$filter_projeto_id;
+    # se nao passar qual projeto, filtra sozinho para o projeto da web (mapa da delegacia)
+    $filter_projeto_id = $ENV{FILTER_PONTO_APOIO_PROJETO_WEB}
+      if $ENV{FILTER_PONTO_APOIO_PROJETO_WEB} && !$as_csv && !$filter_projeto_id;
 
     $c->reply_invalid_param('Distância precisa ser menor que 5000km', 'form_error', 'max_distance')
       if $max_distance > 5000;
@@ -186,18 +192,43 @@ sub ponto_apoio_list {
         $rows = -1;
     }
 
-    # essa conta aqui só é uma aproximação do globo, com distorções nos polos e equador
-    # o ideal é fazer isso tudo no postgres, com postgis, pois lá o suporte a index é bem mais simples
-    # mas o chato é manter as bases sincronizadas (pelo menos lat/long+categorias+textos indexados)
-    # se você é acredita que a terra é plana, pode ignorar o comentario acima, *ta tudo bem*
-    my $distance_in_km_where
-      = defined $latitude
-      ? qq| ST_DWithin(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography, (($max_distance+1) * 1000) - 1)  |
+    my $user_cod_ibge = -1;
+
+    if (defined $latitude) {
+        $user_cod_ibge = $c->cod_ibge_by_latlng($latitude, $longitude);
+
+        # faz o fallback pro CEP do user
+        if (!$user_cod_ibge && $user_obj) {
+            ($latitude, $longitude) = $c->geo_code_cached_by_user($user_obj);
+
+            $user_cod_ibge = $c->cod_ibge_by_latlng($latitude, $longitude);
+        }
+
+        if (!$user_cod_ibge) {
+            $user_cod_ibge = -1;
+        }
+    }
+
+    #Sempre apresentar o que for "Nacional"
+    # Sempre apresentar o "local" do município em que a pessoa está
+    # (com fallback para o CEP da pessoa caso não tenha esteja dentro do local)
+    # Regional sempre filtrar por 50km (e não filtrar por estado)
+
+    my $distance_in_km_where = defined $latitude
+      ? qq|
+          CASE WHEN abrangencia = 'Nacional' THEN (TRUE)
+          WHEN abrangencia = 'Regional' THEN ( cod_ibge = '$user_cod_ibge'::int OR '$user_cod_ibge'::int = -1 )
+          ELSE
+            (ST_DWithin(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography, (($max_distance+1) * 1000) - 1))
+          END
+       |
       : '';
 
-    my $distance_in_km_column
-      = defined $latitude
-      ? qq| floor(ST_Distance(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography ) / 1000 ) |
+    my $distance_in_km_column = defined $latitude
+      ? qq| CASE
+            WHEN abrangencia = 'Nacional' THEN -1
+            ELSE floor(ST_Distance(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography ) / 1000 )
+            END |
       : '';
 
     my $search = {
@@ -244,7 +275,10 @@ sub ponto_apoio_list {
         )
     };
 
-    log_debug($c->app->dumper($search, $attr));
+    do {
+        local $Data::Dumper::Maxdepth = 3;
+        log_debug($c->app->dumper($search, $attr));
+    };
 
     my $rs = $c->schema2->resultset('PontoApoio')->search($search, $attr);
 
@@ -541,7 +575,7 @@ sub ponto_apoio_detail {
         {
             'columns' => [
                 {categoria_nome => 'categoria.label'},
-                {categoria_cor  => 'categoria.color'},,
+                {categoria_cor  => 'categoria.color'},
                 {categoria_id   => 'categoria.id'},
                 {categoria_id   => 'categoria.id'},
                 (
@@ -602,9 +636,8 @@ sub ponto_apoio_detail {
         nome => delete $row->{categoria_nome},
     };
     my $natureza_de_para = {
-        publico          => 'Público',
-        privado_coletivo => 'Privado coletivo',
-        privado_ong      => 'Privado ONG',
+        publico => 'Público',
+        ong     => 'ONG',
     };
     $row->{natureza} = $natureza_de_para->{$row->{natureza}} || $row->{natureza};
 
@@ -658,7 +691,7 @@ sub tick_ponto_apoio_index {
         },
         {
             rows     => 1000,
-            prefetch => [{categoria => 'ponto_apoio_categoria2projetos'}],
+            prefetch => 'ponto_apoio2projetos'
         }
     );
 
@@ -666,7 +699,7 @@ sub tick_ponto_apoio_index {
     my $now  = time();
     while (my $ponto = $rs->next) {
         my $index    = '';
-        my @projetos = map { $_->ponto_apoio_projeto_id() } $ponto->categoria->ponto_apoio_categoria2projetos->all;
+        my @projetos = map { $_->ponto_apoio_projeto_id() } $ponto->ponto_apoio2projetos->all;
         foreach my $projeto_id (@projetos) {
             $index .= '`p' . $projeto_id . ']]';
         }
