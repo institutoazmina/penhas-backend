@@ -204,6 +204,7 @@ do {
             status => 'test',
         }
     );
+
     #$cat1o->ponto_apoio_categoria2projetos->create({ponto_apoio_projeto_id => $proj->id});
 
     my $avaliar_ponto_apoio;
@@ -255,6 +256,7 @@ do {
     # mas o algoritimo usado aqui só é uma aproximação do globo, com distorções nos polos e equador
     # -23.589893, -46.633462
 
+    trace_popall;
     $t->get_ok(
         '/pontos-de-apoio',
         form => {
@@ -277,6 +279,7 @@ do {
       ->json_is('/avaliacao_maxima',     5,          'avaliacao_maxima')             #
       ->json_is('/next_page',            undef,      'next_page is empty');
 
+    is trace_popall, 'user_cod_ibge,3550308', 'where cod_ibge=sao_paulo';
 
     $t->get_ok(
         '/pontos-de-apoio',
@@ -574,6 +577,30 @@ do {
         }
     )->status_is(200);
 
+
+    trace_popall;
+    $t->get_ok(
+        '/pontos-de-apoio',
+        form => {
+            'latitude'   => '23.589893',
+            'longitude'  => '46.633462',
+            'categorias' => join(',', $cat1, $cat2, $cat3)    # filtrar por tudo nao deve ter nenhum efeito
+        }
+    )->status_is(200);
+
+    is trace_popall, 'user_cod_ibge,-1', 'where cod_ibge=-1 pq ta deslogado';
+
+    $t->get_ok(
+        '/me/pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'latitude'   => '23.589893',
+            'longitude'  => '46.633462',
+            'categorias' => join(',', $cat1, $cat2, $cat3)    # filtrar por tudo nao deve ter nenhum efeito
+        }
+    )->status_is(200);
+
+    is trace_popall, 'cep_fallback,user_cod_ibge,3550308', 'where cod_ibge=-1 pq ta deslogado';
 
 };
 
