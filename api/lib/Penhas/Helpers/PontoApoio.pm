@@ -664,8 +664,8 @@ sub ponto_apoio_detail {
               . q|<p style="color: #0a115f"><b>Endereço</b></p>|
               . q|<p style="color: #818181;">[% tipo_logradouro %] [% nome_logradouro %]|
               . q|[% IF numero.defined() %], [% numero %][% END %] -[%bairro %] -[%municipio %], [%uf %], [%cep %] </p>|
-              . q|[% IF ddd.defined() %]<p> [% telefone2 ? 'Telefones' :'Telefone' %]: <a href="+55[%ddd%][%telefone1%]">[% ddd %] [% telefone1 %]</a> [% IF ramal1.defined() %] ramal: [% ramal1 %] [% END %]
-                    [% IF telefone2%], <a href="+55[%ddd%][%telefone2%]">[% ddd %] [% telefone2 %]</a> [% IF ramal2.defined() %] ramal: [% ramal2 %] [% END %] [% END %]
+              . q|[% IF ddd.defined() %]<p> [% telefone2 ? 'Telefones' :'Telefone' %]: <a href="tel:+55[%ddd%][%telefone1%]">[% ddd %] [% telefone1 %]</a> [% IF ramal1.defined() %] ramal: [% ramal1 %] [% END %]
+                    [% IF telefone2%], <a href="tel:+55[%ddd%][%telefone2%]">[% ddd %] [% telefone2 %]</a> [% IF ramal2.defined() %] ramal: [% ramal2 %] [% END %] [% END %]
               </p>[% ELSE %]
                     [% IF telefone1 %] Telefone: [%telefone1%] [% END %]
                     [% IF telefone2 %], [%telefone2%] [% END %]
