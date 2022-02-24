@@ -347,13 +347,15 @@ sub ponto_apoio_list {
         if ($rows > 0) {
             if ($_->{distance_in_km} == -0.0001) {
 
-                $_->{distancia} = 'Nacional';
+                $_->{distancia} = 'Nacional - 0 ';
+
                 # passa por cima
-                $_->{latitude} = $latitude;
+                $_->{latitude}  = $latitude;
                 $_->{longitude} = $longitude;
             }
             else {
-                $_->{distancia} = int(delete $_->{distance_in_km}) . '';
+                $_->{distancia}
+                  = ($_->{abrangencia} eq 'Regional' ? 'Regional - ' : '') . int(delete $_->{distance_in_km}) . '';
             }
         }
         $_->{categoria} = {
