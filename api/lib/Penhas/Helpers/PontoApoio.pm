@@ -386,7 +386,6 @@ sub ponto_apoio_list {
 sub ponto_apoio_fields {
     my ($c, %opts) = @_;
 
-    my $filter_projeto_id = $opts{filter_projeto_id};
     my $is_public         = defined $opts{format} && $opts{format} eq 'public';
 
     my @config = (
@@ -403,14 +402,8 @@ sub ponto_apoio_fields {
                       $c->schema2->resultset('PontoApoioCategoria')->search(
                         {
                             status => 'prod',
-                            (
-                                $filter_projeto_id
-                                ? ('ponto_apoio_categoria2projetos.ponto_apoio_projeto_id' => $filter_projeto_id)
-                                : ()
-                            ),
                         },
                         {
-                            ($filter_projeto_id ? (join => 'ponto_apoio_categoria2projetos') : ()),
                             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
                             order_by     => ['label'],
                             columns      => [qw/id label/],

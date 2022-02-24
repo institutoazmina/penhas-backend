@@ -176,21 +176,8 @@ sub pa_aux_data {
                 $c->schema2->resultset('PontoApoioCategoria')->search(
                     {
                         status => 'prod',
-
-                        (
-                            $filter_projeto_id
-                            ? (
-                                '-and' => [
-                                    {'ponto_apoio_categoria2projetos.ponto_apoio_projeto_id'    => $filter_projeto_id},
-                                    {'ponto_apoio_categoria2projetos.ponto_apoio_projeto_count' => {'>' => 0}}
-                                ]
-                              )
-                            : ()
-                        ),
                     },
                     {
-                        ($filter_projeto_id ? (join => 'ponto_apoio_categoria2projetos') : ()),
-
                         result_class => 'DBIx::Class::ResultClass::HashRefInflator',
                         order_by     => ['label'],
                         columns      => [qw/id label/],

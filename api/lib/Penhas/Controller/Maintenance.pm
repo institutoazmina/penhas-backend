@@ -77,23 +77,6 @@ sub housekeeping {
         }
     }
 
-    my $dbh = $c->schema2->storage->dbh;
-    $dbh->do(
-        "UPDATE
-            ponto_apoio_categoria2projetos me
-        SET ponto_apoio_projeto_count = qtde_ponto_apoio
-        FROM (
-            SELECT
-                a.id AS rel_id,
-                count(b.id) AS qtde_ponto_apoio
-            FROM
-                ponto_apoio_categoria2projetos a
-                JOIN ponto_apoio b ON b.categoria = a.ponto_apoio_categoria_id
-            GROUP BY a.id
-        ) AS subq
-        WHERE subq.rel_id = me.id and ponto_apoio_projeto_count != qtde_ponto_apoio"
-    );
-
     return $c->render(json => {});
 }
 
