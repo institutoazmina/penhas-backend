@@ -233,7 +233,7 @@ sub ponto_apoio_list {
 
     my $distance_in_km_column = defined $latitude
       ? qq| CASE
-            WHEN abrangencia = 'Nacional' THEN -1
+            WHEN abrangencia = 'Nacional' THEN -0.0001
             ELSE floor(ST_Distance(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography ) / 1000 )
             END |
       : '';
@@ -340,13 +340,21 @@ sub ponto_apoio_list {
         $cur_count--;
     }
     foreach (@rows) {
-        use DDP;
-        p $_;
+
         $_->{avaliacao} = sprintf('%.01f', $_->{avaliacao});
         $_->{avaliacao} =~ s/\./,/;
         $_->{avaliacao} = 'n/a' if delete $_->{qtde_avaliacao} == 0;
         if ($rows > 0) {
-            $_->{distancia} = int(delete $_->{distance_in_km}) . '';
+            if ($_->{distance_in_km} == -0.0001) {
+
+                $_->{distancia} = 'Nacional';
+                # passa por cima
+                $_->{latitude} = $latitude;
+                $_->{longitude} = $longitude;
+            }
+            else {
+                $_->{distancia} = int(delete $_->{distance_in_km}) . '';
+            }
         }
         $_->{categoria} = {
             id   => delete $_->{categoria_id},
