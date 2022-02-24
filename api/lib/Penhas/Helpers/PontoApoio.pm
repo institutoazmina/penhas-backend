@@ -260,7 +260,7 @@ sub ponto_apoio_list {
             {categoria_id   => 'categoria.id'},
             {categoria_id   => 'categoria.id'},
             ($user_obj ? ({cliente_avaliacao => 'cliente_ponto_apoio_avaliacaos.avaliacao'}) : ()),
-            qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf me.qtde_avaliacao/,
+            qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf me.qtde_avaliacao me.abrangencia/,
         ],
         join => [
             'categoria',
