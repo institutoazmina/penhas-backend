@@ -386,7 +386,7 @@ sub ponto_apoio_list {
 sub ponto_apoio_fields {
     my ($c, %opts) = @_;
 
-    my $is_public         = defined $opts{format} && $opts{format} eq 'public';
+    my $is_public = defined $opts{format} && $opts{format} eq 'public';
 
     my @config = (
 
@@ -604,7 +604,10 @@ sub ponto_apoio_detail {
                   me.ddd
                   me.telefone1
                   me.telefone2
+                  me.ramal1
+                  me.ramal2
                   me.eh_24h
+                  me.eh_whatsapp
                   me.horario_inicio
                   me.horario_fim
                   me.dias_funcionamento
@@ -643,10 +646,14 @@ sub ponto_apoio_detail {
 
 
     my $dow_de_para = {
-        dias_uteis             => 'Dias úteis',
-        fds                    => 'Fim de semana',
-        dias_uteis_fds_plantao => 'Dias úteis com plantão aos fins de semanas',
-        todos_os_dias          => 'Todos os dias'
+        'dias_uteis'             => 'Dias úteis',
+        'fds'                    => 'Fim de semana',
+        'dias_uteis_fds_plantao' => 'Dias úteis com plantão aos fins de semana',
+        'todos_os_dias'          => 'Todos os dias',
+        'seg_a_sab'              => 'Segunda a sábado',
+        'seg_a_qui'              => 'Segunda a quinta',
+        'ter_a_qui'              => 'Terça a quinta',
+        'quinta_feira'           => 'Quintas-feiras',
     };
     $row->{dias_funcionamento}
       = $dow_de_para->{$row->{dias_funcionamento}} || $row->{dias_funcionamento};
@@ -656,7 +663,14 @@ sub ponto_apoio_detail {
                 q|<p style="color: #0a115f">[% observacao %]</p><br/>|
               . q|<p style="color: #0a115f"><b>Endereço</b></p>|
               . q|<p style="color: #818181;">[% tipo_logradouro %] [% nome_logradouro %]|
-              . q|[% IF numero.defined() %], [% numero %][% END %] -[%bairro %] -[%municipio %], [%uf %], [%cep %] </p>|,
+              . q|[% IF numero.defined() %], [% numero %][% END %] -[%bairro %] -[%municipio %], [%uf %], [%cep %] </p>|
+              . q|[% IF ddd.defined() %]<p> [% telefone2 ? 'Telefones' :'Telefone' %]: [% ddd %] [% telefone1 %] [% IF ramal1.defined() %] ramal: [% ramal1 %] [% END %]
+                    [% IF telefone2%], [% ddd %] [% telefone2 %] [% IF ramal2.defined() %] ramal: [% ramal2 %] [% END %] [% END %]
+              </p>[% ELSE %]
+                    [% IF telefone1 %] Telefone: [%telefone1%] [% END %]
+                    [% IF telefone2 %], [%telefone2%] [% END %]
+              [% END %]|,
+
             $row
         );
     }
