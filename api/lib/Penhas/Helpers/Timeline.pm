@@ -604,6 +604,7 @@ sub _format_tweet {
             owner     => $user->{id} == $me->{cliente_id}                 ? 1 : 0,
             can_reply => $me->{tweet_depth} < 3 && $me->{tweet_depth} > 0 ? 1 : 0,
 
+            parent_id => $me->{parent_id},
             (is_test() ? (tweet_depth_test_only => $me->{tweet_depth}) : ())
         },
 
