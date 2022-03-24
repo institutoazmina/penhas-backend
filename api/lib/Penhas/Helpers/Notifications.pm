@@ -248,7 +248,7 @@ sub user_notifications {
             }
         }
         elsif ($meta->{tweet_id}) {
-            $r->{expand_screen} = '/mainboard/tweet/' . $meta->{tweet_id};
+            $r->{expand_screen} = '/mainboard/tweet/' . $meta->{tweet_id} . '?comment_id=' . $meta->{comment_id};
         }
     }
 
