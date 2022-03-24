@@ -179,7 +179,7 @@ sub support_send_message {
     my $prev_last_msg_at;
     my $last_msg_at;
     my $logged_as_admin = $c->stash('logged_as_admin') ? 1 : 0;
-    $c->schema->txn_do(
+    $c->schema2->txn_do(
         sub {
             # pega o ultimo horario antes da nossa msg
             my $db_info = $c->schema2->resultset('ChatSupport')->search(
@@ -218,6 +218,14 @@ sub support_send_message {
 
                 }
             );
+
+            if ($c->schema2->resultset('RelatorioChatClienteSuporte')->search({
+                cliente_id => $chat_message->cliente_id
+            })->count() == 0){
+                $c->schema2->resultset('RelatorioChatClienteSuporte')->create({
+                    cliente_id => $chat_message->cliente_id
+                 });
+            }
         }
     );
     die '$chat_message is not defined' unless $chat_message;
