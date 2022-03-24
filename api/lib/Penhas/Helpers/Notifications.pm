@@ -247,8 +247,10 @@ sub user_notifications {
                 log_trace("expand_screen=" . $subject_id);
             }
         }
-        elsif ($meta->{tweet_id}) {
+        elsif ($meta->{tweet_id} && $meta->{comment_id}) {
             $r->{expand_screen} = '/mainboard/tweet/' . $meta->{tweet_id} . '?comment_id=' . $meta->{comment_id};
+        }elsif ($meta->{tweet_id}) {
+            $r->{expand_screen} = '/mainboard/tweet/' . $meta->{tweet_id};
         }
     }
 
