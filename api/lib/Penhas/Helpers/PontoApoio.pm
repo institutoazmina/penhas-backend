@@ -11,7 +11,7 @@ use Mojo::Util qw/trim/;
 use Scope::OnExit;
 use Text::CSV_XS;
 use Encode qw/encode_utf8/;
-
+use Penhas::CEP;
 
 sub setup {
     my $self = shift;
@@ -401,7 +401,10 @@ sub ponto_apoio_fields {
     my @config = (
 
 
-        ['endereco_ou_cep' => {max_length => 255, required => 1,},],
+        ['endereco_ou_cep' => {max_length => 255, required => 0,},],
+        ['endereco'        => {max_length => 255, required => 0,},],
+        ['cep'             => {max_length => 255, required => 0,},],
+        ['telefone'        => {max_length => 255, required => 0,},],
         ['nome'            => {max_length => 255, required => 1,},],
 
         [
@@ -433,6 +436,9 @@ sub ponto_apoio_fields {
         endereco_ou_cep   => 'Endereço ou CEP',
         descricao_servico => 'Descrição do serviço',
         nome              => 'Nome',
+        endereco          => 'Endereço',
+        cep               => 'CEP',
+        telefone          => 'Telefone com DDD ou 0800',
     );
     foreach my $item (@config) {
 
@@ -478,6 +484,64 @@ sub ponto_apoio_suggest {
     my $user_obj = $opts{user_obj} or confess 'missing user_obj';
 
     my $fields = $opts{fields};
+
+    if (!$fields->{endereco} && !$fields->{endereco_ou_cep}) {
+        $c->reply_invalid_param('É necessário enviar o endereço', 'endereco');
+    }
+
+    my $cep = $fields->{cep} || '';
+    if ($cep){
+        $cep =~ s/[^\d+]//ga;
+        $fields->{cep} = $cep;
+    }
+
+    $c->reply_invalid_param('É necessário enviar o endereço', 'endereco') if ($cep && !$fields->{endereco});
+
+    $c->reply_invalid_param('É informar um telefone', 'telefone') if ($cep && !$fields->{telefone});
+
+    my $raw_telefone = delete $fields->{telefone};
+    if ($raw_telefone) {
+        my $telefone = Number::Phone::Lib->new($raw_telefone =~ /^\+/ ? ($raw_telefone) : ('BR', $raw_telefone));
+
+        $c->reply_invalid_param(
+            'Não conseguimos decodificar o número de telefone enviado. Lembre-se de incluir o DDD para Brasil. Também aceitamos números 0800, 0300',
+            'parser_error', 'telefone'
+        ) if !$telefone || !$telefone->is_valid();
+
+        $fields->{telefone_formatted_as_national} = $telefone->format_using('National');
+        $fields->{telefone_e164}                  = $telefone->format_using('NationallyPreferredIntl');
+    }
+
+    $fields->{endereco_ou_cep} ||= '';
+
+    if ($cep && !is_test()) {
+        my $err;
+        my $result;
+        eval {
+            foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(Postmon Correios)) {
+                my @_address_fields = qw(city state);
+                $result = $backend->find($cep);
+                if ($result) {
+
+                    # para o teste dos backend se todos os campos estão preenchidos
+                    last if (grep { length $result->{$_} } @_address_fields) == @_address_fields;
+                }
+            }
+            if (!$result) {
+                $err = {
+                    error   => 'cep_invalid',
+                    message => "Não conseguimos localizar o endereço do CEP $cep!",
+                    field   => 'cep',
+                    reason  => 'invalid'
+                };
+            }
+        };
+        if ($@) {
+            $c->log->error("Error during cep test: $@");
+        }
+        die $err if defined $err;
+    }
+
 
     $fields->{cliente_id} = $user_obj->id;
     $fields->{metainfo}   = to_json(

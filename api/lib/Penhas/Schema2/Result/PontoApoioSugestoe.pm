@@ -39,6 +39,30 @@ __PACKAGE__->add_columns(
     is_nullable   => 0,
     original      => { data_type => "varchar" },
   },
+  "endereco",
+  {
+    data_type   => "text",
+    is_nullable => 1,
+    original    => { data_type => "varchar" },
+  },
+  "cep",
+  {
+    data_type   => "text",
+    is_nullable => 1,
+    original    => { data_type => "varchar" },
+  },
+  "telefone_formatted_as_national",
+  {
+    data_type   => "text",
+    is_nullable => 1,
+    original    => { data_type => "varchar" },
+  },
+  "telefone_e164",
+  {
+    data_type   => "text",
+    is_nullable => 1,
+    original    => { data_type => "varchar" },
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -49,8 +73,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:40:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SELYsGDFnGj8jM74W5emsg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-04-08 00:06:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:r63j+4Zp2dxui1k7MxybFQ
 
 # ALTER TABLE ponto_apoio_sugestoes ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

@@ -128,23 +128,9 @@ do {
         }
     )->next();
 
-    my $first_sugg = $t->post_ok(
-        '/me/sugerir-pontos-de-apoio',
-        {'x-api-key' => $session},
-        form => {
-            'endereco_ou_cep' => 'rua cupa, 255',
-            nome              => 'foo',
-
-            'categoria'         => $rand_cat->id,
-            'descricao_servico' => 'aaa'
-        }
-    )->status_is(200)->json_has('/message', 'tem mensagem de sucesso')->json_has('/id', 'tem id durante os testes')
-      ->tx->res->json;
-    ok my $first_sugg_row = $schema2->resultset('PontoApoioSugestoe')->find($first_sugg->{id}),
-      'row PontoApoioSugestoe is added';
-    is $first_sugg_row->nome,       'foo', 'nome ok';
-    is $first_sugg_row->cliente_id, $cliente_id, 'cliente_id ok';
-    is $first_sugg_row->categoria,  $rand_cat->id, 'cliente_id ok';
+    &test_pa_sugg($rand_cat);
+    done_testing;
+    exit;
 
     my $fields = {
         'sigla'                 => 'UPPER',
@@ -613,4 +599,52 @@ sub reset_db {
     $schema2->resultset('PontoApoio')->search({test_status => 'test'})->delete;
     $schema2->resultset('PontoApoioCategoria')->search({status => 'test'})->delete;
     $schema2->resultset('PontoApoioProjeto')->search({status => 'test'})->delete;
+}
+
+sub test_pa_sugg {
+    my $rand_cat = shift;
+
+    my $first_sugg = $t->post_ok(
+        '/me/sugerir-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'endereco_ou_cep' => 'rua cupa, 255',
+            nome              => 'foo',
+
+            'categoria'         => $rand_cat->id,
+            'descricao_servico' => 'aaa'
+        }
+    )->status_is(200)->json_has('/message', 'tem mensagem de sucesso')->json_has('/id', 'tem id durante os testes')
+      ->tx->res->json;
+    ok my $first_sugg_row = $schema2->resultset('PontoApoioSugestoe')->find($first_sugg->{id}),
+      'row PontoApoioSugestoe is added';
+    is $first_sugg_row->nome,       'foo', 'nome ok';
+    is $first_sugg_row->cliente_id, $cliente_id, 'cliente_id ok';
+    is $first_sugg_row->categoria,  $rand_cat->id, 'cliente_id ok';
+
+    my $sec_sugg = $t->post_ok(
+        '/me/sugerir-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'endereco'          => 'rua cupa, 255',
+            'cep'               => '03640 000',
+            nome                => 'foo',
+            'categoria'         => $rand_cat->id,
+            'descricao_servico' => 'aaa',
+
+            telefone => '0800 6086236'
+        }
+    )->status_is(200)->json_has('/message', 'tem mensagem de sucesso')->json_has('/id', 'tem id durante os testes')
+      ->tx->res->json;
+
+    ok my $sec_sugg_row = $schema2->resultset('PontoApoioSugestoe')->find($sec_sugg->{id}),
+      'row PontoApoioSugestoe is added';
+    is $sec_sugg_row->nome,                           'foo',              'nome ok';
+    is $sec_sugg_row->telefone_e164,                  '+55 800 608 6236', 'telefone ok';
+    is $sec_sugg_row->telefone_formatted_as_national, '0800 608 6236',    'telefone ok';
+    is $sec_sugg_row->cep,                            '03640000',         'cep ok';
+    is $sec_sugg_row->endereco_ou_cep,                '',                 'endereco_ou_cep vazio';
+    is $sec_sugg_row->endereco,                       'rua cupa, 255',    'endereco ok';
+
+
 }
