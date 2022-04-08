@@ -646,5 +646,31 @@ sub test_pa_sugg {
     is $sec_sugg_row->endereco_ou_cep,                '',                 'endereco_ou_cep vazio';
     is $sec_sugg_row->endereco,                       'rua cupa, 255',    'endereco ok';
 
+    $t->post_ok(
+        '/me/sugerir-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'endereco'          => 'rua cupa, 255',
+            'cep'               => '03640 000',
+            nome                => 'foo',
+            'categoria'         => $rand_cat->id,
+            'descricao_servico' => 'aaa',
+
+        }
+    )->status_is(400)->json_is('/error', 'telefone');
+
+    $t->post_ok(
+        '/me/sugerir-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'telefone'          => '+55 11 98888 8888',
+            'cep'               => '03640 000',
+            nome                => 'foo',
+            'categoria'         => $rand_cat->id,
+            'descricao_servico' => 'aaa',
+
+        }
+    )->status_is(400)->json_is('/error', 'endereco');
+
 
 }
