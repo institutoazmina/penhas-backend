@@ -557,7 +557,7 @@ sub process_quiz_assistant {
                 return {quiz_session => $c->stash('quiz_session')};
             }
             else {
-                push @preprend_msg, &_new_displaytext_normal('Não há questionários para você no momento!');
+                push @preprend_msg, &_new_displaytext_normal('Não há questionários para você no momento!', 'err');
             }
         }
         elsif ($params->{reset_questionnaire} eq 'N') {
