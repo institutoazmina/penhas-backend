@@ -137,7 +137,7 @@ sub user_get_quiz_session {
     # verifica se o usuário acabou de fazer um login,
     # se sim, ignora o quiz
     my $key = $ENV{REDIS_NS} . 'is_during_login:' . $user->{id};
-    return if $c->kv->redis->del($key) && !is_test();
+    return if $c->kv->redis->del($key) && !is_test() && !$opts{disable_is_during_login};
 
     Log::Log4perl::NDC->push('user_get_quiz_session user_id:' . $user->{id});
     on_scope_exit { Log::Log4perl::NDC->pop };
@@ -550,7 +550,7 @@ sub process_quiz_assistant {
 
             $user_obj->reset_all_questionnaires();
 
-            my $quiz_session = $c->user_get_quiz_session(user => $user);
+            my $quiz_session = $c->user_get_quiz_session(user => $user, disable_is_during_login => 1);
             if ($quiz_session) {
 
                 $c->load_quiz_session(session => $quiz_session, user => $user);
