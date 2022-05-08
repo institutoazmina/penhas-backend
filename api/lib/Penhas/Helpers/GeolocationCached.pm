@@ -13,6 +13,27 @@ sub setup {
 
     $self->helper('reverse_geo_code_cached' => sub { &reverse_geo_code_cached(@_) });
     $self->helper('geo_code_cached'         => sub { &geo_code_cached(@_) });
+    $self->helper('geo_code_cached_by_user' => sub { &geo_code_cached_by_user(@_) });
+}
+
+sub geo_code_cached_by_user {
+    my ($c, $user_obj) = @_;
+    $c->stash(geo_code_rps => 'geocode:' . $user_obj->id);
+
+    my $cep = $user_obj->cep_formmated;
+    $c->reply_invalid_param('CEP da conta não é válido!', 'no-cep') if !$cep || $cep !~ /^\d{5}-\d{3}$/;
+
+    my $latlng = $c->geo_code_cached($cep . ' brasil');
+
+    $c->reply_invalid_param(
+        sprintf(
+            'Não foi possível encontrar sua localização através do CEP %s, tente novamente mais tarde ou ative a localização',
+            $cep
+        ),
+        'no-gps'
+    ) unless $latlng;
+
+    return split /,/, $latlng;
 }
 
 sub geo_code_cached {

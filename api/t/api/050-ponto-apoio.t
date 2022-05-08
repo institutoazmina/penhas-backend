@@ -24,7 +24,7 @@ goto AGAIN if cpf_already_exists($random_cpf);
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
 $ENV{SKIP_END_NEWS}            = '1';
 
-$ENV{FILTER_PONTO_APOIO_CATS} = '';
+$ENV{FILTER_PONTO_APOIO_PROJETO_WEB} = '';
 
 my @other_fields = (
     raca        => 'branco',
@@ -128,23 +128,9 @@ do {
         }
     )->next();
 
-    my $first_sugg = $t->post_ok(
-        '/me/sugerir-pontos-de-apoio',
-        {'x-api-key' => $session},
-        form => {
-            'endereco_ou_cep' => 'rua cupa, 255',
-            nome              => 'foo',
-
-            'categoria'         => $rand_cat->id,
-            'descricao_servico' => 'aaa'
-        }
-    )->status_is(200)->json_has('/message', 'tem mensagem de sucesso')->json_has('/id', 'tem id durante os testes')
-      ->tx->res->json;
-    ok my $first_sugg_row = $schema2->resultset('PontoApoioSugestoe')->find($first_sugg->{id}),
-      'row PontoApoioSugestoe is added';
-    is $first_sugg_row->nome,       'foo', 'nome ok';
-    is $first_sugg_row->cliente_id, $cliente_id, 'cliente_id ok';
-    is $first_sugg_row->categoria,  $rand_cat->id, 'cliente_id ok';
+    &test_pa_sugg($rand_cat);
+    done_testing;
+    exit;
 
     my $fields = {
         'sigla'                 => 'UPPER',
@@ -174,6 +160,7 @@ do {
         status                  => 'active',
         created_on              => \'now()',
         updated_at              => \'now()',
+        abrangencia             => 'Local',
     };
 
     my $cat1o = $schema2->resultset('PontoApoioCategoria')->create(
@@ -203,7 +190,8 @@ do {
             status => 'test',
         }
     );
-    $cat1o->ponto_apoio_categoria2projetos->create({ponto_apoio_projeto_id => $proj->id});
+
+    #$cat1o->ponto_apoio_categoria2projetos->create({ponto_apoio_projeto_id => $proj->id});
 
     my $avaliar_ponto_apoio;
     foreach my $code (1 .. 3) {
@@ -245,6 +233,7 @@ do {
         $ponto_apoio2 = $tmp if $code == 2;
         $ponto_apoio3 = $tmp if $code == 3;
     }
+    $ponto_apoio1->add_to_ponto_apoio2projetos({ponto_apoio_projeto_id => $proj->id});
     $t->app->tick_ponto_apoio_index();
 
     $avaliar_ponto_apoio = $ponto_apoio3;
@@ -253,6 +242,7 @@ do {
     # mas o algoritimo usado aqui só é uma aproximação do globo, com distorções nos polos e equador
     # -23.589893, -46.633462
 
+    trace_popall;
     $t->get_ok(
         '/pontos-de-apoio',
         form => {
@@ -275,6 +265,7 @@ do {
       ->json_is('/avaliacao_maxima',     5,          'avaliacao_maxima')             #
       ->json_is('/next_page',            undef,      'next_page is empty');
 
+    is trace_popall, 'user_cod_ibge,3550308', 'where cod_ibge=sao_paulo';
 
     $t->get_ok(
         '/pontos-de-apoio',
@@ -393,7 +384,7 @@ do {
         form => {
             'latitude'  => '-23.589893',
             'longitude' => '-46.633462',
-            'keywords'  => 'kaz',
+            'keywords'  => 'kazu',
         }
       )->status_is(200)                                                                    #
       ->json_is('/rows/0/nome', 'kazu', 'kazu eh o resultado pra busca')                   #
@@ -573,6 +564,30 @@ do {
     )->status_is(200);
 
 
+    trace_popall;
+    $t->get_ok(
+        '/pontos-de-apoio',
+        form => {
+            'latitude'   => '23.589893',
+            'longitude'  => '46.633462',
+            'categorias' => join(',', $cat1, $cat2, $cat3)    # filtrar por tudo nao deve ter nenhum efeito
+        }
+    )->status_is(200);
+
+    is trace_popall, 'user_cod_ibge,-1', 'where cod_ibge=-1 pq ta deslogado';
+
+    $t->get_ok(
+        '/me/pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'latitude'   => '23.589893',
+            'longitude'  => '46.633462',
+            'categorias' => join(',', $cat1, $cat2, $cat3)    # filtrar por tudo nao deve ter nenhum efeito
+        }
+    )->status_is(200);
+
+    is trace_popall, 'cep_fallback,user_cod_ibge,3550308', 'where cod_ibge=-1 pq ta deslogado';
+
 };
 
 done_testing();
@@ -584,4 +599,78 @@ sub reset_db {
     $schema2->resultset('PontoApoio')->search({test_status => 'test'})->delete;
     $schema2->resultset('PontoApoioCategoria')->search({status => 'test'})->delete;
     $schema2->resultset('PontoApoioProjeto')->search({status => 'test'})->delete;
+}
+
+sub test_pa_sugg {
+    my $rand_cat = shift;
+
+    my $first_sugg = $t->post_ok(
+        '/me/sugerir-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'endereco_ou_cep' => 'rua cupa, 255',
+            nome              => 'foo',
+
+            'categoria'         => $rand_cat->id,
+            'descricao_servico' => 'aaa'
+        }
+    )->status_is(200)->json_has('/message', 'tem mensagem de sucesso')->json_has('/id', 'tem id durante os testes')
+      ->tx->res->json;
+    ok my $first_sugg_row = $schema2->resultset('PontoApoioSugestoe')->find($first_sugg->{id}),
+      'row PontoApoioSugestoe is added';
+    is $first_sugg_row->nome,       'foo', 'nome ok';
+    is $first_sugg_row->cliente_id, $cliente_id, 'cliente_id ok';
+    is $first_sugg_row->categoria,  $rand_cat->id, 'cliente_id ok';
+
+    my $sec_sugg = $t->post_ok(
+        '/me/sugerir-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'endereco'          => 'rua cupa, 255',
+            'cep'               => '03640 000',
+            nome                => 'foo',
+            'categoria'         => $rand_cat->id,
+            'descricao_servico' => 'aaa',
+
+            telefone => '0800 6086236'
+        }
+    )->status_is(200)->json_has('/message', 'tem mensagem de sucesso')->json_has('/id', 'tem id durante os testes')
+      ->tx->res->json;
+
+    ok my $sec_sugg_row = $schema2->resultset('PontoApoioSugestoe')->find($sec_sugg->{id}),
+      'row PontoApoioSugestoe is added';
+    is $sec_sugg_row->nome,                           'foo',              'nome ok';
+    is $sec_sugg_row->telefone_e164,                  '+55 800 608 6236', 'telefone ok';
+    is $sec_sugg_row->telefone_formatted_as_national, '0800 608 6236',    'telefone ok';
+    is $sec_sugg_row->cep,                            '03640000',         'cep ok';
+    is $sec_sugg_row->endereco_ou_cep,                '',                 'endereco_ou_cep vazio';
+    is $sec_sugg_row->endereco,                       'rua cupa, 255',    'endereco ok';
+
+    $t->post_ok(
+        '/me/sugerir-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'endereco'          => 'rua cupa, 255',
+            'cep'               => '03640 000',
+            nome                => 'foo',
+            'categoria'         => $rand_cat->id,
+            'descricao_servico' => 'aaa',
+
+        }
+    )->status_is(400)->json_is('/error', 'telefone');
+
+    $t->post_ok(
+        '/me/sugerir-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'telefone'          => '+55 11 98888 8888',
+            'cep'               => '03640 000',
+            nome                => 'foo',
+            'categoria'         => $rand_cat->id,
+            'descricao_servico' => 'aaa',
+
+        }
+    )->status_is(400)->json_is('/error', 'endereco');
+
+
 }

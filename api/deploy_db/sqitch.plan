@@ -20,3 +20,6 @@
 0017-add-tsvector [0016-tweet_depth] 2021-11-18T18:19:52Z renato,,, <renato@renato-Inspiron-7580> # add-tsvector
 0018-preferences-post-as-penhas [0017-add-tsvector] 2021-12-06T10:15:02Z renato,,, <renato@renato-MS-7A34> # post as penhas
 0020-relatorio_cliente_suporte [0018-preferences-post-as-penhas] 2022-03-24T15:29:28Z renato,,, <renato@renato-Inspiron-7580> # relatorio_cliente_suporte
+0019-municipalities [0018-preferences-post-as-penhas] 2022-02-24T11:46:02Z renato,,, <renato@renato-MS-7A34> # public.municipalities_ogc_fid_seq
+0020-relatorio_cliente_suporte [0019-municipalities] 2022-03-24T15:29:28Z renato,,, <renato@renato-Inspiron-7580> # relatorio_cliente_suporte
+0021-PontoApoioSugestoe [0020-relatorio_cliente_suporte] 2022-04-06T22:38:47Z renato,,, <renato@renato-Inspiron-7580> # PontoApoioSugestoe

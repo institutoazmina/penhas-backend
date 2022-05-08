@@ -54,6 +54,12 @@ sub setup {
             );
             slog_info('Resposta para consulta %s: CODE=%s BODY=%s', $cpf, $tx->res->code, $tx->res->body);
             my $json = $tx->res->json;
+            if ($tx->res->code == 500) {
+                die {
+                    error   => 'cpf_offline',
+                    message => 'Não conseguimos consultar o seu CPF no momento, tente novamente mais tarde.',
+                };
+            }
 
             if ($tx->res->code == 500) {
                 die {

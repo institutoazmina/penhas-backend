@@ -11,7 +11,7 @@ use Mojo::Util qw/trim/;
 use Scope::OnExit;
 use Text::CSV_XS;
 use Encode qw/encode_utf8/;
-
+use Penhas::CEP;
 
 sub setup {
     my $self = shift;
@@ -76,6 +76,8 @@ sub _ponto_apoio_csv {
         ['ddd',                    'ddd'],
         ['telefone1',              'telefone1'],
         ['telefone2',              'telefone2'],
+        ['ramal1',                 'ramal1'],
+        ['ramal2',                 'ramal2'],
         ['email',                  'e-mail'],
         ['eh_24h',                 '24horas', 'bool'],
         ['horario_inicio',         'Horário início'],
@@ -92,9 +94,12 @@ sub _ponto_apoio_csv {
         ['delegacia_mulher',       'Delegacia Mulher'],
         ['endereco_correto',       'Endereço correto', 'bool'],
         ['horario_correto',        'Horário correto',  'bool'],
-        ['telefone_correto',       'Telefone correto',  'bool'],
+        ['telefone_correto',       'Telefone correto', 'bool'],
         ['observacao',             'Observação'],
-        ['id',                     'ID']
+        ['eh_whatsapp',            'Whatsapp', 'bool'],
+        ['abrangencia',            'Abrangencia',],
+        ['cod_ibge',               'cod_ibge',],
+        ['id',                     'ID'],
     );
     $csv->say($fh, [map { $_->[1] } @fields]);
 
@@ -158,8 +163,9 @@ sub ponto_apoio_list {
 
     my $filter_projeto_id = $c->_project_id_by_label(%opts);
 
-    $categorias = [split /,/, $ENV{FILTER_PONTO_APOIO_CATS}]
-      if $ENV{FILTER_PONTO_APOIO_CATS} && !$as_csv && !$filter_projeto_id;
+    # se nao passar qual projeto, filtra sozinho para o projeto da web (mapa da delegacia)
+    $filter_projeto_id = $ENV{FILTER_PONTO_APOIO_PROJETO_WEB}
+      if $ENV{FILTER_PONTO_APOIO_PROJETO_WEB} && !$as_csv && !$filter_projeto_id;
 
     $c->reply_invalid_param('Distância precisa ser menor que 5000km', 'form_error', 'max_distance')
       if $max_distance > 5000;
@@ -186,18 +192,50 @@ sub ponto_apoio_list {
         $rows = -1;
     }
 
-    # essa conta aqui só é uma aproximação do globo, com distorções nos polos e equador
-    # o ideal é fazer isso tudo no postgres, com postgis, pois lá o suporte a index é bem mais simples
-    # mas o chato é manter as bases sincronizadas (pelo menos lat/long+categorias+textos indexados)
-    # se você é acredita que a terra é plana, pode ignorar o comentario acima, *ta tudo bem*
-    my $distance_in_km_where
-      = defined $latitude
-      ? qq| ST_DWithin(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography, (($max_distance+1) * 1000) - 1)  |
+    my $user_cod_ibge = -1;
+
+    if (defined $latitude) {
+        $user_cod_ibge = $c->cod_ibge_by_latlng($latitude, $longitude);
+
+        # faz o fallback pro CEP do user
+        if (!$user_cod_ibge && $user_obj) {
+            log_debug('cod_ibge not found, trying again by geo_code_cached_by_user');
+            ($latitude, $longitude) = $c->geo_code_cached_by_user($user_obj);
+
+            $c->reply_invalid_param('Localização do CEP não é válida') if (!$latitude);
+
+            log_trace('cep_fallback');
+
+            $user_cod_ibge = $c->cod_ibge_by_latlng($latitude, $longitude);
+            log_debug("geo_code_cached_by_user($latitude, $longitude) is $user_cod_ibge");
+        }
+
+        if (!$user_cod_ibge) {
+            $user_cod_ibge = -1;
+        }
+    }
+    log_trace('user_cod_ibge', $user_cod_ibge);
+
+    #Sempre apresentar o que for "Nacional"
+    # Sempre apresentar o "local" do município em que a pessoa está
+    # (com fallback para o CEP da pessoa caso não tenha esteja dentro do local)
+    # Regional sempre filtrar por 50km (e não filtrar por estado)
+
+    my $distance_in_km_where = defined $latitude
+      ? qq|
+          CASE WHEN abrangencia = 'Nacional' THEN (TRUE)
+          WHEN abrangencia = 'Regional' THEN ( cod_ibge = '$user_cod_ibge'::int OR '$user_cod_ibge'::int = -1 )
+          ELSE
+            (ST_DWithin(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography, (($max_distance+1) * 1000) - 1))
+          END
+       |
       : '';
 
-    my $distance_in_km_column
-      = defined $latitude
-      ? qq| floor(ST_Distance(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography ) / 1000 ) |
+    my $distance_in_km_column = defined $latitude
+      ? qq| CASE
+            WHEN abrangencia = 'Nacional' THEN -0.0001
+            ELSE floor(ST_Distance(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography ) / 1000 )
+            END |
       : '';
 
     my $search = {
@@ -222,7 +260,7 @@ sub ponto_apoio_list {
             {categoria_id   => 'categoria.id'},
             {categoria_id   => 'categoria.id'},
             ($user_obj ? ({cliente_avaliacao => 'cliente_ponto_apoio_avaliacaos.avaliacao'}) : ()),
-            qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf me.qtde_avaliacao/,
+            qw/me.id me.nome me.latitude me.longitude me.avaliacao me.uf me.qtde_avaliacao me.abrangencia/,
         ],
         join => [
             'categoria',
@@ -244,7 +282,10 @@ sub ponto_apoio_list {
         )
     };
 
-    log_debug($c->app->dumper($search, $attr));
+    do {
+        local $Data::Dumper::Maxdepth = 3;
+        log_debug($c->app->dumper($search, $attr));
+    };
 
     my $rs = $c->schema2->resultset('PontoApoio')->search($search, $attr);
 
@@ -299,13 +340,23 @@ sub ponto_apoio_list {
         $cur_count--;
     }
     foreach (@rows) {
-        use DDP;
-        p $_;
+
         $_->{avaliacao} = sprintf('%.01f', $_->{avaliacao});
         $_->{avaliacao} =~ s/\./,/;
         $_->{avaliacao} = 'n/a' if delete $_->{qtde_avaliacao} == 0;
         if ($rows > 0) {
-            $_->{distancia} = int(delete $_->{distance_in_km}) . '';
+            if ($_->{distance_in_km} == -0.0001) {
+
+                $_->{distancia} = 'Nacional - 0 ';
+
+                # passa por cima
+                $_->{latitude}  = $latitude;
+                $_->{longitude} = $longitude;
+            }
+            else {
+                $_->{distancia}
+                  = ($_->{abrangencia} eq 'Regional' ? 'Regional - ' : '') . int(delete $_->{distance_in_km}) . '';
+            }
         }
         $_->{categoria} = {
             id   => delete $_->{categoria_id},
@@ -345,13 +396,15 @@ sub ponto_apoio_list {
 sub ponto_apoio_fields {
     my ($c, %opts) = @_;
 
-    my $filter_projeto_id = $opts{filter_projeto_id};
-    my $is_public         = defined $opts{format} && $opts{format} eq 'public';
+    my $is_public = defined $opts{format} && $opts{format} eq 'public';
 
     my @config = (
 
 
-        ['endereco_ou_cep' => {max_length => 255, required => 1,},],
+        ['endereco_ou_cep' => {max_length => 255, required => 0,},],
+        ['endereco'        => {max_length => 255, required => 0,},],
+        ['cep'             => {max_length => 255, required => 0,},],
+        ['telefone'        => {max_length => 255, required => 0,},],
         ['nome'            => {max_length => 255, required => 1,},],
 
         [
@@ -362,14 +415,8 @@ sub ponto_apoio_fields {
                       $c->schema2->resultset('PontoApoioCategoria')->search(
                         {
                             status => 'prod',
-                            (
-                                $filter_projeto_id
-                                ? ('ponto_apoio_categoria2projetos.ponto_apoio_projeto_id' => $filter_projeto_id)
-                                : ()
-                            ),
                         },
                         {
-                            ($filter_projeto_id ? (join => 'ponto_apoio_categoria2projetos') : ()),
                             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
                             order_by     => ['label'],
                             columns      => [qw/id label/],
@@ -389,6 +436,9 @@ sub ponto_apoio_fields {
         endereco_ou_cep   => 'Endereço ou CEP',
         descricao_servico => 'Descrição do serviço',
         nome              => 'Nome',
+        endereco          => 'Endereço',
+        cep               => 'CEP',
+        telefone          => 'Telefone com DDD ou 0800',
     );
     foreach my $item (@config) {
 
@@ -434,6 +484,64 @@ sub ponto_apoio_suggest {
     my $user_obj = $opts{user_obj} or confess 'missing user_obj';
 
     my $fields = $opts{fields};
+
+    if (!$fields->{endereco} && !$fields->{endereco_ou_cep}) {
+        $c->reply_invalid_param('É necessário enviar o endereço', 'endereco');
+    }
+
+    my $cep = $fields->{cep} || '';
+    if ($cep){
+        $cep =~ s/[^\d+]//ga;
+        $fields->{cep} = $cep;
+    }
+
+    $c->reply_invalid_param('É necessário enviar o endereço', 'endereco') if ($cep && !$fields->{endereco});
+
+    $c->reply_invalid_param('É informar um telefone', 'telefone') if ($cep && !$fields->{telefone});
+
+    my $raw_telefone = delete $fields->{telefone};
+    if ($raw_telefone) {
+        my $telefone = Number::Phone::Lib->new($raw_telefone =~ /^\+/ ? ($raw_telefone) : ('BR', $raw_telefone));
+
+        $c->reply_invalid_param(
+            'Não conseguimos decodificar o número de telefone enviado. Lembre-se de incluir o DDD para Brasil. Também aceitamos números 0800, 0300',
+            'parser_error', 'telefone'
+        ) if !$telefone || !$telefone->is_valid();
+
+        $fields->{telefone_formatted_as_national} = $telefone->format_using('National');
+        $fields->{telefone_e164}                  = $telefone->format_using('NationallyPreferredIntl');
+    }
+
+    $fields->{endereco_ou_cep} ||= '';
+
+    if ($cep && !is_test()) {
+        my $err;
+        my $result;
+        eval {
+            foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(Postmon Correios)) {
+                my @_address_fields = qw(city state);
+                $result = $backend->find($cep);
+                if ($result) {
+
+                    # para o teste dos backend se todos os campos estão preenchidos
+                    last if (grep { length $result->{$_} } @_address_fields) == @_address_fields;
+                }
+            }
+            if (!$result) {
+                $err = {
+                    error   => 'cep_invalid',
+                    message => "Não conseguimos localizar o endereço do CEP $cep!",
+                    field   => 'cep',
+                    reason  => 'invalid'
+                };
+            }
+        };
+        if ($@) {
+            $c->log->error("Error during cep test: $@");
+        }
+        die $err if defined $err;
+    }
+
 
     $fields->{cliente_id} = $user_obj->id;
     $fields->{metainfo}   = to_json(
@@ -541,7 +649,7 @@ sub ponto_apoio_detail {
         {
             'columns' => [
                 {categoria_nome => 'categoria.label'},
-                {categoria_cor  => 'categoria.color'},,
+                {categoria_cor  => 'categoria.color'},
                 {categoria_id   => 'categoria.id'},
                 {categoria_id   => 'categoria.id'},
                 (
@@ -570,7 +678,10 @@ sub ponto_apoio_detail {
                   me.ddd
                   me.telefone1
                   me.telefone2
+                  me.ramal1
+                  me.ramal2
                   me.eh_24h
+                  me.eh_whatsapp
                   me.horario_inicio
                   me.horario_fim
                   me.dias_funcionamento
@@ -602,28 +713,46 @@ sub ponto_apoio_detail {
         nome => delete $row->{categoria_nome},
     };
     my $natureza_de_para = {
-        publico          => 'Público',
-        privado_coletivo => 'Privado coletivo',
-        privado_ong      => 'Privado ONG',
+        publico => 'Público',
+        ong     => 'ONG',
     };
     $row->{natureza} = $natureza_de_para->{$row->{natureza}} || $row->{natureza};
 
 
     my $dow_de_para = {
-        dias_uteis             => 'Dias úteis',
-        fds                    => 'Fim de semana',
-        dias_uteis_fds_plantao => 'Dias úteis com plantão aos fins de semanas',
-        todos_os_dias          => 'Todos os dias'
+        'dias_uteis'             => 'Dias úteis',
+        'fds'                    => 'Fim de semana',
+        'dias_uteis_fds_plantao' => 'Dias úteis com plantão aos fins de semana',
+        'todos_os_dias'          => 'Todos os dias',
+        'seg_a_sab'              => 'Segunda a sábado',
+        'seg_a_qui'              => 'Segunda a quinta',
+        'ter_a_qui'              => 'Terça a quinta',
+        'quinta_feira'           => 'Quintas-feiras',
     };
     $row->{dias_funcionamento}
       = $dow_de_para->{$row->{dias_funcionamento}} || $row->{dias_funcionamento};
 
     if ($user_obj) {
         $row->{content_html} = tt_render(
-                q|<p style="color: #0a115f">[% observacao %]</p><br/>|
+                q|[% IF observacao%] <p style="color: #0a115f">[% observacao %]</p><br/>[% END %]|
               . q|<p style="color: #0a115f"><b>Endereço</b></p>|
               . q|<p style="color: #818181;">[% tipo_logradouro %] [% nome_logradouro %]|
-              . q|[% IF numero.defined() %], [% numero %][% END %] -[%bairro %] -[%municipio %], [%uf %], [%cep %] </p>|,
+              . q|[% IF numero.defined() %], [% numero %][% END %] -[%bairro %] -[%municipio %], [%uf %], [%cep %] </p>|
+              . q|[% IF ddd.defined() %]<p> [% telefone2 ? 'Telefones' :'Telefone' %]: <a href="tel:+55[%ddd%][%telefone1%]">[% ddd %] [% telefone1 %]</a> [% IF ramal1.defined() %] ramal: [% ramal1 %] [% END %]
+                    [% IF telefone2%], <a href="tel:+55[%ddd%][%telefone2%]">[% ddd %] [% telefone2 %]</a> [% IF ramal2.defined() %] ramal: [% ramal2 %] [% END %] [% END %]
+              </p>[% ELSE %]
+                    [% IF telefone1 %] Telefone: [%telefone1%] [% END %]
+                    [% IF telefone2 %], [%telefone2%] [% END %]
+              [% END %]
+              [%IF dias_funcionamento%]
+                <p>Horário de funcionamento: [%dias_funcionamento%]
+                  [%IF horario_inicio %]<br/>
+                    [% horario_inicio %] - [% horario_fim %] </p>
+                  [% END %]
+                  </p>
+              [% END %]
+              |,
+
             $row
         );
     }
@@ -658,7 +787,7 @@ sub tick_ponto_apoio_index {
         },
         {
             rows     => 1000,
-            prefetch => [{categoria => 'ponto_apoio_categoria2projetos'}],
+            prefetch => 'ponto_apoio2projetos'
         }
     );
 
@@ -666,7 +795,7 @@ sub tick_ponto_apoio_index {
     my $now  = time();
     while (my $ponto = $rs->next) {
         my $index    = '';
-        my @projetos = map { $_->ponto_apoio_projeto_id() } $ponto->categoria->ponto_apoio_categoria2projetos->all;
+        my @projetos = map { $_->ponto_apoio_projeto_id() } $ponto->ponto_apoio2projetos->all;
         foreach my $projeto_id (@projetos) {
             $index .= '`p' . $projeto_id . ']]';
         }

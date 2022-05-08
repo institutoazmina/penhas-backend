@@ -10,8 +10,26 @@ use Mojo::Util qw/url_escape/;
 sub setup {
     my $self = shift;
 
-    $self->helper('reverse_geo_code' => sub { &reverse_geo_code(@_) });
-    $self->helper('geo_code'         => sub { &geo_code(@_) });
+    $self->helper('reverse_geo_code'   => sub { &reverse_geo_code(@_) });
+    $self->helper('geo_code'           => sub { &geo_code(@_) });
+    $self->helper('cod_ibge_by_latlng' => sub { &cod_ibge_by_latlng(@_) });
+}
+
+sub cod_ibge_by_latlng {
+    my ($c, $lat, $lng) = @_;
+
+    my $cd_mun = $c->schema2->resultset('Municipality')->search(
+        {
+            '-and' => [
+                \[
+                    'ST_Intersects(wkb_geometry::geography, ST_SetSRID(ST_MakePoint( ?, ? ), 4326)::geography )',
+                    $lng, $lat
+                ]
+            ]
+        }
+    )->get_column('cd_mun')->next;
+
+    return $cd_mun;
 }
 
 sub geo_code {

@@ -45,8 +45,10 @@ use Test::Mojo;
 use Minion;
 use Minion::Job;
 use Penhas::Logger;
+use Business::BR::CPF qw/random_cpf/;
 use Digest::SHA qw/sha256_hex/;
 my $redis_ns;
+use feature 'state';
 
 sub END {
     if (defined $redis_ns) {
@@ -289,4 +291,47 @@ sub user_cleanup {
 sub last_tx_json {
     test_instance->tx->res->json;
 }
+
+sub get_new_user() {
+    state $name_seq = 'a';
+  AGAIN:
+    my $random_cpf   = random_cpf();
+    my $random_email = 'email' . $random_cpf . '@something.com';
+    goto AGAIN if cpf_already_exists($random_cpf);
+
+    my $nome_completo = 'xpto ' . $name_seq++;
+    get_schema->resultset('CpfCache')->find_or_create(
+        {
+            cpf_hashed  => cpf_hash_with_salt($random_cpf),
+            dt_nasc     => '1994-01-31',
+            nome_hashed => cpf_hash_with_salt(uc $nome_completo),
+            situacao    => '',
+        }
+    );
+    my $res = $t->post_ok(
+        '/signup',
+        form => {
+            apelido       => $nome_completo,
+            nome_completo => $nome_completo,
+            cpf           => $random_cpf,
+            email         => $random_email,
+            senha         => '1:W456a588',
+            cep           => '12345678',
+            dt_nasc       => '1994-01-31',
+            nome_social   => 'foobar lorem',
+            raca          => 'pardo',
+            app_version   => 'Versao Ios ou Android, Modelo Celular, Versao do App',
+            dry           => 0,
+            genero        => 'Feminino',
+        },
+    )->status_is(200)->tx->res->json;
+
+    my $cliente_id = $res->{_test_only_id};
+    my $session    = $res->{session};
+
+    my $user = get_schema2->resultset('Cliente')->find($cliente_id);
+
+    return ($cliente_id, $session, $user);
+}
+
 1;
