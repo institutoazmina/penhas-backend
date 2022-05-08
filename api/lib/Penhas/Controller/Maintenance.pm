@@ -77,7 +77,68 @@ sub housekeeping {
         }
     }
 
-    return $c->render(json => {});
+    my $dbh = $c->schema2->storage->dbh;
+    $dbh->do(
+        "UPDATE
+            ponto_apoio_categoria2projetos me
+        SET ponto_apoio_projeto_count = qtde_ponto_apoio
+        FROM (
+            SELECT
+                a.id AS rel_id,
+                count(b.id) AS qtde_ponto_apoio
+            FROM
+                ponto_apoio_categoria2projetos a
+                JOIN ponto_apoio b ON b.categoria = a.ponto_apoio_categoria_id
+            GROUP BY a.id
+        ) AS subq
+        WHERE subq.rel_id = me.id and ponto_apoio_projeto_count != qtde_ponto_apoio"
+    );
+
+    $dbh->do(
+        "UPDATE tweets x SET qtde_comentarios = (
+            SELECT
+                count(1)
+            FROM
+                tweets me
+            WHERE
+                me.status = 'published'
+                AND x.id = me.parent_id
+            )
+        WHERE qtde_comentarios != (
+            SELECT
+                count(1)
+            FROM
+                tweets me
+            WHERE
+                me.status = 'published'
+                AND x.id = me.parent_id
+        );
+"
+    );
+
+    $dbh->do(
+        "UPDATE tweets me SET qtde_likes = (
+            SELECT
+                count(1)
+            FROM
+                tweets_likes x
+            WHERE x.tweet_id = me.id
+            )
+        WHERE qtde_likes != (
+            SELECT
+                count(1)
+            FROM
+                tweets_likes x
+            WHERE x.tweet_id = me.id
+        );
+"
+    );
+
+    return $c->render(
+        json => {
+            redis => Penhas::KeyValueStorage->instance->redis->ping(),
+        }
+    );
 }
 
 # cria notificacoes do chat (nao leu em X tempo)

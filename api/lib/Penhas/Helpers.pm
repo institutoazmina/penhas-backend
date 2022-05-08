@@ -155,13 +155,13 @@ sub user_preference_is_active {
     my ($c, $cliente_id, $preference_name) = @_;
 
     # se tiver resultado, deu match, entao esta ativo
-    my $r = $c->rs_user_by_preference($preference_name, '1')->search(
+    my $rs = $c->rs_user_by_preference($preference_name, '1')->search(
         {
             cliente_id => $cliente_id,
         }
     )->next;
 
-    return defined $r ? 1 : 0;
+    return defined $rs ? 1 : 0;
 }
 
 1;

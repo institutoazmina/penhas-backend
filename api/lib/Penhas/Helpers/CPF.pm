@@ -18,8 +18,15 @@ sub setup {
 
             my $cpf_hashed = cpf_hash_with_salt($cpf);
 
-            my $found
-              = $self->schema->resultset('CpfCache')->search({cpf_hashed => $cpf_hashed, dt_nasc => $dt_nasc})->next;
+            my $found = $self->schema->resultset('CpfCache')->search(
+                {cpf_hashed => $cpf_hashed, dt_nasc => $dt_nasc},
+                {'+columns' => [{age => \"extract('epoch' from now() - me.__created_at_real)"}]}
+            )->next;
+
+            if ($found && $found->nome_hashed eq '404' && $found->get_column('age') > 300) {
+                $found->delete;    # apaga por causa da PK
+                $found = undef;    # faz novamente a consulta
+            }
 
             return $found if $found;
 
@@ -45,7 +52,14 @@ sub setup {
                 },
                 tries => 3
             );
+            slog_info('Resposta para consulta %s: CODE=%s BODY=%s', $cpf, $tx->res->code, $tx->res->body);
             my $json = $tx->res->json;
+            if ($tx->res->code == 500) {
+                die {
+                    error   => 'cpf_offline',
+                    message => 'Não conseguimos consultar o seu CPF no momento, tente novamente mais tarde.',
+                };
+            }
 
             # dados encontrados e da match na data de nascimento
             if ($json->{RetornoCpf}{msg}{Resultado} == 1) {
