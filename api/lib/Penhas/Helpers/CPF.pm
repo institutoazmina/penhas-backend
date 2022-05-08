@@ -24,8 +24,8 @@ sub setup {
             )->next;
 
             if ($found && $found->nome_hashed eq '404' && $found->get_column('age') > 300) {
-                $found->delete;    # apaga por causa da PK
-                $found = undef;    # faz novamente a consulta
+                $found->delete; # apaga por causa da PK
+                $found = undef; # faz novamente a consulta
             }
 
             return $found if $found;

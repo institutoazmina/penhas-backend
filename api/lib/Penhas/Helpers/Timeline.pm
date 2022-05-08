@@ -497,7 +497,15 @@ sub list_tweets {
         # para fazer a pesquisa dos comentarios, nao importa a ordem, nem podemos limitar as linhas
         delete $attr->{rows};
         delete $attr->{order_by};
-        my @childs = $c->schema2->resultset('Tweet')->search({'me.id' => {in => \@comments}}, $attr)->all;
+        my @childs = $c->schema2->resultset('Tweet')->search(
+            {
+                'me.id'     => {in => \@comments},
+                'me.status' => 'published',
+                'me.escondido'   => 'false',
+                'cliente.status' => 'active',
+            },
+            $attr
+        )->all;
         foreach my $me (@childs) {
             $last_reply{$me->{parent_id}} = &_format_tweet($user, $me, $remote_addr);
         }
@@ -599,9 +607,10 @@ sub _format_tweet {
         }
     }
 
+    my $is_owner = $user->{id} == $me->{cliente_id} ? 1 : 0;
     return {
         meta => {
-            owner     => $user->{id} == $me->{cliente_id}                 ? 1 : 0,
+            owner     => $is_owner,
             can_reply => $me->{tweet_depth} < 3 && $me->{tweet_depth} > 0 ? 1 : 0,
 
             parent_id => $me->{parent_id},
@@ -611,7 +620,7 @@ sub _format_tweet {
         id      => $me->{id},
         content => $me->{disable_escape}
         ? $me->{content}
-        : &linkfy(&nl2br(xml_escape(&_remove_phone_number($me->{content})))),
+        : &linkfy(&nl2br(xml_escape($is_owner ? $me->{content} : &_remove_phone_number($me->{content})))),
         anonimo => $anonimo && !$eh_admin ? 1 : 0,
 
 
@@ -633,13 +642,31 @@ sub _format_tweet {
                 cliente_id => 0,
                 anonimo    => 1,
                 icon       => $avatar_penhas,
-                name => 'Admin PenhaS',
+                name       => 'Admin PenhaS',
               )
             : ()
         ),
     };
 }
 
+
+sub _replace_number {
+    my ($content) = @_;
+
+    return $content if $content =~ /^[^\d]*0800/;
+
+    $content =~ s/\d/*/g;
+    return $content;
+}
+
+sub _remove_phone_number {
+    my ($content) = @_;
+
+    $content
+      =~ s/((?:\(?(11|12|13|14|15|16|17|18|19|21|22|24|27|28|31|32|33|34|35|37|38|41|42|43|44|45|46|47|48|49|51|53|54|55|61|62|63|64|65|66|67|68|69|71|73|74|75|77|79|81|82|83|84|85|86|87|88|89|91|92|93|94|95|96|97|98|99)\)?\s*)?[^\d]{0,3}(?:11|12|13|14|15|16|17|18|19|21|22|24|27|28|31|32|33|34|35|37|38|41|42|43|44|45|46|47|48|49|51|53|54|55|61|62|63|64|65|66|67|68|69|71|73|74|75|77|79|81|82|83|84|85|86|87|88|89|91|92|93|94|95|96|97|98|99)?\d{4,5}[^\d]?\d{4,10}[^\d]{0,3})/&_replace_number($1)/ge;
+
+    return $content;
+}
 
 sub _replace_number {
     my ($content) = @_;

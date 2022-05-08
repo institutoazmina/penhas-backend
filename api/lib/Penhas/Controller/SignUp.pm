@@ -141,8 +141,6 @@ sub post {
 
         die {
             error   => 'cpf_not_match',
-            field   => 'dt_nasc',
-            reason  => 'invalid',
             message => 'Data de nascimento não confere com o CPF.'
               . (
                 $cpf_info->nome_hashed eq '404'
