@@ -123,7 +123,7 @@ sub import {
     }
 }
 
-my $t = Test::Mojo->with_roles('+StopOnFail')->new('Penhas');
+my $t = Test::Mojo->new('Penhas');
 $t->ua->on(
     start => sub {
         my ($ua, $tx) = @_;

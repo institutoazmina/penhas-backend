@@ -36,7 +36,7 @@ sub check_user_jwt {
                             columns      => ['cliente_id']
                         }
                     )->next;
-                    return undef if !$ret;
+                    return '' if !$ret;
                     return $ret->{cliente_id};
                 }
             );

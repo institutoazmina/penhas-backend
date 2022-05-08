@@ -78,6 +78,7 @@ sub post {
                 my @_address_fields = qw(city state);
                 $result = $backend->find($cep);
                 if ($result) {
+
                     # para o teste dos backend se todos os campos estão preenchidos
                     last if (grep { length $result->{$_} } @_address_fields) == @_address_fields;
                 }
@@ -140,9 +141,12 @@ sub post {
 
         die {
             error   => 'cpf_not_match',
-            message => 'Data de nascimento não confere com o CPF.',
-            field   => 'dt_nasc',
-            reason  => 'invalid',
+            message => 'Data de nascimento não confere com o CPF.'
+              . (
+                $cpf_info->nome_hashed eq '404'
+                ? ' Caso os dados estejam corretos, tente novamente após 5 minutos.'
+                : ''
+              ),
         };
     }
 
@@ -180,8 +184,6 @@ sub post {
             error   => 'cpf_already_exists',
             message =>
               'Este CPF já possui uma conta. Entre em contato com o suporte caso não lembre do e-mail utilizado.',
-            field  => 'cpf',
-            reason => 'duplicate'
         };
     }
 

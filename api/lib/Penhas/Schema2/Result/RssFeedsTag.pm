@@ -48,8 +48,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-12-06 10:56:46
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Ajw7yhqxzuWwyc2DpAYRtg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-02-24 10:24:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jnTwjc8pBhwTdbNWeMbZMQ
 
 # ALTER TABLE rss_feeds_tags ADD FOREIGN KEY (tags_id) REFERENCES tags(id) ON DELETE CASCADE ON UPDATE cascade;
 # ALTER TABLE rss_feeds_tags ADD FOREIGN KEY (rss_feeds_id) REFERENCES rss_feeds(id) ON DELETE CASCADE ON UPDATE cascade;

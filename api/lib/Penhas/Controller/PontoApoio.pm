@@ -11,6 +11,7 @@ use Penhas::Controller::Me;
 
 use DateTime::Format::Pg;
 
+# usado pelo chatbot do twitter
 sub pa_list_unlimited {
     my $c = shift;
 
@@ -116,21 +117,7 @@ sub _pa_list {
         }
 
         die 'user_obj should be defined' unless $user_obj;
-        $c->stash(geo_code_rps => 'geocode:' . $user_obj->id);
-
-        my $cep = $user_obj->cep_formmated;
-        $c->reply_invalid_param('CEP da conta não é válido!', 'no-cep') if !$cep || $cep !~ /^\d{5}-\d{3}$/;
-
-        my $latlng = $c->geo_code_cached($cep . ' brasil');
-
-        $c->reply_invalid_param(
-            sprintf(
-                'Não foi possível encontrar sua localização através do CEP %s, tente novamente mais tarde ou ative a localização',
-                $cep
-            ),
-            'no-gps'
-        ) unless $latlng;
-        ($valid->{latitude}, $valid->{longitude}) = split /,/, $latlng;
+        ($valid->{latitude}, $valid->{longitude}) = $c->geo_code_cached_by_user($user_obj);
     }
 
     $valid->{categorias} = [split /,/, $valid->{categorias}] if $valid->{categorias};
@@ -189,21 +176,8 @@ sub pa_aux_data {
                 $c->schema2->resultset('PontoApoioCategoria')->search(
                     {
                         status => 'prod',
-
-                        (
-                            $filter_projeto_id
-                            ? (
-                                '-and' => [
-                                    {'ponto_apoio_categoria2projetos.ponto_apoio_projeto_id'    => $filter_projeto_id},
-                                    {'ponto_apoio_categoria2projetos.ponto_apoio_projeto_count' => {'>' => 0}}
-                                ]
-                              )
-                            : ()
-                        ),
                     },
                     {
-                        ($filter_projeto_id ? (join => 'ponto_apoio_categoria2projetos') : ()),
-
                         result_class => 'DBIx::Class::ResultClass::HashRefInflator',
                         order_by     => ['label'],
                         columns      => [qw/id label/],

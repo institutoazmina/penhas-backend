@@ -105,13 +105,13 @@ sub new_notification_like {
     }
 
     my $titles = {
-        new_like => $has_parent ? 'curtiu seu comentário' : 'curtiu sua publicação',
+        new_like    => $has_parent ? 'curtiu seu comentário'   : 'curtiu sua publicação',
     };
     my $prefs = {
-        new_like => $has_parent ? 'NOTIFY_LIKES_POSTS_COMMENTED' : 'NOTIFY_LIKES_POSTS_CREATED',
+        new_like    => $has_parent ? 'NOTIFY_LIKES_POSTS_COMMENTED'    : 'NOTIFY_LIKES_POSTS_CREATED',
     };
     my $icons = {
-        new_like => 3,
+        new_like    => 3,
     };
     my $preference_name = $prefs->{$type};
     my $icon            = $icons->{$type};

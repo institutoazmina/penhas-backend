@@ -310,5 +310,4 @@ sub _test_notification_paging {
         {'x-api-key' => $session},
     )->status_is(200)->json_is('/count', 0, '0 unread notifications');
 
-
 }

@@ -35,6 +35,9 @@ sub list_preferences {
         }
     );
 
+    # filtra as que são para admin caso não seja admin
+    $rs = $rs->search({admin_only => 0}) unless $user_obj->eh_admin;
+
     my @prefs;
     while (my $pref = $rs->next) {
         my $name  = $pref->{name};

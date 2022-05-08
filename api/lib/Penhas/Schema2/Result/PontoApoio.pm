@@ -162,6 +162,26 @@ __PACKAGE__->add_columns(
   { data_type => "geography", is_nullable => 1 },
   "owner",
   { data_type => "uuid", is_nullable => 1, size => 16 },
+  "abrangencia",
+  {
+    data_type   => "text",
+    is_nullable => 0,
+    original    => { data_type => "varchar" },
+  },
+  "eh_whatsapp",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
+  "ramal1",
+  { data_type => "bigint", is_nullable => 1 },
+  "ramal2",
+  { data_type => "bigint", is_nullable => 1 },
+  "cod_ibge",
+  { data_type => "bigint", is_nullable => 1 },
+  "fonte",
+  {
+    data_type   => "text",
+    is_nullable => 1,
+    original    => { data_type => "varchar" },
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -176,10 +196,21 @@ __PACKAGE__->has_many(
   { "foreign.ponto_apoio_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
+__PACKAGE__->has_many(
+  "ponto_apoio2projetos",
+  "Penhas::Schema2::Result::PontoApoio2projeto",
+  { "foreign.ponto_apoio_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->many_to_many(
+  "ponto_apoio_projetoes",
+  "ponto_apoio2projetos",
+  "ponto_apoio_projeto",
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:40:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EPOprlPDpeSBnEVmjsgKEg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-02-24 10:24:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CxR9NbUHacC2h4rflDdPvQ
 
 # ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id);
 
