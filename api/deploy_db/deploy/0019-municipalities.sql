@@ -28,8 +28,10 @@ INSERT INTO public.ponto_apoio_categoria (id, status, created_on, label, color, 
 
 SELECT pg_catalog.setval('public.ponto_apoio_categoria_id_seq', 584, true);
 
+/* -- ja existia em prod
 ALTER TABLE ONLY public.ponto_apoio_categoria
     ADD CONSTRAINT idx_26416_primary PRIMARY KEY (id);
+*/
 
 CREATE TABLE public.ponto_apoio2projetos (
     ponto_apoio_id integer NOT NULL,
