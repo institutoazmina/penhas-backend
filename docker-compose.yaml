@@ -5,8 +5,8 @@ services:
     image: directus/directus:v9.0.0-rc.69
     restart: unless-stopped
     networks:
-        - db_network
-        - external_network
+      - db_network
+      - external_network
     ports:
       - "172.17.0.1:${DIRECTUS_API_LISTEN}:8055"
     environment:
@@ -26,23 +26,49 @@ services:
       EMAIL_SMTP_USER: "${SMTP_USER}"
       EMAIL_SMTP_PASSWORD: "${SMTP_PASSWORD}"
       EMAIL_SMTP_SECURE: 'true'
-
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "${LOG_MAX_FILE}"
+        max-size: "${LOG_MAX_SIZE}"
   penhas_api:
     image: azminas/penhas_api
     restart: unless-stopped
     ports:
       - "172.17.0.1:${PENHAS_API_LISTEN}:8080"
     environment:
-      REDIS_SERVER: "${REDIS_SERVER}"
-      REDIS_NS: "${REDIS_NS}"
+      REDIS_SERVER: "redis:6379"
+      REDIS_NS: ""
     volumes:
-        - ../data/:/data/
-        - ./api/:/src/
+      - ../data/:/data/
+      - ./api/:/src/
     networks:
-        - external_network
-        - db_network
-
+      - external_network
+      - db_network
+      - cache
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "${LOG_MAX_FILE}"
+        max-size: "${LOG_MAX_SIZE}"
+  redis:
+    container_name: penhas_redis
+    restart: unless-stopped
+    image: docker.io/bitnami/redis:6.2
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_PASSWORD=""
+    networks:
+      - cache
+    volumes:
+      - ${REDIS_STORAGE}:/bitnami/redis/data
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "${LOG_MAX_FILE}"
+        max-size: "${LOG_MAX_SIZE}"
 networks:
-    external_network:
-    db_network:
-        name: penhas_db_pg_network
+  external_network:
+  cache:
+  db_network:
+    name: penhas_db_pg_network
