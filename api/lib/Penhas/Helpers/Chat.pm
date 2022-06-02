@@ -8,6 +8,7 @@ use Penhas::Utils;
 use Mojo::Util qw/trim xml_escape/;
 use Scope::OnExit;
 use Crypt::CBC;
+use Penhas::CryptCBC2x;
 use Crypt::Rijndael;    # AES
 use Crypt::PRNG qw(random_bytes);
 use Convert::Z85;
@@ -557,6 +558,14 @@ sub _load_chat_room {
         -pbkdf  => 'pbkdf2'
     );
 
+    # inicia o AES usando as duas chaves como origem
+    my $cipher_old = Penhas::CryptCBC2x->new(
+        -key    => decode_z85($chat_owner->{salt_key}) . decode_z85($session->{session_key}),
+        -cipher => 'Rijndael',
+        -header => 'salt',
+        -pbkdf  => 'pbkdf2'
+    );
+
     my ($other_id) = grep { $_ != $user_obj->id } $session->participants->@*;
 
     my $other = $c->schema2->resultset('Cliente')->search(
@@ -604,13 +613,13 @@ sub _load_chat_room {
     };
     $meta->{can_send_message} = 0 if delete $other->{not_found};
 
-    return ($cipher, $session, $user_obj, $other, $meta);
+    return ($cipher, $cipher_old, $session, $user_obj, $other, $meta);
 }
 
 sub chat_delete_session {
     my ($c, %opts) = @_;
 
-    my ($cipher, $session, $user_obj, $other, $meta) = &_load_chat_room($c, %opts);
+    my ($cipher, $cipher_old, $session, $user_obj, $other, $meta) = &_load_chat_room($c, %opts);
 
     my @participants_in_order = sort { $a <=> $b } $session->participants->@*;
     my ($locked1, $lock_key1) = $c->kv->lock_and_wait('new_chat:cliente_id' . $participants_in_order[0]);
@@ -638,7 +647,7 @@ sub chat_delete_session {
 sub chat_send_message {
     my ($c, %opts) = @_;
 
-    my ($cipher, $session, $user_obj, $other, $meta) = &_load_chat_room($c, %opts);
+    my ($cipher, $cipher_old, $session, $user_obj, $other, $meta) = &_load_chat_room($c, %opts);
     my $message = defined $opts{message} ? $opts{message} : confess 'missing message';
 
     $c->reply_invalid_param(
@@ -744,9 +753,9 @@ sub chat_send_message {
 sub chat_list_message {
     my ($c, %opts) = @_;
 
-    my ($cipher, $session, $user_obj, $other, $meta) = &_load_chat_room($c, %opts);
+    my ($cipher, $cipher_old, $session, $user_obj, $other, $meta) = &_load_chat_room($c, %opts);
     my $rows = $opts{rows} || 10;
-    $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
+    $rows = 10 if !is_test() && ($rows > 1000 || $rows < 10);
 
     my $page = $opts{pagination};
     if ($page) {
@@ -817,6 +826,17 @@ sub chat_list_message {
         }
         else {
             $message = '[erro ao descriptografar mensagem]' unless $message =~ s/#$//;
+        }
+
+        if ($message eq '[erro ao descriptografar mensagem]'){
+            $message = $cipher_old->decrypt($row->{message});
+            if ($row->{is_compressed}) {
+                $message = Compress::Zlib::memGunzip($message);
+                $message = '[erro ao descriptografar mensagem]' unless defined $message;
+            }
+            else {
+                $message = '[erro ao descriptografar mensagem]' unless $message =~ s/#$//;
+            }
         }
 
         # set internal flag as UTF-8 hint
