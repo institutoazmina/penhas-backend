@@ -122,7 +122,7 @@ sub housekeeping {
     my $err = '';
     $err .= 'failed redis' unless Penhas::KeyValueStorage->instance->redis->ping() eq 'PONG';
 
-    $err .= 'failed EmaildbQueue' unless $c->schema2->resultset('EmaildbQueue')->search(
+    $err .= 'failed EmaildbQueue' unless $c->schema->resultset('EmaildbQueue')->search(
         {
             -'or' => [
                 {sent   => 0},
