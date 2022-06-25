@@ -122,14 +122,15 @@ sub housekeeping {
     my $err = '';
     $err .= 'failed redis' unless Penhas::KeyValueStorage->instance->redis->ping() eq 'PONG';
 
-    $err .= 'failed EmaildbQueue' unless $c->schema->resultset('EmaildbQueue')->search(
+    my $errCount = $c->schema->resultset('EmaildbQueue')->search(
         {
             -'or' => [
                 {sent   => 0},
                 {errmsg => {'!=' => undef}}
             ]
         }
-    )->count > 0;
+    )->count();
+    $err .= 'failed EmaildbQueue' if $errCount > 0;
 
     return $c->render(
         json => {
