@@ -847,19 +847,24 @@ sub process_quiz_session {
             $c->cliente_set_skill(user => $user, skills => [keys $update_user_skills->{set}->%*]);
         }
 
+
         if ($user_obj && defined $set_modo_camuflado) {
 
             # se for 1, eh pra ativar
             # sefor 0, nao ativa, mas precisa manter ligar o do mesmo jeito anonimo
             $user_obj->cliente_modo_camuflado_toggle(active => $set_modo_camuflado eq '1' ? 1 : 0);
             $user_obj->cliente_modo_anonimo_toggle(active => 1);
+            log_info("before quiz_detectou_violencia_toggle active => 1 " . to_json({$user_obj->columns}) );
             $user_obj->quiz_detectou_violencia_toggle(active => 1);
+            log_info("after quiz_detectou_violencia_toggle active => 1 " . to_json({$user_obj->columns}) );
         }
         elsif ($user_obj) {
 
             # atualmente só tem um quiz no Penhas, por isso seta pra falso quando nao estiver defined
             # o melhor será criar um campo 'type' no questionnaire pra saber qual
+            log_info("before quiz_detectou_violencia_toggle active => 0 " . to_json({$user_obj->columns}) );
             $user_obj->quiz_detectou_violencia_toggle(active => 0);
+            log_info("after quiz_detectou_violencia_toggle active => 0 " . to_json({$user_obj->columns}) );
         }
 
     }
