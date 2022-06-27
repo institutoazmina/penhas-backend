@@ -432,14 +432,19 @@ sub quiz_detectou_violencia_toggle {
         {
             quiz_detectou_violencia_atualizado_em => \'NOW()',
             quiz_detectou_violencia               => $active ? '1' : '0',
-
-            # saber o status da primeira vez que saiu de NULL para algum valor
-            primeiro_quiz_detectou_violencia => \['coalesce(primeiro_quiz_detectou_violencia, ?)', $active ? '1' : '0'],
-            primeiro_quiz_detectou_violencia_atualizado_em => \
-              'coalesce(primeiro_quiz_detectou_violencia_atualizado_em, now())',
         }
     );
 
+}
+
+# recalc based on the current status
+sub recalc_quiz_detectou_violencia_toggle {
+    my ($self) = @_;
+
+    $self->update({
+        primeiro_quiz_detectou_violencia => \['coalesce(primeiro_quiz_detectou_violencia, ?)', $self->quiz_detectou_violencia ? '1' : '0'],
+        primeiro_quiz_detectou_violencia_atualizado_em => \'coalesce(primeiro_quiz_detectou_violencia_atualizado_em, now())',
+    });
 }
 
 # retorna o string para ser usada em FK composta
