@@ -8,31 +8,34 @@ use Digest::MD5 qw/md5_hex/;
 use Penhas::Uploader;
 
 sub register {
-    my ($self, $app) = @_;
+    my ( $self, $app ) = @_;
 
-    $app->minion->add_task(delete_audio => \&delete_audio);
+    $app->minion->add_task( delete_audio => \&delete_audio );
 }
 
 sub delete_audio {
-    my ($job, $audio_evento_id) = @_;
+    my ( $job, $audio_evento_id ) = @_;
 
-    log_trace("minion:delete_audio", $audio_evento_id);
+    log_trace( "minion:delete_audio", $audio_evento_id );
     my $schema2 = $job->app->schema2;
 
     my $logger = $job->app->log;
 
-    my $event = $schema2->resultset('ClientesAudiosEvento')->find($audio_evento_id);
+    my $event =
+      $schema2->resultset('ClientesAudiosEvento')->find($audio_evento_id);
     goto OK if !$event;
-    my @audios = map {$_} $event->cliente_audios->get_column('media_upload_id')->all;
+    my @audios =
+      map { $_ } $event->cliente_audios->get_column('media_upload_id')->all;
 
     my $s3       = Penhas::Uploader->new();
-    my $media_rs = $schema2->resultset('MediaUpload')->search({id => {'in' => \@audios}});
+    my $media_rs = $schema2->resultset('MediaUpload')
+      ->search( { id => { 'in' => \@audios } } );
 
     my $sum_deleted_bytes = 0;
-    while (my $r = $media_rs->next) {
+    while ( my $r = $media_rs->next ) {
 
-        $s3->remove_by_uri($r->s3_path);
-        $s3->remove_by_uri($r->s3_path_avatar) if $r->s3_path_avatar;
+        $s3->remove_by_uri( $r->s3_path );
+        $s3->remove_by_uri( $r->s3_path_avatar ) if $r->s3_path_avatar;
 
         $sum_deleted_bytes += $r->file_size;
         $sum_deleted_bytes += $r->file_size_avatar if $r->file_size_avatar;
@@ -42,8 +45,20 @@ sub delete_audio {
 
     $schema2->txn_do(
         sub {
-            $event->cliente_audios->delete;
-            $event->delete;
+            #$event->cliente_audios->delete;
+            $event->tweets->update( { escondido => '1' } );
+
+            $event->update(
+                {
+                    nome_completo => '(deleted)',
+                    cpf_hash      => 'deleted:' || $event->id,
+                    minibio       => '(deleted)',
+                    nome_social   => '(deleted)',
+                    email         => '(deleted)',
+                }
+            );
+
+            #$event->delete;
         }
     );
 
