@@ -8,7 +8,7 @@ use MooseX::Types::Email qw/EmailAddress/;
 use Digest::SHA qw/sha256_hex/;
 use Scope::OnExit;
 use Penhas::Controller::Logout;
-use Penhas::Utils qw/check_password_or_die/;
+use Penhas::Utils qw/check_password_or_die check_email_mx/;
 
 sub check_and_load {
     my $c = shift;
@@ -133,6 +133,15 @@ sub me_update {
         )->count > 0;
         $c->reply_invalid_param('O e-mail já está em uso em outra conta', 'form_error', 'email', 'duplicate')
           if $in_use;
+
+
+        if (!check_email_mx($email)){
+            die {
+                error   => 'invalid_email',
+                message => 'Por favor, verificar validade do endereço de e-mail.'
+            };
+        }
+
         $user_obj->update({email => $email});
     }
 

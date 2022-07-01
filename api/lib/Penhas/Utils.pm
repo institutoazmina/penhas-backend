@@ -15,6 +15,7 @@ use Text::Xslate;
 use POSIX ();
 use utf8;
 use vars qw(@ISA @EXPORT);
+use Email::Valid;
 
 use DateTime::Format::Pg;
 
@@ -55,6 +56,7 @@ state $text_xslate = Text::Xslate->new(
 
   linkfy
   nl2br
+  check_email_mx
 );
 
 
@@ -324,5 +326,21 @@ sub nl2br {
     return $text;
 }
 
+sub check_email_mx {
+    my $email = shift;
+    # dominios comuns não precisa verificar o mx
+    if (   is_test()
+        || lc $email =~ /\@(gmail|hotmail|icloud|outlook|msn|live|globo)\.com$/
+        || lc $email =~ /\@(terra|uol|yahoo|outlook|bol)\.com\.br$/)
+    {
+        return 1;
+    }
+    else {
+        eval { $addr = Email::Valid->address(-address => $values{email}, -mxcheck => 1) };
+        return 0 if $@;
+    }
+
+    return 1;
+}
 
 1;

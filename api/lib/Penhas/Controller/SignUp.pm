@@ -6,7 +6,7 @@ use Scope::OnExit;
 use DateTime;
 use Digest::SHA qw/sha256_hex/;
 use Penhas::Logger;
-use Penhas::Utils qw/random_string random_string_from is_test cpf_hash_with_salt check_password_or_die/;
+use Penhas::Utils qw/check_email_mx random_string random_string_from is_test cpf_hash_with_salt check_password_or_die/;
 use Scope::OnExit;
 use Convert::Z85;
 use Crypt::PRNG qw(random_bytes);
@@ -44,6 +44,13 @@ sub post {
             apelido     => {max_length => 40,  required => 1, type => 'Str', min_length => 2},
             senha       => {max_length => 200, required => 1, type => 'Str'},
         );
+
+        if (!check_email_mx($params->{email})){
+            die {
+                error   => 'invalid_email',
+                message => 'Por favor, verificar validade do endereço de e-mail.'
+            };
+        }
 
         # nome_social quando o genero é trans ou Outro
         if ($params->{genero} =~ /trans|outro/i) {
