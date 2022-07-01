@@ -336,7 +336,7 @@ sub check_email_mx {
         return 1;
     }
     else {
-        eval { $addr = Email::Valid->address(-address => $values{email}, -mxcheck => 1) };
+        eval { Email::Valid->address(-address => $email, -mxcheck => 1) };
         return 0 if $@;
     }
 
