@@ -19,7 +19,12 @@ __PACKAGE__->add_columns(
     sequence          => "tweets_likes_id_seq",
   },
   "created_on",
-  { data_type => "timestamp with time zone", is_nullable => 1 },
+  {
+    data_type     => "timestamp with time zone",
+    default_value => \"current_timestamp",
+    is_nullable   => 1,
+    original      => { default_value => \"now()" },
+  },
   "cliente_id",
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "tweet_id",
@@ -40,8 +45,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LmHSjI706hCUgOLExcxmGA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-07-03 16:07:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:h7F3AqZDdOxQHhomJj35ng
 
 # alter table tweets_likes modify column cliente_id  int(11) unsigned  not null;
 # delete from tweets_likes where cliente_id not in (select id from clientes);

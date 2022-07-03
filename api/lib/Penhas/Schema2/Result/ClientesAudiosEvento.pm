@@ -38,6 +38,8 @@ __PACKAGE__->add_columns(
   { data_type => "timestamp with time zone", is_nullable => 1 },
   "deleted_at",
   { data_type => "timestamp with time zone", is_nullable => 1 },
+  "estava_em_situacao_risco",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("event_id");
 __PACKAGE__->belongs_to(
@@ -48,8 +50,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-25 03:33:20
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xdk4evyUXncLG5xyvEfGcg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-07-03 16:07:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5IOGuQDtapjVSIHWhAWV+w
 
 # ALTER TABLE clientes_audios_eventos ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

@@ -47,6 +47,8 @@ __PACKAGE__->add_columns(
   { data_type => "timestamp with time zone", is_nullable => 1 },
   "expires_at",
   { data_type => "timestamp with time zone", is_nullable => 0 },
+  "estava_em_situacao_risco",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("idx_25971_token", ["token"]);
@@ -58,8 +60,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:40:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pUq4lQbgpIxcO5QD0ByN0w
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-07-03 16:07:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:sT/c+O7dMubHm6mIGstYcw
 
 # ALTER TABLE clientes_guardioes ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

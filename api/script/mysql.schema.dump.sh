@@ -31,6 +31,7 @@ rm lib/Penhas/Schema2/Result/MinionJob.pm
 rm lib/Penhas/Schema2/Result/MinionLock.pm
 rm lib/Penhas/Schema2/Result/MinionWorker.pm
 rm lib/Penhas/Schema2/Result/MojoMigration.pm
+rm lib/Penhas/Schema2/Result/TmpPaSearch.pm
 
 
 cd $CWD

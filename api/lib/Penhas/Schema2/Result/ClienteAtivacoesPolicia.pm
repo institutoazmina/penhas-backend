@@ -22,6 +22,8 @@ __PACKAGE__->add_columns(
   { data_type => "timestamp with time zone", is_nullable => 0 },
   "cliente_id",
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
+  "estava_em_situacao_risco",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -32,8 +34,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Clw8oPVngSHd29BLgO3rQw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-07-03 16:07:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Gf6BZVriE+frbyoWEqkO0g
 
 # ALTER TABLE cliente_ativacoes_policia ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 
