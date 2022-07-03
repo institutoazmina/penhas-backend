@@ -291,6 +291,11 @@ sub ponto_apoio_list {
 
     if ($keywords) {
         log_debug("keywords original: $keywords");
+        $c->schema2->resultset('PontoApoioKeywordsLog')->create({
+            cliente_id => $user_obj ? $user_obj->id : undef,
+            keywords   => $keywords,
+        });
+
         $rs = $rs->search(
             {
                 '-and' => [

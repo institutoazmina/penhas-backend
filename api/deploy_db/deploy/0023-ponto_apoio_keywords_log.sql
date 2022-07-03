@@ -4,9 +4,9 @@ BEGIN;
 
 CREATE TABLE ponto_apoio_keywords_log (
     id bigserial primary key not null,
-    created_on timestamp without time zone,
+    created_on timestamp without time zone not null default now(),
     cliente_id int,
-    keywords varchar
+    keywords varchar not null
 );
 
 COMMIT;
