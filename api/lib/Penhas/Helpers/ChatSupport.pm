@@ -219,7 +219,7 @@ sub support_send_message {
                 }
             );
 
-            if ($c->schema2->resultset('RelatorioChatClienteSuporte')->search({
+            if (!$logged_as_admin && $c->schema2->resultset('RelatorioChatClienteSuporte')->search({
                 cliente_id => $chat_message->cliente_id
             })->count() == 0){
                 $c->schema2->resultset('RelatorioChatClienteSuporte')->create({
