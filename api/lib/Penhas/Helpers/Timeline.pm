@@ -359,7 +359,7 @@ sub report_tweet {
                 template  => 'tweet_reportado.html',
                 to        => $ENV{EMAIL_TWEET_REPORTADO},
                 subject   => 'PenhaS - Tweet reportado - Qtde reports ' . $tweet->qtde_reportado,
-                variables => encode_json(
+                variables => to_json(
                     {
                         tweet => {
                             id             => $tweet->id,
