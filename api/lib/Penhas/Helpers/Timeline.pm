@@ -350,6 +350,32 @@ sub report_tweet {
         }
     )->update({qtde_reportado => \'qtde_reportado + 1'});
 
+
+    if ($ENV{EMAIL_TWEET_REPORTADO}) {
+        my $tweet = $c->schema2->resultset('Tweet')->find($reported_id);
+        $c->schema->resultset('EmaildbQueue')->create(
+            {
+                config_id => 1,
+                template  => 'tweet_reportado.html',
+                to        => $ENV{EMAIL_TWEET_REPORTADO},
+                subject   => 'PenhaS - Tweet reportado - Qtde reports ' . $tweet->qtde_reportado,
+                variables => encode_json(
+                    {
+                        tweet => {
+                            id             => $tweet->id,
+                            content        => $tweet->content,
+                            qtde_reportado => $tweet->qtde_reportado
+                        },
+                        report => {
+                            id     => $report->id,
+                            reason => $reason,
+                        }
+                    }
+                ),
+            }
+        );
+    }
+
     return {id => $report->id};
 }
 
@@ -499,8 +525,8 @@ sub list_tweets {
         delete $attr->{order_by};
         my @childs = $c->schema2->resultset('Tweet')->search(
             {
-                'me.id'     => {in => \@comments},
-                'me.status' => 'published',
+                'me.id'          => {in => \@comments},
+                'me.status'      => 'published',
                 'me.escondido'   => 'false',
                 'cliente.status' => 'active',
             },
