@@ -128,7 +128,9 @@ do {
         }
     )->next();
 
-    &test_pa_sugg($rand_cat);
+#    &test_pa_sugg($rand_cat);
+    &test_pa_sugg_full($rand_cat);
+
     done_testing;
     exit;
 
@@ -674,3 +676,44 @@ sub test_pa_sugg {
 
 
 }
+
+
+sub test_pa_sugg_full {
+    my $rand_cat = shift;
+
+    my $first_sugg = $t->post_ok(
+        '/me/sugerir-pontos-de-apoio-completo',
+        {'x-api-key' => $session},
+        form => {
+            'nome'            => 'Nome',
+            'nome_logradouro' => 'Nome Logradouro',
+            'cep'             => '03600-000',
+            'abrangencia'     => 'Local',
+            'complemento'     => '',
+            'numero'          => 'Número',
+            'bairro'          => '',
+            'municipio'       => 'Município',
+            'uf'              => 'SP',
+            'email'           => 'E-mail',
+            'horario'         => 'Horário',
+            'ddd1'            => '11',
+            'telefone1'       => '0911223344',
+            'ddd2'            => '',
+            'telefone2'       => '',
+            'has_whatsapp'    => 'Sim',
+            'eh_24h'          => 'Não',
+            'categoria'       => $rand_cat->id,
+        }
+    )->status_is(200)->json_has('/message', 'tem mensagem de sucesso')->json_has('/id', 'tem id durante os testes')
+      ->tx->res->json;
+
+    ok my $first_sugg_row = $schema2->resultset('PontoApoioSugestoesV2')->find($first_sugg->{id}),
+      'row PontoApoioSugestoe is added';
+    is $first_sugg_row->nome,       'Nome', 'nome ok';
+    is $first_sugg_row->cliente_id, $cliente_id, 'cliente_id ok';
+    is $first_sugg_row->categoria->id,  $rand_cat->id, 'cliente_id ok';
+    is $first_sugg_row->telefone1,  911223344,  'telefone ok';
+    is $first_sugg_row->cep,        '03600000', 'cep ok';
+
+}
+

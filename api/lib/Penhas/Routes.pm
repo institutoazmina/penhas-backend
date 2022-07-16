@@ -204,6 +204,7 @@ sub register {
 
     # POST /me/sugerir-pontos-de-apoio
     $me->under('sugerir-pontos-de-apoio')->post()->to(controller => 'PontoApoio', action => 'user_pa_suggest');
+    $me->under('sugerir-pontos-de-apoio-completo')->post()->to(controller => 'PontoApoio', action => 'user_pa_suggest_full');
 
     my $me_pa = $me->under('pontos-de-apoio');
 

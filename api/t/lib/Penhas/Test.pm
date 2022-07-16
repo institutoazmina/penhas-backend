@@ -276,6 +276,7 @@ sub user_cleanup {
         LoginErro
         TweetsReport
         MediaUpload
+        PontoApoioSugestoesV2
         /
       )
     {

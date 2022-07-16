@@ -6,7 +6,7 @@ CREATE TABLE ponto_apoio_sugestoes_v2 (
     id serial NOT NULL PRIMARY KEY,
     cliente_id int REFERENCES clientes (id) NOT NULL,
     status varchar NOT NULL DEFAULT 'awaiting-moderation',
-    created_on timestamp without time zone NOT NULL DEFAULT now(),
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
     updated_by_admin_at timestamp without time zone,
     created_ponto_apoio_id bigint REFERENCES ponto_apoio (id),
     nome varchar(255) NOT NULL,
@@ -27,7 +27,8 @@ CREATE TABLE ponto_apoio_sugestoes_v2 (
     telefone2 bigint,
     eh_24h boolean,
     has_whatsapp boolean,
-    observacao varchar
+    observacao varchar,
+    metainfo json not null default '{}'
 );
 
 COMMIT;

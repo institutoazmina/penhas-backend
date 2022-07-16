@@ -222,6 +222,49 @@ sub user_pa_suggest {
     );
 }
 
+sub user_pa_suggest_full {
+    my $c = shift;
+
+    die 'missing user' unless $c->stash('user_obj');
+
+    # limite de requests por usuario
+    # no maximo 120 request por hora
+    $c->stash(apply_rps_on => 'pa_suggest:' . $c->stash('user_id'));
+    $c->apply_request_per_second_limit(120, 60 * 60);
+
+    my $rules = $c->ponto_apoio_fields_v2(format => 'rules');
+    use DDP;
+    p $rules;
+
+    my $valid = $c->validate_request_params(@$rules);
+
+    for (qw/ddd1 ddd2 telefone1 telefone2/) {
+        delete $valid->{$_} if exists $valid->{$_} && $valid->{$_} eq '';
+    }
+
+    if (defined $valid->{eh_24h}) {
+        $valid->{eh_24h} = $valid->{eh_24h} eq 'Sim' ? 1 : 0;
+    }
+
+    if (defined $valid->{has_whatsapp}) {
+        $valid->{has_whatsapp} = $valid->{has_whatsapp} eq 'Sim' ? 1 : 0;
+    }
+
+    if (defined $valid->{cep}) {
+        $valid->{cep} =~ s/[^0-9]//a;
+    }
+
+    $c->render(
+        json => $c->ponto_apoio_suggest(
+            v2       => 1,
+            fields   => $valid,
+            user_obj => $c->stash('user_obj'),
+        ),
+
+        status => 200,
+    );
+}
+
 sub user_pa_rating {
     my $c = shift;
 

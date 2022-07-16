@@ -231,6 +231,10 @@ sub validate_request_params {
             die {error => 'form_error', field => $key, reason => 'is_required', x => 1, %def_message, status => 400};
         }
 
+        if (exists $me->{empty_is_invalid} && !exists $me->{empty_is_valid}) {
+            $me->{empty_is_valid} = !$me->{empty_is_invalid};
+        }
+
         if (
                defined $val
             && $val eq ''

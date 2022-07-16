@@ -18,6 +18,7 @@ sub setup {
 
     $self->helper('ponto_apoio_list'       => sub { &ponto_apoio_list(@_) });
     $self->helper('ponto_apoio_fields'     => sub { &ponto_apoio_fields(@_) });
+    $self->helper('ponto_apoio_fields_v2'  => sub { &ponto_apoio_fields_v2(@_) });
     $self->helper('ponto_apoio_suggest'    => sub { &ponto_apoio_suggest(@_) });
     $self->helper('ponto_apoio_rating'     => sub { &ponto_apoio_rating(@_) });
     $self->helper('ponto_apoio_detail'     => sub { &ponto_apoio_detail(@_) });
@@ -291,10 +292,12 @@ sub ponto_apoio_list {
 
     if ($keywords) {
         log_debug("keywords original: $keywords");
-        $c->schema2->resultset('PontoApoioKeywordsLog')->create({
-            cliente_id => $user_obj ? $user_obj->id : undef,
-            keywords   => $keywords,
-        });
+        $c->schema2->resultset('PontoApoioKeywordsLog')->create(
+            {
+                cliente_id => $user_obj ? $user_obj->id : undef,
+                keywords   => $keywords,
+            }
+        );
 
         $rs = $rs->search(
             {
@@ -473,6 +476,136 @@ sub ponto_apoio_fields {
     return $ret;
 }
 
+
+sub ponto_apoio_fields_v2 {
+    my ($c, %opts) = @_;
+
+    my $is_public = defined $opts{format} && $opts{format} eq 'public';
+
+    my @config = (
+        ['nome' => {max_length => 255, required => 1,},],
+        [
+            'categoria' => {required => 1},
+            {
+                options => [
+                    map { +{value => $_->{id}, name => $_->{label}} }
+                      $c->schema2->resultset('PontoApoioCategoria')->search(
+                        {
+                            status => 'prod',
+                        },
+                        {
+                            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                            order_by     => ['label'],
+                            columns      => [qw/id label/],
+                        }
+                    )->all()
+                ]
+            }
+        ],
+        ['nome_logradouro' => {max_length => 255, required => 1,},],
+        ['cep'             => {max_length => 9,   required => 0,},],
+        ['abrangencia'     => {max_length => 255, required => 1,},],
+       [
+            'abrangencia' => {
+                max_length => 55,
+                required   => 1,
+                {
+                    options => [
+                        {value => 'Local', name => 'Local'},
+                        {value => 'Regional', name => 'Regional'},
+                        {value => 'Nacional', name => 'Nacional'},
+                    ]
+                }
+            },
+        ],
+        ['complemento'     => {max_length => 255, required => 0,},],
+        ['numero'          => {max_length => 255, required => 1,},],
+        ['bairro'          => {max_length => 255, required => 0,},],
+        ['municipio'       => {max_length => 255, required => 1,},],
+        ['uf'              => {max_length => 2,   required => 1,},],
+        ['email'           => {max_length => 255, required => 0,},],
+        ['horario'         => {max_length => 255, required => 0,},],
+        ['ddd1'            => {max_length => 255, type     => 'Int', required => 0,},],
+        ['telefone1'       => {max_length => 255, type     => 'Int', required => 0,},],
+        ['ddd2'            => {max_length => 255, type     => 'Int', required => 0,},],
+        ['telefone2'       => {max_length => 255, type     => 'Int', required => 0,},],
+        [
+            'eh_24h' => {
+                max_length => 8,
+                required   => 0,
+                {
+                    options => [
+                        {value => 'Sim', name => 'Sim'},
+                        {value => 'Não', name => 'Não'},
+                    ]
+                }
+            },
+        ],
+        [
+            'has_whatsapp' => {
+                max_length => 8,
+                required   => 0,
+                {
+                    options => [
+                        {value => 'Sim', name => 'Sim'},
+                        {value => 'Não', name => 'Não'},
+                    ]
+                }
+            },
+        ],
+        ['observacao' => {max_length => 9999, required => 0,},],
+    );
+
+    my $ret;
+
+    my %names = (
+        'nome'            => 'Nome',
+        'nome_logradouro' => 'Nome Logradouro',
+        'cep'             => 'cep',
+        'abrangencia'     => 'Abrangencia',
+        'complemento'     => 'Complemento',
+        'numero'          => 'Número',
+        'bairro'          => 'Bairro',
+        'municipio'       => 'Município',
+        'uf'              => 'UF',
+        'email'           => 'E-mail',
+        'horario'         => 'Horário',
+        'ddd1'            => 'DDD 1',
+        'telefone1'       => 'Telefone 1',
+        'ddd2'            => 'DDD 2',
+        'telefone2'       => 'Telefone 2',
+        'has_whatsapp'    => 'Tem Whatsapp?',
+        'eh_24h'          => 'é 24H?',
+    );
+    foreach my $item (@config) {
+
+        $item->[1]{type}     = 'Str' unless exists $item->[1]{type};
+        $item->[1]{required} = 0     unless exists $item->[1]{required};
+
+        if ($is_public) {
+            my %tmp = defined $item->[2] ? $item->[2]->%* : ();
+
+            push $ret->@*, {
+                code => $item->[0],
+                name => (
+                    exists $names{$item->[0]}
+                    ? $names{$item->[0]}
+                    : &_gen_name_from_code($item->[0])
+                ),
+                $item->[1]->%*,
+                %tmp,
+            };
+        }
+        else {
+            $item->[1]{empty_is_invalid} = 0;
+            push $ret->@*, $item->[0], $item->[1];
+        }
+    }
+
+    return $ret;
+}
+
+
 sub _gen_name_from_code {
     my ($code) = @_;
 
@@ -490,34 +623,41 @@ sub ponto_apoio_suggest {
 
     my $fields = $opts{fields};
 
-    if (!$fields->{endereco} && !$fields->{endereco_ou_cep}) {
-        $c->reply_invalid_param('É necessário enviar o endereço', 'endereco');
+    $opts{v2} ||= 0;
+
+    if (!$opts{v2}) {
+        if (!$fields->{endereco} && !$fields->{endereco_ou_cep}) {
+            $c->reply_invalid_param('É necessário enviar o endereço', 'endereco');
+        }
     }
 
     my $cep = $fields->{cep} || '';
-    if ($cep){
+    if ($cep) {
         $cep =~ s/[^\d+]//ga;
         $fields->{cep} = $cep;
     }
 
-    $c->reply_invalid_param('É necessário enviar o endereço', 'endereco') if ($cep && !$fields->{endereco});
+    if (!$opts{v2}) {
+        $c->reply_invalid_param('É necessário enviar o endereço', 'endereco') if ($cep && !$fields->{endereco});
 
-    $c->reply_invalid_param('É informar um telefone', 'telefone') if ($cep && !$fields->{telefone});
+        $c->reply_invalid_param('É informar um telefone', 'telefone') if ($cep && !$fields->{telefone});
 
-    my $raw_telefone = delete $fields->{telefone};
-    if ($raw_telefone) {
-        my $telefone = Number::Phone::Lib->new($raw_telefone =~ /^\+/ ? ($raw_telefone) : ('BR', $raw_telefone));
+        my $raw_telefone = delete $fields->{telefone};
+        if ($raw_telefone) {
+            my $telefone = Number::Phone::Lib->new($raw_telefone =~ /^\+/ ? ($raw_telefone) : ('BR', $raw_telefone));
 
-        $c->reply_invalid_param(
-            'Não conseguimos decodificar o número de telefone enviado. Lembre-se de incluir o DDD para Brasil. Também aceitamos números 0800, 0300',
-            'parser_error', 'telefone'
-        ) if !$telefone || !$telefone->is_valid();
+            $c->reply_invalid_param(
+                'Não conseguimos decodificar o número de telefone enviado. Lembre-se de incluir o DDD para Brasil. Também aceitamos números 0800, 0300',
+                'parser_error', 'telefone'
+            ) if !$telefone || !$telefone->is_valid();
 
-        $fields->{telefone_formatted_as_national} = $telefone->format_using('National');
-        $fields->{telefone_e164}                  = $telefone->format_using('NationallyPreferredIntl');
+            $fields->{telefone_formatted_as_national} = $telefone->format_using('National');
+            $fields->{telefone_e164}                  = $telefone->format_using('NationallyPreferredIntl');
+        }
+
+
+        $fields->{endereco_ou_cep} ||= '';
     }
-
-    $fields->{endereco_ou_cep} ||= '';
 
     if ($cep && !is_test()) {
         my $err;
@@ -554,10 +694,10 @@ sub ponto_apoio_suggest {
             ip => $c->remote_addr(),
         }
     );
+
     $fields->{created_at} = \'now()';
 
-
-    my $row = $c->schema2->resultset('PontoApoioSugestoe')->create($fields);
+    my $row = $c->schema2->resultset($opts{v2} ? 'PontoApoioSugestoesV2' : 'PontoApoioSugestoe')->create($fields);
 
     if ($ENV{EMAIL_PONTO_APOIO_SUGESTAO}) {
         $c->schema->resultset('EmaildbQueue')->create(
@@ -569,6 +709,7 @@ sub ponto_apoio_suggest {
                 variables => encode_json(
                     {
                         id => $row->id(),
+                        v2 => $opts{v2}
                     }
                 ),
             }
