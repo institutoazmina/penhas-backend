@@ -202,6 +202,12 @@ __PACKAGE__->has_many(
   { "foreign.ponto_apoio_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
+__PACKAGE__->has_many(
+  "ponto_apoio_sugestoes_v2s",
+  "Penhas::Schema2::Result::PontoApoioSugestoesV2",
+  { "foreign.created_ponto_apoio_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 __PACKAGE__->many_to_many(
   "ponto_apoio_projetoes",
   "ponto_apoio2projetos",
@@ -209,8 +215,8 @@ __PACKAGE__->many_to_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-02-24 10:24:22
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CxR9NbUHacC2h4rflDdPvQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-07-16 03:50:48
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DXP33sxW8al45+mUnSB/kw
 
 # ALTER TABLE ponto_apoio ADD FOREIGN KEY (categoria) REFERENCES ponto_apoio_categoria(id);
 
