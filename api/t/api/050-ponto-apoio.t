@@ -128,11 +128,8 @@ do {
         }
     )->next();
 
-#    &test_pa_sugg($rand_cat);
+    &test_pa_sugg($rand_cat);
     &test_pa_sugg_full($rand_cat);
-
-    done_testing;
-    exit;
 
     my $fields = {
         'sigla'                 => 'UPPER',
@@ -709,11 +706,11 @@ sub test_pa_sugg_full {
 
     ok my $first_sugg_row = $schema2->resultset('PontoApoioSugestoesV2')->find($first_sugg->{id}),
       'row PontoApoioSugestoe is added';
-    is $first_sugg_row->nome,       'Nome', 'nome ok';
+    is $first_sugg_row->nome, 'Nome', 'nome ok';
     is $first_sugg_row->cliente_id, $cliente_id, 'cliente_id ok';
-    is $first_sugg_row->categoria->id,  $rand_cat->id, 'cliente_id ok';
-    is $first_sugg_row->telefone1,  911223344,  'telefone ok';
-    is $first_sugg_row->cep,        '03600000', 'cep ok';
+    is $first_sugg_row->categoria->id, $rand_cat->id, 'cliente_id ok';
+    is $first_sugg_row->telefone1, 911223344,  'telefone ok';
+    is $first_sugg_row->cep,       '03600000', 'cep ok';
 
 }
 
