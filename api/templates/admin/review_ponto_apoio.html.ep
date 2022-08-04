@@ -10,13 +10,19 @@
         <h2 class="h2">Dados recebidos</h2>
         <form>
             % for my $field ( @{$left_form->{fields} || []} ) {
+            % my $hide_slot = @$field == 0;
             % my ($name, $label, $config) = @$field;
-            % my $value = $left_form->{data}{$name};
+            % my $value = $name ? $left_form->{data}{$name} : '';
 
-            % if ($config && $config->{options} ) {
+            % if ($hide_slot ){
+                <div style="opacity: 0" class="form-group">
+                    <label> &nbsp; </label>
+                    <input disabled type="text" class="form-control">
+                </div>
+            % } elsif ($config && $config->{options} ) {
             <div class="form-group">
                 <label for="left<%= $name %>">
-                    <%= $label %>
+                    <%= $label  %> &nbsp;
                 </label>
                 <select class="form-control" id="left<%= $name %>" data-v="<%=$value%>" readonly disabled>
                     % for my $option ( @{$config->{options} || []} ) {
@@ -28,7 +34,7 @@
             % } else {
             <div class="form-group">
                 <label for="left<%= $name %>">
-                    <%= $label %>
+                    <%= $label %>&nbsp;
                 </label>
                 <input readonly type="text" class="form-control" value="<%= $value %>" id="left<%= $name %>">
             </div>
@@ -43,17 +49,23 @@
 
         <form>
             % for my $field ( @{$right_form->{fields} || []} ) {
+            % my $hide_slot = @$field == 0;
             % my ($name, $label, $config) = @$field;
-            % my $value = $right_form->{data}{$name};
+            % my $value = $name ? $right_form->{data}{$name} : '';
 
-            % if ($config && $config->{options} ) {
+             % if ($hide_slot ){
+                <div style="opacity: 0" class="form-group">
+                    <label> &nbsp; </label>
+                    <input disabled type="text" class="form-control">
+                </div>
+            % } elsif ($config && $config->{options} ) {
             <div class="form-group">
                 <label for="left<%= $name %>">
-                    <%= $label %>
+                    <%= $label %> &nbsp;
                 </label>
                 <select class="form-control" id="left<%= $name %>" data-v="<%=$value%>">
                     % for my $option ( @{$config->{options} || []} ) {
-                    <option value="<%=$option->{value}%>" <%=$value eq $option->{value} ? 'selected' : '' %> ><%=
+                    <option value="<%= $option->{value} %>" <%= ($value || '') eq $option->{value} ? 'selected' : '' %> ><%=
                             $option->{name} %></option>
                     % }
                 </select>
@@ -61,9 +73,13 @@
             % } else {
             <div class="form-group">
                 <label for="left<%= $name %>">
-                    <%= $label %>
+                    <%= $label %> &nbsp;
                 </label>
-                <input type="<%= $config ?$config->{input_type}||'text' : 'text'  %>" class="form-control"
+                <input
+                    % if ($config->{placeholder} ) {
+                        placeholder="<%= $config->{placeholder} %>"
+                    % }
+                     type="<%= $config ?$config->{input_type}||'text' : 'text'  %>" class="form-control"
                     value="<%= $value %>" id="left<%= $name %>">
             </div>
             % }
@@ -73,3 +89,5 @@
     </div>
 
 </div>
+
+<div style="padding-top: 10em">&nbsp;</div>

@@ -77,6 +77,8 @@ sub apa_review {
     $row->{has_whatsapp} = $row->{has_whatsapp} ? 1 : defined $row->{has_whatsapp} ? 0 : '';
     $row->{abrangencia}  = ucfirst(lc($row->{abrangencia}));
 
+    $row->{cep} =~ s/[^0-9]+//g;
+
     my $categorias_hash    = $c->ponto_apoio_categoria_options();
     my $abragencia_options = $c->ponto_apoio_abrangencia_options();
 
@@ -94,53 +96,91 @@ sub apa_review {
         ],
     };
 
+    my $dow       = $c->ponto_apoio_dias_de_funcionamento_map();
+    my $dias_list = {options => [map { {value => $_, name => $dow->{$_}} } keys %$dow]};
+
     my $left_config = [
-        ["nome"            => 'Nome'],
-        ["categoria"       => 'Categoria',       $categorias_hash],
-        ["abrangencia"     => 'Abrangência',     $abragencia_options],
-        ["cep"             => 'CEP',             {}],
-        ["uf"              => "UF",              {}],
-        ["municipio"       => "Município",       {}],
+        ["nome" => 'Nome'],
+        [],
+        ["categoria"   => 'Categoria',   $categorias_hash],
+        ["abrangencia" => 'Abrangência', $abragencia_options],
+        ["cep"         => 'CEP',         {}],
+        [],
+        ["uf"        => "UF",        {}],
+        ["municipio" => "Município", {}],
+        [],
         ["nome_logradouro" => 'Nome Logradouro', {}],
         ["numero"          => "Número",          {}],
-        ["complemento"     => 'Complemento',     {}],
-        ["bairro"          => "Bairro",          {}],
-        ["email"           => "E-mail",          {}],
-        ["horario"         => "Horário",         {}],
-        ["ddd1"            => "DDD 1",           {}],
-        ["telefone1"       => "DDD 1",           {}],
-        ["ddd2"            => "DDD 2",           {}],
-        ["telefone2"       => "DDD 2",           {}],
-        ["eh_24h"          => "É 24h?",          $yes_no_list_null],
-        ["has_whatsapp"    => "Tem Whatsapp?",   $yes_no_list_null],
-        ["observacao"      => "Observação",      {}],
+        [],
+        ["complemento" => 'Complemento', {}],
+        ["bairro"      => "Bairro",      {}],
+        ["email"       => "E-mail",      {}],
+        ["horario"     => "Horário",     {}],
+        [],
+        [],
+        ["ddd1"         => "DDD 1",         {}],
+        ["ddd2"         => "DDD 2",         {}],
+        ["telefone1"    => "Telefone 1",    {}],
+        ["telefone2"    => "Telefone 2",    {}],
+        ["eh_24h"       => "É 24h?",        $yes_no_list_null],
+        ["has_whatsapp" => "Tem Whatsapp?", $yes_no_list_null],
+        ["observacao"   => "Observação",    {}],
     ];
 
     my $right_config = [
-        ["nome"            => 'Nome'],
-        ["categoria"       => 'Categoria',       $categorias_hash],
-        ["abrangencia"     => 'Abrangência',     $abragencia_options],
-        ["cep"             => 'CEP',             {}],
-        ["uf"              => "UF",              {}],
-        ["municipio"       => "Município",       {}],
-        ["nome_logradouro" => 'Nome Logradouro', {}],
-        ["numero"          => "Número",          {}],
-        ["complemento"     => 'Complemento',     {}],
-        ["bairro"          => "Bairro",          {}],
-        ["email"           => "E-mail",          {}],
-        ["horario"         => "Horário",         {}],
-        ["ddd1"            => "DDD 1",           {}],
-        ["telefone1"       => "DDD 1",           {}],
-        ["ddd2"            => "DDD 2",           {}],
-        ["telefone2"       => "DDD 2",           {}],
-        ["eh_24h"          => "É 24h?",          $yes_no_list],
-        ["has_whatsapp"    => "Tem Whatsapp?",   $yes_no_list],
-        ["observacao"      => "Observação",      {}],
+        ["nome"               => 'Nome *', {required => 1}],
+        ["sigla"              => 'Sigla'],
+        ["categoria"          => 'Categoria',            {%$categorias_hash,    required => 1}],
+        ["abrangencia"        => 'Abrangência',          {%$abragencia_options, required => 1}],
+        ["cep"                => 'CEP *',                {required => 1}],
+        ["cod_ibge"           => 'Código IBGE (cidade)', {}],
+        ["uf"                 => "UF *",                 {required                => 1}],
+        ["municipio"          => "Município *",          {required                => 1}],
+        ["tipo_logradouro"    => 'Tipo Logradouro *',    {required                => 1}],
+        ["nome_logradouro"    => 'Nome Logradouro *',    {required                => 1}],
+        ["numero"             => "Número",               {input_type              => 'number'}],
+        ["numero_sem_numero"  => "Sem número? *",        {%$yes_no_list, required => 1}],
+        ["complemento"        => 'Complemento',          {}],
+        ["bairro"             => "Bairro *",             {required => 1}],
+        ["email"              => "E-mail",               {}],
+        ["horario_inicio"     => "Horário Inicio",       {}],
+        ["horario_fim"        => "Horário Fim",          {}],
+        ["dias_funcionamento" => "Dias de Funcioamento", $dias_list],
+        ["ddd"                => "DDD",                  {}],
+        [],
+        ["telefone1"    => "Telefone 1",    {}],
+        ["telefone2"    => "Telefone 2",    {}],
+        ["eh_24h"       => "É 24h?",        $yes_no_list],
+        ["has_whatsapp" => "Tem Whatsapp?", {%$yes_no_list, db_field => 'eh_whatsapp'}],
+        ["observacao"   => "Observação",    {}],
+        ["natureza"     => "Natureza *",    {}],
+        ["descricao"    => "Descriação",    {}],
+        ["latitude"     => "latitude",      {placeholder => '-0,12345'}],
+        ["longitude"    => "longitude",     {placeholder => '0,45678'}],
     ];
 
-
-
     my $fake_pa = {};
+
+    $fake_pa->{$_} = $row->{$_}
+      for (
+        qw/
+        nome
+        abrangencia
+        nome_logradouro
+        cep
+        numero
+        complemento
+        bairro
+        municipio
+        uf
+        telefone1
+        telefone2
+        email
+        eh_24h
+        has_whatsapp
+        observacao
+        /
+      );
 
     return $c->respond_to_if_web(
         json => {

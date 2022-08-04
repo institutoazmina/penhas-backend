@@ -30,7 +30,7 @@ sub setup {
     $self->helper('ponto_apoio_categoria_options'   => sub { &ponto_apoio_categoria_options(@_) });
     $self->helper('ponto_apoio_abrangencia_options' => sub { &ponto_apoio_abrangencia_options(@_) });
     $self->helper('ponto_apoio_sugestao_dashboard'  => sub { &ponto_apoio_sugestao_dashboard(@_) });
-
+    $self->helper('ponto_apoio_dias_de_funcionamento_map'  => sub { &ponto_apoio_dias_de_funcionamento_map(@_) });
 
 }
 
@@ -804,6 +804,19 @@ sub ponto_apoio_rating {
     );
 }
 
+sub ponto_apoio_dias_de_funcionamento_map {
+    return {
+        'dias_uteis'             => 'Dias úteis',
+        'fds'                    => 'Fim de semana',
+        'dias_uteis_fds_plantao' => 'Dias úteis com plantão aos fins de semana',
+        'todos_os_dias'          => 'Todos os dias',
+        'seg_a_sab'              => 'Segunda a sábado',
+        'seg_a_qui'              => 'Segunda a quinta',
+        'ter_a_qui'              => 'Terça a quinta',
+        'quinta_feira'           => 'Quintas-feiras',
+    };
+
+}
 sub ponto_apoio_detail {
     my ($c, %opts) = @_;
 
@@ -892,16 +905,8 @@ sub ponto_apoio_detail {
     $row->{natureza} = $natureza_de_para->{$row->{natureza}} || $row->{natureza};
 
 
-    my $dow_de_para = {
-        'dias_uteis'             => 'Dias úteis',
-        'fds'                    => 'Fim de semana',
-        'dias_uteis_fds_plantao' => 'Dias úteis com plantão aos fins de semana',
-        'todos_os_dias'          => 'Todos os dias',
-        'seg_a_sab'              => 'Segunda a sábado',
-        'seg_a_qui'              => 'Segunda a quinta',
-        'ter_a_qui'              => 'Terça a quinta',
-        'quinta_feira'           => 'Quintas-feiras',
-    };
+    my $dow_de_para = $c->ponto_apoio_dias_de_funcionamento_map();
+
     $row->{dias_funcionamento}
       = $dow_de_para->{$row->{dias_funcionamento}} || $row->{dias_funcionamento};
 
