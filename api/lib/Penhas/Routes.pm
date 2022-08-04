@@ -94,6 +94,7 @@ sub register {
 
     $admin->get('ponto-apoio-sugg')->to(controller => 'Admin::PontoApoio', action => 'apa_list');
     $admin->get('analisar-sugestao-ponto-apoio')->to(controller => 'Admin::PontoApoio', action => 'apa_review');
+    $admin->post('analisar-sugestao-ponto-apoio')->to(controller => 'Admin::PontoApoio', action => 'apa_review_post');
 
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss

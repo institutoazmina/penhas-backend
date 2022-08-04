@@ -112,6 +112,8 @@ sub apa_review {
         ["nome_logradouro" => 'Nome Logradouro', {}],
         ["numero"          => "Número",          {}],
         [],
+        [],
+        [],
         ["complemento" => 'Complemento', {}],
         ["bairro"      => "Bairro",      {}],
         ["email"       => "E-mail",      {}],
@@ -128,64 +130,80 @@ sub apa_review {
     ];
 
     my $right_config = [
-        ["nome"               => 'Nome *', {required => 1}],
+        ["nome"               => 'Nome ⛯ ⛃',],
         ["sigla"              => 'Sigla'],
-        ["categoria"          => 'Categoria',            {%$categorias_hash,    required => 1}],
-        ["abrangencia"        => 'Abrangência',          {%$abragencia_options, required => 1}],
-        ["cep"                => 'CEP *',                {required => 1}],
-        ["cod_ibge"           => 'Código IBGE (cidade)', {}],
-        ["uf"                 => "UF *",                 {required                => 1}],
-        ["municipio"          => "Município *",          {required                => 1}],
-        ["tipo_logradouro"    => 'Tipo Logradouro *',    {required                => 1}],
-        ["nome_logradouro"    => 'Nome Logradouro *',    {required                => 1}],
-        ["numero"             => "Número",               {input_type              => 'number'}],
-        ["numero_sem_numero"  => "Sem número? *",        {%$yes_no_list, required => 1}],
-        ["complemento"        => 'Complemento',          {}],
-        ["bairro"             => "Bairro *",             {required => 1}],
-        ["email"              => "E-mail",               {}],
-        ["horario_inicio"     => "Horário Inicio",       {}],
-        ["horario_fim"        => "Horário Fim",          {}],
-        ["dias_funcionamento" => "Dias de Funcioamento", $dias_list],
-        ["ddd"                => "DDD",                  {}],
+        ["categoria"          => 'Categoria ⛃',             {%$categorias_hash}],
+        ["abrangencia"        => 'Abrangência',             {%$abragencia_options}],
+        ["cep"                => 'CEP ⛯ ⛃',                 {}],
+        ["cod_ibge"           => 'Código IBGE (Município)', {}],
+        ["uf"                 => "UF ⛯ ⛃",                  {}],
+        ["municipio"          => "Município ⛯ ⛃",           {}],
+        ["tipo_logradouro"    => 'Tipo Logradouro ⛯',       {}],
+        ["nome_logradouro"    => 'Nome Logradouro ⛯ ⛃',     {}],
+        ["numero"             => "Número",                  {input_type              => 'number'}],
+        ["numero_sem_numero"  => "Sem número? ⛯",           {%$yes_no_list, required => 1}],
+        ["latitude"           => "latitude",                {}],
+        ["longitude"          => "longitude",               {}],
+        ["complemento"        => 'Complemento',             {}],
+        ["bairro"             => "Bairro ⛯ ⛃",              {required => 1}],
+        ["email"              => "E-mail",                  {}],
+        ["horario_inicio"     => "Horário Inicio",          {}],
+        ["horario_fim"        => "Horário Fim",             {}],
+        ["dias_funcionamento" => "Dias de Funcioamento",    $dias_list],
+        ["ddd"                => "DDD",                     {}],
         [],
         ["telefone1"    => "Telefone 1",    {}],
         ["telefone2"    => "Telefone 2",    {}],
         ["eh_24h"       => "É 24h?",        $yes_no_list],
         ["has_whatsapp" => "Tem Whatsapp?", {%$yes_no_list, db_field => 'eh_whatsapp'}],
         ["observacao"   => "Observação",    {}],
-        ["natureza"     => "Natureza *",    {}],
-        ["descricao"    => "Descriação",    {}],
-        ["latitude"     => "latitude",      {placeholder => '-0,12345'}],
-        ["longitude"    => "longitude",     {placeholder => '0,45678'}],
+        ["natureza"     => "Natureza ⛯",    {}],
+        ["descricao"    => "Descriação ⛃",  {}],
     ];
 
     my $fake_pa = {};
 
-    $fake_pa->{$_} = $row->{$_}
-      for (
-        qw/
-        nome
-        abrangencia
-        nome_logradouro
-        cep
-        numero
-        complemento
-        bairro
-        municipio
-        uf
-        telefone1
-        telefone2
-        email
-        eh_24h
-        has_whatsapp
-        observacao
-        /
-      );
+    my $decoded = from_json($row->{saved_form});
+
+    if (keys %$decoded == 0) {
+
+        $fake_pa->{$_} = $row->{$_}
+          for (
+            qw/
+            nome
+            abrangencia
+            nome_logradouro
+            cep
+            numero
+            complemento
+            bairro
+            municipio
+            uf
+            telefone1
+            telefone2
+            email
+            eh_24h
+            has_whatsapp
+            observacao
+            /
+          );
+    }
+    else {
+        $fake_pa = $decoded;
+    }
 
     return $c->respond_to_if_web(
         json => {
             json => {
-                id => $row->{id},
+                left_form => {
+                    data   => $row,
+                    fields => $left_config,
+                },
+
+                right_form => {
+                    data   => $fake_pa,
+                    fields => $right_config,
+                },
             }
         },
         html => {
@@ -203,6 +221,45 @@ sub apa_review {
         },
     );
 
+}
+
+sub apa_review_post {
+    my $c = shift;
+
+    $c->use_redis_flash();
+
+    my $valid = $c->validate_request_params(
+        id => {required => 1, type => 'Int'},
+    );
+
+
+    my $row = $c->schema2->resultset('PontoApoioSugestoesV2')->find($valid->{id})
+      or $c->reply_item_not_found();
+
+    my $taken_action = 'Dados foram salvos com sucesso';
+    my $params       = $c->req->params->to_hash;
+
+    my $action = delete $params->{action};
+    if ($action eq 'geolocation') {
+
+    }
+
+
+    $row->update({saved_form => to_json($params)});
+
+
+    if ($c->accept_html()) {
+        $c->flash_to_redis({success_message => $taken_action});
+        $c->redirect_to('/admin/analisar-sugestao-ponto-apoio?id=' . $row->id);
+
+        return 0;
+    }
+    else {
+        return $c->render(
+            json   => {ok => 1},
+            status => 200,
+        );
+    }
 }
 
 1;

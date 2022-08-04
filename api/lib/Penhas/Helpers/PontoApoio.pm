@@ -27,10 +27,10 @@ sub setup {
     $self->helper('_ponto_apoio_csv'       => sub { &_ponto_apoio_csv(@_) });
 
 
-    $self->helper('ponto_apoio_categoria_options'   => sub { &ponto_apoio_categoria_options(@_) });
-    $self->helper('ponto_apoio_abrangencia_options' => sub { &ponto_apoio_abrangencia_options(@_) });
-    $self->helper('ponto_apoio_sugestao_dashboard'  => sub { &ponto_apoio_sugestao_dashboard(@_) });
-    $self->helper('ponto_apoio_dias_de_funcionamento_map'  => sub { &ponto_apoio_dias_de_funcionamento_map(@_) });
+    $self->helper('ponto_apoio_categoria_options'         => sub { &ponto_apoio_categoria_options(@_) });
+    $self->helper('ponto_apoio_abrangencia_options'       => sub { &ponto_apoio_abrangencia_options(@_) });
+    $self->helper('ponto_apoio_sugestao_dashboard'        => sub { &ponto_apoio_sugestao_dashboard(@_) });
+    $self->helper('ponto_apoio_dias_de_funcionamento_map' => sub { &ponto_apoio_dias_de_funcionamento_map(@_) });
 
 }
 
@@ -817,6 +817,7 @@ sub ponto_apoio_dias_de_funcionamento_map {
     };
 
 }
+
 sub ponto_apoio_detail {
     my ($c, %opts) = @_;
 
@@ -990,6 +991,10 @@ sub tick_ponto_apoio_index {
           cep/;
         $index = $pg_schema->unaccent($index);
         $index = lc($index);
+
+        if ($ponto->cep) {
+            $index = substr($ponto->cep, 0, 5) . '-' . substr($ponto->cep, 5, 3);
+        }
 
         $ponto->update(
             {
