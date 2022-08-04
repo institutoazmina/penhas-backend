@@ -1,0 +1,34 @@
+<div class="border-bottom">
+    <h1 class="h2">Lista de sugestão de ponto de apoio aguardando avaliação</h1>
+</div>
+<br>
+
+<div class="table-responsive">
+    <table class="table table-striped table-sm table-hover">
+        <thead>
+            <tr>
+                <th>Nome (ponto de apoio)</th>
+                <th>Categoria</th>
+                <th>Enviado por</th>
+                <th>Enviado em</th>
+                <th>&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            % for my $r (@{stash('rows') || []}) {
+            <tr>
+                <td style="width: 15em"><%= $r->{nome} %></td>
+                <td style="width: 15em"><%= $r->{categoria}{label} %></td>
+                <td style="width: 25em">
+                    <a href="/admin/users?cliente_id=<%= $r->{cliente}{id} %>"><%= $r->{cliente}{nome_completo} %></a>
+                </td>
+                <td style="width: 25em"><%= $pg_timestamp2human->($r->{created_at}) %></td>
+
+                <td class="text-right">
+                    <a href="/admin/analisar-sugestao-ponto-apoio?id=<%= $r->{id} %>" class="btn btn-warning btn-sm">avaliar</a>
+                </td>
+            </tr>
+            % }
+        </tbody>
+    </table>
+</div>

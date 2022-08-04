@@ -92,6 +92,8 @@ sub register {
     $admin->post('schedule-delete')->to(controller => 'Admin::Users', action => 'au_schedule_delete');
     $admin->get('unschedule-delete')->to(controller => 'Admin::Users', action => 'au_unschedule_delete');
 
+    $admin->get('ponto-apoio-sugg')->to(controller => 'Admin::PontoApoio', action => 'apa_list');
+    $admin->get('analisar-sugestao-ponto-apoio')->to(controller => 'Admin::PontoApoio', action => 'apa_review');
 
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss

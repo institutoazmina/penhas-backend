@@ -1,0 +1,75 @@
+<div class="border-bottom">
+    <h1 class="h2">Avaliar sugestão de ponto de apoio</h1>
+</div>
+
+<br />
+
+<div class="row">
+
+    <div class="col-sm">
+        <h2 class="h2">Dados recebidos</h2>
+        <form>
+            % for my $field ( @{$left_form->{fields} || []} ) {
+            % my ($name, $label, $config) = @$field;
+            % my $value = $left_form->{data}{$name};
+
+            % if ($config && $config->{options} ) {
+            <div class="form-group">
+                <label for="left<%= $name %>">
+                    <%= $label %>
+                </label>
+                <select class="form-control" id="left<%= $name %>" data-v="<%=$value%>" readonly disabled>
+                    % for my $option ( @{$config->{options} || []} ) {
+                    <option value="<%=$option->{value}%>" <%=$value eq $option->{value} ? 'selected' : '' %> ><%=
+                            $option->{name} %></option>
+                    % }
+                </select>
+            </div>
+            % } else {
+            <div class="form-group">
+                <label for="left<%= $name %>">
+                    <%= $label %>
+                </label>
+                <input readonly type="text" class="form-control" value="<%= $value %>" id="left<%= $name %>">
+            </div>
+            % }
+
+            % }
+        </form>
+    </div>
+
+    <div class="col-sm">
+        <h2 class="h2">Dados para o Ponto de Apoio</h2>
+
+        <form>
+            % for my $field ( @{$right_form->{fields} || []} ) {
+            % my ($name, $label, $config) = @$field;
+            % my $value = $right_form->{data}{$name};
+
+            % if ($config && $config->{options} ) {
+            <div class="form-group">
+                <label for="left<%= $name %>">
+                    <%= $label %>
+                </label>
+                <select class="form-control" id="left<%= $name %>" data-v="<%=$value%>">
+                    % for my $option ( @{$config->{options} || []} ) {
+                    <option value="<%=$option->{value}%>" <%=$value eq $option->{value} ? 'selected' : '' %> ><%=
+                            $option->{name} %></option>
+                    % }
+                </select>
+            </div>
+            % } else {
+            <div class="form-group">
+                <label for="left<%= $name %>">
+                    <%= $label %>
+                </label>
+                <input type="<%= $config ?$config->{input_type}||'text' : 'text'  %>" class="form-control"
+                    value="<%= $value %>" id="left<%= $name %>">
+            </div>
+            % }
+            % }
+        </form>
+
+    </div>
+
+</div>

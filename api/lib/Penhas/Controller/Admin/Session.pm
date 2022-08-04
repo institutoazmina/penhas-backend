@@ -127,7 +127,7 @@ sub admin_check_authorization {
     )->next;
     return $c->reply_forbidden() unless $admin;
 
-    $c->log->info(sprintf 'Logged as %s', $admin->id . ' ' . $admin->first_name);
+    $c->log->info(sprintf 'Logged as %s', $admin->id . ' ' . ($admin->first_name || '(nameless)'));
 
     $c->stash(
         logged_as_admin => 1,
@@ -152,6 +152,7 @@ sub admin_dashboard {
         template => 'admin/dashboard',
 
         last_messages => $c->support_recent_messages(%$params),
+        pa_sugestao   => $c->ponto_apoio_sugestao_dashboard(%$params),
     );
 
     $c->render(html => {});

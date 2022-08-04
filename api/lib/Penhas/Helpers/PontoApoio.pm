@@ -25,8 +25,28 @@ sub setup {
     $self->helper('tick_ponto_apoio_index' => sub { &tick_ponto_apoio_index(@_) });
     $self->helper('_project_id_by_label'   => sub { &_project_id_by_label(@_) });
     $self->helper('_ponto_apoio_csv'       => sub { &_ponto_apoio_csv(@_) });
+
+
+    $self->helper('ponto_apoio_categoria_options'   => sub { &ponto_apoio_categoria_options(@_) });
+    $self->helper('ponto_apoio_abrangencia_options' => sub { &ponto_apoio_abrangencia_options(@_) });
+    $self->helper('ponto_apoio_sugestao_dashboard'  => sub { &ponto_apoio_sugestao_dashboard(@_) });
+
+
 }
 
+sub ponto_apoio_sugestao_dashboard {
+    my ($c) = @_;
+
+    my $awaiting_moderation = $c->schema2->resultset('PontoApoioSugestoesV2')->search(
+        {
+            'status' => 'awaiting-moderation',
+        }
+    )->count;
+
+    return {
+        awaiting_moderation => $awaiting_moderation,
+    };
+}
 
 sub _format_pa_row {
     my ($c, $user_obj, $row) = @_;
@@ -401,6 +421,36 @@ sub ponto_apoio_list {
     };
 }
 
+sub ponto_apoio_categoria_options {
+    my ($c) = @_;
+    return {
+        options => [
+            map { +{value => $_->{id}, name => $_->{label}} } $c->schema2->resultset('PontoApoioCategoria')->search(
+                {
+                    status => 'prod',
+                },
+                {
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                    order_by     => ['label'],
+                    columns      => [qw/id label/],
+                }
+            )->all()
+
+        ]
+    };
+}
+
+sub ponto_apoio_abrangencia_options {
+    my ($c) = @_;
+    return {
+        options => [
+            {value => 'Local',    name => 'Local'},
+            {value => 'Regional', name => 'Regional'},
+            {value => 'Nacional', name => 'Nacional'},
+        ]
+    };
+}
+
 sub ponto_apoio_fields {
     my ($c, %opts) = @_;
 
@@ -414,25 +464,8 @@ sub ponto_apoio_fields {
         ['cep'             => {max_length => 255, required => 0,},],
         ['telefone'        => {max_length => 255, required => 0,},],
         ['nome'            => {max_length => 255, required => 1,},],
-
         [
-            'categoria' => {required => 1},
-            {
-                options => [
-                    map { +{value => $_->{id}, name => $_->{label}} }
-                      $c->schema2->resultset('PontoApoioCategoria')->search(
-                        {
-                            status => 'prod',
-                        },
-                        {
-                            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-                            order_by     => ['label'],
-                            columns      => [qw/id label/],
-                        }
-                    )->all()
-
-                ]
-            }
+            'categoria' => {required => 1}, $c->ponto_apoio_categoria_options(),
         ],
         ['descricao_servico' => {required => 1, max_length => 9999,},],
 
@@ -505,30 +538,24 @@ sub ponto_apoio_fields_v2 {
         ['nome_logradouro' => {max_length => 255, required => 1,},],
         ['cep'             => {max_length => 9,   required => 0,},],
         ['abrangencia'     => {max_length => 255, required => 1,},],
-       [
+        [
             'abrangencia' => {
                 max_length => 55,
                 required   => 1,
-                {
-                    options => [
-                        {value => 'Local', name => 'Local'},
-                        {value => 'Regional', name => 'Regional'},
-                        {value => 'Nacional', name => 'Nacional'},
-                    ]
-                }
+                $c->ponto_apoio_abrangencia_options(),
             },
         ],
-        ['complemento'     => {max_length => 255, required => 0,},],
-        ['numero'          => {max_length => 255, required => 1,},],
-        ['bairro'          => {max_length => 255, required => 0,},],
-        ['municipio'       => {max_length => 255, required => 1,},],
-        ['uf'              => {max_length => 2,   required => 1,},],
-        ['email'           => {max_length => 255, required => 0,},],
-        ['horario'         => {max_length => 255, required => 0,},],
-        ['ddd1'            => {max_length => 255, type     => 'Int', required => 0,},],
-        ['telefone1'       => {max_length => 255, type     => 'Int', required => 0,},],
-        ['ddd2'            => {max_length => 255, type     => 'Int', required => 0,},],
-        ['telefone2'       => {max_length => 255, type     => 'Int', required => 0,},],
+        ['complemento' => {max_length => 255, required => 0,},],
+        ['numero'      => {max_length => 255, required => 1,},],
+        ['bairro'      => {max_length => 255, required => 0,},],
+        ['municipio'   => {max_length => 255, required => 1,},],
+        ['uf'          => {max_length => 2,   required => 1,},],
+        ['email'       => {max_length => 255, required => 0,},],
+        ['horario'     => {max_length => 255, required => 0,},],
+        ['ddd1'        => {max_length => 255, type     => 'Int', required => 0,},],
+        ['telefone1'   => {max_length => 255, type     => 'Int', required => 0,},],
+        ['ddd2'        => {max_length => 255, type     => 'Int', required => 0,},],
+        ['telefone2'   => {max_length => 255, type     => 'Int', required => 0,},],
         [
             'eh_24h' => {
                 max_length => 8,
