@@ -31,7 +31,8 @@ sub setup {
     $self->helper('ponto_apoio_abrangencia_options'       => sub { &ponto_apoio_abrangencia_options(@_) });
     $self->helper('ponto_apoio_sugestao_dashboard'        => sub { &ponto_apoio_sugestao_dashboard(@_) });
     $self->helper('ponto_apoio_dias_de_funcionamento_map' => sub { &ponto_apoio_dias_de_funcionamento_map(@_) });
-
+    $self->helper('ponto_apoio_tipo_logradouro_map' => sub { &ponto_apoio_tipo_logradouro_map(@_) });
+    $self->helper('ponto_apoio_tipo_uf_map' => sub { &ponto_apoio_tipo_uf_map(@_) });
 }
 
 sub ponto_apoio_sugestao_dashboard {
@@ -802,6 +803,56 @@ sub ponto_apoio_rating {
             $ponto_apoio->update($agg);
         }
     );
+}
+
+
+sub ponto_apoio_tipo_uf_map {
+    return {
+        Rodovia         => 'Rodovia',
+        Rua             => 'Rua',
+        Avenida         => 'Avenida',
+        Estrada         => 'Estrada',
+        Alameda         => 'Alameda',
+        Viela           => 'Viela',
+        Via             => 'Via',
+        Travessa        => 'Travessa',
+        Quadra          => 'Quadra',
+        Praça           => 'Praça',
+        Área            => 'Área',
+        Conjunto        => 'Conjunto',
+        Villa           => 'Vila',
+        Vila            => 'Vila',
+        'Sítio'         => 'Sítio',
+        'Área Especial' => 'Área Especial',
+        'Trecho'        => 'Trecho',
+        'Setor'         => 'Setor',
+        Entrequadra     => 'Entrequadra',
+    };
+}
+
+
+sub ponto_apoio_tipo_logradouro_map {
+    return {
+        Rodovia         => 'Rodovia',
+        Rua             => 'Rua',
+        Avenida         => 'Avenida',
+        Estrada         => 'Estrada',
+        Alameda         => 'Alameda',
+        Viela           => 'Viela',
+        Via             => 'Via',
+        Travessa        => 'Travessa',
+        Quadra          => 'Quadra',
+        Praça           => 'Praça',
+        Área            => 'Área',
+        Conjunto        => 'Conjunto',
+        Villa           => 'Vila',
+        Vila            => 'Vila',
+        'Sítio'         => 'Sítio',
+        'Área Especial' => 'Área Especial',
+        'Trecho'        => 'Trecho',
+        'Setor'         => 'Setor',
+        Entrequadra     => 'Entrequadra',
+    };
 }
 
 sub ponto_apoio_dias_de_funcionamento_map {

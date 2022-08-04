@@ -61,7 +61,7 @@
                 <label> &nbsp; </label>
                 <input disabled type="text" class="form-control">
             </div>
-            % } elsif ($name eq 'cod_ibge' ) {
+            % } elsif ($name eq 'cep' ) {
 
                 <div class="form-row">
 
@@ -81,7 +81,7 @@
                         <label for="geolocation">
                              &nbsp;
                         </label>
-                        <button id="geolocation" type="submit" value="load_cep" name="action" class="form-control btn btn-secondary">Buscar pelo CEP</button>
+                        <button id="geolocation" type="submit" value="load_cep" name="action" class="form-control btn btn-secondary">Buscar informações</button>
                     </div>
 
                 </div>

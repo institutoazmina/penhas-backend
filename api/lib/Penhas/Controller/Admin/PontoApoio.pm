@@ -4,9 +4,7 @@ use utf8;
 use JSON;
 use Penhas::Utils;
 use DateTime;
-use MooseX::Types::Email qw/EmailAddress/;
-use Mojo::Util qw/humanize_bytes/;
-use Penhas::Types qw/DateStr/;
+use Penhas::Types qw/CEP/;
 
 sub apa_list {
     my $c = shift;
@@ -77,7 +75,8 @@ sub apa_review {
     $row->{has_whatsapp} = $row->{has_whatsapp} ? 1 : defined $row->{has_whatsapp} ? 0 : '';
     $row->{abrangencia}  = ucfirst(lc($row->{abrangencia}));
 
-    $row->{cep} =~ s/[^0-9]+//g;
+    $row->{cep} =~ s/[^0-9]+//g if $row->{cep};
+    $row->{uf} = uc($row->{uf});
 
     my $categorias_hash    = $c->ponto_apoio_categoria_options();
     my $abragencia_options = $c->ponto_apoio_abrangencia_options();
@@ -96,8 +95,21 @@ sub apa_review {
         ],
     };
 
-    my $dow       = $c->ponto_apoio_dias_de_funcionamento_map();
-    my $dias_list = {options => [map { {value => $_, name => $dow->{$_}} } keys %$dow]};
+    my $dow = $c->ponto_apoio_dias_de_funcionamento_map();
+    my $dias_list
+      = {options => [sort { $a->{value} cmp $b->{value} } map { {value => $_, name => $dow->{$_}} } keys %$dow]};
+
+    my $uf = $c->ponto_apoio_tipo_uf_map();
+    my $uf_list
+      = {options => [sort { $a->{value} cmp $b->{value} } map { {value => $_, name => $uf->{$_}} } keys %$uf]};
+
+    my $tipo_logradouro      = $c->ponto_apoio_tipo_logradouro_map();
+    my $tipo_logradouro_list = {
+        options => [
+            sort { $a->{value} cmp $b->{value} }
+            map  { {value => $_, name => $tipo_logradouro->{$_}} } keys %$tipo_logradouro
+        ]
+    };
 
     my $left_config = [
         ["nome" => 'Nome'],
@@ -106,7 +118,7 @@ sub apa_review {
         ["abrangencia" => 'Abrangência', $abragencia_options],
         ["cep"         => 'CEP',         {}],
         [],
-        ["uf"        => "UF",        {}],
+        ["uf"        => "UF",        $uf_list],
         ["municipio" => "Município", {}],
         [],
         ["nome_logradouro" => 'Nome Logradouro', {}],
@@ -136,9 +148,9 @@ sub apa_review {
         ["abrangencia"        => 'Abrangência',             {%$abragencia_options}],
         ["cep"                => 'CEP ⛯ ⛃',                 {}],
         ["cod_ibge"           => 'Código IBGE (Município)', {}],
-        ["uf"                 => "UF ⛯ ⛃",                  {}],
+        ["uf"                 => "UF ⛯ ⛃",                  $uf_list],
         ["municipio"          => "Município ⛯ ⛃",           {}],
-        ["tipo_logradouro"    => 'Tipo Logradouro ⛯',       {}],
+        ["tipo_logradouro"    => 'Tipo Logradouro ⛯',       $tipo_logradouro_list],
         ["nome_logradouro"    => 'Nome Logradouro ⛯ ⛃',     {}],
         ["numero"             => "Número",                  {input_type              => 'number'}],
         ["numero_sem_numero"  => "Sem número? ⛯",           {%$yes_no_list, required => 1}],
@@ -166,7 +178,8 @@ sub apa_review {
     my $decoded = from_json($row->{saved_form});
 
     if (keys %$decoded == 0) {
-
+        use DDP;
+        p $decoded;
         $fake_pa->{$_} = $row->{$_}
           for (
             qw/
@@ -187,6 +200,14 @@ sub apa_review {
             observacao
             /
           );
+
+        if (!$fake_pa->{cod_ibge} && $fake_pa->{cep} && $fake_pa->{cep} =~ /^[\d-]+$/g) {
+            $fake_pa->{cep} =~ s/[^0-9]+//g;
+            my $res = &_search_cep($c, $fake_pa->{cep});
+            if ($res->{cidade_info}{codigo_ibge}) {
+                &_patch_from_cep_result($c, $res, $fake_pa);
+            }
+        }
     }
     else {
         $fake_pa = $decoded;
@@ -240,8 +261,47 @@ sub apa_review_post {
     my $params       = $c->req->params->to_hash;
 
     my $action = delete $params->{action};
-    if ($action eq 'geolocation') {
 
+    if ($action eq 'load_cep') {
+        my $valid_cep = $c->validate_request_params(
+            cep => {required => 1, type => CEP},
+        );
+        $valid_cep->{cep} =~ s/[^0-9]+//g;
+        my $res = &_search_cep($c, $valid_cep->{cep});
+
+        if ($res->{cidade_info}{codigo_ibge}) {
+            $taken_action = 'Busca do endereço pelo CEP realizada com sucesso';
+
+            &_patch_from_cep_result($c, $res, $params);
+        }
+        else {
+            $taken_action = 'Erro ao buscar pelo CEP';
+        }
+    }
+    elsif ($action eq 'geolocation') {
+
+        my $valid_addr = $c->validate_request_params(
+            tipo_logradouro => {required => 1, type => 'Str'},
+            nome_logradouro => {required => 1, type => 'Str'},
+            municipio       => {required => 1, type => 'Str'},
+            uf              => {required => 1, type => 'Str'},
+            cep             => {required => 1, type => 'Str'},
+            numero          => {required => 0, type => 'Str', empty_is_valid => 1,},
+        );
+
+        my $full_addr = join ' ', $valid_addr->{tipo_logradouro},
+          $valid_addr->{nome_logradouro}, ($valid_addr->{numero} ? $valid_addr->{numero} : ''), ',',
+          $valid_addr->{uf},
+          '-', $valid_addr->{municipio}, ',', $valid_addr->{cep};
+
+        my $latlng = $c->geo_code_cached($full_addr);
+        if ($latlng){
+
+            $taken_action = 'Sucesso ao localizar lat/lng para ' . $full_addr;
+            ($params->{latitude},$params->{longitude}) = split /,/, $latlng;
+        }else{
+            $taken_action = 'lat/lng para ' . $full_addr . ' não foi encontrado';
+        }
     }
 
 
@@ -260,6 +320,38 @@ sub apa_review_post {
             status => 200,
         );
     }
+}
+
+sub _patch_from_cep_result {
+    my ($c, $res, $params) = @_;
+
+    $params->{cod_ibge}  = $res->{cidade_info}{codigo_ibge};
+    $params->{municipio} = $res->{cidade};
+    $params->{bairro}    = $res->{bairro};
+    $params->{uf}        = $res->{estado};
+
+    foreach my $option (keys %{$c->ponto_apoio_tipo_logradouro_map()}) {
+        my $value    = $c->ponto_apoio_tipo_logradouro_map()->{$option};
+        my $option_q = quotemeta($value);
+
+        if ($res->{logradouro} =~ /$option_q\s/) {
+            $params->{nome_logradouro} = substr($res->{logradouro}, length($value) + 1);
+            $params->{tipo_logradouro} = $value;
+            last;
+        }
+        else {
+            $params->{tipo_logradouro} = '';
+            $params->{nome_logradouro} = $res->{logradouro};
+        }
+    }
+}
+
+sub _search_cep {
+    my $c   = shift;
+    my $cep = shift;
+
+    my $res = $c->ua->get('https://api.postmon.com.br/v1/cep/' . $cep)->result->json;
+    return $res;
 }
 
 1;

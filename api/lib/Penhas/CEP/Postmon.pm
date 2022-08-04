@@ -12,7 +12,7 @@ sub _find {
     state $ua = Furl->new(timeout => 30);
 
     my $cep = pop;
-    my $res = $ua->get('http://api.postmon.com.br/v1/cep/' . $cep);
+    my $res = $ua->get('https://api.postmon.com.br/v1/cep/' . $cep);
 
     return unless $res->is_success;
 
