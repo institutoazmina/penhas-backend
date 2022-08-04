@@ -103,7 +103,7 @@
                     </label>
                     <select class="form-control" name="<%= $name %>" id="right<%= $name %>" data-v="<%=$value%>">
                         % for my $option ( @{$config->{options} || []} ) {
-                        <option value="<%= $option->{value} %>" <%=($value || '' ) eq $option->{value} ? 'selected' : ''
+                        <option value="<%= $option->{value} %>" <%=($value // '' ) eq $option->{value} ? 'selected' : ''
                             %> ><%= $option->{name} %></option>
                         % }
                     </select>
@@ -126,7 +126,7 @@
                 </label>
                 <select class="form-control" name="<%= $name %>" id="right<%= $name %>" data-v="<%=$value%>">
                     % for my $option ( @{$config->{options} || []} ) {
-                    <option value="<%= $option->{value} %>" <%=($value || '' ) eq $option->{value} ? 'selected' : '' %>
+                    <option value="<%= $option->{value} %>" <%=($value // '' ) eq $option->{value} ? 'selected' : '' %>
                         ><%= $option->{name} %></option>
                     % }
                 </select>

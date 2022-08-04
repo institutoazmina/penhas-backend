@@ -71,9 +71,11 @@ sub apa_review {
     )->next;
     $c->reply_invalid_param('suggestion not found') unless $row;
 
-    $row->{eh_24h}       = $row->{eh_24h}       ? 1 : defined $row->{eh_24h}       ? 0 : '';
-    $row->{has_whatsapp} = $row->{has_whatsapp} ? 1 : defined $row->{has_whatsapp} ? 0 : '';
-    $row->{abrangencia}  = ucfirst(lc($row->{abrangencia}));
+    $row->{eh_whatsapp} = delete $row->{has_whatsapp};
+
+    $row->{eh_24h}      = $row->{eh_24h}      ? 1 : defined $row->{eh_24h}      ? 0 : '';
+    $row->{eh_whatsapp} = $row->{eh_whatsapp} ? 1 : defined $row->{eh_whatsapp} ? 0 : '';
+    $row->{abrangencia} = ucfirst(lc($row->{abrangencia}));
 
     $row->{cep} =~ s/[^0-9]+//g if $row->{cep};
     $row->{uf} = uc($row->{uf});
@@ -83,15 +85,15 @@ sub apa_review {
 
     my $yes_no_list_null = {
         options => [
-            {value => '0', name => 'Não'},
             {value => '1', name => 'Sim'},
+            {value => '0', name => 'Não'},
             {value => '',  name => '(nulo)'},
         ],
     };
     my $yes_no_list = {
         options => [
-            {value => '0', name => 'Não'},
             {value => '1', name => 'Sim'},
+            {value => '0', name => 'Não'},
         ],
     };
 
@@ -116,6 +118,7 @@ sub apa_review {
         [],
         ["categoria"   => 'Categoria',   $categorias_hash],
         ["abrangencia" => 'Abrangência', $abragencia_options],
+        [],
         ["cep"         => 'CEP',         {}],
         [],
         ["uf"        => "UF",        $uf_list],
@@ -132,13 +135,15 @@ sub apa_review {
         ["horario"     => "Horário",     {}],
         [],
         [],
-        ["ddd1"         => "DDD 1",         {}],
-        ["ddd2"         => "DDD 2",         {}],
-        ["telefone1"    => "Telefone 1",    {}],
-        ["telefone2"    => "Telefone 2",    {}],
-        ["eh_24h"       => "É 24h?",        $yes_no_list_null],
-        ["has_whatsapp" => "Tem Whatsapp?", $yes_no_list_null],
-        ["observacao"   => "Observação",    {}],
+        ["ddd1"      => "DDD 1",      {}],
+        ["ddd2"      => "DDD 2",      {}],
+        ["telefone1" => "Telefone 1", {}],
+        ["telefone2" => "Telefone 2", {}],
+        [],
+        [],
+        ["eh_24h"      => "É 24h?",        $yes_no_list_null],
+        ["eh_whatsapp" => "Tem Whatsapp?", $yes_no_list_null],
+        ["observacao"  => "Observação",    {}],
     ];
 
     my $right_config = [
@@ -146,6 +151,9 @@ sub apa_review {
         ["sigla"              => 'Sigla'],
         ["categoria"          => 'Categoria ⛃',             {%$categorias_hash}],
         ["abrangencia"        => 'Abrangência',             {%$abragencia_options}],
+        ["natureza"               => "Natureza ⛯",                  {
+            options => [{value => 'ong', name=>'ONG'}, {value => 'publico', name=>'Público'}]
+        }],
         ["cep"                => 'CEP ⛯ ⛃',                 {}],
         ["cod_ibge"           => 'Código IBGE (Município)', {}],
         ["uf"                 => "UF ⛯ ⛃",                  $uf_list],
@@ -159,18 +167,28 @@ sub apa_review {
         ["complemento"        => 'Complemento',             {}],
         ["bairro"             => "Bairro ⛯ ⛃",              {required => 1}],
         ["email"              => "E-mail",                  {}],
-        ["horario_inicio"     => "Horário Inicio",          {}],
-        ["horario_fim"        => "Horário Fim",             {}],
+        ["horario_inicio"     => "Horário Inicio",          {placeholder => 'HH:MM'}],
+        ["horario_fim"        => "Horário Fim",             {placeholder => 'HH:MM'}],
         ["dias_funcionamento" => "Dias de Funcioamento",    $dias_list],
-        ["ddd"                => "DDD",                     {}],
+        ["ddd"                => "DDD",                     {input_type => 'number'}],
         [],
-        ["telefone1"    => "Telefone 1",    {}],
-        ["telefone2"    => "Telefone 2",    {}],
-        ["eh_24h"       => "É 24h?",        $yes_no_list],
-        ["has_whatsapp" => "Tem Whatsapp?", {%$yes_no_list, db_field => 'eh_whatsapp'}],
-        ["observacao"   => "Observação",    {}],
-        ["natureza"     => "Natureza ⛯",    {}],
-        ["descricao"    => "Descriação ⛃",  {}],
+        ["telefone1"              => "Telefone 1",                  {input_type => 'number'}],
+        ["telefone2"              => "Telefone 2",                  {input_type => 'number'}],
+        ["ramal1"                 => "Ramal 1",                     {input_type => 'number'}],
+        ["ramal2"                 => "Ramal 2",                     {input_type => 'number'}],
+        ["eh_24h"                 => "É 24h?",                      $yes_no_list],
+        ["eh_whatsapp"            => "Tem Whatsapp?",               $yes_no_list],
+        ["observacao"             => "Observação (exibido no app)", {}],
+        ["funcionamento_pandemia" => "Funciona na Pandemia?",       $yes_no_list_null],
+        ["observacao_pandemia"    => "Observação Pandemia",         {}],
+        ["descricao"              => "Descriação ⛃",                {}],
+        ["delegacia_mulher"       => "Delegacia Mulher?",           $yes_no_list_null],
+        ["horario_correto"        => "Horário Correto?",            $yes_no_list_null],
+        ["endereco_correto"       => "Endereço Correto?",           $yes_no_list_null],
+        ["telefone_correto"       => "Telefone Correto?",           $yes_no_list_null],
+        ["existe_delegacia"       => "Existe Delegacia?",           $yes_no_list_null],
+        ["eh_presencial"          => "É presencial?",               $yes_no_list_null],
+        ["eh_online"              => "É online?",                   $yes_no_list_null],
     ];
 
     my $fake_pa = {};
@@ -195,7 +213,7 @@ sub apa_review {
             telefone2
             email
             eh_24h
-            has_whatsapp
+            eh_whatsapp
             observacao
             /
           );
@@ -208,21 +226,23 @@ sub apa_review {
             }
         }
 
-        if ($fake_pa->{numero} =~ /^\d+$/){
+        if ($fake_pa->{numero} =~ /^\d+$/) {
             $fake_pa->{numero_sem_numero} = '0';
-        }else{
+        }
+        else {
             $fake_pa->{numero_sem_numero} = '1';
-            $fake_pa->{numero} = '';
+            $fake_pa->{numero}            = '';
         }
     }
     else {
         $fake_pa = $decoded;
 
-        if ($fake_pa->{numero} =~ /^\d+$/){
+        if ($fake_pa->{numero} =~ /^\d+$/) {
             $fake_pa->{numero_sem_numero} = '0';
-        }else{
+        }
+        else {
             $fake_pa->{numero_sem_numero} = '1';
-            $fake_pa->{numero} = '';
+            $fake_pa->{numero}            = '';
         }
     }
 
@@ -270,7 +290,7 @@ sub apa_review_post {
     my $row = $c->schema2->resultset('PontoApoioSugestoesV2')->find($valid->{id})
       or $c->reply_item_not_found();
 
-    my $taken_action = 'Dados foram salvos com sucesso';
+    my $taken_action = 'Rascunho salvo com sucesso!';
     my $params       = $c->req->params->to_hash;
 
     my $action = delete $params->{action};

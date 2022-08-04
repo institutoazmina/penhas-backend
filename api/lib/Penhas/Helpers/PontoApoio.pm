@@ -830,7 +830,7 @@ sub ponto_apoio_tipo_uf_map {
         'SP' => 'São Paulo',
         'PR' => 'Paraná',
         'SC' => 'Santa Catarina',
-        'RS' => 'Rio Grande do Sul (*)',
+        'RS' => 'Rio Grande do Sul',
         'MS' => 'Mato Grosso do Sul',
         'MT' => 'Mato Grosso',
         'GO' => 'Goiás',
