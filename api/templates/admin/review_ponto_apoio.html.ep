@@ -150,7 +150,7 @@
 
                 <hr>
 
-            <button type="button" value="publish" name="action" class="btn btn-success">Salvar e aprovar</button>
+            <button type="submit" value="publish" name="action" class="btn btn-success">Salvar e aprovar</button>
         </form>
 
     </div>

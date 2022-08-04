@@ -5,6 +5,7 @@ use JSON;
 use Penhas::Utils;
 use DateTime;
 use Penhas::Types qw/CEP/;
+use MooseX::Types::Email qw/EmailAddress/;
 
 sub apa_list {
     my $c = shift;
@@ -119,7 +120,7 @@ sub apa_review {
         ["categoria"   => 'Categoria',   $categorias_hash],
         ["abrangencia" => 'Abrangência', $abragencia_options],
         [],
-        ["cep"         => 'CEP',         {}],
+        ["cep" => 'CEP', {}],
         [],
         ["uf"        => "UF",        $uf_list],
         ["municipio" => "Município", {}],
@@ -147,30 +148,31 @@ sub apa_review {
     ];
 
     my $right_config = [
-        ["nome"               => 'Nome ⛯ ⛃',],
-        ["sigla"              => 'Sigla'],
-        ["categoria"          => 'Categoria ⛃',             {%$categorias_hash}],
-        ["abrangencia"        => 'Abrangência',             {%$abragencia_options}],
-        ["natureza"               => "Natureza ⛯",                  {
-            options => [{value => 'ong', name=>'ONG'}, {value => 'publico', name=>'Público'}]
-        }],
-        ["cep"                => 'CEP ⛯ ⛃',                 {}],
-        ["cod_ibge"           => 'Código IBGE (Município)', {}],
-        ["uf"                 => "UF ⛯ ⛃",                  $uf_list],
-        ["municipio"          => "Município ⛯ ⛃",           {}],
-        ["tipo_logradouro"    => 'Tipo Logradouro ⛯',       $tipo_logradouro_list],
-        ["nome_logradouro"    => 'Nome Logradouro ⛯ ⛃',     {}],
-        ["numero"             => "Número",                  {input_type              => 'number'}],
-        ["numero_sem_numero"  => "Sem número? ⛯",           {%$yes_no_list, required => 1}],
-        ["latitude"           => "latitude",                {}],
-        ["longitude"          => "longitude",               {}],
-        ["complemento"        => 'Complemento',             {}],
-        ["bairro"             => "Bairro ⛯ ⛃",              {required => 1}],
-        ["email"              => "E-mail",                  {}],
-        ["horario_inicio"     => "Horário Inicio",          {placeholder => 'HH:MM'}],
-        ["horario_fim"        => "Horário Fim",             {placeholder => 'HH:MM'}],
-        ["dias_funcionamento" => "Dias de Funcioamento",    $dias_list],
-        ["ddd"                => "DDD",                     {input_type => 'number'}],
+        ["nome"        => 'Nome ⛯ ⛃',],
+        ["sigla"       => 'Sigla'],
+        ["categoria"   => 'Categoria ⛃',   {%$categorias_hash}],
+        ["abrangencia" => 'Abrangência ⛯', {%$abragencia_options}],
+        [
+            "natureza" => "Natureza ⛯",
+            {options => [{value => 'ong', name => 'ONG'}, {value => 'publico', name => 'Público'}]}
+        ],
+        ["cep"                => 'CEP ⛯ ⛃',                   {}],
+        ["cod_ibge"           => 'Código IBGE (Município) ⛯', {}],
+        ["uf"                 => "UF ⛯ ⛃",                    $uf_list],
+        ["municipio"          => "Município ⛯ ⛃",             {}],
+        ["tipo_logradouro"    => 'Tipo Logradouro ⛯',         $tipo_logradouro_list],
+        ["nome_logradouro"    => 'Nome Logradouro ⛯ ⛃',       {}],
+        ["numero"             => "Número",                    {input_type              => 'number'}],
+        ["numero_sem_numero"  => "Sem número? ⛯",             {%$yes_no_list, required => 1}],
+        ["latitude"           => "Latitude ⛯",                {}],
+        ["longitude"          => "Longitude ⛯",               {}],
+        ["complemento"        => 'Complemento',               {}],
+        ["bairro"             => "Bairro ⛯ ⛃",                {required => 1}],
+        ["email"              => "E-mail",                    {}],
+        ["horario_inicio"     => "Horário Inicio",            {placeholder => 'HH:MM'}],
+        ["horario_fim"        => "Horário Fim",               {placeholder => 'HH:MM'}],
+        ["dias_funcionamento" => "Dias de Funcioamento",      $dias_list],
+        ["ddd"                => "DDD",                       {input_type => 'number'}],
         [],
         ["telefone1"              => "Telefone 1",                  {input_type => 'number'}],
         ["telefone2"              => "Telefone 2",                  {input_type => 'number'}],
@@ -282,6 +284,7 @@ sub apa_review_post {
 
     $c->use_redis_flash();
 
+    my $style = 'success_message';
     my $valid = $c->validate_request_params(
         id => {required => 1, type => 'Int'},
     );
@@ -326,6 +329,7 @@ sub apa_review_post {
         }
         else {
             $taken_action = 'Erro ao buscar pelo CEP';
+            $style        = 'message';
         }
     }
     elsif ($action eq 'geolocation') {
@@ -355,12 +359,15 @@ sub apa_review_post {
         }
     }
 
-
     $row->update({saved_form => to_json($params)});
 
+    if ($action eq 'publish') {
+        &try_publish_pa($c, $row);
+        return;
+    }
 
     if ($c->accept_html()) {
-        $c->flash_to_redis({success_message => $taken_action});
+        $c->flash_to_redis({$style => $taken_action});
         $c->redirect_to('/admin/analisar-sugestao-ponto-apoio?id=' . $row->id);
 
         return 0;
@@ -371,6 +378,90 @@ sub apa_review_post {
             status => 200,
         );
     }
+}
+
+sub try_publish_pa {
+    my ($c, $row) = @_;
+
+    my $valid = $c->validate_request_params(
+        nome                   => {required => 1, type => 'Str'},
+        sigla                  => {required => 0, type => 'Str', empty_is_valid => 1},
+        categoria              => {required => 1, type => 'Int'},
+        abrangencia            => {required => 1, type => 'Str'},
+        natureza               => {required => 1, type => 'Str'},
+        cep                    => {required => 1, type => CEP},
+        cod_ibge               => {required => 1, type => 'Str'},
+        uf                     => {required => 1, type => 'Str'},
+        municipio              => {required => 1, type => 'Str'},
+        tipo_logradouro        => {required => 1, type => 'Str'},
+        nome_logradouro        => {required => 1, type => 'Str'},
+        numero                 => {required => 0, type => 'Int', empty_is_valid => 1},
+        numero_sem_numero      => {required => 1, type => 'Bool'},
+        latitude               => {required => 1, type => 'Num'},
+        longitude              => {required => 1, type => 'Num'},
+        complemento            => {required => 0, type => 'Str', empty_is_valid => 1},
+        bairro                 => {required => 1, type => 'Str'},
+        email                  => {required => 0, type => EmailAddress},
+        horario_inicio         => {required => 0, type => 'Str', empty_is_valid => 1, max_lenght => 5},
+        horario_fim            => {required => 0, type => 'Str', empty_is_valid => 1, max_lenght => 5},
+        dias_funcionamento     => {required => 0, type => 'Str', empty_is_valid => 1},
+        ddd                    => {required => 0, type => 'Int', empty_is_valid => 1},
+        telefone1              => {required => 0, type => 'Int', empty_is_valid => 1},
+        telefone2              => {required => 0, type => 'Int', empty_is_valid => 1},
+        ramal1                 => {required => 0, type => 'Int', empty_is_valid => 1},
+        ramal2                 => {required => 0, type => 'Int', empty_is_valid => 1},
+        eh_24h                 => {required => 0, type => 'Bool'},
+        eh_whatsapp            => {required => 0, type => 'Bool'},
+        observacao             => {required => 0, type => 'Str'},
+        funcionamento_pandemia => {required => 0, type => 'Bool', empty_is_valid => 1},
+        observacao_pandemia    => {required => 0, type => 'Str',  empty_is_valid => 1},
+        descricao              => {required => 0, type => 'Str',  empty_is_valid => 1},
+        delegacia_mulher       => {required => 0, type => 'Bool', empty_is_valid => 1},
+        horario_correto        => {required => 0, type => 'Bool', empty_is_valid => 1},
+        endereco_correto       => {required => 0, type => 'Bool', empty_is_valid => 1},
+        telefone_correto       => {required => 0, type => 'Bool', empty_is_valid => 1},
+        existe_delegacia       => {required => 0, type => 'Bool', empty_is_valid => 1},
+        eh_presencial          => {required => 0, type => 'Bool', empty_is_valid => 1},
+        eh_online              => {required => 0, type => 'Bool', empty_is_valid => 1}
+    );
+
+    $valid->{cep} =~ s/[^0-9]+//g;
+    $valid->{sigla} = uc($valid->{sigla}) if $valid->{sigla};
+
+    for my $field (qw/horario_inicio horario_fim/) {
+        $c->reply_invalid_param($field . ' inválido')
+          if $valid->{$field} && $valid->{$field} !~ /^\d{2}\:\d{2}$/a;
+    }
+
+    $c->schema->txn_do(
+        sub {
+            $valid->{ja_passou_por_moderacao} = 1;
+
+            $valid->{created_on} = \'now()';
+            $valid->{updated_at} = \'now()';
+            $valid->{cliente_id} = $row->get_column('cliente_id');
+
+            my $pa = $c->schema2->resultset('PontoApoio')->create($valid);
+            $c->tick_ponto_apoio_index();
+
+            $row->update(
+                {
+                    metainfo => to_json(
+                        {
+                            %{from_json($row->metainfo())},
+                            ponto_apoio_id => $pa->id,
+                            approved_by => $c->stash('admin_user')->id,
+                        }
+                    ),
+                    status => 'approved',
+                }
+            );
+        }
+    );
+
+    $c->flash_to_redis({success_message => 'Ponto de Apoio registrado!'});
+    $c->redirect_to('/admin/');
+
 }
 
 sub _patch_from_cep_result {

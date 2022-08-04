@@ -1052,7 +1052,7 @@ sub tick_ponto_apoio_index {
         $index = lc($index);
 
         if ($ponto->cep) {
-            $index = substr($ponto->cep, 0, 5) . '-' . substr($ponto->cep, 5, 3);
+            $index .= ' ' . substr($ponto->cep, 0, 5) . '-' . substr($ponto->cep, 5, 3);
         }
 
         $ponto->update(
