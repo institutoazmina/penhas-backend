@@ -178,8 +178,7 @@ sub apa_review {
     my $decoded = from_json($row->{saved_form});
 
     if (keys %$decoded == 0) {
-        use DDP;
-        p $decoded;
+
         $fake_pa->{$_} = $row->{$_}
           for (
             qw/
@@ -208,9 +207,23 @@ sub apa_review {
                 &_patch_from_cep_result($c, $res, $fake_pa);
             }
         }
+
+        if ($fake_pa->{numero} =~ /^\d+$/){
+            $fake_pa->{numero_sem_numero} = '0';
+        }else{
+            $fake_pa->{numero_sem_numero} = '1';
+            $fake_pa->{numero} = '';
+        }
     }
     else {
         $fake_pa = $decoded;
+
+        if ($fake_pa->{numero} =~ /^\d+$/){
+            $fake_pa->{numero_sem_numero} = '0';
+        }else{
+            $fake_pa->{numero_sem_numero} = '1';
+            $fake_pa->{numero} = '';
+        }
     }
 
     return $c->respond_to_if_web(
