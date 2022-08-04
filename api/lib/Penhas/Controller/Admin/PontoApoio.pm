@@ -262,7 +262,24 @@ sub apa_review_post {
 
     my $action = delete $params->{action};
 
-    if ($action eq 'load_cep') {
+    if ($action eq 'reprove') {
+
+        $row->update({status => 'reproved'});
+
+        if ($c->accept_html()) {
+            $c->flash_to_redis({success_message => 'Sugestão reprovada com sucesso.'});
+            $c->redirect_to('/admin');
+
+            return 0;
+        }
+        else {
+            return $c->render(
+                json   => {ok => 1},
+                status => 200,
+            );
+        }
+    }
+    elsif ($action eq 'load_cep') {
         my $valid_cep = $c->validate_request_params(
             cep => {required => 1, type => CEP},
         );
@@ -295,11 +312,12 @@ sub apa_review_post {
           '-', $valid_addr->{municipio}, ',', $valid_addr->{cep};
 
         my $latlng = $c->geo_code_cached($full_addr);
-        if ($latlng){
+        if ($latlng) {
 
             $taken_action = 'Sucesso ao localizar lat/lng para ' . $full_addr;
-            ($params->{latitude},$params->{longitude}) = split /,/, $latlng;
-        }else{
+            ($params->{latitude}, $params->{longitude}) = split /,/, $latlng;
+        }
+        else {
             $taken_action = 'lat/lng para ' . $full_addr . ' não foi encontrado';
         }
     }

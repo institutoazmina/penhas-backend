@@ -9,7 +9,7 @@
     <div class="col-sm">
         <h2 class="h2">Dados recebidos</h2>
         <p>&nbsp;</p>
-        <form>
+        <form class="form-signin" method="POST" action="/admin/analisar-sugestao-ponto-apoio">
             % for my $field ( @{$left_form->{fields} || []} ) {
             % my $hide_slot = @$field == 0;
             % my ($name, $label, $config) = @$field;
@@ -42,6 +42,10 @@
             % }
 
             % }
+
+            <input type="hidden" name="id" value="<%= $left_form->{data}{id} %>">
+            <button type="submit" value="reprove" name="action" class="btn btn-danger">Reprovar</button>
+
         </form>
     </div>
 
@@ -50,6 +54,9 @@
         <p>⛯ campos obrigatórios para aprovação, ⛃ campos usados na busca</p>
         <form class="form-signin" method="POST" action="/admin/analisar-sugestao-ponto-apoio">
             <input type="hidden" name="id" value="<%= $left_form->{data}{id} %>">
+
+            <button style="overflow: visible !important; height: 0 !important; width: 0 !important; margin: 0 !important; border: 0 !important; padding: 0 !important; display: block !important;" type="submit" name="action" value="save"></button>
+
 
             % for my $field ( @{$right_form->{fields} || []} ) {
             % my $hide_slot = @$field == 0;
@@ -66,7 +73,7 @@
                 <div class="form-row">
 
                     <div class="form-group col-md-6">
-                        <label for="left<%= $name %>">
+                        <label for="right<%= $name %>">
                             <%= $label %> &nbsp;
                         </label>
                         <input
@@ -91,10 +98,10 @@
             <div class="form-row">
 
                 <div class="form-group col-md-6">
-                    <label for="left<%= $name %>">
+                    <label for="right<%= $name %>">
                         <%= $label %> &nbsp;
                     </label>
-                    <select class="form-control" name="<%= $name %>" id="left<%= $name %>" data-v="<%=$value%>">
+                    <select class="form-control" name="<%= $name %>" id="right<%= $name %>" data-v="<%=$value%>">
                         % for my $option ( @{$config->{options} || []} ) {
                         <option value="<%= $option->{value} %>" <%=($value || '' ) eq $option->{value} ? 'selected' : ''
                             %> ><%= $option->{name} %></option>
@@ -114,10 +121,10 @@
 
             % } elsif ($config && $config->{options} ) {
             <div class="form-group">
-                <label for="left<%= $name %>">
+                <label for="right<%= $name %>">
                     <%= $label %> &nbsp;
                 </label>
-                <select class="form-control" name="<%= $name %>" id="left<%= $name %>" data-v="<%=$value%>">
+                <select class="form-control" name="<%= $name %>" id="right<%= $name %>" data-v="<%=$value%>">
                     % for my $option ( @{$config->{options} || []} ) {
                     <option value="<%= $option->{value} %>" <%=($value || '' ) eq $option->{value} ? 'selected' : '' %>
                         ><%= $option->{name} %></option>
@@ -126,7 +133,7 @@
             </div>
             % } else {
             <div class="form-group">
-                <label for="left<%= $name %>">
+                <label for="right<%= $name %>">
                     <%= $label %> &nbsp;
                 </label>
                 <input
@@ -139,7 +146,11 @@
             % }
             % }
 
-            <button type="submit" value="save" name="action" class="btn btn-primary">Salvar</button>
+            <button type="submit" value="save" name="action" class="btn btn-primary">Salvar como rascunho</button>
+
+                <hr>
+
+            <button type="button" value="publish" name="action" class="btn btn-success">Salvar e aprovar</button>
         </form>
 
     </div>
