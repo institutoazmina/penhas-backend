@@ -194,8 +194,7 @@ sub validate_request_params {
     my ($c, %fields) = @_;
 
     my $params = $c->req->params->to_hash;
-    use DDP;
-    p $params;
+
     my $tested = {};
     foreach my $key (keys %fields) {
         my $me   = $fields{$key};
@@ -270,7 +269,7 @@ sub validate_request_params {
             die {error => 'form_error', field => $key, reason => 'invalid', %def_message, _val => $val, status => 400};
         }
     }
-use DDP; p $tested;
+
     return $tested;
 }
 
