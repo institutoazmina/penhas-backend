@@ -5,9 +5,9 @@ use utf8;
 use JSON;
 use Penhas::Logger;
 use Number::Phone::Lib;
-use Penhas::Utils qw/random_string_from is_test tt_render/;
+use Penhas::Utils qw/random_string_from is_test tt_render linkfy nl2br/;
 use Digest::MD5 qw/md5_hex/;
-use Mojo::Util qw/trim/;
+use Mojo::Util qw/trim xml_escape/;
 use Scope::OnExit;
 use Text::CSV_XS;
 use Encode qw/encode_utf8/;
@@ -972,7 +972,7 @@ sub ponto_apoio_detail {
 
     if ($user_obj) {
         $row->{content_html} = tt_render(
-                q|[% IF observacao%] <p style="color: #0a115f">[% observacao %]</p><br/>[% END %]|
+                q|[% IF observacao%] <p style="color: #0a115f">| . linkfy(&nl2br(xml_escape($row->{observacao}))) . q|</p><br/>[% END %]|
               . q|<p style="color: #0a115f"><b>Endereço</b></p>|
               . q|<p style="color: #818181;">[% tipo_logradouro %] [% nome_logradouro %]|
               . q|[% IF numero.defined() %], [% numero %][% END %] -[%bairro %] -[%municipio %], [%uf %], [%cep %] </p>|
