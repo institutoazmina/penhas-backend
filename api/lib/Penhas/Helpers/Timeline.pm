@@ -14,6 +14,7 @@ use Penhas::Utils;
 use List::Util '1.54' => qw/sample/;
 use DateTime::Format::Pg;
 use Encode;
+use Business::BR::CPF qw(test_cpf);
 
 our $ForceFilterClientes;
 sub kv { Penhas::KeyValueStorage->instance }
@@ -646,7 +647,7 @@ sub _format_tweet {
         id      => $me->{id},
         content => $me->{disable_escape}
         ? $me->{content}
-        : &linkfy(&nl2br(xml_escape($is_owner ? $me->{content} : &_remove_phone_number($me->{content})))),
+        : &linkfy(&nl2br(xml_escape($is_owner ? $me->{content} : &_remove_pi($me->{content})))),
         anonimo => $anonimo && !$eh_admin ? 1 : 0,
 
 
@@ -685,29 +686,41 @@ sub _replace_number {
     return $content;
 }
 
-sub _remove_phone_number {
+sub _replace_chars {
     my ($content) = @_;
 
-    $content
-      =~ s/((?:\(?(11|12|13|14|15|16|17|18|19|21|22|24|27|28|31|32|33|34|35|37|38|41|42|43|44|45|46|47|48|49|51|53|54|55|61|62|63|64|65|66|67|68|69|71|73|74|75|77|79|81|82|83|84|85|86|87|88|89|91|92|93|94|95|96|97|98|99)\)?\s*)?[^\d]{0,3}(?:11|12|13|14|15|16|17|18|19|21|22|24|27|28|31|32|33|34|35|37|38|41|42|43|44|45|46|47|48|49|51|53|54|55|61|62|63|64|65|66|67|68|69|71|73|74|75|77|79|81|82|83|84|85|86|87|88|89|91|92|93|94|95|96|97|98|99)?\d{4,5}[^\d]?\d{4,10}[^\d]{0,3})/&_replace_number($1)/ge;
+    $content =~ s/[\d\w0-9]/*/g;
 
     return $content;
 }
 
-sub _replace_number {
+
+sub _check_cpf {
     my ($content) = @_;
 
-    return $content if $content =~ /^[^\d]*0800/;
+    my $only_digits = $content;
+    $only_digits =~ s/[^\d]//ga;
 
-    $content =~ s/\d/*/g;
+    if (test_cpf($only_digits)) {
+        $content =~ s/[0-9]/*/g;
+    }
+
     return $content;
 }
 
-sub _remove_phone_number {
+sub _remove_pi {
     my ($content) = @_;
 
+    # telefones
     $content
       =~ s/((?:\(?(11|12|13|14|15|16|17|18|19|21|22|24|27|28|31|32|33|34|35|37|38|41|42|43|44|45|46|47|48|49|51|53|54|55|61|62|63|64|65|66|67|68|69|71|73|74|75|77|79|81|82|83|84|85|86|87|88|89|91|92|93|94|95|96|97|98|99)\)?\s*)?[^\d]{0,3}(?:11|12|13|14|15|16|17|18|19|21|22|24|27|28|31|32|33|34|35|37|38|41|42|43|44|45|46|47|48|49|51|53|54|55|61|62|63|64|65|66|67|68|69|71|73|74|75|77|79|81|82|83|84|85|86|87|88|89|91|92|93|94|95|96|97|98|99)?\d{4,5}[^\d]?\d{4,10}[^\d]{0,3})/&_replace_number($1)/ge;
+
+    # emails
+    $content =~ s/(\w+(?:[-+.']\w+)*@\w+(?:[-.]\w+)*\.\w+(?:[-.]\w+)*)/&_replace_chars($1)/ge;
+
+    # cpfs
+    # busca por digitos, seguidos de letras entre 1 e 4 espaçadores, até 5 conjuntos
+    $content =~ s/(\d(?:[\w\s\.\-\*]{1,4}\d){1,5})\b/&_check_cpf($1)/ge;
 
     return $content;
 }
