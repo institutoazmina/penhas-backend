@@ -722,6 +722,8 @@ sub _remove_pi {
     # busca por digitos, seguidos de letras entre 1 e 4 espaçadores, até 5 conjuntos
     $content =~ s/(\d(?:[\w\s\.\-\*]{1,4}\d){1,5})\b/&_check_cpf($1)/ge;
 
+    $content =~ s/[\w]{8}(-[\w]{4}){3}-[\w]{12}/*******-****-****-****-************/g;
+
     return $content;
 }
 
