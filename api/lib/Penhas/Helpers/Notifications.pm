@@ -118,7 +118,7 @@ sub user_notifications {
         $notification_message->{icon} ||= 0;
 
         push @output_rows, {
-            content     => $notification_message->{content},
+            content     => remove_pi($notification_message->{content}),
             title       => $notification_message->{title},
             time        => pg_timestamp2iso_8601($notification_message->{created_at}),
             icon        => $ENV{DEFAULT_NOTIFICATION_ICON} . '/' . $notification_message->{icon} . '.svg',
