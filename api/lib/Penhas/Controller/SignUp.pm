@@ -39,13 +39,13 @@ sub post {
         $c->validate_request_params(
             email       => {max_length => 200, required => 1, type => EmailAddress},
             genero      => {required   => 1,   type     => Genero},
-            nome_social => {required   => 0,   type     => Nome},
+            nome_social => {required   => 0,   type     => 'Str', min_length => 1, max_length => 200},
             raca        => {required   => 1,   type     => Raca},
             apelido     => {max_length => 40,  required => 1, type => 'Str', min_length => 2},
             senha       => {max_length => 200, required => 1, type => 'Str'},
         );
 
-        if (!check_email_mx($params->{email})){
+        if (!check_email_mx($params->{email})) {
             die {
                 error   => 'invalid_email',
                 message => 'Por favor, verificar validade do endereço de e-mail.'
@@ -58,9 +58,9 @@ sub post {
                 nome_social => {required => 1, type => 'Str'},
             );
 
-            $c->validate_request_params(
-                genero_outro => {required => 1, type => 'Str', max_length => 200},
-            ) if $params->{genero} eq 'Outro';
+            #$c->validate_request_params(
+            #    genero_outro => {required => 1, type => 'Str', max_length => 200},
+            #) if $params->{genero} eq 'Outro';
         }
 
         else {
