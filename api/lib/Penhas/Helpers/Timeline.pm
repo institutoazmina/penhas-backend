@@ -490,8 +490,7 @@ sub list_tweets {
     my $rs       = $c->schema2->resultset('Tweet')->search($cond, $attr);
     my $is_admin = $user_obj ? $user_obj->eh_admin : 0;
     if (!$is_admin) {
-        $cond->{'me.escondido'} = 'false',
-          $rs->search(
+          $rs = $rs->search(
             {
                 '-and' => [
                     {
