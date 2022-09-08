@@ -436,7 +436,6 @@ sub list_tweets {
 
     my $cond = {
         'cliente.status' => 'active',
-        'me.escondido'   => 'false',
         'me.status'      => 'published',
 
         '-and' => [
@@ -488,8 +487,32 @@ sub list_tweets {
         result_class => 'DBIx::Class::ResultClass::HashRefInflator'
     };
 
+    my $rs       = $c->schema2->resultset('Tweet')->search($cond, $attr);
+    my $is_admin = $user_obj ? $user_obj->eh_admin : 0;
+    if (!$is_admin) {
+        $cond->{'me.escondido'} = 'false',
+          $rs->search(
+            {
+                '-and' => [
+                    {
+                        '-or' => [
+                            {'me.escondido' => 'false'},
+                            (
+                                $user_obj
+                                ? (
+                                    {'me.cliente_id' => $user_obj->id},
+                                  )
+                                : ()
+                            )
+                        ]
+                    }
+                ]
+            }
+          );
+    }
+
     #log_info(dumper([$cond, $attr]));
-    my @rows     = $c->schema2->resultset('Tweet')->search($cond, $attr)->all;
+    my @rows     = $rs->all;
     my $has_more = scalar @rows > $rows ? 1 : 0;
 
 #    log_info(dumper([@rows]));
