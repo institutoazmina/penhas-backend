@@ -1,5 +1,6 @@
 #!/bin/bash -e
 source /home/app/perl5/perlbrew/etc/bashrc
+export TZ=Etc/UTC
 
 mkdir -p /data/log/;
 
