@@ -55,6 +55,8 @@ sub au_search {
                   me.genero
                   me.genero_outro
                   me.status
+                  me.raca
+                  me.minibio
                   /,
                 (
                     $render_detail
@@ -109,6 +111,7 @@ sub au_search {
             [nome_completo                => 'Nome Completo'],
             [status                       => 'Status'],
             [genero                       => 'Gênero'],
+            [raca                         => 'Raça'],
             [genero_outro                 => 'Gênero outro'],
             [dt_nasc                      => 'Data de Nascimento', 'tz'],
             [cep_cidade                   => 'Cidade'],
@@ -121,6 +124,7 @@ sub au_search {
             [modo_anonimo_ativo           => 'Menu "Estou em situação de violência" Ativo?', 'bool'],
             [modo_anonimo_atualizado_em   => '',                                             'tz'],
             [qtde_audio_aguardando        => 'Nº de aúdios aguardando liberação'],
+            [minibio                      => 'minibio'],
         );
 
         foreach my $field (@fields) {
