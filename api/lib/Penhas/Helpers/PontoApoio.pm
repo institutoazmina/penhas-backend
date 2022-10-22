@@ -219,18 +219,18 @@ sub ponto_apoio_list {
     if (defined $latitude) {
         $user_cod_ibge = $c->cod_ibge_by_latlng($latitude, $longitude);
 
-        # faz o fallback pro CEP do user
-        if (!$user_cod_ibge && $user_obj) {
-            log_debug('cod_ibge not found, trying again by geo_code_cached_by_user');
-            ($latitude, $longitude) = $c->geo_code_cached_by_user($user_obj);
-
-            $c->reply_invalid_param('Localização do CEP não é válida') if (!$latitude);
-
-            log_trace('cep_fallback');
-
-            $user_cod_ibge = $c->cod_ibge_by_latlng($latitude, $longitude);
-            log_debug("geo_code_cached_by_user($latitude, $longitude) is $user_cod_ibge");
-        }
+#       # faz o fallback pro CEP do user
+#        if (!$user_cod_ibge && $user_obj) {
+#            log_debug('cod_ibge not found, trying again by geo_code_cached_by_user');
+#            ($latitude, $longitude) = $c->geo_code_cached_by_user($user_obj);
+#
+#            $c->reply_invalid_param('Localização do CEP não é válida') if (!$latitude);
+#
+#            log_trace('cep_fallback');
+#
+#            $user_cod_ibge = $c->cod_ibge_by_latlng($latitude, $longitude);
+#            log_debug("geo_code_cached_by_user($latitude, $longitude) is $user_cod_ibge");
+#        }
 
         if (!$user_cod_ibge) {
             $user_cod_ibge = -1;
