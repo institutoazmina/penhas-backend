@@ -8,6 +8,7 @@ use Penhas::Utils qw/is_test/;
 use MooseX::Types::Email qw/EmailAddress/;
 use Penhas::Types qw/Latitute Longitude IntList/;
 use Penhas::Controller::Me;
+use JSON;
 
 use DateTime::Format::Pg;
 
