@@ -202,6 +202,8 @@ sub pa_aux_data {
 sub user_pa_suggest {
     my $c = shift;
 
+    $c->reply_invalid_param('Por favor, atualize o aplicativo para enviar sugestões de ponto de apoio', 'endereco_ou_cep');
+
     die 'missing user' unless $c->stash('user_obj');
 
     # limite de requests por usuario
