@@ -83,6 +83,7 @@ sub _pa_list {
         keywords       => {max_length => 200,  required => 0, type => 'Str'},
 
         is_web             => {required => 0, type => 'Bool', undef_if_missing => 1},
+        full_list          => {required => 0, type => 'Bool', undef_if_missing => 1},
         eh_24h             => {required => 0, type => 'Bool', undef_if_missing => 1},
         dias_funcionamento => {required => 0, type => 'Str',  max_length       => 99},
         as_csv             => {required => 0, type => 'Bool', undef_if_missing => 1},
@@ -202,7 +203,8 @@ sub pa_aux_data {
 sub user_pa_suggest {
     my $c = shift;
 
-    $c->reply_invalid_param('Por favor, atualize o aplicativo para enviar sugestões de ponto de apoio', 'endereco_ou_cep');
+    $c->reply_invalid_param('Por favor, atualize o aplicativo para enviar sugestões de ponto de apoio',
+        'endereco_ou_cep');
 
     die 'missing user' unless $c->stash('user_obj');
 

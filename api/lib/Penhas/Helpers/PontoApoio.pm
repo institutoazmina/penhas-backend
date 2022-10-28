@@ -210,6 +210,11 @@ sub ponto_apoio_list {
         $latitude  = undef;
         $longitude = undef;
     }
+    if ($opts{full_list}) {
+        $rows         = -1;
+        $max_distance = 5000;
+    }
+
     if ($max_distance == 5000) {
         $rows = -1;
     }
@@ -217,7 +222,11 @@ sub ponto_apoio_list {
     my $user_cod_ibge = -1;
 
     if (defined $latitude) {
-        $user_cod_ibge = $c->cod_ibge_by_latlng($latitude, $longitude);
+        if (!$opts{full_list}) {
+
+            # nao busca pelo codigo da cidade se passar full_list, então o código vai buscar todas as cidades
+            $user_cod_ibge = $c->cod_ibge_by_latlng($latitude, $longitude);
+        }
 
         # faz o fallback pro CEP do user
         if (!$user_cod_ibge && $user_obj) {
@@ -243,7 +252,7 @@ sub ponto_apoio_list {
     # (com fallback para o CEP da pessoa caso não tenha esteja dentro do local)
     # Regional sempre filtrar por 50km (e não filtrar por estado)
 
-    my $distance_in_km_where = defined $latitude
+    my $distance_in_km_where = $max_distance >= 5000 ? undef : defined $latitude
       ? qq|
           CASE WHEN abrangencia = 'Nacional' THEN (TRUE)
           WHEN abrangencia = 'Regional' THEN ( cod_ibge = '$user_cod_ibge'::int OR '$user_cod_ibge'::int = -1 )
@@ -374,7 +383,7 @@ sub ponto_apoio_list {
         $_->{avaliacao} =~ s/\./,/;
         $_->{avaliacao} = 'n/a' if delete $_->{qtde_avaliacao} == 0;
         if ($rows > 0) {
-            if ($_->{distance_in_km} == -0.0001) {
+            if ($_->{distance_in_km} <= -0.001) {
 
                 $_->{distancia} = 'Nacional - 0 ';
 
@@ -972,7 +981,9 @@ sub ponto_apoio_detail {
 
     if ($user_obj) {
         $row->{content_html} = tt_render(
-                q|[% IF observacao%] <p style="color: #0a115f">| . linkfy(&nl2br(xml_escape($row->{observacao}))) . q|</p><br/>[% END %]|
+                q|[% IF observacao%] <p style="color: #0a115f">|
+              . linkfy(&nl2br(xml_escape($row->{observacao})))
+              . q|</p><br/>[% END %]|
               . q|<p style="color: #0a115f"><b>Endereço</b></p>|
               . q|<p style="color: #818181;">[% tipo_logradouro %] [% nome_logradouro %]|
               . q|[% IF numero.defined() %], [% numero %][% END %] -[%bairro %] -[%municipio %], [%uf %], [%cep %] </p>|
