@@ -8,6 +8,7 @@ use Penhas::Utils qw/is_test/;
 use MooseX::Types::Email qw/EmailAddress/;
 use Penhas::Types qw/Latitute Longitude IntList/;
 use Penhas::Controller::Me;
+use JSON;
 
 use DateTime::Format::Pg;
 
@@ -74,6 +75,7 @@ sub _pa_list {
     my $c = shift;
 
     my $valid = $c->validate_request_params(
+        debug          => {required   => 0,    type     => 'Int'},
         categorias     => {required   => 0,    type     => IntList},
         projeto        => {max_length => 200,  required => 0, type => 'Str'},
         rows           => {required   => 0,    type     => 'Int'},
@@ -89,36 +91,64 @@ sub _pa_list {
         as_csv             => {required => 0, type => 'Bool', undef_if_missing => 1},
     );
 
+    my $debug    = '';
     my $user_obj = $c->stash('user_obj');
 
     if ($valid->{location_token}) {
+        $debug .= 'location_token was defined' . "\n";
+        log_debug("location_token setting lat/long");
 
         my $tmp = eval { $c->decode_jwt($valid->{location_token}) };
         $c->reply_invalid_param('location_token')
           if ($tmp->{iss} || '') ne 'LT';
+
+        log_debug("location_token => " . $valid->{location_token});
         ($valid->{latitude}, $valid->{longitude}) = split /,/, $tmp->{latlng};
+
+        log_debug('valid after split => ' . to_json($valid));
+
+        $debug .= 'valid after split => ' . to_json($valid) . "\n";
     }
 
+
     if (!(defined $valid->{latitude} && defined $valid->{longitude})) {
+
         my $gps_required = $user_obj ? 0 : 1;
         $gps_required = 0 if $valid->{is_web} || $valid->{as_csv};
+        log_debug('no lat/lng, this is required if is is_web or as_csv is not set => ' . $gps_required);
+
+        $debug .= 'no lat/lng, this is required if is is_web or as_csv is not set => ' . $gps_required . "\n";
 
         $c->merge_validate_request_params(
             $valid,
             latitude  => {max_length => 20, required => $gps_required, type => Latitute},
             longitude => {max_length => 20, required => $gps_required, type => Longitude},
         );
+        log_debug('valid after merge => ' . to_json($valid));
+        $debug .= 'valid after merge => ' . to_json($valid) . "\n";
+    }
+    else {
+        log_debug('no lat/lng position yet => ' . to_json($valid));
+        $debug .= 'no lat/lng position yet => ' . to_json($valid) . "\n";
     }
 
     # se nao tem ainda, eh pq o usuario nao mandou, entao temos que pegar via CEP
-    if ((!$valid->{latitude} || !$valid->{longitude}) && !($valid->{is_web} || $valid->{as_csv})) {
+    if ((!$valid->{latitude} || !$valid->{longitude})
+        && !($valid->{is_web} || $valid->{as_csv}))
+    {
+        log_debug('!lat or !lng && ! is_web or is_csv');
+        $debug .= '!lat or !lng && ! is_web or is_csv' . "\n";
 
         if (!$user_obj) {
             $c->reply_invalid_param('é necessário localização', 'location_token');
         }
 
         die 'user_obj should be defined' unless $user_obj;
+
         ($valid->{latitude}, $valid->{longitude}) = $c->geo_code_cached_by_user($user_obj);
+
+        log_debug('lat/long was overwritten by user geocode');
+        $debug .= 'lat/long was overwritten by user geocode' . "\n";
     }
 
     $valid->{categorias} = [split /,/, $valid->{categorias}] if $valid->{categorias};
@@ -132,6 +162,11 @@ sub _pa_list {
             'filepath' => $ponto_apoio_list->{file},
             'filename' => 'lista-pontos-apoios-' . DateTime->now->set_time_zone('America/Sao_Paulo')->dmy('-') . '.csv',
         );
+    }
+
+    if ($valid->{debug} == 1) {
+        $ponto_apoio_list->{_debug}        = $debug;
+        $ponto_apoio_list->{_debug_params} = $valid;
     }
 
     $c->render(

@@ -2,6 +2,11 @@ version: "3.5"
 services:
 
   directus:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 100M
     image: directus/directus:v9.0.0-rc.69
     restart: unless-stopped
     networks:
@@ -34,6 +39,11 @@ services:
   penhas_api:
     image: azminas/penhas_api
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 800M
     ports:
       - "172.17.0.1:${PENHAS_API_LISTEN}:8080"
     environment:
@@ -55,6 +65,11 @@ services:
     container_name: penhas_redis
     restart: unless-stopped
     image: docker.io/bitnami/redis:6.2
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 100M
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_PASSWORD=""
