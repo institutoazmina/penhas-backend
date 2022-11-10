@@ -322,8 +322,8 @@ sub linkfy {
 
 sub nl2br {
     my ($text) = @_;
-    $text =~ s/(\r\n|\n\r|\n|\r)/<br\/>$1/g;
-    $text =~ s/\s\s/&nbsp;&nbsp;/g;
+    $text =~ s/(\r\n|\n\r|\n|\r)/ <br\/> $1/g;
+    $text =~ s/\s\s/ &nbsp;&nbsp; /g;
     return $text;
 }
 
