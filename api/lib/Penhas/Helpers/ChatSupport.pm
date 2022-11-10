@@ -219,12 +219,12 @@ sub support_send_message {
                 }
             );
 
-            if (!$logged_as_admin && $c->schema2->resultset('RelatorioChatClienteSuporte')->search({
-                cliente_id => $chat_message->cliente_id
-            })->count() == 0){
-                $c->schema2->resultset('RelatorioChatClienteSuporte')->create({
-                    cliente_id => $chat_message->cliente_id
-                 });
+            if (  !$logged_as_admin
+                && $c->schema2->resultset('RelatorioChatClienteSuporte')
+                ->search({cliente_id => $chat_message->cliente_id})->count() == 0)
+            {
+                $c->schema2->resultset('RelatorioChatClienteSuporte')
+                  ->create({cliente_id => $chat_message->cliente_id});
             }
         }
     );
@@ -328,7 +328,10 @@ sub support_list_message {
         $is_me = $is_me ? 0 : 1 if $logged_as_admin;
 
         $row->{message} = nl2br(xml_escape($row->{message}));
+
+        slog_info('before linkfy => ' . $row->{message});
         $row->{message} = linkfy($row->{message}) if $ENV{LINKFY_CHAT};
+        slog_info('after linkfy => ' . $row->{message});
 
         push @messages, {
             id      => $row->{id},
