@@ -204,6 +204,7 @@ sub apa_review {
             qw/
             nome
             abrangencia
+            categoria
             nome_logradouro
             cep
             numero
@@ -235,6 +236,8 @@ sub apa_review {
             $fake_pa->{numero_sem_numero} = '1';
             $fake_pa->{numero}            = '';
         }
+
+        $fake_pa->{ddd} = $row->{ddd1};
     }
     else {
         $fake_pa = $decoded;
@@ -247,6 +250,9 @@ sub apa_review {
             $fake_pa->{numero}            = '';
         }
     }
+
+
+use DDP; p $fake_pa;
 
     return $c->respond_to_if_web(
         json => {
@@ -437,6 +443,7 @@ sub try_publish_pa {
         sub {
             $valid->{ja_passou_por_moderacao} = 1;
 
+            $valid->{status} = 'active';
             $valid->{created_on} = \'now()';
             $valid->{updated_at} = \'now()';
             $valid->{cliente_id} = $row->get_column('cliente_id');
