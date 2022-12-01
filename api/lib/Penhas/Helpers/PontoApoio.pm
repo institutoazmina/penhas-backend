@@ -295,7 +295,7 @@ sub ponto_apoio_list {
     my $attr = {
         (($as_csv || $all_columns) ? '+columns' : 'columns') => [
             (
-                $rows == -1 ? () : (
+                $rows == -1 && !$opts{full_list} ? () : (
                     {distance_in_km => \"$distance_in_km_column AS distance_in_km"},
                 )
             ),
