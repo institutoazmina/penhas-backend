@@ -395,7 +395,7 @@ sub ponto_apoio_list {
         $_->{avaliacao} = sprintf('%.01f', $_->{avaliacao});
         $_->{avaliacao} =~ s/\./,/;
         $_->{avaliacao} = 'n/a' if delete $_->{qtde_avaliacao} == 0;
-        if ($rows > 0) {
+        if ($rows > 0 || $opts{full_list}) {
             if ($_->{distance_in_km} <= -0.001) {
 
                 $_->{distancia} = 'Nacional - 0 ';
