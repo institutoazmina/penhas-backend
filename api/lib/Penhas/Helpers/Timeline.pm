@@ -567,6 +567,23 @@ sub list_tweets {
                 'me.status'      => 'published',
                 'me.escondido'   => 'false',
                 'cliente.status' => 'active',
+
+                (
+                    @$blocked_users > 0
+                    ? (
+                        {
+                            '-and' => {
+                                {
+                                    '-or' => [
+                                        {'me.anonimo'    => 'true'},
+                                        {'me.cliente_id' => {'not in' => $blocked_users}},
+                                    ]
+                                }
+                            }
+                        }
+                      )
+                    : ()
+                ),
             },
             $attr
         )->all;
