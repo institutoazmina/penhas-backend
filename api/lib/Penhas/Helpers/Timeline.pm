@@ -572,14 +572,14 @@ sub list_tweets {
                     @$blocked_users > 0
                     ? (
                         {
-                            '-and' => {
+                            '-and' => [
                                 {
                                     '-or' => [
                                         {'me.anonimo'    => 'true'},
                                         {'me.cliente_id' => {'not in' => $blocked_users}},
                                     ]
                                 }
-                            }
+                            ]
                         }
                       )
                     : ()
