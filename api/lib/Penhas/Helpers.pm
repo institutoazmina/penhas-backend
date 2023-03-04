@@ -18,6 +18,7 @@ use Penhas::Helpers::Chat;
 use Penhas::Helpers::ChatSupport;
 use Penhas::Helpers::Notifications;
 use Penhas::Helpers::WebHelpers;
+use Penhas::Helpers::Cliente;
 
 use Carp qw/croak confess/;
 
@@ -39,6 +40,7 @@ sub setup {
     Penhas::Helpers::ChatSupport::setup($c);
     Penhas::Helpers::Notifications::setup($c);
     Penhas::Helpers::WebHelpers::setup($c);
+    Penhas::Helpers::Cliente::setup($c);
 
     state $kv = Penhas::KeyValueStorage->instance;
     $c->helper(kv                        => sub {$kv});

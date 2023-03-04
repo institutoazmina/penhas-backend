@@ -388,10 +388,13 @@ sub list_tweets {
     my $user     = $opts{user} or confess 'missing user';
     my $user_obj = $opts{skip_comments} ? undef : ($opts{user_obj} or confess 'missing user_obj');
 
+    my $blocked_users = [];
 
     my $modules_str = $user_obj ? $user_obj->access_modules_str : ',tweets,';
     my $category    = $opts{category} || 'all';
     if ($user_obj) {
+
+        $blocked_users = $user_obj->timeline_clientes_bloqueados_ids;
 
         # se pediu por tudo que pode incluir tweets, mas nao eh tem permissao pros tweets,
         # volta dar erro
@@ -459,6 +462,19 @@ sub list_tweets {
                     : {parent_id => undef}  # nao eh pra montar comentarios na timeline principal
                 )
             ),
+
+            (
+                @$blocked_users > 0
+                ? (
+                    {
+                        '-or' => [
+                            {'me.anonimo'    => 'true'},
+                            {'me.cliente_id' => {'not in' => $blocked_users}},
+                        ]
+                    }
+                  )
+                : ()
+            ),
         ],
     };
 
@@ -490,7 +506,7 @@ sub list_tweets {
     my $rs       = $c->schema2->resultset('Tweet')->search($cond, $attr);
     my $is_admin = $user_obj ? $user_obj->eh_admin : 0;
     if (!$is_admin) {
-          $rs = $rs->search(
+        $rs = $rs->search(
             {
                 '-and' => [
                     {
@@ -507,7 +523,7 @@ sub list_tweets {
                     }
                 ]
             }
-          );
+        );
     }
 
     #log_info(dumper([$cond, $attr]));
@@ -551,6 +567,17 @@ sub list_tweets {
                 'me.status'      => 'published',
                 'me.escondido'   => 'false',
                 'cliente.status' => 'active',
+
+                (
+                    @$blocked_users > 0
+                    ? (
+                        '-or' => [
+                            {'me.anonimo'    => 'true'},
+                            {'me.cliente_id' => {'not in' => $blocked_users}},
+                        ]
+                      )
+                    : ()
+                ),
             },
             $attr
         )->all;

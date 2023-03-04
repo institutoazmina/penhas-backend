@@ -65,7 +65,7 @@ sub add_report {
 
     my $params = $c->req->params->to_hash;
     $c->validate_request_params(
-        reason => {required => 1, type => 'Str', max_length => 500},
+        reason => {required => 1, type => 'Str', max_length => 200},    # ta 200 no banco! nao 500
     );
 
     my $tweet = $c->report_tweet(
@@ -75,7 +75,7 @@ sub add_report {
     );
 
     return $c->render(
-        json   => {message => 'Report enviado'},
+        json   => {message => 'Sua denúncia foi recebida com sucesso.'},
         status => 200,
     );
 }
