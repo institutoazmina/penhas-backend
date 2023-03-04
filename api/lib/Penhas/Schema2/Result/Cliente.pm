@@ -144,6 +144,12 @@ __PACKAGE__->add_columns(
   { data_type => "bigint", default_value => 0, is_nullable => 0 },
   "eh_admin",
   { data_type => "boolean", default_value => \"false", is_nullable => 0 },
+  "timeline_clientes_bloqueados_ids",
+  {
+    data_type     => "integer[]",
+    default_value => \"'{}'::integer[]",
+    is_nullable   => 0,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("idx_25909_cpf_hash", ["cpf_hash"]);
@@ -251,6 +257,18 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "clientes_reports_clientes",
+  "Penhas::Schema2::Result::ClientesReport",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "clientes_reports_reported_clientes",
+  "Penhas::Schema2::Result::ClientesReport",
+  { "foreign.reported_cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "clientes_reset_passwords",
   "Penhas::Schema2::Result::ClientesResetPassword",
   { "foreign.cliente_id" => "self.id" },
@@ -293,6 +311,18 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "timeline_clientes_bloqueados_block_clientes",
+  "Penhas::Schema2::Result::TimelineClientesBloqueado",
+  { "foreign.block_cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "timeline_clientes_bloqueados_clientes",
+  "Penhas::Schema2::Result::TimelineClientesBloqueado",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "tweets",
   "Penhas::Schema2::Result::Tweet",
   { "foreign.cliente_id" => "self.id" },
@@ -312,8 +342,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-07-16 03:50:48
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Boy9JdRigX8AD0w4NLFthA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-03-04 15:27:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SFYw5TSge34QDWnp+WSsDA
 
 use Carp qw/confess/;
 

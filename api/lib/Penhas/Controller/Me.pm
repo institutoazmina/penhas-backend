@@ -135,7 +135,7 @@ sub me_update {
           if $in_use;
 
 
-        if (!check_email_mx($email)){
+        if (!check_email_mx($email)) {
             die {
                 error   => 'invalid_email',
                 message => 'Por favor, verificar validade do endereço de e-mail.'
@@ -239,6 +239,43 @@ sub me_notifications {
             user_obj => $user_obj,
             %$valid,
         ),
+        status => 200,
+    );
+}
+
+sub me_add_report_profile {
+    my $c = shift;
+
+    my $valid = $c->validate_request_params(
+        reason     => {required => 1, type => 'Str', max_length => 200},
+        cliente_id => {required => 1, type => 'Int'},
+    );
+
+    my $report = $c->add_report_profile(
+        user   => $c->stash('user'),
+        %$valid,
+    );
+
+    return $c->render(
+        json   => {message => 'Sua denúncia foi recebida com sucesso.'},
+        status => 200,
+    );
+}
+
+sub me_add_block_profile {
+    my $c = shift;
+
+    my $valid = $c->validate_request_params(
+        cliente_id => {required => 1, type => 'Int'},
+    );
+
+    my $report = $c->add_block_profile(
+        user   => $c->stash('user'),
+        %$valid,
+    );
+
+    return $c->render(
+        json   => {message => 'O usuário foi bloqueado com sucesso.'},
         status => 200,
     );
 }

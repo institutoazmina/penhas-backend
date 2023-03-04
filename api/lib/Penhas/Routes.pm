@@ -132,6 +132,10 @@ sub register {
     # POST /reactivate
     $authenticated->post('reactivate')->to(controller => 'Me', action => 'me_reactivate');
 
+    $authenticated->post('report-profile')->to(controller => 'Me', action => 'me_add_report_profile');
+
+    $authenticated->post('block-profile')->to(controller => 'Me', action => 'me_add_block_profile');
+
     # GET /me
     my $user_loaded = $authenticated->under('')->to(controller => 'Me', action => 'check_and_load');
     my $me          = $user_loaded->any('me');
