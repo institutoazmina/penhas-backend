@@ -1,4 +1,4 @@
-package Penhas::Helpers::Timeline;
+package Penhas::Helpers::Cliente;
 use common::sense;
 use Carp qw/confess /;
 use utf8;
