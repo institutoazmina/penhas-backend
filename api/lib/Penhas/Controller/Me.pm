@@ -251,8 +251,9 @@ sub me_add_report_profile {
         cliente_id => {required => 1, type => 'Int'},
     );
 
-    my $report = $c->add_report_profile(
-        user   => $c->stash('user'),
+    my $user_obj = $c->stash('user_obj');
+    my $report   = $c->add_report_profile(
+        user_obj => $user_obj,
         %$valid,
     );
 
@@ -269,8 +270,9 @@ sub me_add_block_profile {
         cliente_id => {required => 1, type => 'Int'},
     );
 
-    my $report = $c->add_block_profile(
-        user   => $c->stash('user'),
+    my $user_obj = $c->stash('user_obj');
+    my $report   = $c->add_block_profile(
+        user_obj => $user_obj,
         %$valid,
     );
 

@@ -19,13 +19,18 @@ sub setup {
 sub add_block_profile {
     my ($c, %opts) = @_;
 
-    my $user       = $opts{user}       or confess 'missing user';
+    my $user       = $opts{user_obj}   or confess 'missing user_obj';
     my $cliente_id = $opts{cliente_id} or confess 'missing cliente_id';
     my $cliente    = $c->schema2->resultset('Cliente')->find($cliente_id);
     die {
         message => 'Não foi possível encontrar o usuário.',
         error   => 'cliente_id_not_found'
     } unless $cliente;
+
+    die {
+        message => 'Não é possível bloquear o seu próprio perfil.',
+        error   => 'cliente_id_invalid'
+    } if ($user->id == $cliente_id);
 
     slog_info(
         'add_block_profile user=%s $cliente_id=%s',
@@ -37,7 +42,7 @@ sub add_block_profile {
     return
       if $c->schema2->resultset('TimelineClientesBloqueado')->search(
         {
-            cliente_id       => $user->{id},
+            cliente_id       => $user->id,
             block_cliente_id => $cliente_id,
         }
     )->count() > 0;
@@ -46,7 +51,7 @@ sub add_block_profile {
         sub {
             my $block = $c->schema2->resultset('TimelineClientesBloqueado')->create(
                 {
-                    cliente_id       => $user->{id},
+                    cliente_id       => $user->id,
                     block_cliente_id => $cliente_id,
                     created_at       => \'NOW()',
                 }
@@ -67,7 +72,7 @@ sub add_block_profile {
 sub add_report_profile {
     my ($c, %opts) = @_;
 
-    my $user       = $opts{user}       or confess 'missing user';
+    my $user       = $opts{user_obj}   or confess 'missing user_obj';
     my $reason     = $opts{reason}     or confess 'missing reason';
     my $cliente_id = $opts{cliente_id} or confess 'missing cliente_id';
     my $cliente    = $c->schema2->resultset('Cliente')->find($cliente_id);
@@ -84,7 +89,7 @@ sub add_report_profile {
     my $report = $c->schema2->resultset('ClientesReportClientesReport')->create(
         {
             reason              => $reason,
-            cliente_id          => $user->{id},
+            cliente_id          => $user->id,
             reported_cliente_id => $cliente_id,
             created_at          => \'NOW()',
         }
