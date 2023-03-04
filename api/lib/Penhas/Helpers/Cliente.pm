@@ -86,7 +86,7 @@ sub add_report_profile {
         $user->id, $cliente_id, $reason,
     );
 
-    my $report = $c->schema2->resultset('ClientesReportClientesReport')->create(
+    my $report = $c->schema2->resultset('ClientesReport')->create(
         {
             reason              => $reason,
             cliente_id          => $user->id,
