@@ -95,7 +95,6 @@ sub remove_blocked_profile {
                     cliente_id       => $user->id,
                     block_cliente_id => $cliente_id,
                     valid_until      => 'infinity'
-
                 }
             );
 
