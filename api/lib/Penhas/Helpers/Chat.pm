@@ -230,17 +230,18 @@ sub chat_list_sessions {
 
 
     my $blocked_users = $user_obj->timeline_clientes_bloqueados_ids;
-    my $placeholders = join ', ' => ('?') x @$blocked_users;
+    my $placeholders  = join ', ' => ('?') x @$blocked_users;
 
-    my $rs            = $c->schema->resultset('ChatSession')->search(
+    my $rs = $c->schema->resultset('ChatSession')->search(
         {
             '-and' => [
                 \['me.participants @> ARRAY[?]::int[]', $user_obj->id],    # @> is contains operator
                                                                            # true if left array contains right array
 
                 (
+                    ## && == overlap, se tiver algum overlap, remove o membro
                     @$blocked_users > 0
-                    ? (\[' ( ARRAY[' . $placeholders . ']::int[] @> me.participants ) = FALSE', @$blocked_users])
+                    ? (\[' ( ARRAY[' . $placeholders . ']::int[] && me.participants ) = FALSE', @$blocked_users])
                     : ()
                 ),
             ],
