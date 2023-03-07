@@ -106,7 +106,7 @@ sub user_notifications {
     my @output_rows;
     my @load_users;
     my @load_users_chat;    # forcar carregar o chat, mesmo se estiverem em modo anônimo
-    my $blocked_users = "," . $user_obj->timeline_clientes_bloqueados_ids() . ',';
+    my $blocked_users = join(',', "", @{$user_obj->timeline_clientes_bloqueados_ids()}, '',);
 
     foreach my $r (@rows) {
         my $notification_message = $r->{notification_message};
