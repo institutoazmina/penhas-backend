@@ -228,11 +228,22 @@ sub chat_list_sessions {
         $offset = $tmp->{offset};
     }
 
+
+    my $blocked_users = $user_obj->timeline_clientes_bloqueados_ids;
+    my $placeholders  = join ', ' => ('?') x @$blocked_users;
+
     my $rs = $c->schema->resultset('ChatSession')->search(
         {
             '-and' => [
                 \['me.participants @> ARRAY[?]::int[]', $user_obj->id],    # @> is contains operator
                                                                            # true if left array contains right array
+
+                (
+                    ## && == overlap, se tiver algum overlap, remove o membro
+                    @$blocked_users > 0
+                    ? (\[' ( ARRAY[' . $placeholders . ']::int[] && me.participants ) = FALSE', @$blocked_users])
+                    : ()
+                ),
             ],
             'me.has_message' => 1,
         },
@@ -828,7 +839,7 @@ sub chat_list_message {
             $message = '[erro ao descriptografar mensagem]' unless $message =~ s/#$//;
         }
 
-        if ($message eq '[erro ao descriptografar mensagem]'){
+        if ($message eq '[erro ao descriptografar mensagem]') {
             $message = $cipher_old->decrypt($row->{message});
             if ($row->{is_compressed}) {
                 $message = Compress::Zlib::memGunzip($message);

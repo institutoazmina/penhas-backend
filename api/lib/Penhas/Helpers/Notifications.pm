@@ -106,14 +106,18 @@ sub user_notifications {
     my @output_rows;
     my @load_users;
     my @load_users_chat;    # forcar carregar o chat, mesmo se estiverem em modo anônimo
+    my $blocked_users = join(',', "", @{$user_obj->timeline_clientes_bloqueados_ids()}, '',);
+
     foreach my $r (@rows) {
         my $notification_message = $r->{notification_message};
         my $meta                 = $notification_message->{meta} ? from_json($notification_message->{meta}) : {};
-        push @not_in,          $r->{id}                            if $r->{created_at} eq $last_timestamp;
-        push @load_users,      $notification_message->{subject_id} if $notification_message->{subject_id};
-        push @load_users_chat, $notification_message->{subject_id}
-          if $notification_message->{subject_id}
-          && $meta->{chat};
+        push @not_in, $r->{id} if $r->{created_at} eq $last_timestamp;
+
+        my $subject_id = $notification_message->{subject_id};
+        next if $subject_id && index($blocked_users, ",$subject_id,") >= 0;
+
+        push @load_users,      $subject_id if $subject_id;
+        push @load_users_chat, $subject_id if $subject_id && $meta->{chat};
 
         $notification_message->{icon} ||= 0;
 
@@ -122,7 +126,7 @@ sub user_notifications {
             title       => $notification_message->{title},
             time        => pg_timestamp2iso_8601($notification_message->{created_at}),
             icon        => $ENV{DEFAULT_NOTIFICATION_ICON} . '/' . $notification_message->{icon} . '.svg',
-            _subject_id => $notification_message->{subject_id},
+            _subject_id => $subject_id,
             _meta       => $meta,
         };
     }
@@ -249,7 +253,8 @@ sub user_notifications {
         }
         elsif ($meta->{tweet_id} && $meta->{comment_id}) {
             $r->{expand_screen} = '/mainboard/tweet/' . $meta->{tweet_id} . '?comment_id=' . $meta->{comment_id};
-        }elsif ($meta->{tweet_id}) {
+        }
+        elsif ($meta->{tweet_id}) {
             $r->{expand_screen} = '/mainboard/tweet/' . $meta->{tweet_id};
         }
     }

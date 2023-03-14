@@ -268,16 +268,30 @@ sub me_add_block_profile {
 
     my $valid = $c->validate_request_params(
         cliente_id => {required => 1, type => 'Int'},
+        remove     => {required => 0, type => 'Str', max_length => 1},
     );
 
     my $user_obj = $c->stash('user_obj');
-    my $report   = $c->add_block_profile(
-        user_obj => $user_obj,
-        %$valid,
-    );
+    my $remove   = exists $valid->{remove} && $valid->{remove} eq '1' ? 1 : 0;
+    if ($remove) {
+        $c->remove_blocked_profile(
+            user_obj => $user_obj,
+            %$valid,
+        );
+    }
+    else {
+        $c->add_block_profile(
+            user_obj => $user_obj,
+            %$valid,
+        );
+    }
 
     return $c->render(
-        json   => {message => 'O usuário foi bloqueado com sucesso.'},
+        json => {
+            message => $remove
+            ? 'A usuária foi desbloqueada com sucesso.'
+            : 'A usuária foi bloqueada com sucesso.',
+        },
         status => 200,
     );
 }
