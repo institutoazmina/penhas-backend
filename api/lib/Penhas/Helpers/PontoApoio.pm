@@ -265,8 +265,7 @@ sub ponto_apoio_list {
     # (com fallback para o CEP da pessoa caso não tenha esteja dentro do local)
     # Regional sempre filtrar por 50km (e não filtrar por estado)
 
-    my $distance_in_km_where = $max_distance >= 5000 ? undef : defined $latitude
-      ? qq|
+    my $distance_in_km_where = $max_distance >= 5000 ? undef : defined $latitude ? qq|
           CASE WHEN abrangencia = 'Nacional' THEN (TRUE)
           WHEN abrangencia = 'Regional' THEN ( cod_ibge = '$user_cod_ibge'::int OR '$user_cod_ibge'::int = -1 )
           ELSE
@@ -278,7 +277,7 @@ sub ponto_apoio_list {
     my $distance_in_km_column = defined $latitude
       ? qq| CASE
             WHEN abrangencia = 'Nacional' THEN -0.0001
-            ELSE floor(ST_Distance(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography ) / 1000 )
+            ELSE ST_Distance(me.geog, ST_SetSRID(ST_MakePoint( $longitude , $latitude ), 4326)::geography ) / 1000.0
             END |
       : '';
 
