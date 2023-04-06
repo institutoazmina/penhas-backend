@@ -187,7 +187,8 @@ sub register {
     # /me/tarefas
     my $me_tarefas = $me->under('tarefas')->to(controller => 'Me_Tarefas', action => 'assert_user_perms');
     $me_tarefas->get()->to(action => 'list');
-    $me_tarefas->post()->to(action => 'sync');
+    $me_tarefas->post('sync')->to(action => 'sync');
+    $me_tarefas->post('nova')->to(action => 'nova');
 
     # /me/tweets
     my $me_tweets = $me->under('tweets')->to(controller => 'Me_Tweets', action => 'assert_user_perms');

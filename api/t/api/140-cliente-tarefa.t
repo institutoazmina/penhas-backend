@@ -119,7 +119,7 @@ db_transaction {
       ;
 
     $t->post_ok(
-        '/me/tarefas',
+        '/me/tarefas/sync',
         {'x-api-key' => $session},
         form => {
             id             => $mfc1->id,
@@ -134,7 +134,7 @@ db_transaction {
     )->status_is(200, 'busca todas as tarefas')->json_is('/tarefas/0/checkbox_feito', '1');
 
     $t->post_ok(
-        '/me/tarefas',
+        '/me/tarefas/sync',
         {'x-api-key' => $session},
         form => {
             id             => $mfc1->id,
@@ -149,7 +149,7 @@ db_transaction {
     )->status_is(200, 'busca todas as tarefas')->json_is('/tarefas/0/checkbox_feito', '0');
 
     $t->post_ok(
-        '/me/tarefas',
+        '/me/tarefas/sync',
         {'x-api-key' => $session},
         form => {
             id     => $mfc1->id,
@@ -161,7 +161,40 @@ db_transaction {
         '/me/tarefas',
         {'x-api-key' => $session},
         form => {modificado_apos => $epoch_start},
-    )->status_is(200, 'busca todas as tarefas')->json_is('/tarefas', [])->json_is('/tarefas_removidas', [$mfc1->id]);
+      )->status_is(200, 'busca todas as tarefas')    #
+      ->json_is('/tarefas',           [])            #
+      ->json_is('/tarefas_removidas', [$mfc1->id]);
+
+
+    my $json = $t->post_ok(
+        '/me/tarefas/nova',
+        {'x-api-key' => $session},
+        form => {
+            titulo          => 'hello',
+            descricao       => 'world',
+            modificado_apos => $epoch_start,
+        },
+      )->status_is(200, 'adicionada com sucesso')    #
+      ->json_is('/tarefas/0/titulo', 'hello')->tx->res->json;
+
+    $t->post_ok(
+        '/me/tarefas/sync',
+        {'x-api-key' => $session},
+        form => {
+            id             => $json->{tarefas}[0]{id},
+            titulo         => 'safira',
+            checkbox_feito => 0,
+        },
+    )->status_is(200, 'sync com sucesso');
+
+    $t->get_ok(
+        '/me/tarefas',
+        {'x-api-key' => $session},
+        form => {modificado_apos => $epoch_start},
+      )->status_is(200, 'busca todas as tarefas')    #
+      ->json_is('/tarefas/0/titulo', 'safira')#
+      ->json_is('/tarefas/0/descricao', 'world')#;
+
 
 };
 

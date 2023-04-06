@@ -18,6 +18,40 @@ sub setup {
 
     $self->helper('cliente_lista_tarefas'      => sub { &cliente_lista_tarefas(@_) });
     $self->helper('cliente_sync_lista_tarefas' => sub { &cliente_sync_lista_tarefas(@_) });
+    $self->helper('cliente_nova_tarefas'       => sub { &cliente_nova_tarefas(@_) });
+}
+
+sub cliente_nova_tarefas {
+    my ($c, %opts) = @_;
+
+    my $user      = $opts{user_obj} or confess 'missing user_obj';
+    my $titulo    = $opts{titulo};
+    my $descricao = $opts{descricao};
+
+    $c->schema2->txn_do(
+        sub {
+            my $tarefa_id = $c->schema2->resultset('MfTarefa')->create(
+                {
+                    titulo         => $titulo,
+                    descricao      => $descricao,
+                    tipo           => 'checkbox',
+                    codigo         => '',
+                    eh_customizada => 'true',
+                }
+            );
+
+            $c->schema2->resultset('MfClienteTarefa')->create(
+                {
+                    removido_em   => undef,
+                    cliente_id    => $user->id,
+                    atualizado_em => \'now()',
+                    mf_tarefa_id  => $tarefa_id->id(),
+                }
+            );
+        }
+    );
+
+    return &cliente_lista_tarefas($c, %opts);
 }
 
 sub cliente_lista_tarefas {
@@ -88,45 +122,50 @@ sub cliente_sync_lista_tarefas {
         return {message => 'Removido com sucesso.'};
     }
 
-    if ($row->mf_tarefa->eh_customizada && ($titulo || $descricao)) {
-        $row->mf_tarefa->update(
-            {
-                titulo    => $titulo    || $row->mf_tarefa,    # mantem o valor antigo se enviar em branco ou vazio
-                descricao => $descricao || $row->mf_tarefa
+    $c->schema2->txn_do(
+        sub {
+            if ($row->mf_tarefa->eh_customizada && ($titulo || $descricao)) {
+                $row->mf_tarefa->update(
+                    {
+                        # mantem o valor antigo se enviar em branco ou vazio
+                        titulo    => $titulo    || $row->mf_tarefa->titulo(),
+                        descricao => $descricao || $row->mf_tarefa->descricao()
+                    }
+                );
+                $row->update({atualizado_em => \'now()'});
             }
-        );
-        $row->update({atualizado_em => \'now()'});
-    }
 
-    # se mudou o valor do checkbox
-    if (!!$row->checkbox_feito() ne !!$checkbox_feito) {
-        $row->update(
-            {
-                checkbox_feito => $checkbox_feito ? 'true' : 'false',
-                atualizado_em  => \'now()',
+            # se mudou o valor do checkbox
+            if (!!$row->checkbox_feito() ne !!$checkbox_feito) {
+                $row->update(
+                    {
+                        checkbox_feito => $checkbox_feito ? 'true' : 'false',
+                        atualizado_em  => \'now()',
 
-                $checkbox_feito
-                ? (
-                    # guarda a primeira vez que marcou como feito
-                    $row->checkbox_feito_checked_first_updated_at() ? () : (
-                        checkbox_feito_checked_first_updated_at => \'now()',
-                    ),
+                        $checkbox_feito
+                        ? (
+                            # guarda a primeira vez que marcou como feito
+                            $row->checkbox_feito_checked_first_updated_at() ? () : (
+                                checkbox_feito_checked_first_updated_at => \'now()',
+                            ),
 
-                    # e a ultima vez que marcou como feito
-                    checkbox_feito_checked_last_updated_at => \'now()'
-                  )
-                : (
-                    # guarda a primeria vez que como não-feito
-                    $row->checkbox_feito_unchecked_first_updated_at() ? () : (
-                        checkbox_feito_unchecked_first_updated_at => \'now()',
-                    ),
+                            # e a ultima vez que marcou como feito
+                            checkbox_feito_checked_last_updated_at => \'now()'
+                          )
+                        : (
+                            # guarda a primeria vez que como não-feito
+                            $row->checkbox_feito_unchecked_first_updated_at() ? () : (
+                                checkbox_feito_unchecked_first_updated_at => \'now()',
+                            ),
 
-                    # e a ultima vez que marcou como não-feito
-                    checkbox_feito_unchecked_last_updated_at => \'now()'
-                )
+                            # e a ultima vez que marcou como não-feito
+                            checkbox_feito_unchecked_last_updated_at => \'now()'
+                        )
+                    }
+                );
             }
-        );
-    }
+        }
+    );
 
     return {message => 'Atualizado com sucesso.'};
 }
