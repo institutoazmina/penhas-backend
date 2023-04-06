@@ -147,6 +147,7 @@ sub register {
     $me->put()->to(action => 'me_update');
     $me->delete()->to(action => 'me_delete');
 
+
     # GET /me/delete-text
     $me->get('delete-text')->to(controller => 'Me', action => 'me_delete_text');
 
@@ -182,6 +183,11 @@ sub register {
     # /me/media
     my $me_media = $me->under('media')->to(controller => 'Me_Media', action => 'assert_user_perms');
     $me_media->post()->to(action => 'upload');
+
+    # /me/tarefas
+    my $me_tarefas = $me->under('tarefas')->to(controller => 'Me_Tarefas', action => 'assert_user_perms');
+    $me_tarefas->get()->to(action => 'list');
+    $me_tarefas->post()->to(action => 'sync');
 
     # /me/tweets
     my $me_tweets = $me->under('tweets')->to(controller => 'Me_Tweets', action => 'assert_user_perms');
