@@ -62,4 +62,27 @@ sub sync {
     );
 }
 
+sub nova {
+    my $c = shift;
+
+    my $params = $c->req->params->to_hash;
+
+    my $valid = $c->validate_request_params(
+        titulo          => {required => 1, type => 'Str', max_length => 512,  min_length => 1,},
+        descricao       => {required => 1, type => 'Str', max_length => 2048, min_length => 1},
+        modificado_apos => {required => 1, type => 'Int'},
+    );
+
+    my $result = $c->cliente_nova_tarefas(
+        user_obj => $c->stash('user_obj'),
+        %$valid,
+    );
+
+    return $c->render(
+        json   => $result,
+        status => 200,
+    );
+}
+
+
 1;
