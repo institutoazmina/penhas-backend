@@ -192,8 +192,8 @@ db_transaction {
         {'x-api-key' => $session},
         form => {modificado_apos => $epoch_start},
       )->status_is(200, 'busca todas as tarefas')    #
-      ->json_is('/tarefas/0/titulo', 'safira')#
-      ->json_is('/tarefas/0/descricao', 'world')#;
+      ->json_is('/tarefas/0/titulo',    'safira')    #
+      ->json_is('/tarefas/0/descricao', 'world')     #;
 
 
 };
