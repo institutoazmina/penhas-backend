@@ -554,11 +554,9 @@ sub cliente_alert_guards {
     my $user_obj = $opts{user_obj} or confess 'missing user_obj';
 
     my %extra_db;
-    my $regex = qr/^-?\d{1,2}(?:\.\d{1,17})?$/a;
+    my $regex = qr/^-?\d{1,3}(?:\.\d{1,17})?$/a;
     for my $field (qw/gps_lat gps_long/) {
         next unless defined $opts{$field};
-        next if $opts{$field} eq '0';           # string 0
-        next if (abs($opts{$field}) < 0.01);    # muito perto do zero
 
         if ($opts{$field} !~ $regex) {
             $c->reply_invalid_param(
@@ -568,6 +566,11 @@ sub cliente_alert_guards {
             );
         }
         $extra_db{$field} = $opts{$field};
+    }
+
+    if (abs($extra_db{gps_long} * 1) <= 0.01 && abs($extra_db{gps_lat} * 1) <= 0.01) {
+        delete $extra_db{gps_long};
+        delete $extra_db{gps_lat};
     }
 
     # precisa ter os dois, se nao limpa o outro.
@@ -637,7 +640,7 @@ sub cliente_alert_guards {
     }
     else {
         $com_posicao = 'SEM LOCALIZAÇÃO ';
-        $message_link .= 'A localizacao nao foi recebida.'; # sem acento por causa do SMS
+        $message_link .= 'A localizacao nao foi recebida.';    # sem acento por causa do SMS
     }
 
     # 130 no lugar de 140, pois o minimo reservado pro nome sao 10 chars
