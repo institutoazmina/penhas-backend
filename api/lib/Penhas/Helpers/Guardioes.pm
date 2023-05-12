@@ -557,6 +557,8 @@ sub cliente_alert_guards {
     my $regex = qr/^-?\d{1,3}(?:\.\d{1,17})?$/a;
     for my $field (qw/gps_lat gps_long/) {
         next unless defined $opts{$field};
+        next if $opts{$field} eq '0';           # string 0
+        next if (abs($opts{$field}) < 0.01);    # muito perto do zero
 
         if ($opts{$field} !~ $regex) {
             $c->reply_invalid_param(
