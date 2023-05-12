@@ -557,6 +557,8 @@ sub cliente_alert_guards {
     my $regex = qr/^-?\d{1,2}(?:\.\d{1,17})?$/a;
     for my $field (qw/gps_lat gps_long/) {
         next unless defined $opts{$field};
+        next if $opts{$field} eq '0';           # string 0
+        next if (abs($opts{$field}) < 0.01);    # muito perto do zero
 
         if ($opts{$field} !~ $regex) {
             $c->reply_invalid_param(
@@ -635,7 +637,7 @@ sub cliente_alert_guards {
     }
     else {
         $com_posicao = 'SEM LOCALIZAÇÃO ';
-        $message_link .= 'A localizacao nao foi recebida.';
+        $message_link .= 'A localizacao nao foi recebida.'; # sem acento por causa do SMS
     }
 
     # 130 no lugar de 140, pois o minimo reservado pro nome sao 10 chars
