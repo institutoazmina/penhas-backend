@@ -508,7 +508,7 @@ sub cliente_list_guardioes {
             %defaults,
             header      => 'Convites recusados',
             description =>
-              'Os convites recusados ainda podem serem aceitos usando o mesmo link. Use o botão 🗑️ para cancelar o convite.',
+              'Os convites recusados ainda podem serem aceitos usando o mesmo link. Use o botão ����️ para cancelar o convite.',
             delete_warning =>
               'Após apagar um convite recusado, você não poderá convidar o mesmo número por até 7 dias.',
         },
@@ -557,6 +557,8 @@ sub cliente_alert_guards {
     my $regex = qr/^-?\d{1,3}(?:\.\d{1,17})?$/a;
     for my $field (qw/gps_lat gps_long/) {
         next unless defined $opts{$field};
+        next if $opts{$field} eq '0';           # string 0
+        next if (abs($opts{$field}) < 0.01);    # muito perto do zero
 
         if ($opts{$field} !~ $regex) {
             $c->reply_invalid_param(
