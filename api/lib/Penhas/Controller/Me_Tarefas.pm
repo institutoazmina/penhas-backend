@@ -46,8 +46,9 @@ sub sync {
         $valid = $c->validate_request_params(
             id             => {required => 1, type => 'Int'},
             checkbox_feito => {required => 1, type => 'Bool'},
-            titulo         => {required => 0, type => 'Str', max_length => 512,},
-            descricao      => {required => 0, type => 'Str', max_length => 2048,},
+            campo_livre_1  => {required => 0, type => 'Str', max_length => 512, empty_is_valid => 1},
+            campo_livre_2  => {required => 0, type => 'Str', max_length => 512, empty_is_valid => 1},
+            campo_livre_3  => {required => 0, type => 'Str', max_length => 512, empty_is_valid => 1},
         );
     }
 
@@ -68,8 +69,13 @@ sub nova {
     my $params = $c->req->params->to_hash;
 
     my $valid = $c->validate_request_params(
-        titulo          => {required => 1, type => 'Str', max_length => 512,  min_length => 1,},
-        descricao       => {required => 1, type => 'Str', max_length => 2048, min_length => 1},
+        titulo    => {required => 1, type => 'Str', max_length => 512,  min_length => 1,},
+        descricao => {required => 1, type => 'Str', max_length => 2048, min_length => 1},
+        agrupador => {required => 1, type => 'Str', max_length => 120,  min_length => 1},
+        token     => {required => 1, type => 'Str', max_length => 120,  min_length => 1},
+
+        # ta aqui pq o retorno dele é o mesmo que o list
+        # mas como nao vai ser usado no app, nem faz tanto sentido mais
         modificado_apos => {required => 1, type => 'Int'},
     );
 

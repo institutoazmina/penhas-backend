@@ -52,6 +52,19 @@ __PACKAGE__->add_columns(
   },
   "eh_customizada",
   { data_type => "boolean", default_value => \"false", is_nullable => 0 },
+  "campo_livre_1",
+  { data_type => "varchar", is_nullable => 1, size => 120 },
+  "campo_livre_2",
+  { data_type => "varchar", is_nullable => 1, size => 120 },
+  "campo_livre_3",
+  { data_type => "varchar", is_nullable => 1, size => 120 },
+  "agrupador",
+  {
+    data_type => "varchar",
+    default_value => "Outros",
+    is_nullable => 0,
+    size => 120,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -62,8 +75,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-04-06 00:11:08
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cp9btOv1OkehO1IZ/e3ylw
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-05-20 07:58:36
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6BHCs3J2P24LrPOtl1prfw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

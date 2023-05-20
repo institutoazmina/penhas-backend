@@ -12,6 +12,12 @@ create table mf_tarefa (
     tipo varchar not null default 'checkbox',
     codigo varchar,
 
+    campo_livre_1 varchar(120),
+    campo_livre_2 varchar(120),
+    campo_livre_3 varchar(120),
+
+    agrupador varchar(120) not null default 'Outros',
+
     criado_em timestamp without time zone not null default now(),
     -- se é editável ou não pela usuária
     eh_customizada boolean not null default false
