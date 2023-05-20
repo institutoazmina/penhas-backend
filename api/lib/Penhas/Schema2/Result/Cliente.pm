@@ -414,6 +414,11 @@ sub access_modules_as_config {
             max_length => 2200,
         },
     };
+
+    if ($ENV{ENABLE_MANUAL_FUGA}) {
+        $meta->{mf} = {};
+    }
+
     return [map { +{code => $_, meta => $meta->{$_} || {}} } keys $_[0]->access_modules->%*];
 }
 
@@ -483,10 +488,14 @@ sub quiz_detectou_violencia_toggle {
 sub recalc_quiz_detectou_violencia_toggle {
     my ($self) = @_;
 
-    $self->update({
-        primeiro_quiz_detectou_violencia => \['coalesce(primeiro_quiz_detectou_violencia, ?)', $self->quiz_detectou_violencia ? '1' : '0'],
-        primeiro_quiz_detectou_violencia_atualizado_em => \'coalesce(primeiro_quiz_detectou_violencia_atualizado_em, now())',
-    });
+    $self->update(
+        {
+            primeiro_quiz_detectou_violencia =>
+              \['coalesce(primeiro_quiz_detectou_violencia, ?)', $self->quiz_detectou_violencia ? '1' : '0'],
+            primeiro_quiz_detectou_violencia_atualizado_em => \
+              'coalesce(primeiro_quiz_detectou_violencia_atualizado_em, now())',
+        }
+    );
 }
 
 # retorna o string para ser usada em FK composta
