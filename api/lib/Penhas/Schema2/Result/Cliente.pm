@@ -386,10 +386,15 @@ sub _build_access_modules {
     if ($self->is_female) {
         push @modules,
           qw/tweets chat_privado chat_suporte pontos_de_apoio modo_seguranca noticias/;
+
+        if ($ENV{ENABLE_MANUAL_FUGA}) {
+            push @modules, 'mf';
+        }
     }
     else {
         push @modules, qw/chat_suporte pontos_de_apoio noticias/;
     }
+
 
     return {map { ($_ => {}) } @modules};
 }
@@ -413,11 +418,8 @@ sub access_modules_as_config {
         tweets => {
             max_length => 2200,
         },
+        mf => {},
     };
-
-    if ($ENV{ENABLE_MANUAL_FUGA}) {
-        $meta->{mf} = {};
-    }
 
     return [map { +{code => $_, meta => $meta->{$_} || {}} } keys $_[0]->access_modules->%*];
 }
