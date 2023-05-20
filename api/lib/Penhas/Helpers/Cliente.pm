@@ -194,7 +194,7 @@ sub render_tarefa {
         tipo           => $mf_tarefa->tipo(),
         eh_customizada => $mf_tarefa->eh_customizada(),
         titulo         => $mf_tarefa->titulo(),
-        descricao         => $mf_tarefa->descricao(),
+        descricao      => $mf_tarefa->descricao(),
         agrupador      => $mf_tarefa->agrupador(),
         campo_livre_1  => $mf_tarefa->campo_livre_1(),
         campo_livre_2  => $mf_tarefa->campo_livre_2(),
