@@ -25,6 +25,8 @@ goto AGAIN if cpf_already_exists($random_cpf);
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
 $ENV{SKIP_END_NEWS}            = '1';
 
+$Penhas::Helpers::Cliente::NEW_TASK_TOKEN = 'new-task';
+
 my @other_fields = (
     raca        => 'branco',
     app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
@@ -82,7 +84,8 @@ db_transaction {
             descricao      => 'descricao 1',
             tipo           => 'checkbox',
             codigo         => 'c1',
-            eh_customizada => 'false'
+            eh_customizada => 'false',
+            agrupador      => 'nope'
         }
     );
 
@@ -114,6 +117,7 @@ db_transaction {
       ->json_is('/tarefas/0/descricao',      $tarefa_1_sistema->descricao)     #
       ->json_is('/tarefas/0/checkbox_feito', '0')                              #
       ->json_is('/tarefas/0/eh_customizada', '0')                              #
+      ->json_is('/tarefas/0/agrupador',      'nope')                           #
       ->json_is('/tarefas/0/tipo',           $tarefa_1_sistema->tipo)          #
       ->json_is('/tarefas/0/atualizado_em',  $epoch_start + 1)                 #
       ;
@@ -172,6 +176,8 @@ db_transaction {
         form => {
             titulo          => 'hello',
             descricao       => 'world',
+            agrupador       => 'hey',
+            token           => $Penhas::Helpers::Cliente::NEW_TASK_TOKEN,
             modificado_apos => $epoch_start,
         },
       )->status_is(200, 'adicionada com sucesso')    #
@@ -182,7 +188,9 @@ db_transaction {
         {'x-api-key' => $session},
         form => {
             id             => $json->{tarefas}[0]{id},
-            titulo         => 'safira',
+            campo_livre_1  => 'hey',
+            campo_livre_2  => 'you',
+            campo_livre_3  => 'there',
             checkbox_feito => 0,
         },
     )->status_is(200, 'sync com sucesso');
@@ -192,8 +200,30 @@ db_transaction {
         {'x-api-key' => $session},
         form => {modificado_apos => $epoch_start},
       )->status_is(200, 'busca todas as tarefas')    #
-      ->json_is('/tarefas/0/titulo',    'safira')    #
-      ->json_is('/tarefas/0/descricao', 'world')     #;
+      ->json_is('/tarefas/0/campo_livre_1', 'hey')       #
+      ->json_is('/tarefas/0/campo_livre_2', 'you')       #
+      ->json_is('/tarefas/0/campo_livre_3', 'there');    #
+
+    $t->post_ok(
+        '/me/tarefas/sync',
+        {'x-api-key' => $session},
+        form => {
+            id             => $json->{tarefas}[0]{id},
+            campo_livre_1  => '',
+            campo_livre_3  => 'will be missing',
+            checkbox_feito => 1,
+        },
+    )->status_is(200, 'sync com sucesso');
+
+    $t->get_ok(
+        '/me/tarefas',
+        {'x-api-key' => $session},
+        form => {modificado_apos => $epoch_start},
+      )->status_is(200, 'busca todas as tarefas')    #
+      ->json_is('/tarefas/0/checkbox_feito', '1')                   #
+      ->json_is('/tarefas/0/campo_livre_1',  '')                    #
+      ->json_is('/tarefas/0/campo_livre_2',  '')                    #
+      ->json_is('/tarefas/0/campo_livre_3',  'will be missing');    #;
 
 
 };

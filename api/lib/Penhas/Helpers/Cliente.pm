@@ -9,6 +9,8 @@ use Penhas::Utils;
 use DateTime::Format::Pg;
 use Encode;
 
+our $NEW_TASK_TOKEN = $ENV{NEW_TASK_TOKEN} || '';
+
 sub setup {
     my $self = shift;
 
@@ -21,12 +23,23 @@ sub setup {
     $self->helper('cliente_nova_tarefas'       => sub { &cliente_nova_tarefas(@_) });
 }
 
+# será usado apenas para o desenvolvimento, não será usado em produção
+# o token de prod não será setado, então ficara desabilitado
 sub cliente_nova_tarefas {
     my ($c, %opts) = @_;
 
     my $user      = $opts{user_obj} or confess 'missing user_obj';
     my $titulo    = $opts{titulo};
     my $descricao = $opts{descricao};
+    my $agrupador = $opts{agrupador};
+    my $token     = $opts{token};
+
+    die {
+        message => 'Token não confere',
+        error   => 'mftoken_invalid'
+      }
+      unless $NEW_TASK_TOKEN
+      && $token eq $NEW_TASK_TOKEN;
 
     $c->schema2->txn_do(
         sub {
@@ -34,6 +47,7 @@ sub cliente_nova_tarefas {
                 {
                     titulo         => $titulo,
                     descricao      => $descricao,
+                    agrupador      => $agrupador,
                     tipo           => 'checkbox',
                     codigo         => '',
                     eh_customizada => 'true',
@@ -100,8 +114,6 @@ sub cliente_sync_lista_tarefas {
 
     my $mf_id          = $opts{id};
     my $checkbox_feito = $opts{checkbox_feito};
-    my $titulo         = $opts{titulo};
-    my $descricao      = $opts{descricao};
 
     my $row = $c->schema2->resultset('MfClienteTarefa')->search(
         {
@@ -124,12 +136,12 @@ sub cliente_sync_lista_tarefas {
 
     $c->schema2->txn_do(
         sub {
-            if ($row->mf_tarefa->eh_customizada && ($titulo || $descricao)) {
+            if ($row->mf_tarefa->eh_customizada) {
                 $row->mf_tarefa->update(
                     {
-                        # mantem o valor antigo se enviar em branco ou vazio
-                        titulo    => $titulo    || $row->mf_tarefa->titulo(),
-                        descricao => $descricao || $row->mf_tarefa->descricao()
+                        campo_livre_1 => $opts{campo_livre_1} || '',
+                        campo_livre_2 => $opts{campo_livre_2} || '',
+                        campo_livre_3 => $opts{campo_livre_3} || '',
                     }
                 );
                 $row->update({atualizado_em => \'now()'});
@@ -182,8 +194,11 @@ sub render_tarefa {
         tipo           => $mf_tarefa->tipo(),
         eh_customizada => $mf_tarefa->eh_customizada(),
         titulo         => $mf_tarefa->titulo(),
-        descricao      => $mf_tarefa->descricao(),
-
+        descricao         => $mf_tarefa->descricao(),
+        agrupador      => $mf_tarefa->agrupador(),
+        campo_livre_1  => $mf_tarefa->campo_livre_1(),
+        campo_livre_2  => $mf_tarefa->campo_livre_2(),
+        campo_livre_3  => $mf_tarefa->campo_livre_3(),
     };
 }
 
