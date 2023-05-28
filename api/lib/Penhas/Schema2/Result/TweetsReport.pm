@@ -21,7 +21,7 @@ __PACKAGE__->add_columns(
   "cliente_id",
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "reported_id",
-  { data_type => "varchar", is_nullable => 0, size => 20 },
+  { data_type => "varchar", is_foreign_key => 1, is_nullable => 0, size => 20 },
   "created_at",
   { data_type => "timestamp with time zone", is_nullable => 0 },
   "reason",
@@ -34,10 +34,16 @@ __PACKAGE__->belongs_to(
   { id => "cliente_id" },
   { is_deferrable => 0, on_delete => "CASCADE", on_update => "CASCADE" },
 );
+__PACKAGE__->belongs_to(
+  "reported",
+  "Penhas::Schema2::Result::Tweet",
+  { id => "reported_id" },
+  { is_deferrable => 0, on_delete => "SET NULL", on_update => "NO ACTION" },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iXxKXPhwA095TDVzIe59HQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-05-25 21:16:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3rVRbYte3a1r3/l8ToiD4g
 
 # ALTER TABLE tweets_reports ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

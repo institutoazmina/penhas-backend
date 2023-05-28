@@ -26,6 +26,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "varchar",
     default_value => \"null",
+    is_foreign_key => 1,
     is_nullable => 1,
     size => 20,
   },
@@ -82,16 +83,39 @@ __PACKAGE__->belongs_to(
   { id => "cliente_id" },
   { is_deferrable => 0, on_delete => "CASCADE", on_update => "CASCADE" },
 );
+__PACKAGE__->belongs_to(
+  "parent",
+  "Penhas::Schema2::Result::Tweet",
+  { id => "parent_id" },
+  {
+    is_deferrable => 0,
+    join_type     => "LEFT",
+    on_delete     => "NO ACTION",
+    on_update     => "NO ACTION",
+  },
+);
+__PACKAGE__->has_many(
+  "tweets",
+  "Penhas::Schema2::Result::Tweet",
+  { "foreign.parent_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 __PACKAGE__->has_many(
   "tweets_likes",
   "Penhas::Schema2::Result::TweetLikes",
   { "foreign.tweet_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
+__PACKAGE__->has_many(
+  "tweets_reports",
+  "Penhas::Schema2::Result::TweetsReport",
+  { "foreign.reported_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-12-06 10:18:55
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wzK0b6Oz9KOI8CS8mzkTaQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-05-25 21:16:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:p4vUMwMFJ1irXV5YvFlL3A
 
 # alter table tweets modify column cliente_id  int(11) unsigned  not null;
 # ALTER TABLE tweets ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;

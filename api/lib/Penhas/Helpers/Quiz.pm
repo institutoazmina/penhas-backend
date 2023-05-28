@@ -148,6 +148,10 @@ sub user_get_quiz_session {
     my $vars = &_quiz_get_vars($user);
 
     foreach my $q ($c->stash('questionnaires')->@*) {
+        # just in case, se todos os questionarios já estiverem de fato carregado, ja que
+        # a função chama "ensure" e não "load_just"
+        next unless $q->{penhas_start_automatically};
+
         if (tt_test_condition($q->{condition}, $vars)) {
             push @available_quiz, $q;
             slog_info('questionnaires_id:%s criteria matched "%s"', $q->{id}, $q->{condition});
