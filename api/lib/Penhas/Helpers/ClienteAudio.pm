@@ -177,7 +177,7 @@ sub cliente_list_events_audio {
         }
     );
 
-    my $message = '';
+    my $message = 'Você ainda não tem nenhum áudio gravado.';
     if ($total_count > 0) {
         $message = ($total_count == 1 ? "Você tem 1 áudio gravado." : "Você tem $total_count áudios gravados.")
           . ' Gravações com mais de 30 dias não ficam mais visíveis para você, mas permanecem armazenadas em nossos servidores por até cinco anos. Caso queira os arquivos, solicite através do e-mail penhas@azmina.com.br.';
