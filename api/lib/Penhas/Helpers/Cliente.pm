@@ -52,13 +52,13 @@ sub cliente_nova_tarefas {
 
     my $id;
 
-$c->schema2->txn_do(
+    $c->schema2->txn_do(
         sub {
             my $tarefa_id = $c->schema2->resultset('MfTarefa')->create(
                 {
-                    titulo         => $titulo,
-                    descricao      => $descricao,
-                    agrupador      => $agrupador,
+                    titulo    => $titulo,
+                    descricao => $descricao,
+                    agrupador => $agrupador,
 
                     tipo           => $tipo,
                     codigo         => '',
@@ -78,12 +78,6 @@ $c->schema2->txn_do(
     );
 
     return {message => 'entrada criada com sucesso!', id => $id};
-
-            );
-        }
-    );
-
-    return &cliente_lista_tarefas($c, %opts);
 }
 
 sub cliente_lista_tarefas {
