@@ -418,7 +418,10 @@ sub access_modules_as_config {
         tweets => {
             max_length => 2200,
         },
-        mf => {},
+
+        mf => {
+            max_checkbox_contato => 3,
+        },
     };
 
     return [map { +{code => $_, meta => $meta->{$_} || {}} } keys $_[0]->access_modules->%*];

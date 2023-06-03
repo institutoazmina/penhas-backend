@@ -3,7 +3,7 @@ use common::sense;
 use Carp qw/confess /;
 use utf8;
 
-use JSON;
+use JSON qw/from_json to_json/;
 use Penhas::Logger;
 use Penhas::Utils;
 use DateTime::Format::Pg;
@@ -41,26 +41,44 @@ sub cliente_nova_tarefas {
       unless $NEW_TASK_TOKEN
       && $token eq $NEW_TASK_TOKEN;
 
-    $c->schema2->txn_do(
+
+    my $tipo           = 'checkbox';
+    my $eh_customizada = 'false';
+
+    if ($opts{checkbox_contato}) {
+        $tipo           = 'checkbox_contato';
+        $eh_customizada = 'true';
+    }
+
+    my $id;
+
+$c->schema2->txn_do(
         sub {
             my $tarefa_id = $c->schema2->resultset('MfTarefa')->create(
                 {
                     titulo         => $titulo,
                     descricao      => $descricao,
                     agrupador      => $agrupador,
-                    tipo           => 'checkbox',
+
+                    tipo           => $tipo,
                     codigo         => '',
-                    eh_customizada => 'true',
+                    eh_customizada => $eh_customizada,
                 }
             );
 
-            $c->schema2->resultset('MfClienteTarefa')->create(
+            $id = $c->schema2->resultset('MfClienteTarefa')->create(
                 {
                     removido_em   => undef,
                     cliente_id    => $user->id,
                     atualizado_em => \'now()',
                     mf_tarefa_id  => $tarefa_id->id(),
                 }
+            )->id();
+        }
+    );
+
+    return {message => 'entrada criada com sucesso!', id => $id};
+
             );
         }
     );
@@ -139,9 +157,8 @@ sub cliente_sync_lista_tarefas {
             if ($row->mf_tarefa->eh_customizada) {
                 $row->mf_tarefa->update(
                     {
-                        campo_livre_1 => $opts{campo_livre_1} || '',
-                        campo_livre_2 => $opts{campo_livre_2} || '',
-                        campo_livre_3 => $opts{campo_livre_3} || '',
+
+                        campo_livre => ($opts{campo_livre} ? $opts{campo_livre} : undef),
                     }
                 );
                 $row->update({atualizado_em => \'now()'});
@@ -196,9 +213,7 @@ sub render_tarefa {
         titulo         => $mf_tarefa->titulo(),
         descricao      => $mf_tarefa->descricao(),
         agrupador      => $mf_tarefa->agrupador(),
-        campo_livre_1  => $mf_tarefa->campo_livre_1(),
-        campo_livre_2  => $mf_tarefa->campo_livre_2(),
-        campo_livre_3  => $mf_tarefa->campo_livre_3(),
+        campo_livre    => ($mf_tarefa->campo_livre() ? from_json($mf_tarefa->campo_livre()) : undef),
     };
 }
 

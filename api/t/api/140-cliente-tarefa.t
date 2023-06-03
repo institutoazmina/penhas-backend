@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 # HARNESS-CONFLICTS CHAT
 
+use JSON;
+
 use Mojo::Base -strict;
 use FindBin qw($RealBin);
 use lib "$RealBin/../lib";
@@ -74,6 +76,27 @@ on_scope_exit { user_cleanup(user_id => [$cliente_id,]); };
 $t->get_ok('/filter-skills', {'x-api-key' => $session})->status_is(200);
 
 db_transaction {
+
+
+    $ENV{ENABLE_MANUAL_FUGA} = 0;
+    my $me_perfil = $t->get_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {},
+    )->status_is(200, '')->tx->res->json;
+    my ($cnt) = grep { $_->{code} eq 'mf' } @{$me_perfil->{modules}};
+    is $cnt, undef, 'no mf module';
+
+    $ENV{ENABLE_MANUAL_FUGA} = 1;
+    $me_perfil = $t->get_ok(
+        '/me',
+        {'x-api-key' => $session},
+        form => {},
+    )->status_is(200, '')->tx->res->json;
+
+    my ($mf) = grep { $_->{code} eq 'mf' } @{$me_perfil->{modules}};
+    is $mf->{meta}{max_checkbox_contato}, 3, 'max_checkbox_contato=3';
+
 
     my $mf_tarefa_rs         = $schema2->resultset('MfTarefa');
     my $mf_cliente_tarefa_rs = $schema2->resultset('MfClienteTarefa');
@@ -174,43 +197,58 @@ db_transaction {
         '/me/tarefas/nova',
         {'x-api-key' => $session},
         form => {
-            titulo          => 'hello',
-            descricao       => 'world',
-            agrupador       => 'hey',
-            token           => $Penhas::Helpers::Cliente::NEW_TASK_TOKEN,
-            modificado_apos => $epoch_start,
+            titulo           => 'hello',
+            descricao        => 'world',
+            agrupador        => 'hey',
+            campo_livre      => '',                                          # pode enviar vazio
+            checkbox_contato => '1',
+            token            => $Penhas::Helpers::Cliente::NEW_TASK_TOKEN,
+            modificado_apos  => $epoch_start,
         },
       )->status_is(200, 'adicionada com sucesso')    #
-      ->json_is('/tarefas/0/titulo', 'hello')->tx->res->json;
+      ->json_has('/id')                              #
+      ->json_has('/message', 'hello')->tx->res->json;
+    my $tarefa_criada_id = $json->{id};
+
 
     $t->post_ok(
         '/me/tarefas/sync',
         {'x-api-key' => $session},
         form => {
-            id             => $json->{tarefas}[0]{id},
-            campo_livre_1  => 'hey',
-            campo_livre_2  => 'you',
-            campo_livre_3  => 'there',
+            id             => $tarefa_criada_id,
+            campo_livre    => '{}',
+
             checkbox_feito => 0,
         },
     )->status_is(200, 'sync com sucesso');
+
+    $t->post_ok(
+        '/me/tarefas/sync',
+        {'x-api-key' => $session},
+        form => {
+            id             => $tarefa_criada_id,
+            campo_livre    => 'ABC',
+            checkbox_feito => 0,
+        },
+    )->status_is(400, 'nao pode enviar json invalido');
+
 
     $t->get_ok(
         '/me/tarefas',
         {'x-api-key' => $session},
         form => {modificado_apos => $epoch_start},
       )->status_is(200, 'busca todas as tarefas')    #
-      ->json_is('/tarefas/0/campo_livre_1', 'hey')       #
-      ->json_is('/tarefas/0/campo_livre_2', 'you')       #
-      ->json_is('/tarefas/0/campo_livre_3', 'there');    #
+      ->json_is('/tarefas/0/campo_livre', {})                    #
+      ->json_is('/tarefas/0/tipo',        'checkbox_contato');
+
 
     $t->post_ok(
         '/me/tarefas/sync',
         {'x-api-key' => $session},
         form => {
-            id             => $json->{tarefas}[0]{id},
-            campo_livre_1  => '',
-            campo_livre_3  => 'will be missing',
+            id             => $tarefa_criada_id,
+            campo_livre    => '["abc", {"why": false}]',
+
             checkbox_feito => 1,
         },
     )->status_is(200, 'sync com sucesso');
@@ -220,10 +258,8 @@ db_transaction {
         {'x-api-key' => $session},
         form => {modificado_apos => $epoch_start},
       )->status_is(200, 'busca todas as tarefas')    #
-      ->json_is('/tarefas/0/checkbox_feito', '1')                   #
-      ->json_is('/tarefas/0/campo_livre_1',  '')                    #
-      ->json_is('/tarefas/0/campo_livre_2',  '')                    #
-      ->json_is('/tarefas/0/campo_livre_3',  'will be missing');    #;
+      ->json_is('/tarefas/0/checkbox_feito', '1')                              #
+      ->json_is('/tarefas/0/campo_livre',    ["abc", {why => JSON::false}]);
 
 
 };
