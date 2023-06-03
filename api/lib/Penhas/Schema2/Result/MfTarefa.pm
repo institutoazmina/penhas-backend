@@ -43,12 +43,9 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
     original    => { data_type => "varchar" },
   },
-  "campo_livre_1",
-  { data_type => "varchar", is_nullable => 1, size => 120 },
-  "campo_livre_2",
-  { data_type => "varchar", is_nullable => 1, size => 120 },
-  "campo_livre_3",
-  { data_type => "varchar", is_nullable => 1, size => 120 },
+  "campo_livre",
+  { data_type => "json", is_nullable => 1 },
+  
   "agrupador",
   {
     data_type => "varchar",
@@ -75,8 +72,10 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-05-25 18:44:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BSosNLSLQZ2l7Di9KMM53A
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-06-02 23:47:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qKS8eciO+cMSD/E+2pCF0g
+
+
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

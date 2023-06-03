@@ -3,6 +3,8 @@
 
 BEGIN;
 
+-- alter table mf_tarefa drop column campo_livre_1, drop column campo_livre_2, drop column campo_livre_3;
+-- alter table mf_tarefa add column campo_livre json;
 create table mf_tarefa (
     id serial primary key not null,
 
@@ -12,9 +14,7 @@ create table mf_tarefa (
     tipo varchar not null default 'checkbox',
     codigo varchar,
 
-    campo_livre_1 varchar(120),
-    campo_livre_2 varchar(120),
-    campo_livre_3 varchar(120),
+    campo_livre json,
 
     agrupador varchar(120) not null default 'Outros',
 

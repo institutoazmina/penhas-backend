@@ -3,6 +3,7 @@ use Mojo::Base 'Penhas::Controller';
 
 use DateTime;
 use Penhas::Types qw/TweetID/;
+use JSON qw/from_json/;
 
 sub assert_user_perms {
     my $c = shift;
@@ -46,10 +47,24 @@ sub sync {
         $valid = $c->validate_request_params(
             id             => {required => 1, type => 'Int'},
             checkbox_feito => {required => 1, type => 'Bool'},
-            campo_livre_1  => {required => 0, type => 'Str', max_length => 512, empty_is_valid => 1},
-            campo_livre_2  => {required => 0, type => 'Str', max_length => 512, empty_is_valid => 1},
-            campo_livre_3  => {required => 0, type => 'Str', max_length => 512, empty_is_valid => 1},
+            campo_livre    => {required => 0, type => 'Str', max_length => 50000, empty_is_valid => 1},
         );
+
+        if ($valid->{campo_livre}) {
+
+            # não vou fazer nenhuma validação do schema no momento, pode mandar do jeito que
+            # o Pedro achar melhor, hash com versao, array direto, ele que manda!
+            my $decoded = eval { from_json($valid->{campo_livre}) };
+            if ($@) {
+                die {
+                    error   => 'form_error',
+                    field   => 'campo_livre',
+                    reason  => 'invalid',
+                    message => 'json inválido',
+                    status  => 400
+                };
+            }
+        }
     }
 
     my $result = $c->cliente_sync_lista_tarefas(
@@ -74,9 +89,8 @@ sub nova {
         agrupador => {required => 1, type => 'Str', max_length => 120,  min_length => 1},
         token     => {required => 1, type => 'Str', max_length => 120,  min_length => 1},
 
-        # ta aqui pq o retorno dele é o mesmo que o list
-        # mas como nao vai ser usado no app, nem faz tanto sentido mais
-        modificado_apos => {required => 1, type => 'Int'},
+        # enviar 1 pra mudar o tipo para [checkbox_contato]
+        checkbox_contato => {required => 0, type => 'Bool'},
     );
 
     my $result = $c->cliente_nova_tarefas(
