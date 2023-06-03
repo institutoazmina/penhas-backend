@@ -43,6 +43,7 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
     original    => { data_type => "varchar" },
   },
+
   "campo_livre",
   { data_type => "json", is_nullable => 1 },
   "agrupador",
@@ -52,6 +53,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => 120,
   },
+
   "criado_em",
   {
     data_type     => "timestamp",
@@ -61,6 +63,13 @@ __PACKAGE__->add_columns(
   },
   "eh_customizada",
   { data_type => "boolean", default_value => \"false", is_nullable => 0 },
+  "agrupador",
+  {
+    data_type => "varchar",
+    default_value => "Outros",
+    is_nullable => 0,
+    size => 120,
+  },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(

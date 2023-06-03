@@ -2,6 +2,7 @@
 # HARNESS-CONFLICTS CHAT
 
 use JSON;
+
 use Mojo::Base -strict;
 use FindBin qw($RealBin);
 use lib "$RealBin/../lib";
@@ -209,12 +210,14 @@ db_transaction {
       ->json_has('/message', 'hello')->tx->res->json;
     my $tarefa_criada_id = $json->{id};
 
+
     $t->post_ok(
         '/me/tarefas/sync',
         {'x-api-key' => $session},
         form => {
             id             => $tarefa_criada_id,
             campo_livre    => '{}',
+
             checkbox_feito => 0,
         },
     )->status_is(200, 'sync com sucesso');
@@ -229,6 +232,7 @@ db_transaction {
         },
     )->status_is(400, 'nao pode enviar json invalido');
 
+
     $t->get_ok(
         '/me/tarefas',
         {'x-api-key' => $session},
@@ -237,12 +241,14 @@ db_transaction {
       ->json_is('/tarefas/0/campo_livre', {})                    #
       ->json_is('/tarefas/0/tipo',        'checkbox_contato');
 
+
     $t->post_ok(
         '/me/tarefas/sync',
         {'x-api-key' => $session},
         form => {
             id             => $tarefa_criada_id,
             campo_livre    => '["abc", {"why": false}]',
+
             checkbox_feito => 1,
         },
     )->status_is(200, 'sync com sucesso');
@@ -254,6 +260,7 @@ db_transaction {
       )->status_is(200, 'busca todas as tarefas')    #
       ->json_is('/tarefas/0/checkbox_feito', '1')                              #
       ->json_is('/tarefas/0/campo_livre',    ["abc", {why => JSON::false}]);
+
 
 };
 

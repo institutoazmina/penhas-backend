@@ -27,13 +27,6 @@ __PACKAGE__->add_columns(
     is_nullable   => 0,
     original      => { data_type => "varchar" },
   },
-  "created_at",
-  {
-    data_type     => "timestamp",
-    default_value => \"current_timestamp",
-    is_nullable   => 0,
-    original      => { default_value => \"now()" },
-  },
   "updated_by_admin_at",
   { data_type => "timestamp", is_nullable => 1 },
   "created_ponto_apoio_id",
@@ -82,6 +75,13 @@ __PACKAGE__->add_columns(
   },
   "metainfo",
   { data_type => "json", default_value => "{}", is_nullable => 0 },
+  "created_at",
+  {
+    data_type     => "timestamp",
+    default_value => \"current_timestamp",
+    is_nullable   => 0,
+    original      => { default_value => \"now()" },
+  },
   "saved_form",
   { data_type => "json", default_value => "{}", is_nullable => 0 },
 );

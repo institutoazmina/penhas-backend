@@ -418,6 +418,7 @@ sub access_modules_as_config {
         tweets => {
             max_length => 2200,
         },
+
         mf => {
             max_checkbox_contato => 3,
         },
