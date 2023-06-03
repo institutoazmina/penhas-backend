@@ -191,6 +191,18 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "cliente_bloqueios_blocked_clientes",
+  "Penhas::Schema2::Result::ClienteBloqueio",
+  { "foreign.blocked_cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "cliente_mf_session_controls",
+  "Penhas::Schema2::Result::ClienteMfSessionControl",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "cliente_ponto_apoio_avaliacaos",
   "Penhas::Schema2::Result::ClientePontoApoioAvaliacao",
   { "foreign.cliente_id" => "self.id" },
@@ -299,6 +311,12 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "noticias_aberturas",
+  "Penhas::Schema2::Result::NoticiasAbertura",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "notification_logs",
   "Penhas::Schema2::Result::NotificationLog",
   { "foreign.cliente_id" => "self.id" },
@@ -348,8 +366,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-04-06 00:11:08
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PZsucoBaaCFgbiC6yGA3HA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-05-25 21:16:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6A+EZScFcR1iBl1q18oucQ
 
 use Carp qw/confess/;
 

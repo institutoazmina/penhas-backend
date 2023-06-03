@@ -38,6 +38,12 @@ __PACKAGE__->add_columns(
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
+  "noticias_tags",
+  "Penhas::Schema2::Result::NoticiasTag",
+  { "foreign.tags_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "rss_feeds_tags",
   "Penhas::Schema2::Result::RssFeedsTag",
   { "foreign.tags_id" => "self.id" },
@@ -57,8 +63,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-02-24 10:24:22
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:u+tnR4CpknYNvGBpUUrowg
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-05-25 21:16:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NQ7HQR2hn8iKeaBZz1ZMUw
 
 __PACKAGE__->has_many(
   "noticias_tags",
