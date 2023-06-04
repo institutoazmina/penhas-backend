@@ -167,8 +167,25 @@ sub cliente_list_events_audio {
     }
     return undef if defined $event_id;
 
+    my $total_count = $user_obj->clientes_audios_eventos->count(
+        {
+            # imaginei inicialmente seria apenas o count apenas dos audios escondidos.
+            # nesse caso, seria só descomentar o filtro abaixo:
+            # 'me.event_id'   => {'not in' => [map { $_->{event_id} } @rows]},
+            'me.deleted_at' => undef,
+            (defined $event_id ? ('me.event_id' => $user_obj->id_composed_fk($event_id)) : ()),
+        }
+    );
+
+    my $message = 'Você ainda não tem nenhum áudio gravado.';
+    if ($total_count > 0) {
+        $message = ($total_count == 1 ? "Você tem 1 áudio gravado." : "Você tem $total_count áudios gravados.")
+          . ' Gravações com mais de 30 dias não ficam mais visíveis para você, mas permanecem armazenadas em nossos servidores por até cinco anos. Caso queira os arquivos, solicite através do e-mail penhas@azmina.com.br.';
+    }
+
     return {
-        rows => \@rows,
+        rows    => \@rows,
+        message => $message
     };
 }
 
@@ -209,7 +226,8 @@ sub cliente_request_audio_access {
         }
     );
 
-    my $message = 'A administração do PenhaS vai avaliar seu pedido. Retorne a esta seção em 48h. Caso não haja mudança no status, envie um e-mail para contato@penhas.com.br';
+    my $message
+      = 'A administração do PenhaS vai avaliar seu pedido. Retorne a esta seção em 48h. Caso não haja mudança no status, envie um e-mail para contato@penhas.com.br';
     return {
         message => $message,
         success => 1,
