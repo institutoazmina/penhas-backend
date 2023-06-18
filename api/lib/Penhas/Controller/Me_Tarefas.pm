@@ -12,7 +12,7 @@ sub assert_user_perms {
     return 1;
 }
 
-sub list {
+sub me_t_list {
     my $c = shift;
 
     my $params = $c->req->params->to_hash;
@@ -26,12 +26,15 @@ sub list {
     );
 
     return $c->render(
-        json   => $result,
+        json => {
+            %$result,
+            %{$c->cliente_mf_assistant(user_obj => $c->stash('user_obj'))}
+        },
         status => 200,
     );
 }
 
-sub sync {
+sub me_t_sync {
     my $c = shift;
 
     my $params = $c->req->params->to_hash;
@@ -78,7 +81,7 @@ sub sync {
     );
 }
 
-sub nova {
+sub me_t_nova {
     my $c = shift;
 
     my $params = $c->req->params->to_hash;

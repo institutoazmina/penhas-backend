@@ -21,6 +21,63 @@ sub setup {
     $self->helper('cliente_lista_tarefas'      => sub { &cliente_lista_tarefas(@_) });
     $self->helper('cliente_sync_lista_tarefas' => sub { &cliente_sync_lista_tarefas(@_) });
     $self->helper('cliente_nova_tarefas'       => sub { &cliente_nova_tarefas(@_) });
+    $self->helper('cliente_mf_assistant'       => sub { &cliente_mf_assistant(@_) });
+}
+
+sub cliente_mf_assistant {
+    my ($c, %opts) = @_;
+
+    my $user = $opts{user_obj} or confess 'missing user_obj';
+    return {} unless $user->is_female();
+
+    my $mf_sc = $user->ensure_cliente_mf_session_control_exists();
+
+    my $config = {
+        'onboarding' => {t => 'Criar meu Manual de Fuga',                d => '...'},
+        'inProgress' => {t => 'Continuar preenchendo do Manual de Fuga', d => '...'},
+        'completed'  => {t => 'Refazer Manual de Fuga',                  d => '...'},
+    };
+    my $title    = $config->{$mf_sc->status()}{t};
+    my $subtitle = $config->{$mf_sc->status()}{d};
+
+    # no onboarding e completed o body é vazio, precisa de um POST /me/quiz (só precisa passar o session_id)
+    # para iniciar a session com o primeiro valor da mf_questionnaire_order (geralmente o B0)
+    my $quiz_session = {
+        current_msgs => [],
+        prev_msgs    => undef
+    };
+
+    my $mf_current_session_id = $mf_sc->current_clientes_quiz_session();
+    if ($mf_current_session_id) {
+        my $quiz_session = $c->user_get_quiz_session(user => $user, session_id => $mf_current_session_id);
+
+        if (!$quiz_session) {
+            slog_info(
+                'failed to load current_clientes_quiz_session user=%s $mf_current_session_id=%s',
+                $user->id, $mf_current_session_id,
+            );
+            $user->remove_cliente_mf_session_control();
+        }
+        else {
+
+            $c->load_quiz_session(session => $quiz_session, user => $user);
+
+            $quiz_session = $c->stash('quiz_session');
+        }
+    }
+
+    my $ret = {
+        title    => $title,
+        subtitle => $subtitle,
+
+        quiz_session => {
+            session_id => $user->mf_assistant_session_id(),
+            %$quiz_session,
+        }
+    };
+
+
+    return {mf_assistant => $ret};
 }
 
 # será usado apenas para o desenvolvimento, não será usado em produção

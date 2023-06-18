@@ -21,12 +21,11 @@ create table mf_questionnaire_order (
 -- inProgress
 -- completed
 create table cliente_mf_session_control (
-    id serial not null primary key,
-    cliente_id int not null references clientes(id),
+    cliente_id int not null references clientes(id) ON DELETE CASCADE primary key,
 
     status varchar not null default 'onboarding',
 
-    current_clientes_quiz_session int not null references clientes_quiz_session(id),
+    current_clientes_quiz_session int references clientes_quiz_session(id),
     completed_questionnaires_id  int[] not null default '{}'::int[],
 
     started_at timestamp without time zone not null default now(),

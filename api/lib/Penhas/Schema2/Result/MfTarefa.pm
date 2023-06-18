@@ -43,25 +43,23 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
     original    => { data_type => "varchar" },
   },
-  "campo_livre",
-  { data_type => "json", is_nullable => 1 },
-  
   "agrupador",
   {
     data_type => "varchar",
     default_value => "Outros",
-    is_nullable => 0,
+    is_nullable => 1,
     size => 120,
   },
   "criado_em",
   {
     data_type     => "timestamp",
     default_value => \"current_timestamp",
-    is_nullable   => 0,
-    original      => { default_value => \"now()" },
+    is_nullable   => 1,
   },
   "eh_customizada",
   { data_type => "boolean", default_value => \"false", is_nullable => 0 },
+  "campo_livre",
+  { data_type => "json", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -72,8 +70,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-06-02 23:47:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qKS8eciO+cMSD/E+2pCF0g
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-16 02:15:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:fzQMjYt4gonIcTljNyQ8ww
 
 
 

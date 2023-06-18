@@ -11,24 +11,17 @@ use warnings;
 use base 'Penhas::Schema::Base';
 __PACKAGE__->table("cliente_mf_session_control");
 __PACKAGE__->add_columns(
-  "id",
-  {
-    data_type         => "integer",
-    is_auto_increment => 1,
-    is_nullable       => 0,
-    sequence          => "cliente_mf_session_control_id_seq",
-  },
   "cliente_id",
   { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
   "status",
   {
     data_type     => "text",
-    default_value => "onboard",
+    default_value => "onboarding",
     is_nullable   => 0,
     original      => { data_type => "varchar" },
   },
   "current_clientes_quiz_session",
-  { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
   "completed_questionnaires_id",
   {
     data_type     => "integer[]",
@@ -45,24 +38,87 @@ __PACKAGE__->add_columns(
   "completed_at",
   { data_type => "timestamp", is_nullable => 1 },
 );
-__PACKAGE__->set_primary_key("id");
+__PACKAGE__->set_primary_key("cliente_id");
 __PACKAGE__->belongs_to(
   "cliente",
   "Penhas::Schema2::Result::Cliente",
   { id => "cliente_id" },
-  { is_deferrable => 0, on_delete => "NO ACTION", on_update => "NO ACTION" },
+  { is_deferrable => 0, on_delete => "CASCADE", on_update => "NO ACTION" },
 );
 __PACKAGE__->belongs_to(
   "current_clientes_quiz_session",
   "Penhas::Schema2::Result::ClientesQuizSession",
   { id => "current_clientes_quiz_session" },
-  { is_deferrable => 0, on_delete => "NO ACTION", on_update => "NO ACTION" },
+  {
+    is_deferrable => 0,
+    join_type     => "LEFT",
+    on_delete     => "NO ACTION",
+    on_update     => "NO ACTION",
+  },
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-05-25 18:44:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DI5WCEpbMHdtmSO2Ssohsw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-16 03:00:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:HU6o12q180TXkn/uKyPqMQ
 
+# -- statuses:
+# -- onboarding
+# -- inProgress
+# -- completed
+
+sub register_session_start {
+    my ($self, %opts) = @_;
+
+    $self->update(
+        {
+            started_at                    => \'now()',
+            current_clientes_quiz_session => $opts{session_id},
+            status                        => 'inProgress'
+        }
+    );
+}
+
+sub register_completed_questionnaire {
+    my ($self, %opts) = @_;
+
+    my $completed_questionnaires_id = [@{$self->completed_questionnaires_id}, $opts{questionnaire_id}];
+
+    $self->update(
+        {
+            completed_questionnaires_id => $completed_questionnaires_id,
+        }
+    );
+}
+
+# busca o proximo questionario que não foi completado
+sub get_next_questionnaire_id {
+    my ($self, %opts) = @_;
+
+    my $completed_questionnaires_id = $self->completed_questionnaires_id;
+
+    return $self->result_source->schema->resultset('MfQuestionnaireOrder')->search(
+        {
+            'me.active'           => 1,
+            'me.questionnaire_id' => {'not in' => $completed_questionnaires_id}
+        },
+        {
+            order_by => 'sort',
+            rows     => 1,
+        }
+    )->get_column('questionnaire_id')->next;
+}
+
+sub set_status_completed {
+    my ($self, %opts) = @_;
+
+    $self->update(
+        {
+            status                        => 'completed',
+            completed_at                  => \'now()',
+            current_clientes_quiz_session => undef,
+        }
+    );
+}
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

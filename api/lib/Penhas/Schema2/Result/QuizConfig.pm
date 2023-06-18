@@ -30,7 +30,12 @@ __PACKAGE__->add_columns(
   "modified_on",
   { data_type => "timestamp with time zone", is_nullable => 1 },
   "type",
-  { data_type => "varchar", is_nullable => 0, size => 100 },
+  {
+    data_type => "varchar",
+    default_value => \"null",
+    is_nullable => 1,
+    size => 100,
+  },
   "code",
   {
     data_type   => "text",
@@ -42,9 +47,9 @@ __PACKAGE__->add_columns(
   "questionnaire_id",
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "yesnogroup",
-  { data_type => "json", default_value => "{}", is_nullable => 1 },
+  { data_type => "json", default_value => "[]", is_nullable => 1 },
   "intro",
-  { data_type => "json", default_value => "{}", is_nullable => 1 },
+  { data_type => "json", default_value => "[]", is_nullable => 1 },
   "relevance",
   { data_type => "varchar", default_value => 1, is_nullable => 0, size => 2000 },
   "button_label",
@@ -58,8 +63,23 @@ __PACKAGE__->add_columns(
   { data_type => "uuid", is_nullable => 1, size => 16 },
   "options",
   { data_type => "json", is_nullable => 1 },
+  "tarefas",
+  { data_type => "json", default_value => "[]", is_nullable => 1 },
+  "change_to_questionnaire_id",
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->belongs_to(
+  "change_to_questionnaire",
+  "Penhas::Schema2::Result::Questionnaire",
+  { id => "change_to_questionnaire_id" },
+  {
+    is_deferrable => 0,
+    join_type     => "LEFT",
+    on_delete     => "NO ACTION",
+    on_update     => "NO ACTION",
+  },
+);
 __PACKAGE__->belongs_to(
   "questionnaire",
   "Penhas::Schema2::Result::Questionnaire",
@@ -68,8 +88,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-09-09 08:40:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Lr5NWJXB4b+pHitQ1RXw8g
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-16 02:15:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:D9TdgV29wV4uN3SBnpc5LQ
 
 # ALTER TABLE quiz_config ADD FOREIGN KEY (questionnaire_id) REFERENCES questionnaires(id) ON DELETE CASCADE ON UPDATE cascade;
 =pod

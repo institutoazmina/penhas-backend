@@ -196,8 +196,8 @@ __PACKAGE__->has_many(
   { "foreign.blocked_cliente_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
-__PACKAGE__->has_many(
-  "cliente_mf_session_controls",
+__PACKAGE__->might_have(
+  "cliente_mf_session_control",
   "Penhas::Schema2::Result::ClienteMfSessionControl",
   { "foreign.cliente_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
@@ -366,8 +366,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-05-25 21:16:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6A+EZScFcR1iBl1q18oucQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-16 02:15:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qckAXwn2pzoHhLxne9/zyQ
 
 use Carp qw/confess/;
 
@@ -612,12 +612,50 @@ sub reset_all_questionnaires {
             quiz_assistant_yes_count => \'quiz_assistant_yes_count+1',
         }
     );
-    $self->clientes_quiz_sessions->search({deleted_at => undef})->update(
+
+    # o botão de reset do assistente só pode reiniciar as que começam sozinhas
+    # na vdd só deveria apagar uma especifica (mas não tem esse id salvo no banco)
+    $self->clientes_quiz_sessions->search(
+        {
+            'me.deleted_at'                            => undef,
+            'questionnaire.penhas_start_automatically' => 1,
+        },
+        {'join' => 'questionnaire'}
+    )->update(
         {
             deleted    => 1,
             deleted_at => \'NOW()',
         }
     );
+}
+
+sub remove_cliente_mf_session_control {
+    my ($self) = @_;
+    my $cliente_mf_session_control = $self->cliente_mf_session_control;
+    if ($cliente_mf_session_control) {
+        $cliente_mf_session_control->delete;
+    }
+}
+
+sub ensure_cliente_mf_session_control_exists {
+    my ($self) = @_;
+
+    my $row = eval { $self->find_or_create_related('cliente_mf_session_control', {}); };
+    my $err = $@;
+    if ($err && $err =~ /duplicate/) {
+        $row = $self->cliente_mf_session_control;
+    }
+    elsif ($err) {
+        die $err;
+    }
+
+    die 'failed to fulfill ensure_cliente_mf_session_control_exists' unless $row;
+
+    return $row;
+}
+
+sub mf_assistant_session_id {
+    return 'MF' . substr($_[0]->cpf_hash, 0, 4);
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
