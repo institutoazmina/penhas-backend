@@ -8,27 +8,32 @@ const wb = XLSX.readFile('./input.xlsx');
 
 interface Block { id: string; description: string; db_id: number }
 
-type XlsType = 'SN' | 'SC' | 'AC' | 'SNT' | 'MC';
+type XlsType = 'SN' | 'SC' | 'AC' | 'SNT' | 'MC' | 'BF' | 'PS';
 type DbQuizConfigType = 'yesnomaybe' | 'skillset' | 'text' | 'onlychoice' |
     'yesno' | 'botao_fim' | 'cep_address_lookup' | 'auto_change_questionnaire' |
     'displaytext' | 'yesnogroup' | 'autocontinue' | 'botao_tela_modo_camuflado' |
-    'next_mf_questionnaire' | 'multiplechoice';
+    'next_mf_questionnaire' | 'multiplechoice' | 'next_mf_questionnaire_outstanding';
 
 const yesnoRegex = new RegExp(/(S|N|T)\s*[:,]\s*(.+)\s*/);
 const mcRegexp = new RegExp(/\"([^\"]+)"\s*[:,]\s*(.+)\s*/);
 
+const bf_label = 'Ok!';
+
 const DeParaType: Record<XlsType, DbQuizConfigType> = {
     'AC': 'autocontinue',
+    'PS': 'next_mf_questionnaire_outstanding',
     'SNT': 'yesnomaybe',
     'SN': 'yesno',
     'SC': 'onlychoice',
-    'MC': 'multiplechoice'
+    'MC': 'multiplechoice',
+    'BF': 'botao_fim',
 };
 
 interface XLSXParsedOption {
     proxima_pergunta: string
     opcao: string
     cod_respostas: string[]
+    tags: string[]
 }
 
 interface QuizConfigTarefa {
@@ -41,6 +46,7 @@ interface ParsedQuestionType {
     change_to_questionnaire_id: number | null
     options: XLSXParsedOption[]
     tarefas: QuizConfigTarefa[]
+    button_label: string | null
 }
 
 interface Question {
@@ -72,6 +78,11 @@ interface Task {
     observation: string;
 }
 
+interface Tag {
+    tagId: string;
+    description: string;
+}
+
 const parseSheet = <T>(worksheet: XLSX.WorkSheet): T[] => {
     const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
     const headers = json.shift() as string[];
@@ -98,6 +109,11 @@ const transformBlock = (data: any): Block => ({
     db_id: +data["ID Questionario"],
 });
 
+const transformTag = (data: any): Tag => ({
+    tagId: data["ID TAG"],
+    description: data["DESCRICAO"],
+});
+
 const transformQuestion = (data: any): Question => {
     const parsed: ParsedQuestionType = {
         change_to_questionnaire_id: null,
@@ -105,7 +121,7 @@ const transformQuestion = (data: any): Question => {
         orig_type: data["Tipo"],
         options: [],
         tarefas: [],
-        cod_respostas: [],
+        button_label: null
     };
 
     let returning = {
@@ -136,6 +152,8 @@ const transformQuestion = (data: any): Question => {
 
             if (isNaN(parsed.change_to_questionnaire_id))
                 throw `faltando change_to_questionnaire_id para o tipo autocontinue em ${JSON.stringify(returning)}`;
+        } else if (parsed.db_type == 'botao_fim') {
+            parsed.button_label = bf_label;
         } else if ([
             'onlychoice',
             'multiplechoice',
@@ -150,11 +168,14 @@ const transformQuestion = (data: any): Question => {
                 const paths = ret[2].split(',').map(n => n.trim());
 
                 const cod_respostas: string[] = [];
+                const tags: string[] = [];
                 let pergunta = '';
                 for (const path of paths) {
                     if (path.toLowerCase().startsWith('p')) {
                         if (pergunta) throw `só pode seguir pra uma pergunta por vez, ${line} em ${JSON.stringify(returning)}`
                         pergunta = path;
+                    } else if (path.toLowerCase().startsWith('t')) {
+                        tags.push(path)
                     } else {
                         cod_respostas.push(path)
                     }
@@ -164,7 +185,8 @@ const transformQuestion = (data: any): Question => {
                 parsed.options.push({
                     opcao: ret[1],
                     proxima_pergunta: pergunta,
-                    cod_respostas
+                    cod_respostas,
+                    tags
                 });
             }
 
@@ -196,9 +218,12 @@ const blocks: Block[] = parseSheet(wb.Sheets[wb.SheetNames[0]]).map(transformBlo
 const questions: Question[] = parseSheet(wb.Sheets[wb.SheetNames[1]]).map(transformQuestion).filter(n => n.blockId);
 const replies: Reply[] = parseSheet(wb.Sheets[wb.SheetNames[2]]).map(transformReply).filter(n => n.blockId);
 const tasks: Task[] = parseSheet(wb.Sheets[wb.SheetNames[3]]).map(transformTask).filter(n => n.blockId);
+const tags: Tag[] = parseSheet(wb.Sheets[wb.SheetNames[4]]).map(transformTag).filter(n => n.tagId);
+
 
 //console.log("Blocks:", blocks);
 //console.log("Questions:", questions);
 //console.log("Replies:", replies);
 //console.log("Tasks:", tasks);
+//console.log("Tags:", tags);
 
