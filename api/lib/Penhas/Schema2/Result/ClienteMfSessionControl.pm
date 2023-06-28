@@ -66,6 +66,8 @@ __PACKAGE__->belongs_to(
 # -- inProgress
 # -- completed
 
+use Penhas::Utils;
+
 sub register_session_start {
     my ($self, %opts) = @_;
 
@@ -93,18 +95,35 @@ sub register_completed_questionnaire {
 # busca o proximo questionario que não foi completado
 sub get_next_questionnaire_id {
     my ($self, %opts) = @_;
+    my $published = is_test() ? 'testing' : 'published';
+
+    my $outstanding = $opts{outstanding} ? $opts{outstanding} : 0;
 
     my $completed_questionnaires_id = $self->completed_questionnaires_id;
 
+    if ($outstanding) {
+
+        # busca pelo outstanding se não tiver sido respondido ainda
+        # isso é pra fazer pular na frente dos outros items
+        my $pending = $self->result_source->schema->resultset('MfQuestionnaireOrder')->search(
+            {
+                'me.published'         => $published,
+                'me.questionnaire_id'  => {'not in' => $completed_questionnaires_id},
+                'me.outstanding_order' => $outstanding
+            },
+            {order_by => 'sort', rows => 1}
+        )->get_column('questionnaire_id')->next;
+
+        return $pending if $pending;
+    }
+
+    # se não tiver, busca o normal
     return $self->result_source->schema->resultset('MfQuestionnaireOrder')->search(
         {
-            'me.active'           => 1,
-            'me.questionnaire_id' => {'not in' => $completed_questionnaires_id}
+            'me.published'        => $published,
+            'me.questionnaire_id' => {'not in' => $completed_questionnaires_id},
         },
-        {
-            order_by => 'sort',
-            rows     => 1,
-        }
+        {order_by => 'sort', rows => 1}
     )->get_column('questionnaire_id')->next;
 }
 

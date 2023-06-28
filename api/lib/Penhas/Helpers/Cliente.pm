@@ -11,6 +11,8 @@ use Encode;
 
 our $NEW_TASK_TOKEN = $ENV{NEW_TASK_TOKEN} || '';
 
+my $descricao = '';
+
 sub setup {
     my $self = shift;
 
@@ -22,6 +24,8 @@ sub setup {
     $self->helper('cliente_sync_lista_tarefas' => sub { &cliente_sync_lista_tarefas(@_) });
     $self->helper('cliente_nova_tarefas'       => sub { &cliente_nova_tarefas(@_) });
     $self->helper('cliente_mf_assistant'       => sub { &cliente_mf_assistant(@_) });
+
+    $self->helper('cliente_mf_add_tarefa_por_codigo' => sub { &cliente_mf_add_tarefa_por_codigo(@_) });
 }
 
 sub cliente_mf_assistant {
@@ -33,9 +37,9 @@ sub cliente_mf_assistant {
     my $mf_sc = $user->ensure_cliente_mf_session_control_exists();
 
     my $config = {
-        'onboarding' => {t => 'Criar meu Manual de Fuga',                d => '...'},
-        'inProgress' => {t => 'Continuar preenchendo do Manual de Fuga', d => '...'},
-        'completed'  => {t => 'Refazer Manual de Fuga',                  d => '...'},
+        'onboarding' => {t => 'Criar o meu Manual de Fuga',         d => $descricao},
+        'inProgress' => {t => 'Continuar preenchendo o meu Manual', d => $descricao},
+        'completed'  => {t => 'Refazer o meu Manual de Fuga',       d => $descricao},
     };
     my $title    = $config->{$mf_sc->status()}{t};
     my $subtitle = $config->{$mf_sc->status()}{d};
@@ -78,6 +82,63 @@ sub cliente_mf_assistant {
 
 
     return {mf_assistant => $ret};
+}
+
+
+sub cliente_mf_add_tarefa_por_codigo {
+    my ($c, %opts) = @_;
+
+    my $user    = $opts{user_obj} or confess 'missing user_obj';
+    my $codigos = $opts{codigos}  or confess 'missing codigos';
+
+    $c->schema2->txn_do(
+        sub {
+            my @tarefas = $c->schema2->resultset('MfTarefa')->search(
+                {
+                    codigo => {in => $codigos},
+                },
+                {
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                    columns      => ['id', 'codigo'],
+                }
+            )->all;
+
+            my @already_exists = $c->schema2->resultset('MfClienteTarefa')->search(
+                {
+                    removido_em => undef,
+                    cliente_id  => $user->id,
+
+                    mf_tarefa_id => {'in' => [map { $_->{id} } @tarefas]}
+                },
+                {
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                    columns      => ['mf_tarefa_id']
+                }
+            )->all();
+
+            my $exists_by_id = {};
+            $exists_by_id->{$_->{mf_tarefa_id}} = 1 for @already_exists;
+
+            for my $tarefa (@tarefas) {
+                next if $exists_by_id->{$tarefa->{id}};
+
+                slog_info(
+                    'adding mf_cliente_tarefa user=%s $tarefa_id=%s %s',
+                    $user->id, $tarefa->{id}, $tarefa->{codigo},
+                );
+
+                $c->schema2->resultset('MfClienteTarefa')->create(
+                    {
+                        removido_em   => undef,
+                        cliente_id    => $user->id,
+                        atualizado_em => \'now()',
+                        mf_tarefa_id  => $tarefa->{id},
+                    }
+                );
+            }
+        }
+    );
+
 }
 
 # será usado apenas para o desenvolvimento, não será usado em produção

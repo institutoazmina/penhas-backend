@@ -11,7 +11,12 @@ create table mf_questionnaire_order (
     id serial not null primary key,
 
     sort int not null default 0,
-    active boolean not null default true,
+
+    outstanding_order  boolean not null default false,
+
+    is_last  boolean not null default false,
+
+    published character varying(20) default 'testing',
 
     questionnaire_id int not null references questionnaires(id)
 );
@@ -34,8 +39,11 @@ create table cliente_mf_session_control (
 
 -- novos tipo na quiz_config:
 -- next_mf_questionnaire
+-- next_mf_questionnaire_outstanding
 -- auto_change_questionnaire
 -- yesnomaybe
+-- multiplechoice
+-- text << já existia, mas não tem no app
 
 alter table quiz_config add column change_to_questionnaire_id int references questionnaires(id);
 alter table quiz_config add column tarefas json   not null default '[]';

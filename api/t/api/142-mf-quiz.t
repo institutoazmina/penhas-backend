@@ -170,7 +170,7 @@ db_transaction {
         $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
 
         like $first_msg->{content}, qr/Que bom que você não está sozinha/, 'campo display ok';
-        is $input_msg->{type}, 'text', 'campo livre', 'pergunta campo livre';
+        is $input_msg->{type},      'text',                                'campo livre - pergunta campo livre';
 
         $json = $t->post_ok(
             '/me/quiz',
@@ -182,7 +182,30 @@ db_transaction {
         )->status_is(200)->json_has('/quiz_session')->tx->res->json;
 
         $mf_sc->discard_changes;
-        is $mf_sc->completed_questionnaires_id,   [7, 9, 10], 'completed b0 and b1, b2';
+        is $mf_sc->completed_questionnaires_id, [7, 9, 10], 'completed b0, b1 and b2';
+        is $mf_sc->status, 'inProgress', 'status is inProgress';
+
+        $first_msg = $json->{quiz_session}{current_msgs}[0];
+        $input_msg = $json->{quiz_session}{current_msgs}[-1];
+        $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
+
+        like $first_msg->{content}, qr/Até mais/, 'texto final';
+        is $input_msg->{type},      'button',     'botao para finalizar';
+
+        use DDP;
+        p $first_msg;
+
+        $json = $t->post_ok(
+            '/me/quiz',
+            {'x-api-key' => $session},
+            form => {
+                session_id => $session_id,
+                $field_ref => 'ok',
+            }
+        )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+        $mf_sc->discard_changes;
+        is $mf_sc->completed_questionnaires_id,   [7, 9, 10, 11], 'completed b0, b1, b2 and BF';
         is $mf_sc->status,                        'completed', 'status is completed';
         is $mf_sc->current_clientes_quiz_session, undef,       'current_clientes_quiz_session is back to null';
 

@@ -20,8 +20,17 @@ __PACKAGE__->add_columns(
   },
   "sort",
   { data_type => "integer", default_value => 0, is_nullable => 0 },
-  "active",
-  { data_type => "boolean", default_value => \"true", is_nullable => 0 },
+  "outstanding_order",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
+  "is_last",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
+  "published",
+  {
+    data_type => "varchar",
+    default_value => "testing",
+    is_nullable => 1,
+    size => 20,
+  },
   "questionnaire_id",
   { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
 );
@@ -34,8 +43,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-05-25 18:44:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5Hv6RPdydNTOVr+6CjyTcw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-28 12:27:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4OhL9yrw7tk0YAdMuLYX1A
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

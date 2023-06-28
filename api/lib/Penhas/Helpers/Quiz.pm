@@ -110,8 +110,9 @@ sub load_quiz_config {
     my $kv       = Penhas::KeyValueStorage->instance;
     my $cachekey = "QuizConfig:$id:" . $opts{cachekey};
 
-    #Readonly::Array my @config => @{
-    my @config = @{
+    Readonly::Array my @config => @{
+
+        #my @config = @{
         $kv->redis_get_cached_or_execute(
             $cachekey,
             86400 * 7,    # 7 days
@@ -121,6 +122,7 @@ sub load_quiz_config {
                         $_->{yesnogroup} and $_->{yesnogroup} = from_json($_->{yesnogroup});
                         $_->{intro}      and $_->{intro}      = from_json($_->{intro});
                         $_->{options}    and $_->{options}    = from_json($_->{options});
+                        $_->{tarefas}    and $_->{tarefas}    = from_json($_->{tarefas});
                         $_
                     } $c->schema2->resultset('QuizConfig')->search(
                         {
@@ -316,9 +318,10 @@ sub load_quiz_session {
 
     my $session_rs = $c->schema2->resultset('ClientesQuizSession');
     my $user       = $opts{user};
+    my $user_obj   = $opts{user_obj};
     my $is_anon    = $opts{is_anon} ? 1 : 0;
 
-    croak 'missing user' if !$is_anon && !$user;
+    croak 'missing user' if !$is_anon && (!$user || !$user_obj);
 
     if ($is_anon) {
         $session_rs = $c->schema2->resultset('AnonymousQuizSession');
@@ -385,10 +388,18 @@ sub load_quiz_session {
                     $is_last_item = 0;
                 }
 
-                if ($item->{_next_mf_questionnaire}) {
-                    use DDP;
-                    p $stash;
-                    p $has_relevance;
+                # tem relevancia, mas não é um input, mas tem tarefas, então foi um display text, adiciona
+                # as tarefas automaticamente
+                if (   $user_obj
+                    && $has_relevance
+                    && !$is_last_item
+                    && $item->{_tarefas}
+                    && @{$item->{_tarefas}} > 0)
+                {
+                    my @codigos = map { $_->{codigo} } @{$item->{_tarefas}};
+                    log_info("Adicioando tarefas para o usuário: " . join ', ', @codigos);
+
+                    $c->cliente_mf_add_tarefa_por_codigo(codigos => \@codigos, user_obj => $user_obj);
                 }
 
                 # troca sozinho de questionario se chegar a sua vez
@@ -426,7 +437,7 @@ sub load_quiz_session {
 
                     $mf_sc->register_completed_questionnaire(questionnaire_id => $session->{questionnaire_id});
 
-                    my $next_q_id = $mf_sc->get_next_questionnaire_id();
+                    my $next_q_id = $mf_sc->get_next_questionnaire_id(outstanding => $item->{_outstanding});
                     use DDP;
                     p $next_q_id;
 
@@ -697,7 +708,7 @@ sub process_quiz_assistant {
             my $quiz_session = $c->user_get_quiz_session(user => $user, disable_is_during_login => 1);
             if ($quiz_session) {
 
-                $c->load_quiz_session(session => $quiz_session, user => $user);
+                $c->load_quiz_session(session => $quiz_session, user => $user, user_obj => $user_obj);
                 return {quiz_session => $c->stash('quiz_session')};
             }
             else {
@@ -956,6 +967,16 @@ sub process_quiz_session {
                     if ($stash->{is_eof} || $msg->{_end_chat}) {
                         $stash->{is_finished} = 1;
                         $recalc_primeiro_quiz = 1;
+
+                        if ($stash->{is_mf}) {
+                            log_info("is_mf=true, running set_status_completed");
+
+                            my $mf_sc
+                              = $c->schema2->resultset('ClienteMfSessionControl')->find($stash->{mf_control_id});
+
+                            $mf_sc->register_completed_questionnaire(questionnaire_id => $session->{questionnaire_id});
+                            $mf_sc->set_status_completed();
+                        }
                     }
                 }
 
@@ -972,7 +993,18 @@ sub process_quiz_session {
 
         # vai embora, pois so devemos ter 1 resposta por vez
         # pelo menos eh assim que eu imagino o uso por enquanto
-        last QUESTIONS if $have_new_responses;
+        if ($have_new_responses) {
+
+            if ($user_obj && $msg->{_tarefas} && @{$msg->{_tarefas}} > 0) {
+                my @codigos = map { $_->{codigo} } @{$msg->{_tarefas}};
+                log_info("Adicioando tarefas para o usuário: " . join ', ', @codigos);
+
+                # chama assim que termina de responder (os que são input)
+                $c->cliente_mf_add_tarefa_por_codigo(codigos => \@codigos, user_obj => $user_obj);
+            }
+
+            last QUESTIONS;
+        }
     }
 
     log_info("have_new_responses=$have_new_responses");
@@ -1088,6 +1120,7 @@ sub _init_questionnaire_stash {
         }
 
         if ($qc->{type} eq 'yesno') {
+
             push @questions, {
                 type       => 'yesno',
                 content    => $qc->{question},
@@ -1095,6 +1128,7 @@ sub _init_questionnaire_stash {
                 _relevance => $relevance,
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
+                _tarefas => $qc->{tarefas},
             };
         }
         elsif ($qc->{type} eq 'yesnomaybe') {
@@ -1105,6 +1139,7 @@ sub _init_questionnaire_stash {
                 _relevance => $relevance,
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
+                _tarefas => $qc->{tarefas},
             };
         }
         elsif ($qc->{type} eq 'text') {
@@ -1115,6 +1150,7 @@ sub _init_questionnaire_stash {
                 _relevance => $relevance,
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
+                _tarefas => $qc->{tarefas},
             };
         }
         elsif ($qc->{type} eq 'yesnogroup') {
@@ -1131,6 +1167,7 @@ sub _init_questionnaire_stash {
                     _code   => $qc->{code},
                     ($is_anon ? (code => $qc->{code} . '_' . $subq->{referencia}) : ()),
                     _relevance => $relevance,
+                    _tarefas   => $qc->{tarefas},
                     _sub       => {
                         ref  => $qc->{code} . '_' . $subq->{referencia},
                         p2a  => $subq->{power2answer},
@@ -1161,6 +1198,7 @@ sub _init_questionnaire_stash {
                 _code   => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
                 _relevance => $relevance,
+                _tarefas   => $qc->{tarefas},
                 options    => [],
             };
 
@@ -1184,6 +1222,7 @@ sub _init_questionnaire_stash {
                 style      => 'normal',
                 content    => $qc->{question},
                 _relevance => $relevance,
+                _tarefas   => $qc->{tarefas},
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
             };
@@ -1204,6 +1243,7 @@ sub _init_questionnaire_stash {
                 ref                => 'BT' . $qc->{id},
                 label              => $qc->{button_label} || 'Visualizar',
                 _relevance         => $relevance,
+                _tarefas           => $qc->{tarefas},
                 _code              => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
             };
@@ -1218,21 +1258,24 @@ sub _init_questionnaire_stash {
                 ref        => 'BT' . $qc->{id},
                 label      => $qc->{button_label} || 'Enviar',
                 _relevance => $relevance,
+                _tarefas   => $qc->{tarefas},
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
                 _end_chat => 1,
             };
 
         }
-        elsif ($qc->{type} eq 'onlychoice') {
+        elsif ($qc->{type} eq 'multiplechoices' || $qc->{type} eq 'onlychoice') {
+            my $is_mc = $qc->{type} eq 'multiplechoices' ? 1 : 0;
 
             my $ref = {
-                type    => 'onlychoice',
+                type    => $is_mc ? 'multiplechoices' : 'onlychoice',
                 content => $qc->{question},
-                ref     => 'OC' . $qc->{id},
+                ref     => ($is_mc ? 'MC' : 'OC') . $qc->{id},
                 _code   => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
                 _relevance => $relevance,
+                _tarefas   => $qc->{tarefas},
                 options    => [],
             };
 
@@ -1259,6 +1302,7 @@ sub _init_questionnaire_stash {
                 content             => $qc->{question},
                 ref                 => 'CEP' . $qc->{id},
                 _relevance          => $relevance,
+                _tarefas            => $qc->{tarefas},
                 _code               => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
             };
@@ -1278,23 +1322,26 @@ sub _init_questionnaire_stash {
                 ref     => 'ACQ' . $qc->{id},
 
                 _relevance => $relevance,
+                _tarefas   => $qc->{tarefas},
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
 
                 _change_questionnaire => $qc->{change_to_questionnaire_id},
             };
         }
-        elsif ($qc->{type} eq 'next_mf_questionnaire') {
+        elsif ($qc->{type} eq 'next_mf_questionnaire' || $qc->{type} eq 'next_mf_questionnaire_outstanding') {
             push @questions, {
                 type    => 'next_mf_questionnaire',
                 content => $qc->{question},
                 ref     => 'AMF' . $qc->{id},
 
                 _relevance => $relevance,
+                _tarefas   => $qc->{tarefas},
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
 
                 _next_mf_questionnaire => 1,
+                _outstanding           => $qc->{type} eq 'next_mf_questionnaire_outstanding' ? 1 : 0,
             };
         }
         else {
@@ -1500,7 +1547,7 @@ sub process_mf_assistant {
         );
 
         if ($quiz_session) {
-            $c->load_quiz_session(session => $quiz_session, user => $user);
+            $c->load_quiz_session(session => $quiz_session, user => $user, user_obj => $user_obj);
 
             $mf_sc->register_session_start(
                 questionnaire_id => $first_questionnaire_id,
