@@ -163,7 +163,12 @@ const transformQuestion = (data: any): Question => {
     };
 
     if (returning.tasks) {
-        parsed.tarefas.push(returning.tasks.split(',').map(n => n.trim()));
+        const tasks = returning.tasks.split(',');
+        for (const codigo of tasks) {
+            parsed.tarefas.push({
+                codigo: codigo.trim()
+            });
+        }
     }
 
     if (returning.blockId) {
@@ -349,15 +354,16 @@ const generateSql = (blocks: Block[], quiz: QuizConfig[]) => {
             if (qc.questionnaire_id == block.db_id) {
 
                 let escapedQuestion = escapeString(qc.question);
-                let escapedIntro = escapeString(JSON.stringify(qc.intro));
+                let escapedIntro = escapeString(JSON.stringify(qc.intro.map(
+                    (intro) => { return { text: intro } }
+                )));
                 let escapedRelevance = escapeString(qc.relevance);
-                let escapedOptions = escapeString(JSON.stringify(qc.options));
+                let escapedOptions = qc.options !== null ? escapeString(JSON.stringify(qc.options)) : null;
 
-                // Insert statement
                 sqlStr += `INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id)
                         VALUES ('${qc.status}', ${qc.sort}, '${qc.type}', '${qc.code}', E'${escapedQuestion}',
-                        ${qc.questionnaire_id}, E'${escapedIntro}', E'${escapedRelevance}', '${qc.button_label}',
-                        E'${escapedOptions}', '${JSON.stringify(qc.tarefas)}', ${qc.change_to_questionnaire_id});\n`;
+                        ${qc.questionnaire_id}, E'${escapedIntro}', E'${escapedRelevance}', ${qc.button_label === null ? 'null' : `'${qc.button_label}'`},
+                        ${escapedOptions === null ? 'null' : `E'${escapedOptions}'`}, '${JSON.stringify(qc.tarefas)}', ${qc.change_to_questionnaire_id});\n`;
 
             }
         }
@@ -412,6 +418,7 @@ function boostrap() {
             tarefas: q.parsedType.tarefas,
             type: q.parsedType.db_type,
         };
+
 
         if (!row.questionnaire_id) throw `Faltando ID para o bloco ${q.blockId} -- pergunta ${q.questionId}`;
 
