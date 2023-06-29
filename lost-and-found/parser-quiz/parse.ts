@@ -356,8 +356,8 @@ const generateSql = (blocks: Block[], quiz: QuizConfig[]) => {
                 // Insert statement
                 sqlStr += `INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id)
                         VALUES ('${qc.status}', ${qc.sort}, '${qc.type}', '${qc.code}', E'${escapedQuestion}',
-                        ${qc.questionnaire_id}, '${escapedIntro}', '${escapedRelevance}', '${qc.button_label}',
-                        '${escapedOptions}', '${JSON.stringify(qc.tarefas)}', ${qc.change_to_questionnaire_id});\n`;
+                        ${qc.questionnaire_id}, E'${escapedIntro}', E'${escapedRelevance}', '${qc.button_label}',
+                        E'${escapedOptions}', '${JSON.stringify(qc.tarefas)}', ${qc.change_to_questionnaire_id});\n`;
 
             }
         }
