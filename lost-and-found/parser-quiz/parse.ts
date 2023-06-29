@@ -14,7 +14,7 @@ type DbQuizConfigType = 'yesnomaybe' | 'skillset' | 'text' | 'onlychoice' |
 
 const yesnoRegex = new RegExp(/(S|N|T)\s*[:,]\s*(.+)\s*/);
 const mcRegexp = new RegExp(/\"([^\"]+)"\s*[:,]\s*(.+)\s*/);
-const escapeString = (str: string) => str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+const escapeString = (str: string) => str ? str.replace(/\\/g, '\\\\').replace(/'/g, "\\'") : '';
 
 const bf_label = 'Ok!';
 
@@ -339,6 +339,32 @@ function getBlockByid(blocks: Block[]) {
     return blockId;
 }
 
+const generateSql = (blocks: Block[], quiz: QuizConfig[]) => {
+    let sqlStr = '';
+
+    for (let block of blocks) {
+        sqlStr += `DELETE FROM quiz_config WHERE questionnaire_id = ${block.db_id};\n`;
+
+        for (let qc of quiz) {
+            if (qc.questionnaire_id === block.db_id) {
+                let escapedQuestion = escapeString(qc.question);
+                let escapedIntro = escapeString(JSON.stringify(qc.intro));
+                let escapedRelevance = escapeString(qc.relevance);
+                let escapedOptions = escapeString(JSON.stringify(qc.options));
+
+                // Insert statement
+                sqlStr += `INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id)
+                        VALUES ('${qc.status}', ${qc.sort}, '${qc.type}', '${qc.code}', E'${escapedQuestion}',
+                        ${qc.questionnaire_id}, '${escapedIntro}', '${escapedRelevance}', '${qc.button_label}',
+                        '${escapedOptions}', '${JSON.stringify(qc.tarefas)}', ${qc.change_to_questionnaire_id});\n`;
+            }
+        }
+    }
+
+    return sqlStr;
+}
+
+
 function boostrap() {
     const wb = XLSX.readFile('./input.xlsx');
 
@@ -360,7 +386,7 @@ function boostrap() {
     fs.writeFileSync('out/tags.sql', generateTagSql(tags));
     fs.writeFileSync('out/tarefas.sql', generateTarefasSql(tasks));
 
-
+    generateSql
     //console.log(replies)
 
     let sort_order: number = 10000000;
@@ -460,9 +486,9 @@ function boostrap() {
     //console.log("Tasks:", tasks);
     //console.log("Tags:", tags);
 
-    console.log(quiz)
 
 
+    fs.writeFileSync('out/quiz_config.sql', generateSql(blocks, quiz));
 
 }
 
