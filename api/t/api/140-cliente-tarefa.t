@@ -105,7 +105,7 @@ db_transaction {
             titulo         => 'titulo 1',
             descricao      => 'descricao 1',
             tipo           => 'checkbox',
-            codigo         => 'c1',
+            codigo         => undef,
             eh_customizada => 'false',
             agrupador      => 'nope'
         }

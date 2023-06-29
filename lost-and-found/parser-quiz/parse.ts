@@ -4,18 +4,17 @@ import * as cptable from './cpexcel.full.mjs';
 XLSX.set_cptable(cptable);
 XLSX.set_fs(fs);
 
-const wb = XLSX.readFile('./input.xlsx');
-
 interface Block { id: string; description: string; db_id: number }
 
-type XlsType = 'SN' | 'SC' | 'AC' | 'SNT' | 'MC' | 'BF' | 'PS';
+type XlsType = 'SN' | 'SC' | 'AC' | 'SNT' | 'MC' | 'BF' | 'PS' | 'ET';
 type DbQuizConfigType = 'yesnomaybe' | 'skillset' | 'text' | 'onlychoice' |
     'yesno' | 'botao_fim' | 'cep_address_lookup' | 'auto_change_questionnaire' |
     'displaytext' | 'yesnogroup' | 'autocontinue' | 'botao_tela_modo_camuflado' |
-    'next_mf_questionnaire' | 'multiplechoice' | 'next_mf_questionnaire_outstanding';
+    'next_mf_questionnaire' | 'multiplechoices' | 'next_mf_questionnaire_outstanding';
 
 const yesnoRegex = new RegExp(/(S|N|T)\s*[:,]\s*(.+)\s*/);
 const mcRegexp = new RegExp(/\"([^\"]+)"\s*[:,]\s*(.+)\s*/);
+const escapeString = (str: string) => str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
 const bf_label = 'Ok!';
 
@@ -25,20 +24,38 @@ const DeParaType: Record<XlsType, DbQuizConfigType> = {
     'SNT': 'yesnomaybe',
     'SN': 'yesno',
     'SC': 'onlychoice',
-    'MC': 'multiplechoice',
+    'MC': 'multiplechoices',
     'BF': 'botao_fim',
+    'ET': 'displaytext',
 };
-
-interface XLSXParsedOption {
-    proxima_pergunta: string
-    opcao: string
-    cod_respostas: string[]
-    tags: string[]
-}
 
 interface QuizConfigTarefa {
     codigo: string
 }
+
+interface QuizConfig {
+    status: 'published';
+    sort: number;
+    type: DbQuizConfigType;
+    code: string;
+    question: string; //length max 800
+    questionnaire_id: number; //foreign key, not nullable
+    intro: string[]; //default []
+    relevance: string; //default is '1', length max 2000
+    button_label: string | null; //default 'null', length max 200
+    options: any[] | null;
+    tarefas: QuizConfigTarefa[]; //default []
+    change_to_questionnaire_id: number | null;
+}
+
+interface XLSXParsedOption {
+    proxima_pergunta: string
+    opcao: string
+    opcao_clean: string
+    cod_respostas: string[]
+    tags: string[]
+}
+
 
 interface ParsedQuestionType {
     orig_type: XlsType
@@ -62,16 +79,24 @@ interface Question {
     intros: string[];
 }
 
+interface ReplyXls {
+    blockId: string;
+    questionsId: string;
+    replyId: string;
+    description: string;
+}
+
 interface Reply {
     blockId: string;
     questionId: string;
     replyId: string;
     description: string;
+    tarefas: string[]
 }
 
 interface Task {
     blockId: string;
-    replyId: string;
+    repliesIds: string[];
     taskId: string;
     description: string;
     belongsToBlock: string;
@@ -79,7 +104,7 @@ interface Task {
 }
 
 interface Tag {
-    tagId: string;
+    tagCode: string;
     description: string;
 }
 
@@ -110,7 +135,7 @@ const transformBlock = (data: any): Block => ({
 });
 
 const transformTag = (data: any): Tag => ({
-    tagId: data["ID TAG"],
+    tagCode: data["ID TAG"],
     description: data["DESCRICAO"],
 });
 
@@ -139,7 +164,6 @@ const transformQuestion = (data: any): Question => {
 
     if (returning.tasks) {
         parsed.tarefas.push(returning.tasks.split(',').map(n => n.trim()));
-        console.log(parsed)
     }
 
     if (returning.blockId) {
@@ -156,7 +180,7 @@ const transformQuestion = (data: any): Question => {
             parsed.button_label = bf_label;
         } else if ([
             'onlychoice',
-            'multiplechoice',
+            'multiplechoices',
             'yesno',
             'yesnomaybe'
         ].includes(parsed.db_type)) {
@@ -182,15 +206,26 @@ const transformQuestion = (data: any): Question => {
                 }
                 if (!pergunta) throw `faltando pergunta, ${line} em ${JSON.stringify(returning)}`
 
+                let opcao = ret[1];
+                let opcao_clean: string;
+
+                if (['yesno', 'yesnomaybe'].includes(parsed.db_type)) {
+                    opcao = opcao.toUpperCase().replace('S', 'Y').replace('T', 'M'); // n => N
+                    opcao_clean = opcao;
+                } else {
+                    opcao_clean = opcao.toLowerCase().replace(/\s/g, '-').replace(/[^a-z0-9\-]/g, '');
+                }
+
                 parsed.options.push({
-                    opcao: ret[1],
+                    opcao: opcao,
+                    opcao_clean: opcao_clean,
                     proxima_pergunta: pergunta,
                     cod_respostas,
                     tags
                 });
             }
 
-            console.log(parsed)
+            //console.log(parsed)
         }
 
     }
@@ -198,32 +233,232 @@ const transformQuestion = (data: any): Question => {
     return returning;
 };
 
-const transformReply = (data: any): Reply => ({
+const transformReply = (data: any): ReplyXls => ({
     blockId: data["ID\nBloco"],
-    questionId: data["ID\nPergunta"],
+    questionsId: data["ID\nPergunta"],
     replyId: data["ID\nResposta"],
     description: data["Descrição Resposta"],
 });
 
-const transformTask = (data: any): Task => ({
-    blockId: data["ID Bloco"],
-    replyId: data["ID Resposta"],
-    taskId: data["ID Tarefa"],
-    description: data["Descrição Tarefa"],
-    belongsToBlock: data["Pertence ao bloco"],
-    observation: data["Observação"],
-});
+const transformTask = (data: any): Task => {
+    const str = data["ID Resposta"] ? (data["ID Resposta"] as string).replace(/\s*ou\s*/, ',') : '';
+    const repliesIds = str.split(',').map(s => s.trim());
 
-const blocks: Block[] = parseSheet(wb.Sheets[wb.SheetNames[0]]).map(transformBlock).filter(n => n.id);
-const questions: Question[] = parseSheet(wb.Sheets[wb.SheetNames[1]]).map(transformQuestion).filter(n => n.blockId);
-const replies: Reply[] = parseSheet(wb.Sheets[wb.SheetNames[2]]).map(transformReply).filter(n => n.blockId);
-const tasks: Task[] = parseSheet(wb.Sheets[wb.SheetNames[3]]).map(transformTask).filter(n => n.blockId);
-const tags: Tag[] = parseSheet(wb.Sheets[wb.SheetNames[4]]).map(transformTag).filter(n => n.tagId);
+    return {
+        blockId: data["ID Bloco"],
+        repliesIds: repliesIds,
+        taskId: data["ID Tarefa"],
+        description: data["Descrição Tarefa"],
+        belongsToBlock: data["Pertence ao bloco"],
+        observation: data["Observação"],
+    }
+};
+
+const dbTarefa = (tarefasIds: string[]): QuizConfigTarefa[] => {
+    return tarefasIds.map(t => ({ codigo: t }));
+};
+
+const expandReply = (replyXls: ReplyXls[]): Reply[] => {
+    const out: Reply[] = [];
+
+    for (const reply of replyXls) {
+        const str = reply.questionsId.replace(/\s*ou\s*/, ',');
+        const questions = str.split(',').map(s => s.trim());
+
+        for (const questionId of questions) {
+            out.push({
+                blockId: reply.blockId,
+                description: reply.description,
+                replyId: reply.replyId,
+                questionId: questionId,
+                tarefas: []
+            });
+        }
+    }
+
+    return out;
+};
 
 
-//console.log("Blocks:", blocks);
-//console.log("Questions:", questions);
-//console.log("Replies:", replies);
-//console.log("Tasks:", tasks);
-//console.log("Tags:", tags);
+const generateTagSql = (tags: Tag[]) => {
+    let sqlStr = '';
 
+    for (let tag of tags) {
+        let escapedTagCode = escapeString(tag.tagCode);
+        let escapedDescription = escapeString(tag.description);
+        sqlStr += `INSERT INTO tag(code, description) VALUES (E'${escapedTagCode}', E'${escapedDescription}')
+                   ON CONFLICT (code) DO UPDATE
+                   SET description = EXCLUDED.description;\n`;
+
+    }
+
+    return sqlStr;
+}
+
+const generateTarefasSql = (tasks: Task[]) => {
+    let sqlStr = '';
+
+    for (let task of tasks) {
+        const {
+            taskId: codigo,
+            description: descricao,
+            belongsToBlock: agrupador
+        } = task;
+
+        // tudo vazio por enquanto
+        const titulo = '';
+        const tipo = 'checkbox';
+
+
+        sqlStr += `INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
+                   VALUES (
+                      E'${escapeString(codigo)}',
+                      E'${escapeString(titulo)}',
+                      E'${escapeString(descricao)}',
+                      E'${escapeString(tipo)}',
+                      E'${escapeString(agrupador)}'
+                   )
+                   ON CONFLICT (codigo) WHERE (codigo::text <> ''::text) DO UPDATE
+                   SET descricao = EXCLUDED.descricao,
+                       agrupador = EXCLUDED.agrupador;\n`;
+    }
+
+    return sqlStr;
+}
+
+function getBlockByid(blocks: Block[]) {
+    const blockId: Record<string, number> = {};
+    for (const block of blocks) {
+        blockId[block.id] = block.db_id;
+    }
+    return blockId;
+}
+
+function boostrap() {
+    const wb = XLSX.readFile('./input.xlsx');
+
+    const blocks: Block[] = parseSheet(wb.Sheets[wb.SheetNames[0]]).map(transformBlock).filter(n => n.id);
+    const questions: Question[] = parseSheet(wb.Sheets[wb.SheetNames[1]]).map(transformQuestion).filter(n => n.blockId);
+    const replies: Reply[] = expandReply(parseSheet(wb.Sheets[wb.SheetNames[2]]).map(transformReply).filter(n => n.blockId));
+    const tasks: Task[] = parseSheet(wb.Sheets[wb.SheetNames[3]]).map(transformTask).filter(n => n.blockId);
+    const tags: Tag[] = parseSheet(wb.Sheets[wb.SheetNames[4]]).map(transformTag).filter(n => n.tagCode);
+    const blockById = getBlockByid(blocks);
+
+    for (const task of tasks) {
+        for (const reply of replies) {
+            if (task.repliesIds.includes(reply.replyId)) {
+                reply.tarefas.push(task.taskId)
+            }
+        }
+    }
+
+    fs.writeFileSync('out/tags.sql', generateTagSql(tags));
+    fs.writeFileSync('out/tarefas.sql', generateTarefasSql(tasks));
+
+
+    //console.log(replies)
+
+    let sort_order: number = 10000000;
+    const quiz: QuizConfig[] = [];
+
+    for (const q of questions) {
+
+        const code = `${q.blockId}_${q.questionId}`;
+
+        const row: QuizConfig = {
+            button_label: null,
+            change_to_questionnaire_id: q.parsedType.change_to_questionnaire_id,
+            code: code,
+            intro: q.intros,
+            options: null,
+            question: q.description,
+            questionnaire_id: blockById[q.blockId],
+            relevance: '1',
+            sort: sort_order,
+            status: 'published',
+            tarefas: q.parsedType.tarefas,
+            type: q.parsedType.db_type,
+        };
+
+        if (!row.questionnaire_id) throw `Faltando ID para o bloco ${q.blockId} -- pergunta ${q.questionId}`;
+
+        if (row.type === 'botao_fim') {
+            row.button_label = bf_label;
+        } else if (row.type === 'onlychoice' || row.type === 'multiplechoices') {
+
+            row.options = [];
+            for (const option of q.parsedType.options) {
+                row.options.push({
+                    label: option.opcao,
+                    value: option.opcao_clean,
+                });
+            }
+        }
+
+        let relevances: string[] = [];
+
+        for (const q2 of questions) {
+            for (const option of q2.parsedType.options) {
+                if (option.proxima_pergunta == q.questionId) {
+                    relevances.push(`${q2.blockId}_${q2.questionId} == '${option.opcao_clean}'`);
+                }
+            }
+        }
+
+        if (relevances.length > 0) {
+            row.relevance = relevances.join(' || ');
+        }
+
+        quiz.push(row);
+
+        for (const option of q.parsedType.options) {
+            for (const resp of option.cod_respostas) {
+                sort_order += 10;
+
+                const replyObj = replies.filter(r => r.replyId === resp);
+                const err = `Expected 1 reply, got ${replyObj.length} for ${resp}`;
+                console.log(err)
+                if (replyObj.length !== 1) throw err;
+
+                const resp_code = `${code}_${resp}`;
+
+                const relevance = `${code} == '${option.opcao_clean}' `;
+
+                const resp_row: QuizConfig = {
+                    question: replyObj[0].description,
+                    questionnaire_id: blockById[q.blockId],
+                    relevance: relevance,
+                    sort: sort_order,
+                    tarefas: dbTarefa(replyObj[0].tarefas),
+                    button_label: null,
+                    change_to_questionnaire_id: null,
+                    code: resp_code,
+                    intro: [],
+                    options: null,
+                    status: 'published',
+                    type: 'displaytext',
+                };
+
+                quiz.push(resp_row);
+            }
+        }
+
+        console.log(row)
+
+        //if (sort_order >= 10000000 + 9000)
+            //process.exit();
+
+        sort_order += 1000;
+    }
+
+    //console.log("Blocks:", blocks);
+    //console.log("Questions:", questions);
+    //console.log("Replies:", replies);
+    //console.log("Tasks:", tasks);
+    //console.log("Tags:", tags);
+
+
+
+}
+
+boostrap()
