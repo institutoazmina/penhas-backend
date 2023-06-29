@@ -334,7 +334,7 @@ const generateTarefasSql = (tasks: Task[]) => {
 function getBlockByid(blocks: Block[]) {
     const blockId: Record<string, number> = {};
     for (const block of blocks) {
-        blockId[block.id] = block.db_id;
+        blockId[block.id] = +block.db_id;
     }
     return blockId;
 }
@@ -346,7 +346,8 @@ const generateSql = (blocks: Block[], quiz: QuizConfig[]) => {
         sqlStr += `DELETE FROM quiz_config WHERE questionnaire_id = ${block.db_id};\n`;
 
         for (let qc of quiz) {
-            if (qc.questionnaire_id === block.db_id) {
+            if (qc.questionnaire_id == block.db_id) {
+
                 let escapedQuestion = escapeString(qc.question);
                 let escapedIntro = escapeString(JSON.stringify(qc.intro));
                 let escapedRelevance = escapeString(qc.relevance);
@@ -357,6 +358,7 @@ const generateSql = (blocks: Block[], quiz: QuizConfig[]) => {
                         VALUES ('${qc.status}', ${qc.sort}, '${qc.type}', '${qc.code}', E'${escapedQuestion}',
                         ${qc.questionnaire_id}, '${escapedIntro}', '${escapedRelevance}', '${qc.button_label}',
                         '${escapedOptions}', '${JSON.stringify(qc.tarefas)}', ${qc.change_to_questionnaire_id});\n`;
+
             }
         }
     }
@@ -440,6 +442,7 @@ function boostrap() {
             row.relevance = relevances.join(' || ');
         }
 
+        quiz.push(row);
 
         for (const option of q.parsedType.options) {
             for (const resp of option.cod_respostas) {
@@ -474,13 +477,15 @@ function boostrap() {
             }
         }
 
-        //if (sort_order >= 10000000 + 9000)
+        //console.log(row)
+        //if (sort_order >= 10000000 + 1000)
         //process.exit();
+
 
         sort_order += 1000;
     }
 
-    //console.log("Blocks:", blocks);
+    console.log("Blocks:", blocks);
     //console.log("Questions:", questions);
     //console.log("Replies:", replies);
     //console.log("Tasks:", tasks);
