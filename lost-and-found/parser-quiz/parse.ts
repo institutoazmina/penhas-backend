@@ -213,7 +213,12 @@ const transformQuestion = (data: any): Question => {
                     opcao = opcao.toUpperCase().replace('S', 'Y').replace('T', 'M'); // n => N
                     opcao_clean = opcao;
                 } else {
-                    opcao_clean = opcao.toLowerCase().replace(/\s/g, '-').replace(/[^a-z0-9\-]/g, '');
+                    opcao_clean = opcao.toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .replace(/e\/ou/g, 'e_ou')
+                        .replace(/\//g, '-ou-')
+                        .replace(/\s/g, '-').replace(/[^a-z0-9\-\_]/g, '');
                 }
 
                 parsed.options.push({
@@ -409,16 +414,15 @@ function boostrap() {
             row.relevance = relevances.join(' || ');
         }
 
-        quiz.push(row);
 
         for (const option of q.parsedType.options) {
             for (const resp of option.cod_respostas) {
                 sort_order += 10;
 
                 const replyObj = replies.filter(r => r.replyId === resp);
-                const err = `Expected 1 reply, got ${replyObj.length} for ${resp}`;
-                console.log(err)
-                if (replyObj.length !== 1) throw err;
+
+                if (replyObj.length == 0)
+                    throw `reply ${resp} not found`; // pode ter N perguntas pra mesma resposta, por isso q pode dar > 1
 
                 const resp_code = `${code}_${resp}`;
 
@@ -439,14 +443,13 @@ function boostrap() {
                     type: 'displaytext',
                 };
 
-                quiz.push(resp_row);
+                quiz.push(resp_row)
+
             }
         }
 
-        console.log(row)
-
         //if (sort_order >= 10000000 + 9000)
-            //process.exit();
+        //process.exit();
 
         sort_order += 1000;
     }
@@ -456,6 +459,8 @@ function boostrap() {
     //console.log("Replies:", replies);
     //console.log("Tasks:", tasks);
     //console.log("Tags:", tags);
+
+    console.log(quiz)
 
 
 
