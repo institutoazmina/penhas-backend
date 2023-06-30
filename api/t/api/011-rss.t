@@ -6,6 +6,9 @@ use Penhas::Test;
 use Penhas::Minion::Tasks::NewsIndexer;
 use Penhas::Minion::Tasks::NewsDisplayIndexer;
 
+BEGIN {
+    plan skip_all => 'URL dos feeds atuais esta dando 400' unless $ENV{TEST_RSS_FEED};
+}
 my $t = test_instance;
 
 $ENV{MAINTENANCE_SECRET} = '12345';
@@ -260,8 +263,8 @@ do {
     $t->get_ok(
         ('/timeline?category=only_news'),
         {'x-api-key' => $session}
-    )->status_is(200)->json_is('/tweets/0/type', 'news_group')->json_is('/tweets/0/news/0/title', 'This is Page1 Title')
-      ->json_is('/has_more', '0')->tx->res->json;
+    )->status_is(200)->json_is('/tweets/0/type', 'news_group')
+      ->json_is('/tweets/0/news/0/title', 'This is Page1 Title')->json_is('/has_more', '0')->tx->res->json;
 
     # testa visao tweets+noticias, mas passando tags
     # deve trazer noticias ou tweets marcados
