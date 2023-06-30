@@ -67,6 +67,8 @@ sub setup {
 sub ensure_questionnaires_loaded {
     my ($c, %opts) = @_;
 
+    slog_info('ensure_questionnaires_loaded "%s"', to_json(%opts));
+
     if ($c->stash('questionnaires')) {
         return unless $opts{questionnaire_id};    # se não passou questionnaire_id, fica com o comportamento antigo
 
@@ -148,10 +150,12 @@ sub load_quiz_config {
 sub user_get_quiz_session {
     my ($c, %opts) = @_;
 
-    use DDP; p %opts;
+    use DDP;
+    p %opts;
     my $user = $opts{user} or croak 'missing user';
 
-    use DDP; p $user;
+    use DDP;
+    p $user;
 
     my $extra_stash = $opts{extra_stash} || {};
 
@@ -167,6 +171,8 @@ sub user_get_quiz_session {
     # se passar o session_id, vai buscar o questionnaire_id e passar por cima de todos as
     # verificar se o questionnaire deveria ou não ser executado
     if ($opts{session_id}) {
+        slog_info('loading by session_id "%s"', $opts{session_id});
+
         my $found_session = $rs->search(
             {id => $opts{session_id}},
             {
@@ -1068,6 +1074,7 @@ sub has_relevance {
 
     local $vars->{_self} = $msg->{_code};
     my $x = tt_test_condition($msg->{_relevance}, $vars);
+
     #use DDP;
     #p $msg;
     #p $x;
@@ -1520,7 +1527,7 @@ sub process_mf_assistant {
     my $user = {$user_obj->get_columns};
     my @preprend_msg;
 
-    my $mf_sc = $user_obj->ensure_cliente_mf_session_control_exists();
+    my $mf_sc                         = $user_obj->ensure_cliente_mf_session_control_exists();
     my $current_clientes_quiz_session = $mf_sc->current_clientes_quiz_session();
 
     my $first_questionnaire_id = $mf_sc->get_next_questionnaire_id();

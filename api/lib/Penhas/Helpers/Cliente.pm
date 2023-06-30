@@ -56,6 +56,8 @@ sub cliente_mf_assistant {
     slog_info('calling current_clientes_quiz_session');
     my $mf_current_session_id = $mf_sc->current_clientes_quiz_session();
     if ($mf_current_session_id) {
+        slog_info('calling user_get_quiz_session with session_id=%s', $mf_current_session_id);
+
         my $quiz_session = $c->user_get_quiz_session(user => $user, session_id => $mf_current_session_id);
 
         if (!$quiz_session) {
