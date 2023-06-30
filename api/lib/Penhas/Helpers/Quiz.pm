@@ -502,8 +502,6 @@ sub load_quiz_session {
         }
     }
 
-    use DDP;
-    p $vars;
     slog_info('vars %s', to_json($vars));
 
     foreach my $q ($current_msgs->@*) {
