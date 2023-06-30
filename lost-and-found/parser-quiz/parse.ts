@@ -8,8 +8,8 @@ interface Block { id: string; description: string; db_id: number }
 
 type XlsType = 'SN' | 'SC' | 'AC' | 'SNT' | 'MC' | 'BF' | 'PS' | 'ET';
 type DbQuizConfigType = 'yesnomaybe' | 'skillset' | 'text' | 'onlychoice' |
-    'yesno' | 'botao_fim' | 'cep_address_lookup' | 'auto_change_questionnaire' |
-    'displaytext' | 'yesnogroup' | 'autocontinue' | 'botao_tela_modo_camuflado' |
+    'yesno' | 'botao_fim' | 'cep_address_lookup' |
+    'displaytext' | 'yesnogroup' | 'auto_change_questionnaire' | 'botao_tela_modo_camuflado' |
     'next_mf_questionnaire' | 'multiplechoices' | 'next_mf_questionnaire_outstanding';
 
 const yesnoRegex = new RegExp(/(S|N|T)\s*[:,]\s*(.+)\s*/);
@@ -19,7 +19,7 @@ const escapeString = (str: string) => str ? str.replace(/\\/g, '\\\\').replace(/
 const bf_label = 'Ok!';
 
 const DeParaType: Record<XlsType, DbQuizConfigType> = {
-    'AC': 'autocontinue',
+    'AC': 'auto_change_questionnaire',
     'PS': 'next_mf_questionnaire_outstanding',
     'SNT': 'yesnomaybe',
     'SN': 'yesno',

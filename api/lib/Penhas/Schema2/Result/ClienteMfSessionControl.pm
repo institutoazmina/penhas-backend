@@ -100,6 +100,7 @@ sub get_next_questionnaire_id {
     my $outstanding = $opts{outstanding} ? $opts{outstanding} : 0;
 
     my $completed_questionnaires_id = $self->completed_questionnaires_id;
+    $completed_questionnaires_id = [] unless $completed_questionnaires_id;
 
     if ($outstanding) {
 

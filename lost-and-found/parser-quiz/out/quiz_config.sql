@@ -4,23 +4,23 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         12, E'[{"text":"Olá, bem-vinda ao Manual de Fuga do PenhaS. Esse recurso vai ajudá-la a criar um plano de fuga do ambiente doméstico, minimizando riscos decorrentes de uma situação de violência."},{"text":"A finalidade deste manual é construir junto contigo as melhores estratégias de segurança pessoal e lhe informar sobre os direitos que você possui caso precise fugir de casa para se proteger. "},{"text":"Sabemos que esse momento não é fácil e por isso estamos aqui para que você se sinta acolhida e segura para seguir em frente, qualquer que seja a decisão!"},{"text":"Cada situação é diferente e somente você pode avaliar o risco que corre. Quanto mais perguntas você responder no Manual de Fuga, mais personalizado ele se torna para você. Vamos juntas?"}]', E'1', null,
                         E'[{"label":"Passos para fuga","value":"passos-para-fuga"},{"label":"Crianças, adolescentes e dependentes","value":"criancas-adolescentes-e-dependentes"},{"label":"Bens, trabalho e renda","value":"bens-trabalho-e-renda"},{"label":"Segurança pessoal","value":"seguranca-pessoal"},{"label":"Transporte","value":"transporte"}]', '[{"codigo":"T1"},{"codigo":"T2"},{"codigo":"T3"},{"codigo":"T4"}]', null);
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id)
-                        VALUES ('published', 10001000, 'autocontinue', 'B0_p0a', E'',
+                        VALUES ('published', 10001000, 'auto_change_questionnaire', 'B0_p0a', E'',
                         12, E'[]', E'B0_P0 == \'passos-para-fuga\'', null,
                         null, '[]', 13);
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id)
-                        VALUES ('published', 10002000, 'autocontinue', 'B0_p0b', E'',
+                        VALUES ('published', 10002000, 'auto_change_questionnaire', 'B0_p0b', E'',
                         12, E'[]', E'B0_P0 == \'criancas-adolescentes-e-dependentes\'', null,
                         null, '[]', 14);
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id)
-                        VALUES ('published', 10003000, 'autocontinue', 'B0_p0c', E'',
+                        VALUES ('published', 10003000, 'auto_change_questionnaire', 'B0_p0c', E'',
                         12, E'[]', E'B0_P0 == \'bens-trabalho-e-renda\'', null,
                         null, '[]', 15);
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id)
-                        VALUES ('published', 10004000, 'autocontinue', 'B0_p0d', E'',
+                        VALUES ('published', 10004000, 'auto_change_questionnaire', 'B0_p0d', E'',
                         12, E'[]', E'B0_P0 == \'seguranca-pessoal\'', null,
                         null, '[]', 16);
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id)
-                        VALUES ('published', 10005000, 'autocontinue', 'B0_p0e', E'',
+                        VALUES ('published', 10005000, 'auto_change_questionnaire', 'B0_p0e', E'',
                         12, E'[]', E'B0_P0 == \'transporte\'', null,
                         null, '[]', 17);
 DELETE FROM quiz_config WHERE questionnaire_id = 13;
@@ -189,7 +189,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         13, E'[]', E'B1_P7 == \'Y\' || B1_P7 == \'N\' || B1_P7 == \'M\'', null,
                         null, '[]', null);
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id)
-                        VALUES ('published', 10016310, 'autocontinue', 'B1_P8ac', E'',
+                        VALUES ('published', 10016310, 'auto_change_questionnaire', 'B1_P8ac', E'',
                         13, E'[]', E'B1_P8 == \'Y\' || B1_P8 == \'N\'', null,
                         null, '[]', 17);
 DELETE FROM quiz_config WHERE questionnaire_id = 14;
@@ -222,7 +222,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P12 == \'meu-filho-ou-filha\' ', null,
                         null, '[]', null);
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id)
-                        VALUES ('published', 10022480, 'displaytext', 'B2_P12_R32', E'Sabemos que o seu intuito é garantir tanto o seu próprio bem-estar e  segurança, quanto de seu filho(a) . Para garantir que seus passos a partir de agora não sejam compreendidos enquanto alienação parental, ao 
+                        VALUES ('published', 10022480, 'displaytext', 'B2_P12_R32', E'Sabemos que o seu intuito é garantir tanto o seu próprio bem-estar e  segurança, quanto de seu filho(a) . Para garantir que seus passos a partir de agora não sejam compreendidos enquanto alienação parental, ao
 sair de casa, denuncie o agressor e faça um boletim de ocorrência frisando o risco que a criança/adolescente também está correndo. Infelizmente, nosso sistema judiciário ainda é muito machista e misógino, então é preciso que você se resguarde ao máximo.',
                         14, E'[]', E'B2_P12 == \'meu-filho-ou-filha\' ', null,
                         null, '[{"codigo":"T5"},{"codigo":"T6"},{"codigo":"T9"},{"codigo":"T10"},{"codigo":"T11"},{"codigo":"T53"},{"codigo":"T54"},{"codigo":"T55"},{"codigo":"T56"},{"codigo":"T57"},{"codigo":"T58"},{"codigo":"T59"},{"codigo":"T60"}]', null);
