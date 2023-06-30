@@ -148,6 +148,13 @@ db_transaction {
         like $input_msg->{content}, qr/Você tem para onde ir?/, 'pergunta yesnomaybe';
         is $input_msg->{type},      'yesnomaybe',               'sim não talvez';
 
+        ## chama o get do session no meio do quiz
+        my $me_tarefas_v2 = $t->get_ok(
+            '/me/tarefas',
+            {'x-api-key' => $session},
+            form => {modificado_apos => $epoch_start},
+        )->status_is(200, 'busca todas as tarefas')->tx->res->json;
+
         $mf_sc->discard_changes;
         is $mf_sc->status, 'inProgress', 'status is inProgress';
         is $mf_sc->completed_questionnaires_id, [7], 'completed b0';

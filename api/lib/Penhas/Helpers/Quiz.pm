@@ -67,7 +67,7 @@ sub setup {
 sub ensure_questionnaires_loaded {
     my ($c, %opts) = @_;
 
-    slog_info('ensure_questionnaires_loaded "%s"', to_json(%opts));
+#    slog_info('ensure_questionnaires_loaded "%s"', to_json(%opts));
 
     if ($c->stash('questionnaires')) {
         return unless $opts{questionnaire_id};    # se não passou questionnaire_id, fica com o comportamento antigo
@@ -324,10 +324,13 @@ sub load_quiz_session {
 
     my $session_rs = $c->schema2->resultset('ClientesQuizSession');
     my $user       = $opts{user};
-    my $user_obj   = $opts{user_obj};
-    my $is_anon    = $opts{is_anon} ? 1 : 0;
+
+    my $user_obj = $opts{user_obj};
+    my $is_anon  = $opts{is_anon} ? 1 : 0;
 
     croak 'missing user@load_quiz_session' if !$is_anon && (!$user || !$user_obj);
+    confess '$user should be a hash'     unless ref $user eq 'HASH';
+    confess '$user_obj should be a hash' unless ref $user_obj eq 'Penhas::Schema2::Result::Cliente';
 
     if ($is_anon) {
         $session_rs = $c->schema2->resultset('AnonymousQuizSession');
@@ -371,7 +374,7 @@ sub load_quiz_session {
 
     # nao tem nenhuma relevante pro usuario, pegar todas as pending ate um input
     if ($add_more_questions) {
-
+        log_info("add_more_questions");
         my $is_last_item = 0;
         do {
             my $item = shift $stash->{pending}->@*;
@@ -499,6 +502,8 @@ sub load_quiz_session {
         }
     }
 
+    use DDP;
+    p $vars;
     slog_info('vars %s', to_json($vars));
 
     foreach my $q ($current_msgs->@*) {

@@ -73,7 +73,7 @@ sub cliente_mf_assistant {
         else {
             slog_info('calling load_quiz_session');
 
-            $c->load_quiz_session(session => $quiz_session, user => $user, user_obj => $user);
+            $c->load_quiz_session(session => $quiz_session, user => {$user->get_columns()}, user_obj => $user);
 
             $quiz_session = $c->stash('quiz_session');
         }
