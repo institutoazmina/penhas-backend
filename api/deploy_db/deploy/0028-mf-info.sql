@@ -2,7 +2,9 @@
 -- requires: 0027-tarefa-padrao
 
 BEGIN;
-create unique index ix_mf_codigo_tarefa on mf_tarefa (codigo) where codigo != ''
+
+create unique index ix_mf_codigo_tarefa on mf_tarefa (codigo) where codigo != '';
+
 alter table quiz_config alter column intro set default '[]',
     alter column yesnogroup set default '[]';
 
