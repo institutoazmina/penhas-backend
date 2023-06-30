@@ -12,7 +12,9 @@ use Business::BR::CPF qw/random_cpf/;
 
 my $schema2 = $t->app->schema2;
 
-&test_cli_seg();
+if ($ENV{TEST_DIRECTUS_PASSWORD}) {
+    &test_cli_seg();
+}
 
 &test_faq();
 
