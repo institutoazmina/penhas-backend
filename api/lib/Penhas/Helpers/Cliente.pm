@@ -11,8 +11,7 @@ use Encode;
 
 our $NEW_TASK_TOKEN = $ENV{NEW_TASK_TOKEN} || '';
 
-
-my $descricao = '';
+my $descricao = 'Quas excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum.';
 
 sub setup {
     my $self = shift;
