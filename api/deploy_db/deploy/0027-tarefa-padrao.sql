@@ -3,8 +3,10 @@
 
 BEGIN;
 
+
 -- alter table mf_tarefa drop column campo_livre_1, drop column campo_livre_2, drop column campo_livre_3;
 -- alter table mf_tarefa add column campo_livre json;
+
 create table mf_tarefa (
     id serial primary key not null,
 

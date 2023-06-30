@@ -3,6 +3,7 @@ use Mojo::Base 'Penhas::Controller';
 
 use DateTime;
 use Penhas::Types qw/TweetID/;
+
 use JSON qw/from_json/;
 
 sub assert_user_perms {
@@ -12,7 +13,9 @@ sub assert_user_perms {
     return 1;
 }
 
+
 sub me_t_list {
+
     my $c = shift;
 
     my $params = $c->req->params->to_hash;
@@ -68,6 +71,7 @@ sub me_t_sync {
                 };
             }
         }
+
     }
 
     my $result = $c->cliente_sync_lista_tarefas(
@@ -81,7 +85,9 @@ sub me_t_sync {
     );
 }
 
+
 sub me_t_nova {
+
     my $c = shift;
 
     my $params = $c->req->params->to_hash;
@@ -91,6 +97,7 @@ sub me_t_nova {
         descricao => {required => 1, type => 'Str', max_length => 2048, min_length => 1},
         agrupador => {required => 1, type => 'Str', max_length => 120,  min_length => 1},
         token     => {required => 1, type => 'Str', max_length => 120,  min_length => 1},
+
 
         # enviar 1 pra mudar o tipo para [checkbox_contato]
         checkbox_contato => {required => 0, type => 'Bool'},

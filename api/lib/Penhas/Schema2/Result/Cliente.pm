@@ -369,6 +369,7 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-16 02:15:22
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qckAXwn2pzoHhLxne9/zyQ
 
+
 use Carp qw/confess/;
 
 use Moose;
@@ -436,6 +437,7 @@ sub access_modules_as_config {
         tweets => {
             max_length => 2200,
         },
+
         mf => {
             max_checkbox_contato => 3,
         },
