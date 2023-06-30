@@ -58,7 +58,10 @@ sub cliente_mf_assistant {
     if ($mf_current_session_id) {
         slog_info('calling user_get_quiz_session with session_id=%s', $mf_current_session_id);
 
-        my $quiz_session = $c->user_get_quiz_session(user => {$user->get_columns()}, session_id => $mf_current_session_id);
+        my $quiz_session = $c->user_get_quiz_session(
+            user       => {$user->get_columns()},
+            session_id => $mf_current_session_id
+        );
 
         if (!$quiz_session) {
             slog_info(
@@ -70,7 +73,7 @@ sub cliente_mf_assistant {
         else {
             slog_info('calling load_quiz_session');
 
-            $c->load_quiz_session(session => $quiz_session, user => $user);
+            $c->load_quiz_session(session => $quiz_session, user => $user, user_obj => $user);
 
             $quiz_session = $c->stash('quiz_session');
         }
