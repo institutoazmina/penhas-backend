@@ -52,9 +52,27 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "clientes_quiz_sessions",
+  "Penhas::Schema2::Result::ClientesQuizSession",
+  { "foreign.questionnaire_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "mf_cliente_tarefas",
   "Penhas::Schema2::Result::MfClienteTarefa",
   { "foreign.last_from_questionnaire" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "mf_questionnaire_orders",
+  "Penhas::Schema2::Result::MfQuestionnaireOrder",
+  { "foreign.questionnaire_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "quiz_config_change_to_questionnaires",
+  "Penhas::Schema2::Result::QuizConfig",
+  { "foreign.change_to_questionnaire_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
@@ -65,8 +83,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-04-06 00:11:08
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Qn1vgcONpI1K2BGRFsP+uw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-16 02:15:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gEKIQ2W5D7dh8V2NrcDNxQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

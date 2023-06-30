@@ -17,7 +17,7 @@ create table mf_tarefa (
     codigo varchar,
 
     campo_livre json,
-  
+
     agrupador varchar(120) not null default 'Outros',
 
     criado_em timestamp without time zone not null default now(),

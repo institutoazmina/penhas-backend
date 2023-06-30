@@ -11,6 +11,9 @@ use Encode;
 
 our $NEW_TASK_TOKEN = $ENV{NEW_TASK_TOKEN} || '';
 
+
+my $descricao = '';
+
 sub setup {
     my $self = shift;
 
@@ -21,6 +24,123 @@ sub setup {
     $self->helper('cliente_lista_tarefas'      => sub { &cliente_lista_tarefas(@_) });
     $self->helper('cliente_sync_lista_tarefas' => sub { &cliente_sync_lista_tarefas(@_) });
     $self->helper('cliente_nova_tarefas'       => sub { &cliente_nova_tarefas(@_) });
+    $self->helper('cliente_mf_assistant'       => sub { &cliente_mf_assistant(@_) });
+
+    $self->helper('cliente_mf_add_tarefa_por_codigo' => sub { &cliente_mf_add_tarefa_por_codigo(@_) });
+}
+
+sub cliente_mf_assistant {
+    my ($c, %opts) = @_;
+
+    my $user = $opts{user_obj} or confess 'missing user_obj';
+    return {} unless $user->is_female();
+
+    my $mf_sc = $user->ensure_cliente_mf_session_control_exists();
+
+    my $config = {
+        'onboarding' => {t => 'Criar o meu Manual de Fuga',         d => $descricao},
+        'inProgress' => {t => 'Continuar preenchendo o meu Manual', d => $descricao},
+        'completed'  => {t => 'Refazer o meu Manual de Fuga',       d => $descricao},
+    };
+    my $title    = $config->{$mf_sc->status()}{t};
+    my $subtitle = $config->{$mf_sc->status()}{d};
+
+    # no onboarding e completed o body é vazio, precisa de um POST /me/quiz (só precisa passar o session_id)
+    # para iniciar a session com o primeiro valor da mf_questionnaire_order (geralmente o B0)
+    my $quiz_session = {
+        current_msgs => [],
+        prev_msgs    => undef
+    };
+
+    my $mf_current_session_id = $mf_sc->current_clientes_quiz_session();
+    if ($mf_current_session_id) {
+        my $quiz_session = $c->user_get_quiz_session(user => $user, session_id => $mf_current_session_id);
+
+        if (!$quiz_session) {
+            slog_info(
+                'failed to load current_clientes_quiz_session user=%s $mf_current_session_id=%s',
+                $user->id, $mf_current_session_id,
+            );
+            $user->remove_cliente_mf_session_control();
+        }
+        else {
+
+            $c->load_quiz_session(session => $quiz_session, user => $user);
+
+            $quiz_session = $c->stash('quiz_session');
+        }
+    }
+
+    my $ret = {
+        title    => $title,
+        subtitle => $subtitle,
+
+        quiz_session => {
+            session_id => $user->mf_assistant_session_id(),
+            %$quiz_session,
+        }
+    };
+
+
+    return {mf_assistant => $ret};
+}
+
+
+sub cliente_mf_add_tarefa_por_codigo {
+    my ($c, %opts) = @_;
+
+    my $user    = $opts{user_obj} or confess 'missing user_obj';
+    my $codigos = $opts{codigos}  or confess 'missing codigos';
+
+    $c->schema2->txn_do(
+        sub {
+            my @tarefas = $c->schema2->resultset('MfTarefa')->search(
+                {
+                    codigo => {in => $codigos},
+                },
+                {
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                    columns      => ['id', 'codigo'],
+                }
+            )->all;
+
+            my @already_exists = $c->schema2->resultset('MfClienteTarefa')->search(
+                {
+                    removido_em => undef,
+                    cliente_id  => $user->id,
+
+                    mf_tarefa_id => {'in' => [map { $_->{id} } @tarefas]}
+                },
+                {
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                    columns      => ['mf_tarefa_id']
+                }
+            )->all();
+
+            my $exists_by_id = {};
+            $exists_by_id->{$_->{mf_tarefa_id}} = 1 for @already_exists;
+
+            for my $tarefa (@tarefas) {
+                next if $exists_by_id->{$tarefa->{id}};
+
+                slog_info(
+                    'adding mf_cliente_tarefa user=%s $tarefa_id=%s %s',
+                    $user->id, $tarefa->{id}, $tarefa->{codigo},
+                );
+
+                $c->schema2->resultset('MfClienteTarefa')->create(
+                    {
+                        removido_em   => undef,
+                        cliente_id    => $user->id,
+                        atualizado_em => \'now()',
+                        mf_tarefa_id  => $tarefa->{id},
+                    }
+                );
+            }
+        }
+    );
+
+
 }
 
 # será usado apenas para o desenvolvimento, não será usado em produção
@@ -41,7 +161,7 @@ sub cliente_nova_tarefas {
       unless $NEW_TASK_TOKEN
       && $token eq $NEW_TASK_TOKEN;
 
-
+ 
     my $tipo           = 'checkbox';
     my $eh_customizada = 'false';
 
@@ -51,15 +171,15 @@ sub cliente_nova_tarefas {
     }
 
     my $id;
-
+ 
     $c->schema2->txn_do(
         sub {
             my $tarefa_id = $c->schema2->resultset('MfTarefa')->create(
                 {
-                    titulo    => $titulo,
-                    descricao => $descricao,
-                    agrupador => $agrupador,
 
+                    titulo         => $titulo,
+                    descricao      => $descricao,
+                    agrupador      => $agrupador,
                     tipo           => $tipo,
                     codigo         => '',
                     eh_customizada => $eh_customizada,
@@ -151,7 +271,6 @@ sub cliente_sync_lista_tarefas {
             if ($row->mf_tarefa->eh_customizada) {
                 $row->mf_tarefa->update(
                     {
-
                         campo_livre => ($opts{campo_livre} ? $opts{campo_livre} : undef),
                     }
                 );

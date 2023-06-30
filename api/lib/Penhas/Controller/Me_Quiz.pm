@@ -33,12 +33,40 @@ sub process {
         );
     }
 
+
+    if ($session_id && $session_id eq $user_obj->mf_assistant_session_id()) {
+        my $return = $c->process_mf_assistant(user_obj => $user_obj, params => $params);
+
+        return $c->render(
+            json   => $return,
+            status => 200,
+        );
+    }
+
     # se nao for a chave pra assistente, precisa ser um inteiro
     $c->validate_request_params(
         session_id => {required => 1, type => 'Int'},
     );
 
-    my $quiz_session = $c->user_get_quiz_session(user => $user);
+    my $mf_sc                         = $user_obj->ensure_cliente_mf_session_control_exists();
+    my $current_clientes_quiz_session = $mf_sc->current_clientes_quiz_session();                 #XXXXXXXXX
+
+    # se estiver respondendo o MF, carregamos ele se o Session ID der match no pedido, vamos nele,
+    # senão, vai na logica normal [procurar o primeiro chat relevante].
+    # pq isso só aqui no POST?
+    # o conteudo do chat vem sempre via GET /me, ou /me/chat ou /me/tarefas
+    # e ai já tbm tem os tratamentos pra carregar da session apropriadas
+
+    my $quiz_session = $c->user_get_quiz_session(
+        user => $user,
+
+        questionnaire_id => (
+              $current_clientes_quiz_session && $current_clientes_quiz_session->id() == $session_id
+            ? $current_clientes_quiz_session->questionnaire_id()
+            : undef
+        )
+
+    );
 
     if (!$quiz_session) {
         return $c->render(

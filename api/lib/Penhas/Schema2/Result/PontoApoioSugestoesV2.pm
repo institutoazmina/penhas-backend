@@ -27,6 +27,13 @@ __PACKAGE__->add_columns(
     is_nullable   => 0,
     original      => { data_type => "varchar" },
   },
+  "created_at",
+  {
+    data_type     => "timestamp",
+    default_value => \"current_timestamp",
+    is_nullable   => 0,
+    original      => { default_value => \"now()" },
+  },
   "updated_by_admin_at",
   { data_type => "timestamp", is_nullable => 1 },
   "created_ponto_apoio_id",
@@ -75,13 +82,6 @@ __PACKAGE__->add_columns(
   },
   "metainfo",
   { data_type => "json", default_value => "{}", is_nullable => 0 },
-  "created_at",
-  {
-    data_type     => "timestamp",
-    default_value => \"current_timestamp",
-    is_nullable   => 0,
-    original      => { default_value => \"now()" },
-  },
   "saved_form",
   { data_type => "json", default_value => "{}", is_nullable => 0 },
 );
@@ -111,8 +111,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-06-02 23:47:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:uJ7b876wNb7Y98InxU5yoA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-16 02:15:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:AsBRZhOdQNoLHa/UWradtA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
