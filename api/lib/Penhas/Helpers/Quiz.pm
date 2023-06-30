@@ -546,19 +546,17 @@ sub load_quiz_session {
 
                 # acabou sem um input [pois isso aqui eh chamado no GET],
                 # vou colocar um input padrao de finalizar
-                $current_msgs = [
-                    {
-                        type       => 'button',
-                        content    => 'Tudo certo por aqui! Recado para administrador: quiz acabou sem botão fim!',
-                        action     => '',
-                        ref        => 'BT_END_' . int(rand(100000)),
-                        label      => 'Finalizar',
-                        _relevance => '1',
-                        _code      => 'FORCED_END_CHAT',
-                        _end_chat  => 1,
-                        _currently_has_relevance => 1,
-                    }
-                ];
+                push @frontend_msg, {
+                    type       => 'button',
+                    content    => 'Tudo certo por aqui! Recado para administrador: quiz acabou sem botão fim!',
+                    action     => '',
+                    ref        => 'BT_END_' . int(rand(100000)),
+                    label      => 'Finalizar',
+                    _relevance => '1',
+                    _code      => 'FORCED_END_CHAT',
+                    _end_chat  => 1,
+                    _currently_has_relevance => 1,
+                };
                 $stash->{is_eof}++;
                 $update_db++;
             }
