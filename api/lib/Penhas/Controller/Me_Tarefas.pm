@@ -4,6 +4,7 @@ use Mojo::Base 'Penhas::Controller';
 use DateTime;
 use Penhas::Types qw/TweetID/;
 
+use Penhas::Logger;
 use JSON qw/from_json/;
 
 sub assert_user_perms {
@@ -27,6 +28,8 @@ sub me_t_list {
         user_obj => $c->stash('user_obj'),
         %$valid,
     );
+
+    slog_info('tarefas ok');
 
     return $c->render(
         json => {

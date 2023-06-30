@@ -35,6 +35,7 @@ sub cliente_mf_assistant {
     my $user = $opts{user_obj} or confess 'missing user_obj';
     return {} unless $user->is_female();
 
+    slog_info('calling ensure_cliente_mf_session_control_exists');
     my $mf_sc = $user->ensure_cliente_mf_session_control_exists();
 
     my $config = {
@@ -52,6 +53,7 @@ sub cliente_mf_assistant {
         prev_msgs    => undef
     };
 
+    slog_info('calling current_clientes_quiz_session');
     my $mf_current_session_id = $mf_sc->current_clientes_quiz_session();
     if ($mf_current_session_id) {
         my $quiz_session = $c->user_get_quiz_session(user => $user, session_id => $mf_current_session_id);
@@ -64,6 +66,7 @@ sub cliente_mf_assistant {
             $user->remove_cliente_mf_session_control();
         }
         else {
+            slog_info('calling load_quiz_session');
 
             $c->load_quiz_session(session => $quiz_session, user => $user);
 
@@ -161,7 +164,7 @@ sub cliente_nova_tarefas {
       unless $NEW_TASK_TOKEN
       && $token eq $NEW_TASK_TOKEN;
 
- 
+
     my $tipo           = 'checkbox';
     my $eh_customizada = 'false';
 
@@ -171,7 +174,7 @@ sub cliente_nova_tarefas {
     }
 
     my $id;
- 
+
     $c->schema2->txn_do(
         sub {
             my $tarefa_id = $c->schema2->resultset('MfTarefa')->create(
