@@ -150,12 +150,9 @@ sub load_quiz_config {
 sub user_get_quiz_session {
     my ($c, %opts) = @_;
 
-    use DDP;
-    p %opts;
     my $user = $opts{user} or croak 'missing user';
+    $user->{id}            or confess 'missing user.id';
 
-    use DDP;
-    p $user;
 
     my $extra_stash = $opts{extra_stash} || {};
 
