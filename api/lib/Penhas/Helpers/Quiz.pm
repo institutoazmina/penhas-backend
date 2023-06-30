@@ -182,8 +182,7 @@ sub user_get_quiz_session {
         $opts{disable_is_during_login} = 1;
         $skip_checks = 1;
     }
-    use DDP;
-    p %opts;
+
 
     # verifica se o usuário acabou de fazer um login,
     # se sim, ignora o quiz
@@ -431,15 +430,9 @@ sub load_quiz_session {
 
                     my $mf_sc = $c->schema2->resultset('ClienteMfSessionControl')->find($stash->{mf_control_id});
 
-                    use DDP;
-                    p $stash;
-                    p $session;
-
                     $mf_sc->register_completed_questionnaire(questionnaire_id => $session->{questionnaire_id});
 
                     my $next_q_id = $mf_sc->get_next_questionnaire_id(outstanding => $item->{_outstanding});
-                    use DDP;
-                    p $next_q_id;
 
                     if ($next_q_id) {
 
@@ -1069,11 +1062,11 @@ sub has_relevance {
     return 1                     if $msg->{_relevance} eq '1';
     die '_self already exists!!' if exists $vars->{_self};
 
-    use DDP;
     local $vars->{_self} = $msg->{_code};
     my $x = tt_test_condition($msg->{_relevance}, $vars);
-    p $msg;
-    p $x;
+    #use DDP;
+    #p $msg;
+    #p $x;
 
     return 1 if $x;
     return 0;
@@ -1524,7 +1517,6 @@ sub process_mf_assistant {
     my @preprend_msg;
 
     my $mf_sc = $user_obj->ensure_cliente_mf_session_control_exists();
-
     my $current_clientes_quiz_session = $mf_sc->current_clientes_quiz_session();
 
     my $first_questionnaire_id = $mf_sc->get_next_questionnaire_id();

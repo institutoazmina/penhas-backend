@@ -134,6 +134,7 @@ sub set_status_completed {
         {
             status                        => 'completed',
             completed_at                  => \'now()',
+            completed_questionnaires_id   => '{}',
             current_clientes_quiz_session => undef,
         }
     );

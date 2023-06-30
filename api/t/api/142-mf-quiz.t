@@ -192,8 +192,6 @@ db_transaction {
         like $first_msg->{content}, qr/Até mais/, 'texto final';
         is $input_msg->{type},      'button',     'botao para finalizar';
 
-        use DDP;
-        p $first_msg;
 
         $json = $t->post_ok(
             '/me/quiz',
@@ -205,12 +203,40 @@ db_transaction {
         )->status_is(200)->json_has('/quiz_session')->tx->res->json;
 
         $mf_sc->discard_changes;
-        is $mf_sc->completed_questionnaires_id,   [7, 9, 10, 11], 'completed b0, b1, b2 and BF';
+        is $mf_sc->completed_questionnaires_id,   [], 'back to empty';
         is $mf_sc->status,                        'completed', 'status is completed';
         is $mf_sc->current_clientes_quiz_session, undef,       'current_clientes_quiz_session is back to null';
 
         is $json->{quiz_session}{finished}, 1, 'finished=1';
         ok $json->{quiz_session}{end_screen}, 'has end_screen';
+
+        # chama com o session (numerico) da not found
+        $t->post_ok(
+            '/me/quiz',
+            {'x-api-key' => $session},
+            form => {
+                session_id => $session_id,
+            }
+        )->status_is(400);
+
+        $me_tarefas = $t->get_ok(
+            '/me/tarefas',
+            {'x-api-key' => $session},
+            form => {modificado_apos => $epoch_start},
+        )->status_is(200, 'busca todas as tarefas')->tx->res->json;
+
+        $session_id = $me_tarefas->{mf_assistant}{quiz_session}{session_id};
+
+        $json = $t->post_ok(
+            '/me/quiz',
+            {'x-api-key' => $session},
+            form => {
+                session_id => $session_id,
+            }
+        )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+        $first_msg = $json->{quiz_session}{current_msgs}[0];
+
+        like $first_msg->{content}, qr/bem-vinda/, 'refazendo o questionario';
 
     };
 
