@@ -147,7 +147,11 @@ sub load_quiz_config {
 
 sub user_get_quiz_session {
     my ($c, %opts) = @_;
+
+    use DDP; p %opts;
     my $user = $opts{user} or croak 'missing user';
+
+    use DDP; p $user;
 
     my $extra_stash = $opts{extra_stash} || {};
 
@@ -320,7 +324,7 @@ sub load_quiz_session {
     my $user_obj   = $opts{user_obj};
     my $is_anon    = $opts{is_anon} ? 1 : 0;
 
-    croak 'missing user' if !$is_anon && (!$user || !$user_obj);
+    croak 'missing user@load_quiz_session' if !$is_anon && (!$user || !$user_obj);
 
     if ($is_anon) {
         $session_rs = $c->schema2->resultset('AnonymousQuizSession');

@@ -60,7 +60,7 @@ sub me_find {
             }
         ];
 
-        $c->load_quiz_session(session => $quiz_session, user => $user);
+        $c->load_quiz_session(session => $quiz_session, user_obj => $user_obj, user => $user);
 
         $extra{quiz_session} = $c->stash('quiz_session');
 
