@@ -67,6 +67,8 @@ __PACKAGE__->add_columns(
   { data_type => "json", default_value => "[]", is_nullable => 1 },
   "change_to_questionnaire_id",
   { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
+  "tag",
+  { data_type => "json", default_value => "[]", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -88,8 +90,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-16 02:15:22
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:D9TdgV29wV4uN3SBnpc5LQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-07-04 21:38:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:a5hMz47CwHfRH4thyFLE0A
 
 # ALTER TABLE quiz_config ADD FOREIGN KEY (questionnaire_id) REFERENCES questionnaires(id) ON DELETE CASCADE ON UPDATE cascade;
 =pod

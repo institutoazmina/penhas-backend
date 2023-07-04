@@ -51,7 +51,8 @@ create table cliente_mf_session_control (
 alter table quiz_config add column change_to_questionnaire_id int references questionnaires(id) default null;
 alter table quiz_config add column tarefas json   not null default '[]';
 
-create table tag (
+-- not really mf, mas já tem uma table "tags" lá pro feed/noticias
+create table mf_tag (
     id serial not null primary key,
     code varchar not null unique,
     description varchar,
@@ -62,9 +63,11 @@ create table cliente_tag (
     id serial not null primary key,
 
     cliente_id int not null references clientes(id) ON DELETE CASCADE,
-    tag_id int not null references tag(id) ON DELETE CASCADE ,
+    mf_tag_id int not null references mf_tag(id) ON DELETE CASCADE ,
 
     created_on timestamp without time zone not null default now()
 );
+
+alter table quiz_config add column tag json not null default '[]';
 
 COMMIT;

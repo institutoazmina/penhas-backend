@@ -21,9 +21,9 @@ __PACKAGE__->add_columns(
   "sort",
   { data_type => "integer", default_value => 0, is_nullable => 0 },
   "outstanding_order",
-  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
+  { data_type => "boolean", default_value => \"false", is_nullable => 1 },
   "is_last",
-  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
+  { data_type => "boolean", default_value => \"false", is_nullable => 1 },
   "published",
   {
     data_type => "varchar",
@@ -43,8 +43,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-28 12:27:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4OhL9yrw7tk0YAdMuLYX1A
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-07-04 21:38:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:P1yYZ7V/Ag/2Xasdcs/Rtg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

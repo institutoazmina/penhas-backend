@@ -396,20 +396,43 @@ sub load_quiz_session {
                     log_info("question is not relevant, testing next question...");
                     $is_last_item = 0;
                 }
+                elsif ($has_relevance && $item->{type} eq 'tag_user') {
+                    $is_last_item = 0;        # manter no loop, já que não é um input de fato
+                    $item         = undef;    # pra não adicionar essa propria questão
+                }
 
                 # tem relevancia, mas não é um input, mas tem tarefas, então foi um display text, adiciona
                 # as tarefas automaticamente
-                if (   $user_obj
+                if (
+                       $user_obj
                     && $has_relevance
-                    && !$is_last_item
+                    && !$is_last_item    # manter isso, pq input só ganha as tarefas se responder!
                     && $item->{_tarefas}
-                    && @{$item->{_tarefas}} > 0)
+                    && @{$item->{_tarefas}} > 0
+                  )
                 {
                     my @codigos = map { $_->{codigo} } @{$item->{_tarefas}};
                     log_info("Adicioando tarefas para o usuário: " . join ', ', @codigos);
 
                     $c->cliente_mf_add_tarefa_por_codigo(codigos => \@codigos, user_obj => $user_obj);
                 }
+
+                # qualquer tipo de questão pode taggear um user, nao precisa ser do tipo "tag_user"
+                if (
+                       $user_obj
+                    && $has_relevance
+                    && !$is_last_item    # manter isso, pq input só ganha as tag se responder!
+                    && $item->{_tags}
+                    && @{$item->{_tags}} > 0
+                  )
+                {
+                    # só da pra taggear se for um user!
+                    my @codigos = map { $_->{codigo} } @{$item->{_tags}};
+                    log_info("Adicioando tags para o usuário: " . join ', ', @codigos);
+
+                    $c->cliente_mf_add_tag_by_code(codigos => \@codigos, user_obj => $user_obj);
+                }
+
 
                 # troca sozinho de questionario se chegar a sua vez
                 if ($has_relevance && $item->{_change_questionnaire}) {
@@ -485,6 +508,7 @@ sub load_quiz_session {
                 push $current_msgs->@*, $item if $item;
 
             }
+
             else {
                 $is_last_item = 1;
             }
@@ -1004,6 +1028,15 @@ sub process_quiz_session {
                 $c->cliente_mf_add_tarefa_por_codigo(codigos => \@codigos, user_obj => $user_obj);
             }
 
+
+            if ($user_obj && $msg->{_tags} && @{$msg->{_tags}} > 0) {
+                my @codigos = map { $_->{codigo} } @{$msg->{_tags}};
+                log_info("Adicioando tags para o usuário: " . join ', ', @codigos);
+
+                # chama assim que termina de responder (os que são input)
+                $c->cliente_mf_add_tag_by_code(codigos => \@codigos, user_obj => $user_obj);
+            }
+
             last QUESTIONS;
         }
     }
@@ -1131,6 +1164,7 @@ sub _init_questionnaire_stash {
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
                 _tarefas => $qc->{tarefas},
+                _tags    => $qc->{tag},
             };
         }
         elsif ($qc->{type} eq 'yesnomaybe') {
@@ -1142,6 +1176,7 @@ sub _init_questionnaire_stash {
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
                 _tarefas => $qc->{tarefas},
+                _tags    => $qc->{tag},
             };
         }
         elsif ($qc->{type} eq 'text') {
@@ -1153,6 +1188,7 @@ sub _init_questionnaire_stash {
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
                 _tarefas => $qc->{tarefas},
+                _tags    => $qc->{tag},
             };
         }
         elsif ($qc->{type} eq 'yesnogroup') {
@@ -1170,6 +1206,7 @@ sub _init_questionnaire_stash {
                     ($is_anon ? (code => $qc->{code} . '_' . $subq->{referencia}) : ()),
                     _relevance => $relevance,
                     _tarefas   => $qc->{tarefas},
+                    _tags      => $qc->{tag},
                     _sub       => {
                         ref  => $qc->{code} . '_' . $subq->{referencia},
                         p2a  => $subq->{power2answer},
@@ -1201,6 +1238,7 @@ sub _init_questionnaire_stash {
                 ($is_anon ? (code => $qc->{code}) : ()),
                 _relevance => $relevance,
                 _tarefas   => $qc->{tarefas},
+                _tags      => $qc->{tag},
                 options    => [],
             };
 
@@ -1225,6 +1263,7 @@ sub _init_questionnaire_stash {
                 content    => $qc->{question},
                 _relevance => $relevance,
                 _tarefas   => $qc->{tarefas},
+                _tags      => $qc->{tag},
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
             };
@@ -1246,6 +1285,7 @@ sub _init_questionnaire_stash {
                 label              => $qc->{button_label} || 'Visualizar',
                 _relevance         => $relevance,
                 _tarefas           => $qc->{tarefas},
+                _tags              => $qc->{tag},
                 _code              => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
             };
@@ -1261,6 +1301,7 @@ sub _init_questionnaire_stash {
                 label      => $qc->{button_label} || 'Enviar',
                 _relevance => $relevance,
                 _tarefas   => $qc->{tarefas},
+                _tags      => $qc->{tag},
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
                 _end_chat => 1,
@@ -1278,6 +1319,7 @@ sub _init_questionnaire_stash {
                 ($is_anon ? (code => $qc->{code}) : ()),
                 _relevance => $relevance,
                 _tarefas   => $qc->{tarefas},
+                _tags      => $qc->{tag},
                 options    => [],
             };
 
@@ -1305,6 +1347,7 @@ sub _init_questionnaire_stash {
                 ref                 => 'CEP' . $qc->{id},
                 _relevance          => $relevance,
                 _tarefas            => $qc->{tarefas},
+                _tags               => $qc->{tag},
                 _code               => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
             };
@@ -1325,10 +1368,25 @@ sub _init_questionnaire_stash {
 
                 _relevance => $relevance,
                 _tarefas   => $qc->{tarefas},
+                _tags      => $qc->{tag},
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
 
                 _change_questionnaire => $qc->{change_to_questionnaire_id},
+            };
+        }
+        elsif ($qc->{type} eq 'tag_user') {
+            $qc->{tag} or confess "misssing \$qc->{tag} on ${\$qc->{id}}";
+            die "tag_user do work on AnonymousQuizSession" if $is_anon;
+
+            push @questions, {
+                type    => 'tag_user',
+                content => $qc->{question},
+                ref     => 'TAG' . $qc->{id},
+
+                _relevance => $relevance,
+                _tags      => $qc->{tag},
+                _code      => $qc->{code},
             };
         }
         elsif ($qc->{type} eq 'next_mf_questionnaire' || $qc->{type} eq 'next_mf_questionnaire_outstanding') {
@@ -1339,6 +1397,7 @@ sub _init_questionnaire_stash {
 
                 _relevance => $relevance,
                 _tarefas   => $qc->{tarefas},
+                _tags      => $qc->{tag},
                 _code      => $qc->{code},
                 ($is_anon ? (code => $qc->{code}) : ()),
 

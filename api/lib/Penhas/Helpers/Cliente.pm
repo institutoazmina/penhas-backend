@@ -11,7 +11,8 @@ use Encode;
 
 our $NEW_TASK_TOKEN = $ENV{NEW_TASK_TOKEN} || '';
 
-my $descricao = 'Quas excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum.';
+my $descricao
+  = 'Quas excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum.';
 
 sub setup {
     my $self = shift;
@@ -26,6 +27,7 @@ sub setup {
     $self->helper('cliente_mf_assistant'       => sub { &cliente_mf_assistant(@_) });
 
     $self->helper('cliente_mf_add_tarefa_por_codigo' => sub { &cliente_mf_add_tarefa_por_codigo(@_) });
+    $self->helper('cliente_mf_add_tag_by_code'       => sub { &cliente_mf_add_tag_by_code(@_) });
 }
 
 sub cliente_mf_assistant {
@@ -92,6 +94,59 @@ sub cliente_mf_assistant {
     return {mf_assistant => $ret};
 }
 
+
+sub cliente_mf_add_tag_by_code {
+    my ($c, %opts) = @_;
+
+    my $user    = $opts{user_obj} or confess 'missing user_obj';
+    my $codigos = $opts{codigos}  or confess 'missing codigos';
+
+    $c->schema2->txn_do(
+        sub {
+            my @tarefas = $c->schema2->resultset('MfTag')->search(
+                {
+                    code => {in => $codigos},
+                },
+                {
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                    columns      => ['id', 'code'],
+                }
+            )->all;
+
+            my @already_exists = $c->schema2->resultset('ClienteTag')->search(
+                {
+                    cliente_id => $user->id,
+
+                    mf_tag_id => {'in' => [map { $_->{id} } @tarefas]}
+                },
+                {
+                    result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+                    columns      => ['mf_tag_id']
+                }
+            )->all();
+
+            my $exists_by_id = {};
+            $exists_by_id->{$_->{mf_tag_id}} = 1 for @already_exists;
+
+            for my $tarefa (@tarefas) {
+                next if $exists_by_id->{$tarefa->{id}};
+
+                slog_info(
+                    'adding mf_cliente_tag user=%s $mf_tag_id=%s %s',
+                    $user->id, $tarefa->{id}, $tarefa->{code},
+                );
+
+                $c->schema2->resultset('ClienteTag')->create(
+                    {
+                        cliente_id    => $user->id,
+                        atualizado_em => \'now()',
+                        mf_tag_id     => $tarefa->{id},
+                    }
+                );
+            }
+        }
+    );
+}
 
 sub cliente_mf_add_tarefa_por_codigo {
     my ($c, %opts) = @_;
