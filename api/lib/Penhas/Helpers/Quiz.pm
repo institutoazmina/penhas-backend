@@ -10,6 +10,7 @@ use Readonly;
 use DateTime;
 use Penhas::Logger;
 use Scope::OnExit;
+use Mojo::Util qw/trim/;
 
 # a chave do cache é composta por horarios de modificações do quiz_config e questionnaires
 use Penhas::KeyValueStorage;
@@ -47,7 +48,13 @@ sub _new_displaytext_normal {
 
 sub _skip_empty_msg {
     my ($question) = @_;
-    return exists $question->{content} && $question->{type} ne 'button' ? $question->{content} ? 1 : 0 : 1;
+
+    return
+        exists $question->{content} && $question->{type} ne 'button'
+      ? $question->{content} && trim($question->{content})
+          ? 1
+          : 0
+      : 1;
 }
 
 sub setup {
@@ -125,6 +132,8 @@ sub load_quiz_config {
                         $_->{intro}      and $_->{intro}      = from_json($_->{intro});
                         $_->{options}    and $_->{options}    = from_json($_->{options});
                         $_->{tarefas}    and $_->{tarefas}    = from_json($_->{tarefas});
+                        $_->{tag}        and $_->{tag}        = from_json($_->{tag});
+                        $_->{question} = trim($_->{question});
                         $_
                     } $c->schema2->resultset('QuizConfig')->search(
                         {
@@ -538,7 +547,7 @@ sub load_quiz_session {
             $q->{_relevance},
         );
 
-        if ($has) {
+        if ($has && $q->{content}) {
             push @frontend_msg, $q;
         }
     }
