@@ -923,13 +923,15 @@ sub process_quiz_session {
                     my $reverse_index = {map { $_->{index} => $_->{display} } $msg->{options}->@*};
                     my $output        = '';
                     my $output_human  = '';
+                    my @output;
                     foreach my $index (split /,/, $val) {
 
                         # pula caso venha opcoes invalidas
                         next unless defined $reverse_index->{$index};
 
                         $output_human .= $reverse_index->{$index} . ', ';
-                        $output       .= $index . ',';
+                        push @output, $msg->{_db_option}[$index];
+                        $output .= $index . ',';
 
                         if (exists $msg->{_skills}) {
                             $update_user_skills = {} unless defined $update_user_skills;
@@ -942,8 +944,9 @@ sub process_quiz_session {
                     chop($output_human);    # rm virgula
                     chop($output);          # rm virgula
 
-                    $responses->{$code} = '[' . $output . ']';
-                    $msg->{display_response} = $output_human;
+                    $responses->{$code . '_json'} = to_json(\@output);
+                    $responses->{$code}           = '[' . $output . ']';
+                    $msg->{display_response}      = $output_human;
                     $have_new_responses++;
 
                 }

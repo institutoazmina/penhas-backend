@@ -155,7 +155,7 @@ db_transaction {
             form => {modificado_apos => $epoch_start},
         )->status_is(200, 'busca todas as tarefas')->tx->res->json;
 
-        $input_msg  = $me_tarefas_v2->{mf_assistant}{quiz_session}{current_msgs}[-1];
+        $input_msg = $me_tarefas_v2->{mf_assistant}{quiz_session}{current_msgs}[-1];
         like $input_msg->{content}, qr/Você tem para onde ir?/, 'pergunta yesnomaybe';
 
         $mf_sc->discard_changes;
@@ -199,9 +199,38 @@ db_transaction {
         $input_msg = $json->{quiz_session}{current_msgs}[-1];
         $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
 
+        like $first_msg->{content}, qr/teste mc/,      'teste de MC';
+        is $input_msg->{type},      'multiplechoices', 'multiplechoices';
+
+        $json = $t->post_ok(
+            '/me/quiz',
+            {'x-api-key' => $session},
+            form => {
+                session_id => $session_id,
+                $field_ref => '0,2',         # opção A e C
+            }
+        )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+        $first_msg = $json->{quiz_session}{current_msgs}[0];
+        $input_msg = $json->{quiz_session}{current_msgs}[-1];
+        $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
+
         like $first_msg->{content}, qr/Até mais/, 'texto final';
         is $input_msg->{type},      'button',     'botao para finalizar';
 
+        my $cliente_quiz_session = get_schema2->resultset('ClientesQuizSession')->find($session_id);
+        my $responses            = from_json($cliente_quiz_session->responses);
+
+        ok delete $responses->{start_time}, 'has start_time';
+
+        is $responses, {
+            b0_p0                => 'p0a',
+            b1_p1                => 'Y',
+            b2_primeira_e_ultima => 'foo bar',
+            MC_X                 => '[0,2]',
+            MC_X_json            => '["A","C"]',
+          },
+          'match expected responses';
 
         $json = $t->post_ok(
             '/me/quiz',
