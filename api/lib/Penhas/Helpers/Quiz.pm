@@ -49,7 +49,7 @@ sub _new_displaytext_normal {
 sub _skip_empty_msg {
     my ($question) = @_;
 
-    if ($question->{type} eq 'button' || $question->{type} eq 'cep_results') {
+    if ($question->{type} eq 'button') {
         return 1;
     }
 
