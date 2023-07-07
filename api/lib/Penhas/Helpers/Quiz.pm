@@ -338,8 +338,10 @@ sub load_quiz_session {
     my $is_anon  = $opts{is_anon} ? 1 : 0;
 
     croak 'missing user@load_quiz_session' if !$is_anon && (!$user || !$user_obj);
-    confess '$user should be a hash'     unless ref $user eq 'HASH';
-    confess '$user_obj should be a hash' unless ref $user_obj eq 'Penhas::Schema2::Result::Cliente';
+    if (!$is_anon) {
+        confess '$user should be a hash'     unless ref $user eq 'HASH';
+        confess '$user_obj should be a hash' unless ref $user_obj eq 'Penhas::Schema2::Result::Cliente';
+    }
 
     if ($is_anon) {
         $session_rs = $c->schema2->resultset('AnonymousQuizSession');

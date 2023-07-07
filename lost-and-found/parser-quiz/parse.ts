@@ -33,6 +33,10 @@ interface QuizConfigTarefa {
     codigo: string
 }
 
+interface QuizConfigTag {
+    codigo: string
+}
+
 interface QuizConfig {
     status: 'published';
     sort: number;
@@ -46,6 +50,7 @@ interface QuizConfig {
     options: any[] | null;
     tarefas: QuizConfigTarefa[]; //default []
     change_to_questionnaire_id: number | null;
+    tag: QuizConfigTag[]
 }
 
 interface XLSXParsedOption {
@@ -360,10 +365,10 @@ const generateSql = (blocks: Block[], quiz: QuizConfig[]) => {
                 let escapedRelevance = escapeString(qc.relevance);
                 let escapedOptions = qc.options !== null ? escapeString(JSON.stringify(qc.options)) : null;
 
-                sqlStr += `INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id)
+                sqlStr += `INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('${qc.status}', ${qc.sort}, '${qc.type}', '${qc.code}', E'${escapedQuestion}',
                         ${qc.questionnaire_id}, E'${escapedIntro}', E'${escapedRelevance}', ${qc.button_label === null ? 'null' : `'${qc.button_label}'`},
-                        ${escapedOptions === null ? 'null' : `E'${escapedOptions}'`}, '${JSON.stringify(qc.tarefas)}', ${qc.change_to_questionnaire_id});\n`;
+                        ${escapedOptions === null ? 'null' : `E'${escapedOptions}'`}, '${JSON.stringify(qc.tarefas)}', ${qc.change_to_questionnaire_id}, '${JSON.stringify(qc.tag)}');\n`;
 
             }
         }
@@ -417,6 +422,7 @@ function boostrap() {
             status: 'published',
             tarefas: q.parsedType.tarefas,
             type: q.parsedType.db_type,
+            tag: []
         };
 
 
@@ -488,6 +494,7 @@ function boostrap() {
                     options: null,
                     status: 'published',
                     type: 'displaytext',
+                    tag: []
                 };
 
                 quiz.push(resp_row)
