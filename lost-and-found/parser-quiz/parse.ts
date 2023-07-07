@@ -176,11 +176,11 @@ const transformQuestion = (data: any): Question => {
             throw `faltando de-para para o tipo ${data["Tipo"]} em ${JSON.stringify(returning)}`;
 
 
-        if (parsed.db_type === 'autocontinue') {
+        if (parsed.db_type === 'auto_change_questionnaire') {
             parsed.change_to_questionnaire_id = +returning.questionario;
 
             if (isNaN(parsed.change_to_questionnaire_id))
-                throw `faltando change_to_questionnaire_id para o tipo autocontinue em ${JSON.stringify(returning)}`;
+                throw `faltando change_to_questionnaire_id para o tipo auto_change_questionnaire em ${JSON.stringify(returning)}`;
         } else if (parsed.db_type == 'botao_fim') {
             parsed.button_label = bf_label;
         } else if ([
@@ -440,7 +440,12 @@ function boostrap() {
         for (const q2 of questions) {
             for (const option of q2.parsedType.options) {
                 if (option.proxima_pergunta == q.questionId) {
-                    relevances.push(`${q2.blockId}_${q2.questionId} == '${option.opcao_clean}'`);
+                    if (q2.parsedType.db_type === 'multiplechoices') {
+                        relevances.push(`is_json_member('${option.opcao_clean}', ${q2.blockId}_${q2.questionId}_json)`);
+                    } else {
+                        relevances.push(`${q2.blockId}_${q2.questionId} == '${option.opcao_clean}'`);
+                    }
+
                 }
             }
         }
@@ -462,7 +467,13 @@ function boostrap() {
 
                 const resp_code = `${code}_${resp}`;
 
-                const relevance = `${code} == '${option.opcao_clean}' `;
+                let relevance = '';
+
+                if (q.parsedType.db_type === 'multiplechoices') {
+                    relevance = `is_json_member('${option.opcao_clean}', ${code}_json)`;
+                } else {
+                    relevance = `${code} == '${option.opcao_clean}' `;
+                }
 
                 const resp_row: QuizConfig = {
                     question: replyObj[0].description,
