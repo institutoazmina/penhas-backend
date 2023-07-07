@@ -49,12 +49,11 @@ sub _new_displaytext_normal {
 sub _skip_empty_msg {
     my ($question) = @_;
 
-    return
-        exists $question->{content} && $question->{type} ne 'button'
-      ? $question->{content} && trim($question->{content})
-          ? 1
-          : 0
-      : 1;
+    if ($question->{type} eq 'button' || $question->{type} eq 'cep_results') {
+        return 1;
+    }
+
+    return exists $question->{content} && $question->{content} && trim($question->{content}) ? 1 : 0;
 }
 
 sub setup {
@@ -396,8 +395,12 @@ sub load_quiz_session {
                 slog_info(
                     '  Testing question relevance %s "%s" %s',
                     $has_relevance ? '✔️ True ' : '❌ False',
-                    (exists $item->{_sub} && exists $item->{_sub}{ref} ? $item->{_sub}{ref} : $item->{content}),
-                    $item->{_relevance},
+                    (
+                        exists $item->{_sub} && exists $item->{_sub}{ref}
+                        ? $item->{_sub}{ref}
+                        : ($item->{content} || 'no-content')
+                    ),
+                    $item->{_relevance} || 'no _relevance',
                 );
 
                 # pegamos um item que eh input, entao vamos sair do loop nesta vez
@@ -545,11 +548,11 @@ sub load_quiz_session {
         slog_info(
             'Rendering: question relevance %s "%s" %s',
             $has ? '✔️ True' : '❌ False',
-            (exists $q->{_sub} && exists $q->{_sub}{ref} ? $q->{_sub}{ref} : $q->{content}),
+            (exists $q->{_sub} && exists $q->{_sub}{ref} ? $q->{_sub}{ref} : ($q->{content} || 'no-content')),
             $q->{_relevance},
         );
 
-        if ($has && $q->{content}) {
+        if ($has) {
             push @frontend_msg, $q;
         }
     }
