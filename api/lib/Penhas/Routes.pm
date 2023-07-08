@@ -160,6 +160,9 @@ sub register {
     # POST /me/call-police-pressed
     $me->post('call-police-pressed')->to(action => 'inc_call_police_counter');
 
+    # POST /me/inc-login-offline
+    $me->post('inc-login-offline')->to(action => 'inc_login_offline_counter');
+
     # POST /me/modo-anonimo-toggle
     $me->post('modo-anonimo-toggle')->to(action => 'route_cliente_modo_anonimo_toggle');
 
@@ -186,11 +189,11 @@ sub register {
 
     # /me/tarefas
     my $me_tarefas = $me->under('tarefas')->to(controller => 'Me_Tarefas', action => 'assert_user_perms');
- 
+
     $me_tarefas->get()->to(action => 'me_t_list');
     $me_tarefas->post('sync')->to(action => 'me_t_sync');
     $me_tarefas->post('nova')->to(action => 'me_t_nova');
- 
+
 
     # /me/tweets
     my $me_tweets = $me->under('tweets')->to(controller => 'Me_Tweets', action => 'assert_user_perms');

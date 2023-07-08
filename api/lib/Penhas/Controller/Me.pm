@@ -436,6 +436,23 @@ sub inc_call_police_counter {
     return $c->render(text => '', status => 204,);
 }
 
+sub inc_login_offline_counter {
+    my $c = shift;
+
+    my $valid = $c->validate_request_params(
+        inc_by => {required => 1, type => 'Int', max_length => 4},
+    );
+
+    my $user_obj = $c->stash('user_obj');
+    $user_obj->update(
+        {
+            qtde_login_offline => \['qtde_login_offline + ?', $valid->{inc_by}],
+        }
+    );
+
+    return $c->render(text => '', status => 204,);
+}
+
 sub route_cliente_modo_camuflado_toggle {
     my $c = shift;
 

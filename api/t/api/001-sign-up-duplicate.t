@@ -311,6 +311,20 @@ subtest_buffered 'Contador ligacao policia' => sub {
     is $directus->{qtde_ligar_para_policia}, 1, 'qtde_ligar_para_policia increased';
 };
 
+subtest_buffered 'Contador login offline' => sub {
+
+    is $directus->{qtde_login_offline}, 0, 'qtde_login_offline is 0';
+    $t->post_ok(
+        '/me/inc-login-offline',
+        {'x-api-key' => $session},
+        form => {inc_by => 3}
+    )->status_is(204);
+
+    $directus = get_cliente_by_email($random_email);
+    is $directus->{qtde_login_offline}, 3, 'qtde_login_offline increased';
+};
+
+
 subtest_buffered 'Modos' => sub {
 
     $t->post_ok(
@@ -597,7 +611,7 @@ subtest_buffered 'Reset de senha' => sub {
             senha       => 'abc1A`S345678',
             app_version => 'Versao Ios ou Android, Modelo Celular, Versao do App',
         }
-    )->status_is(200,'pass ok')->json_has('/session');
+    )->status_is(200, 'pass ok')->json_has('/session');
     is $user_obj->status, 'active', 'status active';
     my $session = last_tx_json()->{session};
     $t->get_ok(

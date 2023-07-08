@@ -69,5 +69,6 @@ create table cliente_tag (
 );
 
 alter table quiz_config add column tag json not null default '[]';
+alter table quiz_config alter tag set not null;
 
 COMMIT;
