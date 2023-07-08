@@ -10,7 +10,7 @@ type XlsType = 'SN' | 'SC' | 'AC' | 'SNT' | 'MC' | 'BF' | 'PS' | 'ET';
 type DbQuizConfigType = 'yesnomaybe' | 'skillset' | 'text' | 'onlychoice' |
     'yesno' | 'botao_fim' | 'cep_address_lookup' |
     'displaytext' | 'yesnogroup' | 'auto_change_questionnaire' | 'botao_tela_modo_camuflado' |
-    'next_mf_questionnaire' | 'multiplechoices' | 'next_mf_questionnaire_outstanding';
+    'next_mf_questionnaire' | 'multiplechoices' | 'next_mf_questionnaire_outstanding' | 'tag_user';
 
 const yesnoRegex = new RegExp(/(S|N|T)\s*[:,]\s*(.+)\s*/);
 const mcRegexp = new RegExp(/\"([^\"]+)"\s*[:,]\s*(.+)\s*/);
@@ -500,12 +500,42 @@ function boostrap() {
                 quiz.push(resp_row)
 
             }
+
+            if (option.tags.length > 0) {
+                let relevance = '';
+
+                if (q.parsedType.db_type === 'multiplechoices') {
+                    relevance = `is_json_member('${option.opcao_clean}', ${code}_json)`;
+                } else {
+                    relevance = `${code} == '${option.opcao_clean}' `;
+                }
+
+                const resp_code = `${code}_tags`;
+
+                const tag_row: QuizConfig = {
+                    question: '',
+                    questionnaire_id: blockById[q.blockId],
+                    relevance: relevance,
+                    sort: sort_order + 5,
+                    tarefas: [],
+                    button_label: null,
+                    change_to_questionnaire_id: null,
+                    code: resp_code,
+                    intro: [],
+                    options: null,
+                    status: 'published',
+                    type: 'tag_user',
+                    tag: option.tags.map(t => ({ codigo: t }))
+                };
+
+                quiz.push(tag_row)
+            }
+
         }
 
         //console.log(row)
         //if (sort_order >= 10000000 + 1000)
         //process.exit();
-
 
         sort_order += 1000;
     }
