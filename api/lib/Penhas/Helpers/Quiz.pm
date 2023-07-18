@@ -391,6 +391,12 @@ sub load_quiz_session {
             if ($item) {
                 log_info("Maybe adding question " . to_json($item));
 
+
+                if (!defined $item->{_relevance}) {
+                    slog_error('add_more_questions: question is missing relevance %s', to_json($item));
+                    next;
+                }
+
                 my $has_relevance = &has_relevance($vars, $item);
                 slog_info(
                     '  Testing question relevance %s "%s" %s',
@@ -1143,8 +1149,14 @@ sub any_has_relevance {
     my ($vars, $msgs) = @_;
 
     foreach my $q ($msgs->@*) {
-        return 1 if $q->{_relevance} eq '1'  && &_is_input($q);
-        return 1 if has_relevance($vars, $q) && &_is_input($q);
+        return 1 if $q->{_relevance} eq '1' && &_is_input($q);
+
+        if (!defined $q->{_relevance}) {
+            slog_error('any_has_relevance: question is missing relevance %s', to_json($q));
+            next;
+        }
+
+        return 1 if &_is_input($q) && has_relevance($vars, $q);
     }
 
     return 0;
