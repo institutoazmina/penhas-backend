@@ -359,7 +359,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P18 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10027741, 'next_mf_questionnaire', 'B2_P18_R56_PQ', E' ',
+                        14, E'[]', E'B2_P18 == \'Y\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10027750, 'displaytext', 'B2_P18_R57', E'É dever de todos, especialmente das pessoas mais próximas, denunciar o caso à polícia, ao Ministério Público, à Justiça ou outro órgão de proteção. Lembre-se que a denúncia pode ser feita de forma anônima.',
+                        14, E'[]', E'B2_P18 == \'Y\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10027751, 'next_mf_questionnaire', 'B2_P18_R57_PQ', E' ',
                         14, E'[]', E'B2_P18 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -367,7 +375,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P18 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10027761, 'next_mf_questionnaire', 'B2_P18_R59_PQ', E' ',
+                        14, E'[]', E'B2_P18 == \'Y\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10027770, 'displaytext', 'B2_P18_R57', E'É dever de todos, especialmente das pessoas mais próximas, denunciar o caso à polícia, ao Ministério Público, à Justiça ou outro órgão de proteção. Lembre-se que a denúncia pode ser feita de forma anônima.',
+                        14, E'[]', E'B2_P18 == \'N\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10027771, 'next_mf_questionnaire', 'B2_P18_R57_PQ', E' ',
                         14, E'[]', E'B2_P18 == \'N\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -375,7 +391,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P18 == \'N\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10027781, 'next_mf_questionnaire', 'B2_P18_R58_PQ', E' ',
+                        14, E'[]', E'B2_P18 == \'N\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10027790, 'displaytext', 'B2_P18_R59', E'Você acabou de finalizar este bloco. Parabéns! Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você responda a todos os blocos.',
+                        14, E'[]', E'B2_P18 == \'N\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10027791, 'next_mf_questionnaire', 'B2_P18_R59_PQ', E' ',
                         14, E'[]', E'B2_P18 == \'N\' ', null,
                         null, '[]', null, '[]');
 DELETE FROM quiz_config WHERE questionnaire_id = 15;
@@ -408,7 +432,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030831, 'next_mf_questionnaire', 'B3_P20_R63_PQ', E' ',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10030840, 'displaytext', 'B3_P20_R64', E'Se julgar que sua saída é a única chance de romper o ciclo de violência, siga com o plano. Não é abandono de lar querer sobreviver.',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030841, 'next_mf_questionnaire', 'B3_P20_R64_PQ', E' ',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -416,11 +448,23 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030851, 'next_mf_questionnaire', 'B3_P20_R65_PQ', E' ',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10030860, 'displaytext', 'B3_P20_R66', E'Por isso, iremos acrescentar em seu plano algumas orientações pra que, após a fuga, você possa entrar com uma ação judicial sobre seu patrimônio.',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
                         null, '[{"codigo":"T92"},{"codigo":"T93"},{"codigo":"T94"},{"codigo":"T95"},{"codigo":"T96"},{"codigo":"T97"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030861, 'next_mf_questionnaire', 'B3_P20_R66_PQ', E' ',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10030870, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030871, 'next_mf_questionnaire', 'B3_P20_R76_PQ', E' ',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -428,7 +472,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030881, 'next_mf_questionnaire', 'B3_P20_R67_PQ', E' ',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10030890, 'displaytext', 'B3_P20_R68', E'Caso permaneça no imóvel cujo contrato está no nome do agressor, você não precisará pagar aluguel a ele caso comprove a situação de violência, pois o judiciário entende que você precisa restabelecer sua integridade física, financeira e mental.',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030891, 'next_mf_questionnaire', 'B3_P20_R68_PQ', E' ',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -436,11 +488,23 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030901, 'next_mf_questionnaire', 'B3_P20_R69_PQ', E' ',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10030910, 'displaytext', 'B3_P20_R70', E'Deixar o lar não invalida a sua participação em possíveis divisões de bens ou no direito à guarda de filhos, caso os tenha.',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
                         null, '[{"codigo":"T92"},{"codigo":"T96"},{"codigo":"T97"},{"codigo":"T98"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030911, 'next_mf_questionnaire', 'B3_P20_R70_PQ', E' ',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10030920, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030921, 'next_mf_questionnaire', 'B3_P20_R76_PQ', E' ',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -448,7 +512,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'o-imovel-e-alugado-no-meu-nome\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030931, 'next_mf_questionnaire', 'B3_P20_R71_PQ', E' ',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-alugado-no-meu-nome\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10030940, 'displaytext', 'B3_P20_R72', E'Se julgar que sua saída é a única chance de romper o ciclo de violência, siga com o plano. Dialogue com o proprietário (a) e negocie possíveis multas em caso de quebra de regra contratual e afins.',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-alugado-no-meu-nome\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030941, 'next_mf_questionnaire', 'B3_P20_R72_PQ', E' ',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-alugado-no-meu-nome\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -456,7 +528,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'o-imovel-e-alugado-no-meu-nome\' ', null,
                         null, '[{"codigo":"T92"},{"codigo":"T94"},{"codigo":"T96"},{"codigo":"T97"},{"codigo":"T99"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030951, 'next_mf_questionnaire', 'B3_P20_R73_PQ', E' ',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-alugado-no-meu-nome\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10030960, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-alugado-no-meu-nome\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030961, 'next_mf_questionnaire', 'B3_P20_R76_PQ', E' ',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-alugado-no-meu-nome\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -464,7 +544,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'o-imovel-e-financiado-no-nome-dos-dois\' ', null,
                         null, '[{"codigo":"T92"},{"codigo":"T94"},{"codigo":"T96"},{"codigo":"T97"},{"codigo":"T100"},{"codigo":"T101"},{"codigo":"T102"},{"codigo":"T103"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030971, 'next_mf_questionnaire', 'B3_P20_R74_PQ', E' ',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-financiado-no-nome-dos-dois\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10030980, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        15, E'[]', E'B3_P20 == \'o-imovel-e-financiado-no-nome-dos-dois\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030981, 'next_mf_questionnaire', 'B3_P20_R76_PQ', E' ',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-financiado-no-nome-dos-dois\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -472,7 +560,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'construimos-um-imovel-no-terreno-da-familia\' ', null,
                         null, '[{"codigo":"T92"},{"codigo":"T94"},{"codigo":"T96"},{"codigo":"T97"},{"codigo":"T101"},{"codigo":"T103"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10030991, 'next_mf_questionnaire', 'B3_P20_R75_PQ', E' ',
+                        15, E'[]', E'B3_P20 == \'construimos-um-imovel-no-terreno-da-familia\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10031000, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        15, E'[]', E'B3_P20 == \'construimos-um-imovel-no-terreno-da-familia\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10031001, 'next_mf_questionnaire', 'B3_P20_R76_PQ', E' ',
                         15, E'[]', E'B3_P20 == \'construimos-um-imovel-no-terreno-da-familia\' ', null,
                         null, '[]', null, '[]');
 DELETE FROM quiz_config WHERE questionnaire_id = 16;
@@ -589,15 +685,31 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         16, E'[]', E'B4_P27 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10039201, 'next_mf_questionnaire', 'B4_P27_R96_PQ', E' ',
+                        16, E'[]', E'B4_P27 == \'Y\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10039210, 'displaytext', 'B4_P27_R97', E'Tanto na rede privada quanto no SUS, as equipes de saúde são, por lei, obrigadas a denunciar à polícia casos de violência contra a mulher. A depender da condição, uma visita de rotina pode te ajudar a romper o ciclo de violência.',
                         16, E'[]', E'B4_P27 == \'Y\' ', null,
                         null, '[{"codigo":"T73"},{"codigo":"T74"},{"codigo":"T129"},{"codigo":"T130"},{"codigo":"T131"},{"codigo":"T132"},{"codigo":"T133"}]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10039211, 'next_mf_questionnaire', 'B4_P27_R97_PQ', E' ',
+                        16, E'[]', E'B4_P27 == \'Y\' ', null,
+                        null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10039220, 'displaytext', 'B4_P27_R98', E'Estamos finalizando o bloco "Segurança Pessoal". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
                         16, E'[]', E'B4_P27 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10039221, 'next_mf_questionnaire', 'B4_P27_R98_PQ', E' ',
+                        16, E'[]', E'B4_P27 == \'Y\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10039230, 'displaytext', 'B4_P27_R98', E'Estamos finalizando o bloco "Segurança Pessoal". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        16, E'[]', E'B4_P27 == \'N\' ', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10039231, 'next_mf_questionnaire', 'B4_P27_R98_PQ', E' ',
                         16, E'[]', E'B4_P27 == \'N\' ', null,
                         null, '[]', null, '[]');
 DELETE FROM quiz_config WHERE questionnaire_id = 17;
@@ -614,7 +726,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         17, E'[]', E'is_json_member(\'transporte-publico\', B5_P9_json)', null,
                         null, '[{"codigo":"T18"},{"codigo":"T19"},{"codigo":"T20"},{"codigo":"T21"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017321, 'next_mf_questionnaire', 'B5_P9_R19_PQ', E' ',
+                        17, E'[]', E'is_json_member(\'transporte-publico\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017330, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
+                        17, E'[]', E'is_json_member(\'transporte-publico\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017331, 'next_mf_questionnaire', 'B5_P9_R26_PQ', E' ',
                         17, E'[]', E'is_json_member(\'transporte-publico\', B5_P9_json)', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -622,7 +742,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         17, E'[]', E'is_json_member(\'moto-ou--carro-proprio\', B5_P9_json)', null,
                         null, '[{"codigo":"T22"},{"codigo":"T23"},{"codigo":"T24"},{"codigo":"T25"},{"codigo":"T26"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017341, 'next_mf_questionnaire', 'B5_P9_R20_PQ', E' ',
+                        17, E'[]', E'is_json_member(\'moto-ou--carro-proprio\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017350, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
+                        17, E'[]', E'is_json_member(\'moto-ou--carro-proprio\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017351, 'next_mf_questionnaire', 'B5_P9_R26_PQ', E' ',
                         17, E'[]', E'is_json_member(\'moto-ou--carro-proprio\', B5_P9_json)', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -630,7 +758,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         17, E'[]', E'is_json_member(\'carona\', B5_P9_json)', null,
                         null, '[{"codigo":"T27"},{"codigo":"T28"},{"codigo":"T29"},{"codigo":"T30"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017361, 'next_mf_questionnaire', 'B5_P9_R21_PQ', E' ',
+                        17, E'[]', E'is_json_member(\'carona\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017370, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
+                        17, E'[]', E'is_json_member(\'carona\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017371, 'next_mf_questionnaire', 'B5_P9_R26_PQ', E' ',
                         17, E'[]', E'is_json_member(\'carona\', B5_P9_json)', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -638,7 +774,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         17, E'[]', E'is_json_member(\'bicicleta-ou-a-pe\', B5_P9_json)', null,
                         null, '[{"codigo":"T24"},{"codigo":"T25"},{"codigo":"T26"},{"codigo":"T31"},{"codigo":"T32"},{"codigo":"T33"},{"codigo":"T34"},{"codigo":"T35"},{"codigo":"T36"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017381, 'next_mf_questionnaire', 'B5_P9_R22_PQ', E' ',
+                        17, E'[]', E'is_json_member(\'bicicleta-ou-a-pe\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017390, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
+                        17, E'[]', E'is_json_member(\'bicicleta-ou-a-pe\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017391, 'next_mf_questionnaire', 'B5_P9_R26_PQ', E' ',
                         17, E'[]', E'is_json_member(\'bicicleta-ou-a-pe\', B5_P9_json)', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -646,7 +790,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         17, E'[]', E'is_json_member(\'taxi-ou-carro-por-aplicativo\', B5_P9_json)', null,
                         null, '[{"codigo":"T37"},{"codigo":"T38"},{"codigo":"T39"},{"codigo":"T40"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017401, 'next_mf_questionnaire', 'B5_P9_R23_PQ', E' ',
+                        17, E'[]', E'is_json_member(\'taxi-ou-carro-por-aplicativo\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017410, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
+                        17, E'[]', E'is_json_member(\'taxi-ou-carro-por-aplicativo\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017411, 'next_mf_questionnaire', 'B5_P9_R26_PQ', E' ',
                         17, E'[]', E'is_json_member(\'taxi-ou-carro-por-aplicativo\', B5_P9_json)', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -654,11 +806,23 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         17, E'[]', E'is_json_member(\'nao-sei\', B5_P9_json)', null,
                         null, '[{"codigo":"T41"},{"codigo":"T42"},{"codigo":"T43"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017421, 'next_mf_questionnaire', 'B5_P9_R24_PQ', E' ',
+                        17, E'[]', E'is_json_member(\'nao-sei\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017430, 'displaytext', 'B5_P9_R25', E'Bom que você tenha essa possibilidade! Sair de casa com táxi ou por carro por aplicativo requer uma preparação, sobretudo financeira. Por isso, vou incluir alguns pontos de atenção em relação a esse tipo de deslocamento ao final do seu plano.',
                         17, E'[]', E'is_json_member(\'nao-sei\', B5_P9_json)', null,
                         null, '[{"codigo":"T44"},{"codigo":"T45"},{"codigo":"T46"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017431, 'next_mf_questionnaire', 'B5_P9_R25_PQ', E' ',
+                        17, E'[]', E'is_json_member(\'nao-sei\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017440, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
+                        17, E'[]', E'is_json_member(\'nao-sei\', B5_P9_json)', null,
+                        null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10017441, 'next_mf_questionnaire', 'B5_P9_R26_PQ', E' ',
                         17, E'[]', E'is_json_member(\'nao-sei\', B5_P9_json)', null,
                         null, '[]', null, '[]');
 DELETE FROM quiz_config WHERE questionnaire_id = 18;

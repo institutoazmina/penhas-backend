@@ -451,7 +451,6 @@ function boostrap() {
                     } else {
                         relevances.push(`${q2.blockId}_${q2.questionId} == '${option.opcao_clean}'`);
                     }
-
                 }
             }
         }
@@ -497,7 +496,29 @@ function boostrap() {
                     tag: []
                 };
 
-                quiz.push(resp_row)
+                quiz.push(resp_row);
+
+                if (option.proxima_pergunta === 'PQ') {
+
+                    const next_mf: QuizConfig = {
+                        question: ' ',
+                        questionnaire_id: blockById[q.blockId],
+                        relevance: relevance,
+                        sort: sort_order + 1,
+                        tarefas: [],
+                        button_label: null,
+                        change_to_questionnaire_id: null,
+                        code: resp_code + '_PQ',
+                        intro: [],
+                        options: null,
+                        status: 'published',
+                        type: 'next_mf_questionnaire',
+                        tag: []
+                    };
+
+                    quiz.push(next_mf);
+
+                }
 
             }
 
@@ -540,7 +561,7 @@ function boostrap() {
         sort_order += 1000;
     }
 
-    console.log("Blocks:", blocks);
+    //console.log("Blocks:", blocks);
     //console.log("Questions:", questions);
     //console.log("Replies:", replies);
     //console.log("Tasks:", tasks);
