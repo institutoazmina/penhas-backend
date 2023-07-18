@@ -310,7 +310,7 @@ const generateTagSql = (tags: Tag[]) => {
     return sqlStr;
 }
 
-const generateTarefasSql = (tasks: Task[]) => {
+const generateTarefasSql = (tasks: Task[], blocks: Block[]) => {
     let sqlStr = '';
 
     for (let task of tasks) {
@@ -324,6 +324,7 @@ const generateTarefasSql = (tasks: Task[]) => {
         const titulo = '';
         const tipo = 'checkbox';
 
+        const blocoAgrupador = blocks.find(r => r.id === agrupador)?.description || agrupador;
 
         sqlStr += `INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
@@ -331,7 +332,7 @@ const generateTarefasSql = (tasks: Task[]) => {
                       E'${escapeString(titulo)}',
                       E'${escapeString(descricao)}',
                       E'${escapeString(tipo)}',
-                      E'${escapeString(agrupador)}'
+                      E'${escapeString(blocoAgrupador)}'
                    )
                    ON CONFLICT (codigo) WHERE (codigo::text <> ''::text) DO UPDATE
                    SET descricao = EXCLUDED.descricao,
@@ -397,7 +398,7 @@ function boostrap() {
     }
 
     fs.writeFileSync('out/tags.sql', generateTagSql(tags));
-    fs.writeFileSync('out/tarefas.sql', generateTarefasSql(tasks));
+    fs.writeFileSync('out/tarefas.sql', generateTarefasSql(tasks, blocks));
 
     generateSql
     //console.log(replies)
