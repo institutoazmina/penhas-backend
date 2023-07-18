@@ -1149,6 +1149,8 @@ sub any_has_relevance {
     my ($vars, $msgs) = @_;
 
     foreach my $q ($msgs->@*) {
+        next unless $q;
+
         return 1 if $q->{_relevance} eq '1' && &_is_input($q);
 
         if (!defined $q->{_relevance}) {
