@@ -543,6 +543,12 @@ sub load_quiz_session {
     slog_info('vars %s', to_json($vars));
 
     foreach my $q ($current_msgs->@*) {
+
+        if (!defined $q->{_relevance}) {
+            slog_error('Rendering: question is missing relevance %s', to_json($q));
+            next;
+        }
+
         my $has = &has_relevance($vars, $q);
         $q->{_currently_has_relevance} = $has;
         slog_info(
