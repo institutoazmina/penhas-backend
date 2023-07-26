@@ -94,7 +94,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         null, '[{"codigo":"T9"},{"codigo":"T10"},{"codigo":"T11"},{"codigo":"T12"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10010120, 'next_mf_questionnaire_outstanding', 'B1_P4ac', E'',
-                        13, E'[]', E'B1_P2 == \'N\'', null,
+                        13, E'[]', E'B1_P2 == \'N\' || B1_P4 == \'Y\' || B1_P4 == \'N\'', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10011120, 'onlychoice', 'B1_P5', E'Que lugar é esse?',
