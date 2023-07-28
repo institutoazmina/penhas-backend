@@ -568,7 +568,7 @@ function boostrap() {
                 }
 
                 const resp_row: QuizConfig = {
-                    question: replyObj[0].description,
+                    question: linkify(replyObj[0].description),
                     questionnaire_id: blockById[q.blockId],
                     relevance: relevance,
                     sort: sort_order,
