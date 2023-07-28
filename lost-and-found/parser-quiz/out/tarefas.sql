@@ -256,7 +256,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T24',
                       E'',
-                      E'Verifique se o seu celular possui algum dispositivo de localização conectado com o celular do agressor. Saiba mais a partir das informações disponíveis aqui (https://oab-brusque.org.br/wp-content/uploads/2020/07/Cartilha-Mapa-do-Acolhimento_QuarentenaSemViole%CC%82ncia_BR.pdf).',
+                      E'Verifique se o seu celular possui algum dispositivo de localização conectado com o celular do agressor. Saiba mais a partir das informações disponíveis aqui (<a href="https://oab-brusque.org.br/wp-content/uploads/2020/07/Cartilha-Mapa-do-Acolhimento_QuarentenaSemViole%CC%82ncia_BR.pdf).">https://oab-brusque.org.br/wp-content/uploads/2020/07/Cartilha-Mapa-do-Acolhimento_QuarentenaSemViole%CC%82ncia_BR.pdf).</a>',
                       E'checkbox',
                       E'Passos para fuga'
                    )
@@ -377,7 +377,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T35',
                       E'',
-                      E'Verifique se o carro possui rastreador alguns dias antes. Siga essas dicas: https://pt.wikihow.com/Encontrar-um-Rastreador-Escondido-em-um-Carro',
+                      E'Verifique se o carro possui rastreador alguns dias antes. Siga essas dicas: <a href="https://pt.wikihow.com/Encontrar-um-Rastreador-Escondido-em-um-Carro">https://pt.wikihow.com/Encontrar-um-Rastreador-Escondido-em-um-Carro</a>',
                       E'checkbox',
                       E'Transporte'
                    )
@@ -586,7 +586,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T55',
                       E'',
-                      E'Busque acompanhamento psicológico tanto para a criança/adolescente quanto para você. O Mapa do Acolhimento oferta esse serviço gratuitamente para mulheres vítimas de violência https://mapadoacolhimento.org/',
+                      E'Busque acompanhamento psicológico tanto para a criança/adolescente quanto para você. O Mapa do Acolhimento oferta esse serviço gratuitamente para mulheres vítimas de violência <a href="https://mapadoacolhimento.org/">https://mapadoacolhimento.org/</a>',
                       E'checkbox',
                       E'Crianças, adolescentes e dependentes'
                    )
@@ -949,7 +949,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T88',
                       E'',
-                      E'Busque acompanhamento psicológico. O Mapa do Acolhimento oferta esse serviço gratuitamente para mulheres vítimas de violência https://mapadoacolhimento.org/',
+                      E'Busque acompanhamento psicológico. O Mapa do Acolhimento oferta esse serviço gratuitamente para mulheres vítimas de violência <a href="https://mapadoacolhimento.org/">https://mapadoacolhimento.org/</a>',
                       E'checkbox',
                       E'Bens e renda'
                    )
