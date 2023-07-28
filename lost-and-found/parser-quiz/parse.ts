@@ -159,6 +159,7 @@ const parseSheet = <T>(worksheet: XLSX.WorkSheet): T[] => {
                           .replace(/\u2028/g, `\n`) // Unicode Line Separator (U+2028)
                           .replace(/\r\n/g, `\n`) // sai windows!
                           .replace(/[“”]/g, `"`) // windows hate us
+                          .replace(/\u00A0/g, ' ')
                           .replace(/ {2,9}/g, ` `) // espaços duplicados
                           .trim()
                     : value
@@ -282,6 +283,7 @@ const transformQuestion = (data: any): Question => {
                         .replace(/e\/ou/g, 'e_ou')
                         .replace(/\//g, '-ou-')
                         .replace(/\s/g, '-')
+                        .replace(/\u00A0/g, ' ')
                         .replace(/[^a-z0-9\-\_]/g, '')
                 }
 

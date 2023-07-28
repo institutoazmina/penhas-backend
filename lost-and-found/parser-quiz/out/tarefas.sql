@@ -2,7 +2,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T1',
                       E'',
-                      E'Separe ou faça cópia dos seguintes documentos de identificação (tanto seu, quanto dos filhos, caso os tenha): RG, CPF, CNH,  Título de Eleitor, Passaporte, Certidão de Nascimento, Cartão de Vacinação, Cartão de Saúde do SUS ou do Plano de Saúde, Cartão do Auxílio Brasil',
+                      E'Separe ou faça cópia dos seguintes documentos de identificação (tanto seu, quanto dos filhos, caso os tenha): RG, CPF, CNH, Título de Eleitor, Passaporte, Certidão de Nascimento, Cartão de Vacinação, Cartão de Saúde do SUS ou do Plano de Saúde, Cartão do Auxílio Brasil',
                       E'checkbox',
                       E'Itens Básicos'
                    )
@@ -91,7 +91,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T9',
                       E'',
-                      E'Digite aqui o telefone das pessoas de sua confiança e de quem vai te acolher, pois  ao final você terá registrado no Plano de Segurança, juntamente com o checklist.',
+                      E'Digite aqui o telefone das pessoas de sua confiança e de quem vai te acolher, pois ao final você terá registrado no Plano de Segurança, juntamente com o checklist.',
                       E'checkbox',
                       E'Passos para fuga'
                    )
@@ -608,7 +608,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T57',
                       E'',
-                      E'Sempre que possível, tire fotos / prints, grave vídeos / áudios  que possam servir de prova, principalmente em situações de violência psicológica e moral. Aqui mesmo no PenhaS você consegue gravar o áudio.',
+                      E'Sempre que possível, tire fotos / prints, grave vídeos / áudios que possam servir de prova, principalmente em situações de violência psicológica e moral. Aqui mesmo no PenhaS você consegue gravar o áudio.',
                       E'checkbox',
                       E'Segurança pessoal'
                    )
@@ -1092,7 +1092,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T101',
                       E'',
-                      E'Guarde os comprovantes de pagamento do imóvel, principalmente se for dinheiro de herança e/ou FGTS, pois esse dinheiro é seu e não entrará na partilha  (exceto quando o casamento é pelo regime universal de bens).',
+                      E'Guarde os comprovantes de pagamento do imóvel, principalmente se for dinheiro de herança e/ou FGTS, pois esse dinheiro é seu e não entrará na partilha (exceto quando o casamento é pelo regime universal de bens).',
                       E'checkbox',
                       E'Bens e renda'
                    )
@@ -1367,7 +1367,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T126',
                       E'',
-                      E'Informe na delegacia que o agressor possui arma de fogo, a situação será analisada e possivelmente haverá a suspensão da autorização do porte  e a apreensão da arma.',
+                      E'Informe na delegacia que o agressor possui arma de fogo, a situação será analisada e possivelmente haverá a suspensão da autorização do porte e a apreensão da arma.',
                       E'checkbox',
                       E'Segurança pessoal'
                    )

@@ -222,7 +222,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P12 == \'meu-filho-ou-filha\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10021480, 'displaytext', 'B2_P12_R32', E'Sabemos que o seu intuito é garantir tanto o seu próprio bem-estar e  segurança, quanto de seu filho(a) . Para garantir que seus passos a partir de agora não sejam compreendidos enquanto alienação parental, ao 
+                        VALUES ('published', 10021480, 'displaytext', 'B2_P12_R32', E'Sabemos que o seu intuito é garantir tanto o seu próprio bem-estar e segurança, quanto de seu filho(a) . Para garantir que seus passos a partir de agora não sejam compreendidos enquanto alienação parental, ao 
 sair de casa, denuncie o agressor e faça um boletim de ocorrência frisando o risco que a criança/adolescente também está correndo. Infelizmente, nosso sistema judiciário ainda é muito machista e misógino, então é preciso que você se resguarde ao máximo.',
                         14, E'[]', E'B2_P12 == \'meu-filho-ou-filha\' ', null,
                         null, '[{"codigo":"T5"},{"codigo":"T6"},{"codigo":"T9"},{"codigo":"T10"},{"codigo":"T11"},{"codigo":"T53"},{"codigo":"T54"},{"codigo":"T55"},{"codigo":"T56"},{"codigo":"T57"},{"codigo":"T58"},{"codigo":"T59"},{"codigo":"T60"}]', null, '[]');
