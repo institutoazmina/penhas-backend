@@ -35,8 +35,8 @@ const escapeString = (str: string) =>
 
 const bf_label = 'Ok!'
 
-function linkify(text: string | undefined): string | undefined {
-    if (!text) return text
+function linkify(text: string | undefined): string {
+    if (!text) return text || '';
 
     // if there isn't http, but find www, then replace it by https
     return text.replace(
