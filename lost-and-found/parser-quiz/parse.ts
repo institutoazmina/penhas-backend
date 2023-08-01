@@ -36,7 +36,7 @@ const escapeString = (str: string) =>
 const bf_label = 'Ok!'
 
 function linkify(text: string | undefined): string {
-    if (!text) return text || '';
+    if (!text) return text || ''
 
     // if there isn't http, but find www, then replace it by https
     return text.replace(
@@ -296,6 +296,18 @@ const transformQuestion = (data: any): Question => {
                 })
             }
 
+            if (parsed.db_type === 'yesnomaybe') {
+                if (parsed.options.length !== 3) {
+                    console.log(parsed)
+                    throw 'faltou opcao no yesnomaybe'
+                }
+            } else if (parsed.db_type === 'yesno') {
+                if (parsed.options.length !== 2) {
+                    console.log(parsed)
+                    throw 'faltou opcao no yesno'
+                }
+            }
+
             //console.log(parsed)
         }
     }
@@ -484,7 +496,6 @@ function boostrap() {
     fs.writeFileSync('out/tags.sql', generateTagSql(tags))
     fs.writeFileSync('out/tarefas.sql', generateTarefasSql(tasks, blocks))
 
-    generateSql
     //console.log(replies)
 
     let sort_order: number = 10000000
