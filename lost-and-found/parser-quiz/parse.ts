@@ -10,7 +10,8 @@ interface Block {
     db_id: number
 }
 
-type XlsType = 'SN' | 'SC' | 'AC' | 'SNT' | 'MC' | 'BF' | 'PS' | 'ET'
+type XlsType = 'SN' | 'SC' | 'AC' | 'SNT' | 'MC' | 'BF' | 'PS' | 'ET' | 'PQ'
+
 type DbQuizConfigType =
     | 'yesnomaybe'
     | 'skillset'
@@ -60,6 +61,7 @@ const DeParaType: Record<XlsType, DbQuizConfigType> = {
     MC: 'multiplechoices',
     BF: 'botao_fim',
     ET: 'displaytext',
+    PQ: 'next_mf_questionnaire'
 }
 
 interface QuizConfigTarefa {
