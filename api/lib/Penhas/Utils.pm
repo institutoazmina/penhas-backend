@@ -25,8 +25,8 @@ state $text_xslate = Text::Xslate->new(
     function => {
         is_json_member => sub {
             my ($member, $json) = @_;
-            return 'is_json_member: not an json'  unless $json;
-            return 'is_json_member: not an array' unless $json =~ /^\[/;
+            return 0 unless $json;
+            return 0 unless $json =~ /^\[/;
             my $array = from_json($json);
             foreach (@$array) {
                 return 1 if $_ eq $member;
