@@ -517,6 +517,14 @@ function boostrap() {
         quiz.push(row);
 
         for (const option of q.parsedType.options) {
+            let relevance = '';
+
+            if (q.parsedType.db_type === 'multiplechoices') {
+                relevance = `is_json_member('${option.opcao_clean}', ${code}_json)`;
+            } else {
+                relevance = `${code} == '${option.opcao_clean}' `;
+            }
+
             for (const resp of option.cod_respostas) {
                 sort_order += 10;
 
@@ -525,14 +533,6 @@ function boostrap() {
                 if (replyObj.length == 0) throw `reply ${resp} not found`; // pode ter N perguntas pra mesma resposta, por isso q pode dar > 1
 
                 const resp_code = `${code}_${resp}`;
-
-                let relevance = '';
-
-                if (q.parsedType.db_type === 'multiplechoices') {
-                    relevance = `is_json_member('${option.opcao_clean}', ${code}_json)`;
-                } else {
-                    relevance = `${code} == '${option.opcao_clean}' `;
-                }
 
                 const resp_row: QuizConfig = {
                     question: linkify(replyObj[0].description),
@@ -551,26 +551,26 @@ function boostrap() {
                 };
 
                 quiz.push(resp_row);
+            }
 
-                if (option.proxima_pergunta === 'PQ') {
-                    const next_mf: QuizConfig = {
-                        question: ' ',
-                        questionnaire_id: blockById[q.blockId],
-                        relevance: relevance,
-                        sort: sort_order + 1,
-                        tarefas: [],
-                        button_label: null,
-                        change_to_questionnaire_id: null,
-                        code: resp_code + '_PQ',
-                        intro: [],
-                        options: null,
-                        status: 'published',
-                        type: 'next_mf_questionnaire',
-                        tag: [],
-                    };
+            if (option.proxima_pergunta === 'PQ') {
+                const next_mf: QuizConfig = {
+                    question: ' ',
+                    questionnaire_id: blockById[q.blockId],
+                    relevance: relevance,
+                    sort: sort_order + 1,
+                    tarefas: [],
+                    button_label: null,
+                    change_to_questionnaire_id: null,
+                    code: `${code}_PQ_${option.opcao_clean.replace(/-/g, '_').toUpperCase()}`,
+                    intro: [],
+                    options: null,
+                    status: 'published',
+                    type: 'next_mf_questionnaire',
+                    tag: [],
+                };
 
-                    quiz.push(next_mf);
-                }
+                quiz.push(next_mf);
             }
 
             if (option.tags.length > 0) {
