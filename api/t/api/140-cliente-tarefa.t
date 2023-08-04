@@ -13,7 +13,7 @@ my $t = test_instance;
 use Business::BR::CPF qw/random_cpf/;
 use DateTime;
 use Penhas::Minion::Tasks::NewNotification;
-
+use Penhas::Utils qw/tt_test_condition tt_render/;
 my $schema2 = $t->app->schema2;
 
 my $now_datetime = DateTime->now()->datetime(' ');
@@ -76,6 +76,16 @@ $t->get_ok('/filter-skills', {'x-api-key' => $session})->status_is(200);
 
 db_transaction {
 
+
+    is tt_test_condition("is_json_member('a', XXX)", {}), 0, 'is_json_member return false when reference do not exists';
+    is tt_test_condition("is_json_member('a', XXX)", {XXX => to_json(["a"])}), 1,
+      'is_json_member return true when item exists';
+    is tt_test_condition("is_json_member('b', XXX)", {XXX => to_json(["a"])}), 0,
+      'is_json_member return false when item is not found';
+
+    is tt_render("[% json_array_to_string(ref, 'me', 'skip') %]", {ref => to_json(["you", "it", "skip"])}),
+      'you, it e me',
+      'json_array_to_string is working';
 
     $ENV{ENABLE_MANUAL_FUGA} = 0;
     my $me_perfil = $t->get_ok(
