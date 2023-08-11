@@ -607,7 +607,8 @@ function boostrap() {
         }
 
         // quando é MC, precisa tratar o caso onde há varias respostas que contem a mesma resposta
-        // vou usar como chave o próprio texto, mas agrupar a relevância das respostas
+        // vou usar como chave o codigo da resposta (R123 por exemplo)
+        const regexp = new RegExp(/^B\d+_P\d+_/g);
         if (q.parsedType.db_type === 'multiplechoices') {
             const alreadyAdded = new Set();
 
@@ -617,16 +618,18 @@ function boostrap() {
                     continue;
                 }
 
-                if (alreadyAdded.has(response.question)) continue;
-                alreadyAdded.add(response.question);
+                const response_code = response.code.replace(regexp, '');
+
+                if (alreadyAdded.has(response_code)) continue;
+                alreadyAdded.add(response_code);
 
                 const relevances: string[] = [];
                 for (const otherR of queued_responses) {
-                    if (otherR.type === response.type && otherR.question === response.question)
+                    if (otherR.type === response.type && otherR.code.replace(regexp, '') === response_code)
                         relevances.push(otherR.relevance);
                 }
 
-                console.log({ relevances, question: response.question, x: response });
+                console.log({ relevances, question: response.question, response_code  });
 
                 quiz.push({
                     ...response,

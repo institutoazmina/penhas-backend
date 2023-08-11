@@ -655,40 +655,24 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         null, '[{"codigo":"T18"},{"codigo":"T19"},{"codigo":"T20"},{"codigo":"T21"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017330, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
-                        17, E'[]', E'is_json_member(\'transporte-publico\', B5_P9_json)', null,
+                        17, E'[]', E'is_json_member(\'transporte-publico\', B5_P9_json) || is_json_member(\'moto-ou--carro-proprio\', B5_P9_json) || is_json_member(\'carona\', B5_P9_json) || is_json_member(\'bicicleta-ou-a-pe\', B5_P9_json) || is_json_member(\'taxi-ou-carro-por-aplicativo\', B5_P9_json) || is_json_member(\'nao-sei\', B5_P9_json)', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017340, 'displaytext', 'B5_P9_R20', E'',
                         17, E'[]', E'is_json_member(\'moto-ou--carro-proprio\', B5_P9_json)', null,
                         null, '[{"codigo":"T22"},{"codigo":"T23"},{"codigo":"T24"},{"codigo":"T25"},{"codigo":"T26"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10017350, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
-                        17, E'[]', E'is_json_member(\'moto-ou--carro-proprio\', B5_P9_json)', null,
-                        null, '[]', null, '[]');
-INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017360, 'displaytext', 'B5_P9_R21', E'Os horários dos transportes públicos variam muito, para isso é importante que você fique atenta a alguns itens que vamos incluir ao final do seu plano.',
                         17, E'[]', E'is_json_member(\'carona\', B5_P9_json)', null,
                         null, '[{"codigo":"T27"},{"codigo":"T28"},{"codigo":"T29"},{"codigo":"T30"}]', null, '[]');
-INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10017370, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
-                        17, E'[]', E'is_json_member(\'carona\', B5_P9_json)', null,
-                        null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017380, 'displaytext', 'B5_P9_R22', E'Bom que você tenha essa possibilidade! Sair de casa dirigindo requer preparação e bastante cuidado. Por isso, vou incluir alguns itens de atenção ao final do seu plano.',
                         17, E'[]', E'is_json_member(\'bicicleta-ou-a-pe\', B5_P9_json)', null,
                         null, '[{"codigo":"T24"},{"codigo":"T25"},{"codigo":"T26"},{"codigo":"T31"},{"codigo":"T32"},{"codigo":"T33"},{"codigo":"T34"},{"codigo":"T35"},{"codigo":"T36"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10017390, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
-                        17, E'[]', E'is_json_member(\'bicicleta-ou-a-pe\', B5_P9_json)', null,
-                        null, '[]', null, '[]');
-INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017400, 'displaytext', 'B5_P9_R23', E'Que bom que você conseguiu essa carona! Nesse caso, é importante ter alguns cuidados tanto antes, quanto depois da fuga. Por isso, vou incluir alguns itens relacionados a carona no final do seu plano.',
                         17, E'[]', E'is_json_member(\'taxi-ou-carro-por-aplicativo\', B5_P9_json)', null,
                         null, '[{"codigo":"T37"},{"codigo":"T38"},{"codigo":"T39"},{"codigo":"T40"}]', null, '[]');
-INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10017410, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
-                        17, E'[]', E'is_json_member(\'taxi-ou-carro-por-aplicativo\', B5_P9_json)', null,
-                        null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10017420, 'displaytext', 'B5_P9_R24', E'Que bom que você conseguirá se deslocar a pé ou de bicicleta. Provavelmente, o local para o qual você irá fugir não é tão distante de onde você mora. Por isso, vou incluir alguns itens relacionados a carona no final do seu plano.',
                         17, E'[]', E'is_json_member(\'nao-sei\', B5_P9_json)', null,
@@ -697,10 +681,6 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         VALUES ('published', 10017430, 'displaytext', 'B5_P9_R25', E'Bom que você tenha essa possibilidade! Sair de casa com táxi ou por carro por aplicativo requer uma preparação, sobretudo financeira. Por isso, vou incluir alguns pontos de atenção em relação a esse tipo de deslocamento ao final do seu plano.',
                         17, E'[]', E'is_json_member(\'nao-sei\', B5_P9_json)', null,
                         null, '[{"codigo":"T44"},{"codigo":"T45"},{"codigo":"T46"}]', null, '[]');
-INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10017440, 'displaytext', 'B5_P9_R26', E'Não tem problema você não saber ainda como irá se deslocar. Estamos montando esse plano juntas para que você comece a pensar em algumas possibilidades. Por isso, vou incluir alguns pontos de atenção em relação a esse deslocamento ao final do seu plano.',
-                        17, E'[]', E'is_json_member(\'nao-sei\', B5_P9_json)', null,
-                        null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10018440, 'next_mf_questionnaire', 'B5_P9out', E'',
                         17, E'[]', E'is_json_member(\'transporte-publico\', B5_P9_json) || is_json_member(\'moto-ou--carro-proprio\', B5_P9_json) || is_json_member(\'carona\', B5_P9_json) || is_json_member(\'bicicleta-ou-a-pe\', B5_P9_json) || is_json_member(\'taxi-ou-carro-por-aplicativo\', B5_P9_json) || is_json_member(\'nao-sei\', B5_P9_json)', null,
