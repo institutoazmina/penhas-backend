@@ -516,6 +516,8 @@ function boostrap() {
 
         quiz.push(row);
 
+        const queued_responses: QuizConfig[] = [];
+
         for (const option of q.parsedType.options) {
             let relevance = '';
 
@@ -550,7 +552,7 @@ function boostrap() {
                     tag: [],
                 };
 
-                quiz.push(resp_row);
+                queued_responses.push(resp_row);
             }
 
             if (option.proxima_pergunta === 'PQ') {
@@ -570,7 +572,7 @@ function boostrap() {
                     tag: [],
                 };
 
-                quiz.push(next_mf);
+                queued_responses.push(next_mf);
             }
 
             if (option.tags.length > 0) {
@@ -600,8 +602,39 @@ function boostrap() {
                     tag: option.tags.map((t) => ({ codigo: t })),
                 };
 
-                quiz.push(tag_row);
+                queued_responses.push(tag_row);
             }
+        }
+
+        // quando é MC, precisa tratar o caso onde há varias respostas que contem a mesma resposta
+        // vou usar como chave o próprio texto, mas agrupar a relevância das respostas
+        if (q.parsedType.db_type === 'multiplechoices') {
+            const alreadyAdded = new Set();
+
+            for (const response of queued_responses) {
+                if (response.type !== 'displaytext') {
+                    quiz.push(response);
+                    continue;
+                }
+
+                if (alreadyAdded.has(response.question)) continue;
+                alreadyAdded.add(response.question);
+
+                const relevances: string[] = [];
+                for (const otherR of queued_responses) {
+                    if (otherR.type === response.type && otherR.question === response.question)
+                        relevances.push(otherR.relevance);
+                }
+
+                console.log({ relevances, question: response.question, x: response });
+
+                quiz.push({
+                    ...response,
+                    relevance: relevances.join(' || '),
+                });
+            }
+        } else {
+            quiz.push(...queued_responses);
         }
 
         //console.log(row)
