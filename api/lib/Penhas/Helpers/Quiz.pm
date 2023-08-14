@@ -732,6 +732,10 @@ sub _render_question {
 
             $public->{$k} = $k =~ /content/ ? tt_render($v, $vars) : $v;
 
+            if ($ENV{DEBUG_QUIZ} && $k eq 'content') {
+                $public->{$k} .= ' (' . $public->{code} . ')';
+            }
+
         }
 
     }
