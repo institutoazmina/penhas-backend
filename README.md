@@ -1,3 +1,5 @@
+![GitHub](https://img.shields.io/github/license/institutoazmina/penhas-backend)
+
 # Penhas
 
 
