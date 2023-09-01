@@ -10,7 +10,7 @@ interface Block {
     db_id: number;
 }
 
-type XlsType = 'SN' | 'SC' | 'AC' | 'SNT' | 'MC' | 'BF' | 'PS' | 'ET' | 'PQ';
+type XlsType = 'SN' | 'SC' | 'AC' | 'SNT' | 'MC' | 'BF' | 'PS' | 'ET' | 'PQ' | 'RF';
 
 type DbQuizConfigType =
     | 'yesnomaybe'
@@ -58,6 +58,7 @@ const DeParaType: Record<XlsType, DbQuizConfigType> = {
     BF: 'botao_fim',
     ET: 'displaytext',
     PQ: 'next_mf_questionnaire',
+    RF: 'yesno',
 };
 
 interface QuizConfigTarefa {
@@ -107,6 +108,8 @@ interface Question {
     description: string;
     type: string;
     optionsPath: string;
+    relevance: string;
+    tags: QuizConfigTag[];
     parsedType: ParsedQuestionType;
     obs: string;
     tasks: string;
@@ -187,7 +190,7 @@ const transformQuestion = (data: any): Question => {
         button_label: null,
     };
 
-    let returning = {
+    let returning: Question = {
         blockId: data['ID Bloco'],
         questionId: data['ID Pergunta'],
         description: data['Descrição Pergunta'],
@@ -198,6 +201,8 @@ const transformQuestion = (data: any): Question => {
         questionario: data['questionario'],
         intros: data['intros'] ? data['intros'].split('\n\n') : [],
         parsedType: parsed,
+        relevance: '',
+        tags: [],
     };
 
     if (returning.tasks) {
@@ -213,6 +218,23 @@ const transformQuestion = (data: any): Question => {
         if (typeof parsed.db_type === 'undefined')
             throw `faltando de-para para o tipo ${data['Tipo']} em ${JSON.stringify(returning)}`;
 
+        if (parsed.orig_type === 'RF') {
+            try {
+                const params = JSON.parse(returning.optionsPath);
+                returning.relevance = params.relevance || '';
+
+                if (params.tags && Array.isArray(params.tags)) {
+                    for (const tag of params.tags) {
+                        returning.tags.push({ codigo: tag });
+                    }
+                }
+
+                returning.optionsPath = 'skip';
+            } catch (error) {
+                throw `falha ao ler JSON do campo RF ${error}`;
+            }
+        }
+
         if (parsed.db_type === 'auto_change_questionnaire') {
             parsed.change_to_questionnaire_id = +returning.questionario;
 
@@ -222,7 +244,10 @@ const transformQuestion = (data: any): Question => {
                 )}`;
         } else if (parsed.db_type == 'botao_fim') {
             parsed.button_label = bf_label;
-        } else if (['onlychoice', 'multiplechoices', 'yesno', 'yesnomaybe'].includes(parsed.db_type)) {
+        } else if (
+            ['onlychoice', 'multiplechoices', 'yesno', 'yesnomaybe'].includes(parsed.db_type) &&
+            returning.optionsPath !== 'skip'
+        ) {
             for (const line of returning.optionsPath.split('\n')) {
                 const ret = (['yesno', 'yesnomaybe'].includes(parsed.db_type) ? yesnoRegex : mcRegexp).exec(line);
 
@@ -287,8 +312,6 @@ const transformQuestion = (data: any): Question => {
                     throw 'faltou opcao no yesno';
                 }
             }
-
-            //console.log(parsed)
         }
     }
 
@@ -460,7 +483,7 @@ function boostrap() {
 
     //console.log(replies)
 
-    let sort_order: number = 10000000;
+    let sort_order: number = 10000000 - 1000;
     const quiz: QuizConfig[] = [];
 
     for (const q of questions) {
@@ -474,12 +497,12 @@ function boostrap() {
             options: null,
             question: linkify(q.description),
             questionnaire_id: blockById[q.blockId],
-            relevance: '1',
+            relevance: q.relevance || '1', // se tinha alguma relevância que veio pelo excel, fica ela, se nao é default 1, mas se tiver pergunta, vai passar na frente anyway
             sort: sort_order,
             status: 'published',
             tarefas: q.parsedType.tarefas,
             type: q.parsedType.db_type,
-            tag: [],
+            tag: q.tags,
         };
 
         if (!row.questionnaire_id) throw `Faltando ID para o bloco ${q.blockId} -- pergunta ${q.questionId}`;
@@ -629,7 +652,7 @@ function boostrap() {
                         relevances.push(otherR.relevance);
                 }
 
-                console.log({ relevances, question: response.question, response_code  });
+                console.log({ relevances, question: response.question, response_code });
 
                 quiz.push({
                     ...response,
