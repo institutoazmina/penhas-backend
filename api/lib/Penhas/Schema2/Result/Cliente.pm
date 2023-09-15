@@ -152,6 +152,8 @@ __PACKAGE__->add_columns(
   },
   "qtde_login_offline",
   { data_type => "integer", default_value => 0, is_nullable => 0 },
+  "ja_completou_mf",
+  { data_type => "boolean", default_value => \"false", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("idx_25909_cpf_hash", ["cpf_hash"]);
@@ -374,8 +376,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-07-08 12:42:41
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gqVIGmhJC1aToFpnN3vDfw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-09-15 13:06:40
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:d5LkW5yErl1nJlT+caYrsw
 
 
 use Carp qw/confess/;

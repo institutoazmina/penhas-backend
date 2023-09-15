@@ -131,6 +131,8 @@ sub get_next_questionnaire_id {
 sub set_status_completed {
     my ($self, %opts) = @_;
 
+    $self->cliente->update({ja_completou_mf => 'true'}) unless $self->cliente->ja_completou_mf;
+
     $self->update(
         {
             status                        => 'completed',
