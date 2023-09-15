@@ -83,6 +83,8 @@ db_transaction {
         form => {},
     )->status_is(200, '')->tx->res->json;
 
+    $t->app->cliente_mf_clear_tasks( user_obj => $cliente );
+
     my $epoch_start = 0;
 
     my $me_tarefas = $t->get_ok(

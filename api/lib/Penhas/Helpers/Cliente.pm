@@ -28,6 +28,8 @@ sub setup {
 
     $self->helper('cliente_mf_add_tarefa_por_codigo' => sub { &cliente_mf_add_tarefa_por_codigo(@_) });
     $self->helper('cliente_mf_add_tag_by_code'       => sub { &cliente_mf_add_tag_by_code(@_) });
+    $self->helper('cliente_mf_clear_tasks'           => sub { &cliente_mf_clear_tasks(@_) });
+
 }
 
 sub cliente_mf_assistant {
@@ -92,6 +94,21 @@ sub cliente_mf_assistant {
 
 
     return {mf_assistant => $ret};
+}
+
+sub cliente_mf_clear_tasks {
+    my ($c, %opts) = @_;
+
+    my $user = $opts{user_obj} or confess 'missing user_obj';
+
+    $c->schema2->resultset('MfClienteTarefa')->search(
+        {
+            removido_em => undef,
+            cliente_id  => $user->id,
+        }
+    )->update({removido_em => \'now()'});
+
+
 }
 
 

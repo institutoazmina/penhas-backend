@@ -846,6 +846,7 @@ sub process_quiz_session {
         my $ref = $msg->{ref};
         next unless $ref;
 
+        my $yes_response = 0;
         log_info("ref=$ref?");
         if (exists $params->{$ref}) {
             my $val = defined $params->{$ref} ? $params->{$ref} : '';
@@ -854,6 +855,7 @@ sub process_quiz_session {
             die sprintf "missing `_code` on message %s", to_json($msg) unless $code;
 
             log_info("msg type " . $msg->{type});
+
 
             if ($msg->{type} eq 'yesno') {
 
@@ -895,6 +897,7 @@ sub process_quiz_session {
 
                     $responses->{$code} = $val;
                     $msg->{display_response} = $val eq 'Y' ? 'Sim' : 'Não';
+                    $yes_response++ if $val eq 'Y';
                     $have_new_responses++;
                 }
                 else {
@@ -904,6 +907,7 @@ sub process_quiz_session {
             elsif ($msg->{type} eq 'yesnomaybe') {
 
                 if ($val =~ /^(Y|N|M)$/) {
+                    $yes_response++ if $val eq 'Y';
                     $responses->{$code} = $val;
                     $msg->{display_response} = $depara_yesnomaybe->{$val};
                     $have_new_responses++;
@@ -1061,13 +1065,21 @@ sub process_quiz_session {
                 $c->cliente_mf_add_tarefa_por_codigo(codigos => \@codigos, user_obj => $user_obj);
             }
 
-
+            my $sim_limpa_mf = 0;
             if ($user_obj && $msg->{_tags} && @{$msg->{_tags}} > 0) {
                 my @codigos = map { $_->{codigo} } @{$msg->{_tags}};
                 log_info("Adicioando tags para o usuário: " . join ', ', @codigos);
 
+                for (@codigos) {
+                    $sim_limpa_mf = 1 if $_ eq 'SIM_LIMPA_MF';
+                }
+
                 # chama assim que termina de responder (os que são input)
                 $c->cliente_mf_add_tag_by_code(codigos => \@codigos, user_obj => $user_obj);
+            }
+
+            if ($user_obj && $yes_response && $sim_limpa_mf) {
+                $c->cliente_mf_clear_tasks(user_obj => $user_obj);
             }
 
             last QUESTIONS;
