@@ -194,6 +194,11 @@ sub validate_request_params {
     my ($c, %fields) = @_;
 
     my $params = $c->req->params->to_hash;
+    return validate_params($c, $params, %fields);
+}
+
+sub validate_params {
+    my ($c, $params, %fields) = @_;
 
     my $tested = {};
     foreach my $key (keys %fields) {
@@ -253,7 +258,8 @@ sub validate_request_params {
 
         $tested->{$key} = $val;
         if ($tested->{$key} eq '' && ($type eq 'Bool' || $type eq 'Int' || $type eq 'Num')) {
-            use DDP; p $val;
+            use DDP;
+            p $val;
             $tested->{$key} = undef;
 
         }

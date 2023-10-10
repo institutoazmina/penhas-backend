@@ -193,6 +193,7 @@ sub register {
     $me_tarefas->get()->to(action => 'me_t_list');
     $me_tarefas->post('sync')->to(action => 'me_t_sync');
     $me_tarefas->post('nova')->to(action => 'me_t_nova');
+    $me_tarefas->post('batch')->to(action => 'me_t_batch_sync');
 
 
     # /me/tweets

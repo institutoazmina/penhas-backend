@@ -161,13 +161,13 @@ db_transaction {
             id             => $mfc1->id,
             checkbox_feito => 1,
         },
-    )->status_is(200, 'busca todas as tarefas');
+    )->status_is(204, 'sync de task');
 
     $t->get_ok(
         '/me/tarefas',
         {'x-api-key' => $session},
         form => {modificado_apos => $epoch_start},
-    )->status_is(200, 'busca todas as tarefas')->json_is('/tarefas/0/checkbox_feito', '1');
+    )->status_is(200, 'busca todas as tarefas desde um X momento')->json_is('/tarefas/0/checkbox_feito', '1');
 
     $t->post_ok(
         '/me/tarefas/sync',
@@ -176,7 +176,7 @@ db_transaction {
             id             => $mfc1->id,
             checkbox_feito => 0,
         },
-    )->status_is(200, 'busca todas as tarefas');
+    )->status_is(204, 'sync de task como não feito');
 
     $t->get_ok(
         '/me/tarefas',
@@ -185,13 +185,15 @@ db_transaction {
     )->status_is(200, 'busca todas as tarefas')->json_is('/tarefas/0/checkbox_feito', '0');
 
     $t->post_ok(
-        '/me/tarefas/sync',
+        '/me/tarefas/batch',
         {'x-api-key' => $session},
-        form => {
-            id     => $mfc1->id,
-            remove => 1,
-        },
-    )->status_is(200, 'removido com sucesso');
+        json => [
+            {
+                id     => $mfc1->id,
+                remove => 1,
+            }
+        ],
+    )->status_is(200, 'batch de removido com sucesso');
 
     $t->get_ok(
         '/me/tarefas',
@@ -220,24 +222,50 @@ db_transaction {
     my $tarefa_criada_id = $json->{id};
 
     $t->post_ok(
-        '/me/tarefas/sync',
+        '/me/tarefas/batch',
         {'x-api-key' => $session},
-        form => {
-            id             => $tarefa_criada_id,
-            campo_livre    => '{}',
-            checkbox_feito => 0,
-        },
-    )->status_is(200, 'sync com sucesso');
+        json => [
+            {
+                id             => $tarefa_criada_id,
+                campo_livre    => {hey => 1, deep => [1, "yes", {}]},
+                checkbox_feito => 0,
+            },
+            {
+                id             => $tarefa_criada_id,
+                campo_livre    => '{}',
+                checkbox_feito => 0,
+            }
+        ],
+    )->status_is(200, 'sync em batch aceita json como objeto ou string');
 
     $t->post_ok(
-        '/me/tarefas/sync',
+        '/me/tarefas/batch',
         {'x-api-key' => $session},
-        form => {
-            id             => $tarefa_criada_id,
-            campo_livre    => 'ABC',
-            checkbox_feito => 0,
-        },
-    )->status_is(400, 'nao pode enviar json invalido');
+        json => [
+            {
+                id             => $tarefa_criada_id,
+                campo_livre    => '{}',
+                checkbox_feito => 0,
+            },
+            {
+                id             => $tarefa_criada_id,
+                campo_livre    => 'ABC',
+                checkbox_feito => 0,
+            }
+        ],
+    )->status_is(400, 'sync com erro em batch recusa tudo');
+
+    $t->post_ok(
+        '/me/tarefas/batch',
+        {'x-api-key' => $session},
+        json => [
+            {
+                id             => $tarefa_criada_id,
+                campo_livre    => {},
+                checkbox_feito => 0,
+            }
+        ],
+    )->status_is(200, 'sync em batch aceita json livre mesmo se for hash vazio');
 
     $t->get_ok(
         '/me/tarefas',
@@ -255,7 +283,7 @@ db_transaction {
             campo_livre    => '["abc", {"why": false}]',
             checkbox_feito => 1,
         },
-    )->status_is(200, 'sync com sucesso');
+    )->status_is(204, 'sync com sucesso');
 
     $t->get_ok(
         '/me/tarefas',
