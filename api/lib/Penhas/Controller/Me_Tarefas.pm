@@ -107,9 +107,6 @@ sub me_t_batch_sync {
     $c->schema2->txn_do(
         sub {
             for my $param (@$params) {
-                use DDP;
-                p $param;
-
                 if (exists $param->{campo_livre} && ref $param->{campo_livre}) {
                     $param->{campo_livre} = to_json($param->{campo_livre});
                 }
