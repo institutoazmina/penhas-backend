@@ -290,7 +290,7 @@ sub cliente_lista_tarefas {
             {
                 removido_em => undef,
                 cliente_id  => $user->id,
-                '-and'      => [\['atualizado_em > to_timestamp(?)', $modificado_apos]]
+                '-and'      => [\['atualizado_em >= to_timestamp(?)', $modificado_apos]]
             },
             {prefetch => 'mf_tarefa'}
         )->all
