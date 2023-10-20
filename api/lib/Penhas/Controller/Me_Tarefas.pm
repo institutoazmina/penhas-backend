@@ -19,8 +19,9 @@ sub me_t_list {
 
     my $c = shift;
 
-    my $params = $c->req->params->to_hash;
-    my $valid  = $c->validate_request_params(
+    my $consultado_em = time();
+    my $params        = $c->req->params->to_hash;
+    my $valid         = $c->validate_request_params(
         modificado_apos => {required => 1, type => 'Int'},
     );
 
@@ -34,7 +35,8 @@ sub me_t_list {
     return $c->render(
         json => {
             %$result,
-            %{$c->cliente_mf_assistant(user_obj => $c->stash('user_obj'))}
+            %{$c->cliente_mf_assistant(user_obj => $c->stash('user_obj'))},
+            consultado_em => $consultado_em,
         },
         status => 200,
     );
