@@ -224,7 +224,7 @@ sub apa_review {
         if (!$fake_pa->{cod_ibge} && $fake_pa->{cep} && $fake_pa->{cep} =~ /^[\d-]+$/g) {
             $fake_pa->{cep} =~ s/[^0-9]+//g;
             my $res = &_search_cep($c, $fake_pa->{cep});
-            if ($res->{cidade_info}{codigo_ibge}) {
+            if ($res->{ibge}) {
                 &_patch_from_cep_result($c, $res, $fake_pa);
             }
         }
@@ -328,7 +328,7 @@ sub apa_review_post {
         $valid_cep->{cep} =~ s/[^0-9]+//g;
         my $res = &_search_cep($c, $valid_cep->{cep});
 
-        if ($res->{cidade_info}{codigo_ibge}) {
+        if ($res->{ibge}) {
             $taken_action = 'Busca do endereço pelo CEP realizada com sucesso';
 
             &_patch_from_cep_result($c, $res, $params);
@@ -474,10 +474,10 @@ sub try_publish_pa {
 sub _patch_from_cep_result {
     my ($c, $res, $params) = @_;
 
-    $params->{cod_ibge}  = $res->{cidade_info}{codigo_ibge};
-    $params->{municipio} = $res->{cidade};
+    $params->{cod_ibge}  = $res->{ibge};
+    $params->{municipio} = $res->{localidade};
     $params->{bairro}    = $res->{bairro};
-    $params->{uf}        = $res->{estado};
+    $params->{uf}        = $res->{uf};
 
     foreach my $option (keys %{$c->ponto_apoio_tipo_logradouro_map()}) {
         my $value    = $c->ponto_apoio_tipo_logradouro_map()->{$option};
@@ -499,7 +499,7 @@ sub _search_cep {
     my $c   = shift;
     my $cep = shift;
 
-    my $res = $c->ua->get('https://api.postmon.com.br/v1/cep/' . $cep)->result->json;
+    my $res = $c->ua->get('https://viacep.com.br/ws/' . $cep . '/json/')->result->json;
     return $res;
 }
 

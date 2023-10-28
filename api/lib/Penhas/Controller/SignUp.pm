@@ -81,7 +81,7 @@ sub post {
         my $err;
         my $result;
         eval {
-            foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(Postmon Correios)) {
+            foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(ViaCep Correios)) {
                 my @_address_fields = qw(city state);
                 $result = $backend->find($cep);
                 if ($result) {
