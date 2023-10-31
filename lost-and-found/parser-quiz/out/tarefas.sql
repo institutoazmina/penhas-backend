@@ -2,7 +2,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T1',
                       E'',
-                      E'Separe ou faça cópia dos seguintes documentos de identificação (tanto seu, quanto dos filhos, caso os tenha): RG, CPF, CNH, Título de Eleitor, Passaporte, Certidão de Nascimento, Cartão de Vacinação, Cartão de Saúde do SUS ou do Plano de Saúde, Cartão do Auxílio Brasil',
+                      E'Separe ou faça cópia dos seguintes documentos de identificação (tanto seu, quanto dos filhos, caso os tenha): RG, CPF, CNH, Título de Eleitor, Passaporte, Certidão de Nascimento, Cartão de Vacinação, Cartão de Saúde do SUS ou do Plano de Saúde e Cartão do Auxílio Brasil.',
                       E'checkbox',
                       E'Itens Básicos'
                    )
@@ -13,7 +13,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T2',
                       E'',
-                      E'Organize uma mochila com roupas. Se achar que a mochila levantará suspeita, separe em sacolas plásticas algumas mudas de roupa. Você pode ir separando as peças de roupas no decorrer dos dias para não levantar suspeitas.',
+                      E'Organize uma mochila com roupas. Se achar que a mochila levantará suspeita, separe em sacolas plásticas algumas mudas de roupa. Sugiro que separe as peças de roupas no decorrer dos dias para não levantar suspeitas.',
                       E'checkbox',
                       E'Itens Básicos'
                    )
@@ -24,7 +24,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T3',
                       E'',
-                      E'Ponha na mochila medicamentos básicos e de uso contínuo',
+                      E'Caso tiver, coloque na mochila medicamentos básicos e de uso contínuo.',
                       E'checkbox',
                       E'Itens Básicos'
                    )

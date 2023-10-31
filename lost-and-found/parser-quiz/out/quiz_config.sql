@@ -5,7 +5,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         null, '[]', null, '[{"codigo":"SIM_LIMPA_MF"}]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10000000, 'onlychoice', 'B0_P0', E'Separamos o conteúdo em quatro blocos. Por qual você quer começar?',
-                        12, E'[{"text":"Olá, bem-vinda ao Manual de Fuga do PenhaS. Esse recurso vai ajudá-la a criar um plano de fuga do ambiente doméstico, minimizando riscos decorrentes de uma situação de violência."},{"text":"A finalidade deste manual é construir junto contigo as melhores estratégias de segurança pessoal e lhe informar sobre os direitos que você possui caso precise fugir de casa para se proteger. "},{"text":"Sabemos que esse momento não é fácil e por isso estamos aqui para que você se sinta acolhida e segura para seguir em frente, qualquer que seja a decisão!"},{"text":"Cada situação é diferente e somente você pode avaliar o risco que corre. Quanto mais perguntas você responder no Manual de Fuga, mais personalizado ele se torna para você. Vamos juntas?"}]', E'1', null,
+                        12, E'[{"text":"Olá, bem-vinda ao Manual de Fuga do PenhaS. A finalidade deste manual é construir junto contigo as melhores estratégias de segurança pessoal e informar sobre os direitos que você possui caso precise fugir de casa para se proteger. "},{"text":"São necessários aproximadamente 20 minutos para completá-lo e ter acesso a uma lista personalizada de ações imprescindíveis para o planejamento da sua fuga. Caso seja necessário, você pode interromper e voltar exatamente de onde parou."},{"text":"Tenha em mente que cada situação é diferente e somente você pode avaliar o risco que corre."}]', E'1', null,
                         E'[{"label":"Passos para fuga","value":"passos-para-fuga"},{"label":"Crianças, adolescentes e dependentes","value":"criancas-adolescentes-e-dependentes"},{"label":"Bens, trabalho e renda","value":"bens-trabalho-e-renda"},{"label":"Segurança pessoal","value":"seguranca-pessoal"}]', '[{"codigo":"T1"},{"codigo":"T2"},{"codigo":"T3"},{"codigo":"T4"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10001000, 'auto_change_questionnaire', 'B0_p0a', E'',
@@ -25,7 +25,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         null, '[]', 16, '[]');
 DELETE FROM quiz_config WHERE questionnaire_id = 13;
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10005000, 'displaytext', 'B1_P1intro', E'Este bloco é essencial para pôr o seu plano de fuga em prática. As perguntas a seguir vão lhe ajudar a pensar no lugar para o qual você vai e em estratégias sobre como você fará o deslocamento de forma segura. Sabemos que o momento é de incertezas, além de extremamente difícil e delicado. Então, seguiremos em busca de sua proteção e bem-estar. Tudo bem?',
+                        VALUES ('published', 10005000, 'displaytext', 'B1_P1intro', E'Este bloco é essencial para pôr o seu plano de fuga em prática. As perguntas a seguir vão te ajudar a pensar em um local para se proteger e nas estratégias de deslocamento, priorizando sua proteção e bem-estar.',
                         13, E'[]', E'1', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -61,11 +61,11 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         13, E'[]', E'is_json_member(\'auxilio-aluguel\', B1_P3_json)', null,
                         null, '[{"codigo":"T5"},{"codigo":"T6"},{"codigo":"T7"},{"codigo":"T8"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10008060, 'displaytext', 'B1_P3_R3', E'A Casa abrigo fornece alojamento temporário, de até 90 dias, em endereço sigiloso, e oferece proteção e atendimento integral às mulheres em situação de violência que estejam em risco iminente de morte, acompanhadas ou não de seus filhos com menos de 18 anos. O objetivo é garantir a integridade física e psicológica da vítima, além de oferecer apoio para que ela reestruture sua vida. Apenas Centros de Referência de Assistência Social (CRAS) fazem o encaminhamento para esse serviço.',
+                        VALUES ('published', 10008060, 'displaytext', 'B1_P3_R3', E'A Casa abrigo fornece alojamento temporário e siglioso, de até 90 dias, com proteção e atendimento integral às mulheres em situação de violência que estejam em risco iminente de morte, acompanhadas ou não de seus filhos com menos de 18 anos. O objetivo é garantir a integridade física e psicológica da vítima, além de oferecer apoio para que ela reestruture sua vida. Apenas Centros de Referência de Assistência Social (CRAS) fazem o encaminhamento para esse serviço.',
                         13, E'[]', E'is_json_member(\'casa-abrigo\', B1_P3_json)', null,
                         null, '[{"codigo":"T5"},{"codigo":"T6"},{"codigo":"T7"},{"codigo":"T8"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10008070, 'displaytext', 'B1_P3_R4', E'A Casa de acolhimento é um serviço de abrigamento temporário de curta duração (até 15 dias), não-sigiloso, para mulheres em situação de violência, que não correm risco iminente de morte, acompanhadas ou não de seus filhos. O abrigamento provisório deve garantir a integridade física e emocional da vítima, bem como realizar diagnóstico da situação para encaminhamentos necessários.',
+                        VALUES ('published', 10008070, 'displaytext', 'B1_P3_R4', E'A Casa de acolhimento é um serviço de abrigamento temporário de curta duração (até 15 dias), não-sigiloso, para mulheres em situação de violência, que não correm risco iminente de morte, acompanhadas ou não de seus filhos. O abrigamento provisório deve garantir a integridade física e emocional da vítima, bem como realizar os encaminhamentos necessários.',
                         13, E'[]', E'is_json_member(\'casa-de-acolhimento\', B1_P3_json)', null,
                         null, '[{"codigo":"T5"},{"codigo":"T6"},{"codigo":"T7"},{"codigo":"T8"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -105,11 +105,11 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         13, E'[]', E'B1_P1 == \'Y\'', null,
                         E'[{"label":"Casa de uma amiga ou vizinha","value":"casa-de-uma-amiga-ou-vizinha"},{"label":"Casa de um familiar","value":"casa-de-um-familiar"},{"label":"Casa-abrigo ou casa de Acolhimento","value":"casa-abrigo-ou-casa-de-acolhimento"},{"label":"Uma nova casa Alugada","value":"uma-nova-casa-alugada"}]', '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10011130, 'displaytext', 'B1_P5_R11', E'Que bom que tem com quem contar, isso ajuda muito e faz com que tenhamos a certeza de que não estamos sozinhas! Lembre-se que é importante que você não vá para um lugar tão óbvio e que tome todas as medidas de segurança necessárias, para que nem você, nem a pessoa que te acolheu fique em risco.',
+                        VALUES ('published', 10011130, 'displaytext', 'B1_P5_R11', E'Que bom que você tem com quem contar. Isso ajuda muito! Lembre-se que é importante evitar lugares muito óbvios e cumprir as medidas de segurança necessárias, para que nem você, nem a pessoa que te acolheu fiquem em risco.',
                         13, E'[]', E'B1_P5 == \'casa-de-uma-amiga-ou-vizinha\' ', null,
                         null, '[{"codigo":"T9"},{"codigo":"T10"},{"codigo":"T11"},{"codigo":"T12"},{"codigo":"T13"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10011140, 'displaytext', 'B1_P5_R11', E'Que bom que tem com quem contar, isso ajuda muito e faz com que tenhamos a certeza de que não estamos sozinhas! Lembre-se que é importante que você não vá para um lugar tão óbvio e que tome todas as medidas de segurança necessárias, para que nem você, nem a pessoa que te acolheu fique em risco.',
+                        VALUES ('published', 10011140, 'displaytext', 'B1_P5_R11', E'Que bom que você tem com quem contar. Isso ajuda muito! Lembre-se que é importante evitar lugares muito óbvios e cumprir as medidas de segurança necessárias, para que nem você, nem a pessoa que te acolheu fiquem em risco.',
                         13, E'[]', E'B1_P5 == \'casa-de-um-familiar\' ', null,
                         null, '[{"codigo":"T9"},{"codigo":"T10"},{"codigo":"T11"},{"codigo":"T12"},{"codigo":"T13"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -125,7 +125,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         13, E'[]', E'B1_P5 == \'casa-abrigo-ou-casa-de-acolhimento\' ', null,
                         null, '[{"codigo":"T9"},{"codigo":"T10"},{"codigo":"T11"},{"codigo":"T12"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10011180, 'displaytext', 'B1_P5_R14', E'Que coisa boa! Você precisa e merece ter essa nova chance! Acredito que se você pensa nessa possibilidade, tem se organizado financeiramente para esse passo. Sabemos como é difícil manter esses custos, então, caso você necessite, em alguns estados brasileiros há a possibilidade de mulheres em situação de violência terem direito a um auxílio-aluguel.',
+                        VALUES ('published', 10011180, 'displaytext', 'B1_P5_R14', E'Acredito que se você pensa nessa possibilidade, tem se organizado financeiramente para esse passo. Caso você necessite, em alguns estados brasileiros há a possibilidade de mulheres em situação de violência terem direito a um auxílio-aluguel.',
                         13, E'[]', E'B1_P5 == \'uma-nova-casa-alugada\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -141,11 +141,11 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         13, E'[]', E'B1_P1 == \'M\'', null,
                         E'[{"label":"Casa de uma amiga ou vizinha","value":"casa-de-uma-amiga-ou-vizinha"},{"label":"Casa de um familiar","value":"casa-de-um-familiar"},{"label":"Casa-abrigo ou casa de Acolhimento","value":"casa-abrigo-ou-casa-de-acolhimento"},{"label":"Uma nova casa Alugada","value":"uma-nova-casa-alugada"}]', '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10012210, 'displaytext', 'B1_P6_R11', E'Que bom que tem com quem contar, isso ajuda muito e faz com que tenhamos a certeza de que não estamos sozinhas! Lembre-se que é importante que você não vá para um lugar tão óbvio e que tome todas as medidas de segurança necessárias, para que nem você, nem a pessoa que te acolheu fique em risco.',
+                        VALUES ('published', 10012210, 'displaytext', 'B1_P6_R11', E'Que bom que você tem com quem contar. Isso ajuda muito! Lembre-se que é importante evitar lugares muito óbvios e cumprir as medidas de segurança necessárias, para que nem você, nem a pessoa que te acolheu fiquem em risco.',
                         13, E'[]', E'B1_P6 == \'casa-de-uma-amiga-ou-vizinha\' ', null,
                         null, '[{"codigo":"T9"},{"codigo":"T10"},{"codigo":"T11"},{"codigo":"T12"},{"codigo":"T13"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10012220, 'displaytext', 'B1_P6_R11', E'Que bom que tem com quem contar, isso ajuda muito e faz com que tenhamos a certeza de que não estamos sozinhas! Lembre-se que é importante que você não vá para um lugar tão óbvio e que tome todas as medidas de segurança necessárias, para que nem você, nem a pessoa que te acolheu fique em risco.',
+                        VALUES ('published', 10012220, 'displaytext', 'B1_P6_R11', E'Que bom que você tem com quem contar. Isso ajuda muito! Lembre-se que é importante evitar lugares muito óbvios e cumprir as medidas de segurança necessárias, para que nem você, nem a pessoa que te acolheu fiquem em risco.',
                         13, E'[]', E'B1_P6 == \'casa-de-um-familiar\' ', null,
                         null, '[{"codigo":"T9"},{"codigo":"T10"},{"codigo":"T11"},{"codigo":"T12"},{"codigo":"T13"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -161,7 +161,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         13, E'[]', E'B1_P6 == \'casa-abrigo-ou-casa-de-acolhimento\' ', null,
                         null, '[{"codigo":"T9"},{"codigo":"T10"},{"codigo":"T11"},{"codigo":"T12"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10012260, 'displaytext', 'B1_P6_R14', E'Que coisa boa! Você precisa e merece ter essa nova chance! Acredito que se você pensa nessa possibilidade, tem se organizado financeiramente para esse passo. Sabemos como é difícil manter esses custos, então, caso você necessite, em alguns estados brasileiros há a possibilidade de mulheres em situação de violência terem direito a um auxílio-aluguel.',
+                        VALUES ('published', 10012260, 'displaytext', 'B1_P6_R14', E'Acredito que se você pensa nessa possibilidade, tem se organizado financeiramente para esse passo. Caso você necessite, em alguns estados brasileiros há a possibilidade de mulheres em situação de violência terem direito a um auxílio-aluguel.',
                         13, E'[]', E'B1_P6 == \'uma-nova-casa-alugada\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -198,7 +198,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         null, '[]', 17, '[]');
 DELETE FROM quiz_config WHERE questionnaire_id = 14;
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10020390, 'displaytext', 'B2_P10intro', E'Neste bloco, vamos tratar sobre crianças, adolescentes e outras pessoas que dependam de seus cuidados e vivam no mesmo ambiente doméstico que você. O foco aqui é garantir que essas pessoas estejam protegidas e possam lhe ajudar quando possível, entendendo que é importante que as crianças e os adolescentes sejam orientados a pedir ajuda, mas não devem se sentir responsáveis por garantir sua proteção para que isso não gere impactos negativos na saúde mental deles futuramente. Então, as perguntas e orientações que faremos aqui serão no intuito de criar um ambiente seguro e garantir direitos para todos vocês antes, durante e depois do plano de fuga.',
+                        VALUES ('published', 10020390, 'displaytext', 'B2_P10intro', E'Neste bloco, vamos tratar sobre crianças, adolescentes e outras pessoas que dependam de seus cuidados.O foco é garantir que essas pessoas estejam protegidas e possam lhe ajudar quando possível. Crianças e adolescentes não devem se sentir responsáveis por garantir sua proteção. As perguntas e orientações desse bloco são importantes para criar um ambiente seguro e garantir direitos.',
                         14, E'[]', E'1', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -214,7 +214,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P10 == \'Y\'', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10022400, 'displaytext', 'B2_P11_R29', E'Lamento que tenha que lidar com mais essa situação. Vamos juntas encontrar uma maneira de deixá-los em segurança. É importante ter em mente que mesmo que eles não sejam alvo direto das ameaças ou das agressões físicas, um ambiente doméstico violento é prejudicial a todos.',
+                        VALUES ('published', 10022400, 'displaytext', 'B2_P11_R29', E'Vamos juntas encontrar uma maneira de deixá-los em segurança. É importante ter em mente que mesmo que eles não sejam alvo direto das ameaças ou das agressões físicas, um ambiente doméstico violento é prejudicial a todos.',
                         14, E'[]', E'B2_P11 == \'Y\' ', null,
                         null, '[{"codigo":"T12"},{"codigo":"T49"},{"codigo":"T50"},{"codigo":"T51"},{"codigo":"T52"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -243,7 +243,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P12 == \'meu-enteado-ou-enteada\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10023460, 'displaytext', 'B2_P12_R35', E'Ao sair de casa, denuncie o agressor e faça um boletim de ocorrência frisando o risco que a criança e/ou o adolescente está correndo e que ele também é vítima de violência e está em risco. Infelizmente, nosso sistema judiciário ainda é muito machista e misógino, então é preciso que você se resguarde ao máximo.',
+                        VALUES ('published', 10023460, 'displaytext', 'B2_P12_R35', E'Ao sair de casa, denuncie o agressor e faça um boletim de ocorrência frisando o risco que a criança e/ou o adolescente está correndo. Infelizmente, nosso sistema judiciário ainda é muito machista e misógino, então é preciso que você se resguarde ao máximo.',
                         14, E'[]', E'B2_P12 == \'meu-enteado-ou-enteada\' ', null,
                         null, '[{"codigo":"T53"},{"codigo":"T55"},{"codigo":"T61"},{"codigo":"T62"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -263,7 +263,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P13 == \'Y\' ', null,
                         null, '[{"codigo":"T63"},{"codigo":"T64"},{"codigo":"T65"},{"codigo":"T66"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10024500, 'displaytext', 'B2_P13_R39', E'Compreendo e acolho sua decisão! Esse é um momento delicado, em que é preciso muita cautela. Sair do ambiente violento e se fortalecer pode ser o primeiro passo para, mais tarde, também proporcionar segurança a quem depende de você. Siga com seu plano.',
+                        VALUES ('published', 10024500, 'displaytext', 'B2_P13_R39', E'É preciso muita cautela. Sair do ambiente violento e se fortalecer pode ser o primeiro passo para, mais tarde, também proporcionar segurança a quem depende de você. Siga com seu plano.',
                         14, E'[]', E'B2_P13 == \'N\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -271,7 +271,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P13 == \'N\' ', null,
                         null, '[{"codigo":"T63"},{"codigo":"T67"},{"codigo":"T68"},{"codigo":"T69"},{"codigo":"T70"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10024520, 'displaytext', 'B2_P13_R41', E'Tudo bem, esse é um momento delicado, em que é muito comum ter dúvidas do que fazer. Continue com seu plano. Estamos à disposição, por meio do nosso suporte, para, a qualquer momento, dialogar sobre esse assunto em específico. Retorne quando se sentir mais segura.',
+                        VALUES ('published', 10024520, 'displaytext', 'B2_P13_R41', E'Tudo bem, esse é um momento delicado. Continue com seu plano. Estamos à disposição, por meio do nosso suporte, para, a qualquer momento, dialogar sobre esse assunto em específico. Retorne quando se sentir mais segura.',
                         14, E'[]', E'B2_P13 == \'M\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -283,15 +283,15 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P13 == \'Y\' || B2_P13 == \'N\' || B2_P13 == \'M\'', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10025530, 'displaytext', 'B2_P14_R42', E'A depender da idade e da linguagem, a criança e/ou adolescente é, sim, capaz de compreender a necessidade e a forma como se dará a saída do ambiente familiar. Dialogue sempre que possível e, com muito cuidado, ajuste as fantasias e expectativas da criança e/ou adolescente à realidade.',
+                        VALUES ('published', 10025530, 'displaytext', 'B2_P14_R42', E'A depender da idade e da linguagem, a criança e/ou adolescente é capaz de compreender a saída do ambiente familiar. Dialogue sempre que possível, e tenha cautela para não colocar o plano em risco. Crianças e/ou adolescentes são mais vulneráveis a pressões e ameaças',
                         14, E'[]', E'B2_P14 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10025540, 'displaytext', 'B2_P14_R43', E'Mas também é importante ter cautela para não colocar o plano em risco. Crianças e/ou adolescentes são mais vulneráveis a pressões e ameaças.',
+                        VALUES ('published', 10025540, 'displaytext', 'B2_P14_R43', E'É importante ter cautela para nao ter riscos. Crianças e/ou adolescentes são mais vulneráveis a pressões e ameaças.',
                         14, E'[]', E'B2_P14 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10025550, 'displaytext', 'B2_P14_R44', E'Somente compartilhe o plano no momento em que você tiver segurança quanto à sua concretização. A sensação de segurança nas crianças e/ou adolescentes requer algum grau de previsibilidade.',
+                        VALUES ('published', 10025550, 'displaytext', 'B2_P14_R44', E'Só compartilhe o plano quando tiver certeza dele. A sensação de segurança nas criaças e/ou adolescentes requer previsibilidade.',
                         14, E'[]', E'B2_P14 == \'Y\' ', null,
                         null, '[{"codigo":"T71"},{"codigo":"T72"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -307,11 +307,11 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P14 == \'Y\' || B2_P14 == \'N\'', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10026580, 'displaytext', 'B2_P15_R47', E'Neste caso, além da preparação de documentos, é importante ficar atenta à rotina de medicações, atendimentos médicos e tudo o quanto for necessário para a convivência com a condição.',
+                        VALUES ('published', 10026580, 'displaytext', 'B2_P15_R47', E'Neste caso, além da preparação de documentos, é importante ficar atenta à rotina de remédios, atendimentos médicos e tudo o que for necessário para a convivência com a condição. Vamos incluir itens relativos a isso em seu plano de fuga.',
                         14, E'[]', E'B2_P15 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10026590, 'displaytext', 'B2_P15_R48', E'A depender da situação, você pode necessitar de mais ajuda antes, durante e depois da fuga. Avalie quem pode estar com você ao longo do processo - veja orientações no bloco \'Passos para a fuga\').',
+                        VALUES ('published', 10026590, 'displaytext', 'B2_P15_R48', E'Além disso, a depender da situação, você pode necessitar de mais ajuda antes, durante e depois da fuga. Avalie quem pode lhe acompanhar ao longo deste processo.',
                         14, E'[]', E'B2_P15 == \'Y\' ', null,
                         null, '[{"codigo":"T73"},{"codigo":"T74"},{"codigo":"T75"},{"codigo":"T76"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -323,11 +323,11 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P11 == \'N\' || B2_P15 == \'Y\' || B2_P15 == \'N\'', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10027610, 'displaytext', 'B2_P16_R50', E'Este plano de fuga é individual e focado em sua própria segurança. Certifique-se se é seguro dividir estratégias ou mesmo incluir mais alguém nele.',
+                        VALUES ('published', 10027610, 'displaytext', 'B2_P16_R50', E'Este é um plano de fuga individual, focado em sua própria segurança. Certifique-se se é seguro dividir estratégias ou mesmo incluir mais alguém nele.',
                         14, E'[]', E'B2_P16 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10027620, 'displaytext', 'B2_P16_R51', E'Se julgar isso essencial, converse e conte para essa pessoa os itens listados ao final do seu plano.',
+                        VALUES ('published', 10027620, 'displaytext', 'B2_P16_R51', E'Se julgar essencial, converse e conte para essa pessoa os itens listados ao final do seu plano. Caso essa pessoa seja uma mulher, oriente-a também a baixar o PenhaS para que ela construa o próprio manual e receba orientação especializada da nossa equipe.',
                         14, E'[]', E'B2_P16 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -392,7 +392,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         null, '[]', null, '[]');
 DELETE FROM quiz_config WHERE questionnaire_id = 15;
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10030720, 'displaytext', 'B3_P19intro', E'Chegamos ao bloco sobre bens e renda, assunto que costuma gerar angústias e muitas dúvidas. A depender das suas respostas, iremos personalizar seu plano de fuga adicionando orientações que serão fundamentais no processo de partilha e preservação da sua renda. Saiba que, independente de quem seja o agressor (companheiro, pai, irmão, sócio), há meios de garantir a efetivação dos seus direitos patrimoniais. Vamos juntas?',
+                        VALUES ('published', 10030720, 'displaytext', 'B3_P19intro', E'Chegamos ao bloco sobre bens e renda, assunto que costuma gerar angústias e muitas dúvidas. Saiba que, independente de quem seja o agressor (companheiro, pai, irmão, sócio), há meios de garantir a efetivação dos seus direitos patrimoniais. Ao responder esse bloco, acrescentaremos à sua lista final instruções fundamentais para o processo de partilha e preservação da sua renda. Vamos juntas?',
                         15, E'[]', E'1', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -408,7 +408,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P19 == \'nao-trabalho-mas-recebo-beneficio-ou--pensao\' ', null,
                         null, '[{"codigo":"T4"},{"codigo":"T6"},{"codigo":"T7"},{"codigo":"T8"},{"codigo":"T29"},{"codigo":"T30"},{"codigo":"T81"},{"codigo":"T89"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10031750, 'displaytext', 'B3_P19_R62', E'Tudo bem, respire fundo! Existem políticas públicas que visam garantir autonomia financeira a mulheres em situação de violência. Há possibilidade de inclusão em programas de transferência de renda, como os benefícios socioassistenciais e outras prioridades. Vamos juntas buscar mecanismos para isso.',
+                        VALUES ('published', 10031750, 'displaytext', 'B3_P19_R62', E'Tudo bem, respire fundo! Há possibilidade de inclusão em programas de transferência de renda, como os benefícios socioassistenciais e outras prioridades. Vamos juntas buscar mecanismos para isso.',
                         15, E'[]', E'B3_P19 == \'dependo-financeiramente-ou--ele-controla-meu-dinheiro\' ', null,
                         null, '[{"codigo":"T7"},{"codigo":"T8"},{"codigo":"T29"},{"codigo":"T30"},{"codigo":"T81"},{"codigo":"T82"},{"codigo":"T83"},{"codigo":"T86"},{"codigo":"T90"},{"codigo":"T91"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -432,7 +432,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
                         null, '[{"codigo":"T92"},{"codigo":"T93"},{"codigo":"T94"},{"codigo":"T95"},{"codigo":"T96"},{"codigo":"T97"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10032800, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        VALUES ('published', 10032800, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-meu\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -456,7 +456,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
                         null, '[{"codigo":"T92"},{"codigo":"T96"},{"codigo":"T97"},{"codigo":"T98"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10032850, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        VALUES ('published', 10032850, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-proprio-ou-alugado-em-nome-do-agressor\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -476,7 +476,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'o-imovel-e-alugado-no-meu-nome\' ', null,
                         null, '[{"codigo":"T92"},{"codigo":"T94"},{"codigo":"T96"},{"codigo":"T97"},{"codigo":"T99"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10032890, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        VALUES ('published', 10032890, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-alugado-no-meu-nome\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -484,11 +484,11 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'o-imovel-e-alugado-no-meu-nome\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10032900, 'displaytext', 'B3_P20_R74', E'Entendi! Você possui direitos nessa situação e eles devem ser respeitados nesse momento delicado. Saiba também que deixar o ambiente de violência não invalida a sua participação em possíveis divisões de bens ou o direito à guarda de filhos.',
+                        VALUES ('published', 10032900, 'displaytext', 'B3_P20_R74', E'Entendi! Você possui direitos nessa situação e eles devem ser respeitados. Saiba também que deixar o ambiente de violência não invalida sua participação em possíveis divisões de bens ou o direito à guarda de filhos.',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-financiado-no-nome-dos-dois\' ', null,
                         null, '[{"codigo":"T92"},{"codigo":"T94"},{"codigo":"T96"},{"codigo":"T97"},{"codigo":"T100"},{"codigo":"T101"},{"codigo":"T102"},{"codigo":"T103"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10032910, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        VALUES ('published', 10032910, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
                         15, E'[]', E'B3_P20 == \'o-imovel-e-financiado-no-nome-dos-dois\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -500,7 +500,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P20 == \'construimos-um-imovel-no-terreno-da-familia\' ', null,
                         null, '[{"codigo":"T92"},{"codigo":"T94"},{"codigo":"T96"},{"codigo":"T97"},{"codigo":"T101"},{"codigo":"T103"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10032930, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        VALUES ('published', 10032930, 'displaytext', 'B3_P20_R76', E'Estamos finalizando o bloco "Bens, trabalho e renda". Obrigada por ter respondido até aqui. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
                         15, E'[]', E'B3_P20 == \'construimos-um-imovel-no-terreno-da-familia\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -565,7 +565,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         16, E'[]', E'B4_P21 == \'N\' || B4_P23 == \'Y\' || B4_P23 == \'N\'', null,
                         E'[{"label":"Sim, tenho medida protetiva","value":"sim-tenho-medida-protetiva"},{"label":"Já denunciei, mas não tenho medida protetiva.","value":"ja-denunciei-mas-nao-tenho-medida-protetiva"},{"label":"Nunca denunciei","value":"nunca-denunciei"}]', '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10038030, 'displaytext', 'B4_P24_R86', E'Que bom! Ter a medida protetiva é um grande passo, mas ainda assim é importante manter cuidados. Caso ele ainda tente contato ou lhe ameace, vá à Defensoria Pública ou entre em contato com o(a) advogado(a) particular para informar que a medida protetiva está sendo descumprida.',
+                        VALUES ('published', 10038030, 'displaytext', 'B4_P24_R86', E'Ter a medida protetiva é um grande passo, mas ainda assim é importante manter cuidados. Caso ele ainda tente contato ou lhe ameace, vá à Defensoria Pública ou entre em contato com o(a) advogado(a) particular para informar que a medida protetiva está sendo descumprida.',
                         16, E'[]', E'B4_P24 == \'sim-tenho-medida-protetiva\' ', null,
                         null, '[{"codigo":"T8"},{"codigo":"T122"},{"codigo":"T123"},{"codigo":"T124"},{"codigo":"T125"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -625,7 +625,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         16, E'[]', E'B4_P27 == \'Y\' ', null,
                         null, '[{"codigo":"T73"},{"codigo":"T74"},{"codigo":"T129"},{"codigo":"T130"},{"codigo":"T131"},{"codigo":"T132"},{"codigo":"T133"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10041150, 'displaytext', 'B4_P27_R98', E'Estamos finalizando o bloco "Segurança Pessoal". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        VALUES ('published', 10041150, 'displaytext', 'B4_P27_R98', E'Estamos finalizando o bloco "Segurança Pessoal". Obrigada por ter respondido até aqui. Você é forte e corajosa! Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
                         16, E'[]', E'B4_P27 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -633,7 +633,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         16, E'[]', E'B4_P27 == \'Y\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10041160, 'displaytext', 'B4_P27_R98', E'Estamos finalizando o bloco "Segurança Pessoal". Obrigada por ter respondido até aqui. Você é forte e corajosa! O PenhaS quer te ajudar a romper com o ciclo de violência. Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
+                        VALUES ('published', 10041160, 'displaytext', 'B4_P27_R98', E'Estamos finalizando o bloco "Segurança Pessoal". Obrigada por ter respondido até aqui. Você é forte e corajosa! Certifique-se de todos os itens que aparecerão no seu plano. Eles são personalizados a partir de suas respostas, por isso é tão importante que você siga respondendo a todos os blocos.',
                         16, E'[]', E'B4_P27 == \'N\' ', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
@@ -642,7 +642,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         null, '[]', null, '[]');
 DELETE FROM quiz_config WHERE questionnaire_id = 17;
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10016310, 'displaytext', 'B5_P9intro', E'Chegou a hora de traçar as estratégias de deslocamento até o ambiente que irá te acolher. Este é um momento crucial para o sucesso do seu plano. Ao final do processo, apresentaremos orientações específicas, de acordo com a modalidade de transporte escolhida.',
+                        VALUES ('published', 10016310, 'displaytext', 'B5_P9intro', E'Chegou a hora de traçar as estratégias de deslocamento até o ambiente que irá te acolher. Este é um momento crucial para o sucesso do seu plano. Ao finalizar todos os blocos do seu Manual de Fuga, apresentaremos uma lista orientações específicas, de acordo com a modalidade de transporte escolhida.',
                         17, E'[]', E'1', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
