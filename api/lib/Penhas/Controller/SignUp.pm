@@ -83,14 +83,16 @@ sub post {
         eval {
             foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(ViaCep Correios)) {
                 my @_address_fields = qw(city state);
-                $result = $backend->find($cep);
+                $result = eval{$backend->find($cep)};
+                $c->log->error("Error during cep find using $backend: $@") if ($@);
+
                 if ($result) {
 
                     # para o teste dos backend se todos os campos estão preenchidos
                     last if (grep { length $result->{$_} } @_address_fields) == @_address_fields;
                 }
             }
-            if (!$result) {
+            if (!$result || !$result->{city}) {
                 $err = {
                     error   => 'cep_invalid',
                     message => "Não conseguimos localizar o endereço do CEP $cep!",

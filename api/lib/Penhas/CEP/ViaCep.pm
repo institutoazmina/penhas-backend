@@ -17,11 +17,17 @@ sub _find {
     return unless $res->is_success;
 
     my $r = eval { decode_json($res->content) } or return;
+    return if $r->{erro};
 
     my $street = $r->{logradouro} || '';
 
-    return {street => $street, city => $r->{localidade}, district => $r->{bairro}, state => $r->{uf},
-        ibge => $r->{ibge}};
+    return {
+        street   => $street,
+        city     => $r->{localidade},
+        district => $r->{bairro},
+        state    => $r->{uf},
+        ibge     => $r->{ibge}
+    };
 }
 
 1;
