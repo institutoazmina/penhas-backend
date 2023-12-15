@@ -1,4 +1,4 @@
-package Penhas::CEP::Postmon;
+package Penhas::CEP::ViaCep;
 
 use Moose::Role;
 use feature 'state';
@@ -6,7 +6,7 @@ use feature 'state';
 use Furl;
 use JSON qw(decode_json);
 
-sub name {'Postmon'}
+sub name {'ViaCep'}
 
 sub _find {
     state $ua = Furl->new(timeout => 20);
