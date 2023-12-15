@@ -33,7 +33,7 @@ sub cliente_update_cep {
 
     $cep =~ s/[^0-9]//go;
     my $result;
-    foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(Postmon Correios)) {
+    foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(ViaCep Correios)) {
         $result = $backend->find($cep);
         if ($result) {
 
