@@ -257,7 +257,7 @@ sub validate_params {
         }
 
         $tested->{$key} = $val;
-        if ($tested->{$key} eq '' && ($type eq 'Bool' || $type eq 'Int' || $type eq 'Num')) {
+        if (defined $tested->{$key} && $tested->{$key} eq '' && ($type eq 'Bool' || $type eq 'Int' || $type eq 'Num')) {
             use DDP;
             p $val;
             $tested->{$key} = undef;
