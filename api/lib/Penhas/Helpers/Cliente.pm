@@ -345,15 +345,23 @@ sub cliente_sync_lista_tarefas {
         return {message => 'Removido com sucesso.'};
     }
 
+    my $campo_livre = ($opts{campo_livre} ? $opts{campo_livre} : undef);
+    $campo_livre = to_json($campo_livre) if (defined $campo_livre && ref $campo_livre);
+
     $c->schema2->txn_do(
         sub {
             if ($row->mf_tarefa->eh_customizada) {
                 $row->mf_tarefa->update(
                     {
-                        campo_livre => ($opts{campo_livre} ? $opts{campo_livre} : undef),
+                        campo_livre => $campo_livre,
                     }
                 );
                 $row->update({atualizado_em => \'now()'});
+            }
+            elsif (!$row->mf_tarefa->eh_customizada && $campo_livre) {
+                $c->app->log->debug(
+                    'cliente_sync_lista_tarefas chamado com campo livre mas tarefa não é eh_customizada. Valor ignorado'
+                      . to_json($campo_livre));
             }
 
             # se mudou o valor do checkbox

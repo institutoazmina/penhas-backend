@@ -83,6 +83,8 @@ sub _sync_perform_actions {
     my $c     = shift;
     my $valid = shift;
 
+    $c->app->log->debug('running _sync_perform_actions with ' . to_json($valid));
+
     my $result = $c->cliente_sync_lista_tarefas(
         user_obj => $c->stash('user_obj'),
         %$valid,
@@ -103,17 +105,22 @@ sub me_t_batch_sync {
         status  => 400
     } if (ref $params ne 'ARRAY');
 
+    $c->app->log->debug('raw parsed json params as ' . to_json($params));
+
     my $updated = 0;
     my $removed = 0;
 
     $c->schema2->txn_do(
         sub {
             for my $param (@$params) {
+                use DDP; p $param;
                 if (exists $param->{campo_livre} && ref $param->{campo_livre}) {
                     $param->{campo_livre} = to_json($param->{campo_livre});
                 }
 
                 my $form = _sync_validate_and_process_params($c, $param);
+                $c->app->log->debug('processed form as ' . to_json($form));
+
                 _sync_perform_actions($c, $form);
 
                 if ($form->{remove}) {
