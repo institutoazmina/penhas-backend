@@ -10,6 +10,10 @@ interface Block {
     db_id: number;
 }
 
+const fixTarefasSQL = `
+update mf_tarefa set eh_customizada=true where tipo != 'checkbox';
+`;
+
 type XlsType = 'SN' | 'SC' | 'AC' | 'SNT' | 'MC' | 'BF' | 'PS' | 'ET' | 'PQ' | 'RF';
 
 type DbQuizConfigType =
@@ -479,7 +483,7 @@ function boostrap() {
     }
 
     fs.writeFileSync('out/tags.sql', generateTagSql(tags));
-    fs.writeFileSync('out/tarefas.sql', generateTarefasSql(tasks, blocks));
+    fs.writeFileSync('out/tarefas.sql', generateTarefasSql(tasks, blocks) + fixTarefasSQL);
 
     //console.log(replies)
 

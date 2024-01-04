@@ -1451,3 +1451,5 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    ON CONFLICT (codigo) WHERE (codigo::text <> ''::text) DO UPDATE
                    SET descricao = EXCLUDED.descricao,
                        agrupador = EXCLUDED.agrupador;
+
+update mf_tarefa set eh_customizada=true where tipo != 'checkbox';
