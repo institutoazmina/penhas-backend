@@ -390,7 +390,11 @@ const generateTarefasSql = (tasks: Task[], blocks: Block[]) => {
 
         // tudo vazio por enquanto
         const titulo = '';
-        const tipo = 'checkbox';
+        let tipo = 'checkbox';
+
+        if (/Salve esses contatos/.test(descricao)) {
+            tipo = 'checkbox_contato';
+        }
 
         const blocoAgrupador = blocks.find((r) => r.id === agrupador)?.description || agrupador;
 
