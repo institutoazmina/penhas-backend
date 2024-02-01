@@ -68,6 +68,7 @@ sub setup {
     $self->helper('process_quiz_assistant'       => sub { &process_quiz_assistant(@_) });
     $self->helper('process_cep_address_lookup'   => sub { &process_cep_address_lookup(@_) });
     $self->helper('process_mf_assistant'         => sub { &process_mf_assistant(@_) });
+    $self->helper('process_redo_addr_mf_assistant'         => sub { &process_redo_addr_mf_assistant(@_) });
 }
 
 sub ensure_questionnaires_loaded {
