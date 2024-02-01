@@ -464,8 +464,12 @@ sub load_quiz_session {
 
                         # marca que já respondeu o bloco 0, só pra n bugar o 'proximo bloco não respondido'
                         if ($stash->{is_mf} && $stash->{mf_control_id}) {
-                            $c->schema2->resultset('ClienteMfSessionControl')->find($stash->{mf_control_id})
-                              ->register_completed_questionnaire(questionnaire_id => $session->{questionnaire_id});
+                            my $mf_sc
+                              = $c->schema2->resultset('ClienteMfSessionControl')->find($stash->{mf_control_id});
+
+                            $mf_sc->register_completed_questionnaire(questionnaire_id => $session->{questionnaire_id});
+
+                            $mf_sc->prepare_for_questionnaire(questionnaire_id => $q->{id});
                         }
 
                         $session_rs->search({id => $session->{id}})->update({questionnaire_id => $q->{id}});
@@ -488,6 +492,8 @@ sub load_quiz_session {
                     my $next_q_id = $mf_sc->get_next_questionnaire_id(outstanding => $item->{_outstanding});
 
                     if ($next_q_id) {
+
+                        $mf_sc->prepare_for_questionnaire(questionnaire_id => $next_q_id);
 
                         log_info("forwarding to next MF available questionnaire id " . $next_q_id);
                         $c->ensure_questionnaires_loaded(
@@ -1075,8 +1081,8 @@ sub process_quiz_session {
                 log_info("Adicioando tags para o usuário: " . join ', ', @codigos);
 
                 for (@codigos) {
-                    $sim_limpa_mf = 1 if $_ eq 'SIM_LIMPA_MF'; # tag pra limpar se responder SIM
-                    $nao_limpa_mf = 1 if $_ eq 'NAO_LIMPA_MF'; # tag pra limpar se responder NÃO
+                    $sim_limpa_mf = 1 if $_ eq 'SIM_LIMPA_MF';    # tag pra limpar se responder SIM
+                    $nao_limpa_mf = 1 if $_ eq 'NAO_LIMPA_MF';    # tag pra limpar se responder NÃO
                 }
 
                 # chama assim que termina de responder (os que são input)

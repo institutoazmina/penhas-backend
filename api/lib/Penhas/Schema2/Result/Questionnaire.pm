@@ -70,6 +70,12 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "mf_questionnaire_remove_tarefas",
+  "Penhas::Schema2::Result::MfQuestionnaireRemoveTarefa",
+  { "foreign.questionnaire_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "quiz_config_change_to_questionnaires",
   "Penhas::Schema2::Result::QuizConfig",
   { "foreign.change_to_questionnaire_id" => "self.id" },
@@ -83,8 +89,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-16 02:15:22
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gEKIQ2W5D7dh8V2NrcDNxQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2024-02-01 12:18:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:N8fpK94+TF1P3l/Rfe1l+Q
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

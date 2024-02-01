@@ -61,6 +61,8 @@ __PACKAGE__->belongs_to(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-16 03:00:24
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:HU6o12q180TXkn/uKyPqMQ
 
+use Penhas::Logger;
+
 # -- statuses:
 # -- onboarding
 # -- inProgress
@@ -78,6 +80,36 @@ sub register_session_start {
             status                        => 'inProgress'
         }
     );
+
+    $self->prepare_for_questionnaire(questionnaire_id => $opts{questionnaire_id});
+}
+
+sub prepare_for_questionnaire {
+    my ($self, %opts) = @_;
+
+    my $questionnaire_id = $opts{questionnaire_id};
+    slog_info('prepare_for_questionnaire %s', $questionnaire_id);
+
+    # verifica a tabela mf_questionnaire_remove_tarefa e limpar os dados das tarefas se existir algum bloco
+    # marcado que quando entrar precisa remover
+
+    my @to_remove_tasks = $self->result_source->schema->resultset('MfQuestionnaireRemoveTarefa')
+      ->search({questionnaire_id => $questionnaire_id}, {result_class => 'DBIx::Class::ResultClass::HashRefInflator'});
+
+    if (@to_remove_tasks) {
+        slog_info('@to_remove_tasks %s', join ', ', @to_remove_tasks);
+        my $clear_task = $self->result_source->schema->resultset('MfClienteTarefa')->search(
+            {
+                removido_em => undef,
+                cliente_id  => $self->cliente_id,
+
+                'mf_tarefa.codigo' => {'in' => \@to_remove_tasks}
+            },
+            {join => 'mf_tarefa'}
+        )->update({removido_em => \'now()'});
+
+        slog_info('$clear_task count=%s', $clear_task);
+    }
 }
 
 sub register_completed_questionnaire {
