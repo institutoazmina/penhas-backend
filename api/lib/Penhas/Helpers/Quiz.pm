@@ -1,7 +1,7 @@
 package Penhas::Helpers::Quiz;
 use common::sense;
-use Carp qw/croak confess/;
-use Digest::MD5 qw/md5_hex/;
+use Carp          qw/croak confess/;
+use Digest::MD5   qw/md5_hex/;
 use Penhas::Utils qw/tt_test_condition tt_render is_test/;
 use JSON;
 use utf8;
@@ -483,7 +483,8 @@ sub load_quiz_session {
                         goto RESTART_QUIZ;
                     }
                 }
-                elsif ($has_relevance && $item->{_next_mf_questionnaire} && $stash->{is_mf}) {
+                elsif ($has_relevance && $item->{_next_mf_questionnaire} && $stash->{is_mf} && $stash->{mf_control_id})
+                {
 
                     my $mf_sc = $c->schema2->resultset('ClienteMfSessionControl')->find($stash->{mf_control_id});
 
@@ -1039,7 +1040,7 @@ sub process_quiz_session {
                         $stash->{is_finished} = 1;
                         $recalc_primeiro_quiz = 1;
 
-                        if ($stash->{is_mf}) {
+                        if ($stash->{is_mf} && $stash->{mf_control_id}) {
                             log_info("is_mf=true, running set_status_completed");
 
                             my $mf_sc
@@ -1684,6 +1685,55 @@ sub process_mf_assistant {
 
     push @preprend_msg, &_new_displaytext_error('Não foi encontrado o questionário de manual de fuga', 'err')
       if $append_err;
+
+    return {
+        quiz_session => {
+            session_id   => $user_obj->assistant_session_id(),
+            current_msgs => [map { &_render_question($_, $user) } @preprend_msg],
+            prev_msgs    => undef,
+        }
+    };
+}
+
+
+sub process_redo_addr_mf_assistant {
+    my ($c, %opts) = @_;
+
+    my $user_obj = $opts{user_obj}      or croak 'missing user_obj';
+    my $params   = delete $opts{params} or croak 'missing params';
+
+    log_info("process_redo_addr_mf_assistant " . to_json($params));
+
+    my $user = {$user_obj->get_columns};
+    my @preprend_msg;
+
+
+    my $questionnaire_id = $ENV{MF_REDO_ADDR_QUESTIONNAIRE_ID};
+    croak 'missing $ENV{MF_REDO_ADDR_QUESTIONNAIRE_ID}' unless $questionnaire_id;
+    croak 'invalid $ENV{MF_REDO_ADDR_QUESTIONNAIRE_ID}, expected int ' if $questionnaire_id !~ /^\d+$/;
+
+    # just in case, mas sempre deveria existir se chegou nesse ponto
+    my $mf_sc = $user_obj->ensure_cliente_mf_session_control_exists();
+
+    # não coloca na stash o mf_control_id, já que não queremos mudar o status de nada
+    # do progresso que ocorre em paralelo (potencialmente)
+    my $quiz_session = $c->user_get_quiz_session(
+        user             => $user,
+        questionnaire_id => $questionnaire_id,
+        extra_stash      => {is_mf => 1, redo_addr => 1},
+    );
+
+    if ($quiz_session) {
+        $c->load_quiz_session(session => $quiz_session, user => $user, user_obj => $user_obj);
+
+        # não chama o register_session_start pois não queremos reiniciar o fluxo
+        # chama apenas o prepare_for_questionnaire, para limpar as questoes, se existir código
+        $mf_sc->prepare_for_questionnaire(questionnaire_id => $questionnaire_id);
+
+        return {quiz_session => $c->stash('quiz_session')};
+    }
+
+    push @preprend_msg, &_new_displaytext_error('Não foi encontrado o questionário para refazer o endereço', 'err');
 
     return {
         quiz_session => {
