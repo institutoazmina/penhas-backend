@@ -97,6 +97,7 @@ sub prepare_for_questionnaire {
       ->search({questionnaire_id => $questionnaire_id}, {result_class => 'DBIx::Class::ResultClass::HashRefInflator'});
 
     if (@to_remove_tasks) {
+        @to_remove_tasks = map { $_->{codigo_tarefa} } @to_remove_tasks;
         slog_info('@to_remove_tasks %s', join ', ', @to_remove_tasks);
         my $clear_task = $self->result_source->schema->resultset('MfClienteTarefa')->search(
             {
