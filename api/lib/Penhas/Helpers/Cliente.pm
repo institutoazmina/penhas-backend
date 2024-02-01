@@ -325,7 +325,7 @@ sub cliente_lista_tarefas {
 
     return {
         tarefas => [
-            map { &render_tarefa($_) } @$alteracoes,
+            (map { &render_tarefa($_) } @$alteracoes),
             @botoes
         ],
         tarefas_removidas => $tarefas_removidas
