@@ -16,7 +16,6 @@ sub assert_user_perms {
 
 
 sub me_t_list {
-
     my $c = shift;
 
     my $consultado_em = time();

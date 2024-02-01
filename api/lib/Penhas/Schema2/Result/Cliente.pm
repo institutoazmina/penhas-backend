@@ -670,5 +670,9 @@ sub mf_assistant_session_id {
     return 'MF' . substr($_[0]->cpf_hash, 0, 4);
 }
 
+sub mf_redo_addr_session_id {
+    return 'MF:Address' . substr($_[0]->cpf_hash, 0, 4);
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

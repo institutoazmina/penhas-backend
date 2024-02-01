@@ -310,8 +310,24 @@ sub cliente_lista_tarefas {
         )->all
     ];
 
+    my @botoes = ();
+
+    # se já iniciou alguma vez
+    my $has_mf_sc = $c->schema2->resultset('ClienteMfSessionControl')->search(
+        {
+            cliente_id => $user->id,
+            status     => {'not in' => ['onboarding']}
+        }
+    )->count();
+    if ($has_mf_sc) {
+        push @botoes, &render_botao_endereco($user);
+    }
+
     return {
-        tarefas           => [map { &render_tarefa($_) } @$alteracoes],
+        tarefas => [
+            map { &render_tarefa($_) } @$alteracoes,
+            @botoes
+        ],
         tarefas_removidas => $tarefas_removidas
     };
 
@@ -414,6 +430,27 @@ sub render_tarefa {
         descricao      => $mf_tarefa->descricao(),
         agrupador      => $mf_tarefa->agrupador(),
         campo_livre    => ($mf_tarefa->campo_livre() ? from_json($mf_tarefa->campo_livre()) : undef),
+    };
+}
+
+sub render_botao_endereco {
+    my ($user) = @_;
+
+    return {
+        id            => -1,
+        atualizado_em => time(),
+        tipo          => 'button',
+        descricao     => '',
+        agrupador     => 'Passos para fuga',
+        data          => {
+            label     => 'Mudar resposta',
+            route     => '/quiz',
+            arguments => {
+                current_msgs => [],
+                prev_msgs    => undef,
+                session_id   => $user->mf_redo_addr_session_id()
+            }
+        }
     };
 }
 
