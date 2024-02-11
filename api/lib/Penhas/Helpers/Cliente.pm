@@ -441,15 +441,10 @@ sub render_botao_endereco {
         atualizado_em => time(),
         tipo          => 'button',
         descricao     => '',
-        agrupador     => 'Passos para fuga',
+        agrupador     => 'Transporte',
         data          => {
-            label     => 'Mudar resposta',
-            route     => '/quiz',
-            arguments => {
-                current_msgs => [],
-                prev_msgs    => undef,
-                session_id   => $user->mf_redo_addr_session_id()
-            }
+            label => 'Revistar Transporte',
+            route => '/quiz/start?session_id=' . $user->mf_redo_addr_session_id(),
         }
     };
 }
