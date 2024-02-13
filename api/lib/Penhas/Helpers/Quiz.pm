@@ -268,6 +268,7 @@ sub user_get_quiz_session {
         # procura pela session deste quiz, se nao existir precisamos criar uma
         my $session = $rs->search(
             {
+                ($opts{session_id} ? ('me.id' => $opts{session_id}) : ()),
                 'cliente_id'       => $user->{id},
                 'questionnaire_id' => $q->{id},
                 'finished_at'      => undef,
