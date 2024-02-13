@@ -68,14 +68,8 @@ sub process {
     # e ai já tbm tem os tratamentos pra carregar da session apropriadas
 
     my $quiz_session = $c->user_get_quiz_session(
-        user => $user,
-
-        questionnaire_id => (
-              $current_clientes_quiz_session && $current_clientes_quiz_session->id() == $session_id
-            ? $current_clientes_quiz_session->questionnaire_id()
-            : undef
-        )
-
+        user       => $user,
+        session_id => $session_id,
     );
 
     if (!$quiz_session) {

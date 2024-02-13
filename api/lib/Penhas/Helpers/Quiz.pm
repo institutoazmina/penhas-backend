@@ -60,15 +60,15 @@ sub setup {
     my ($self, %opts) = @_;
 
 
-    $self->helper('ensure_questionnaires_loaded' => sub { &ensure_questionnaires_loaded(@_) });
-    $self->helper('load_quiz_config'             => sub { &load_quiz_config(@_) });
-    $self->helper('user_get_quiz_session'        => sub { &user_get_quiz_session(@_) });
-    $self->helper('load_quiz_session'            => sub { &load_quiz_session(@_) });
-    $self->helper('process_quiz_session'         => sub { &process_quiz_session(@_) });
-    $self->helper('process_quiz_assistant'       => sub { &process_quiz_assistant(@_) });
-    $self->helper('process_cep_address_lookup'   => sub { &process_cep_address_lookup(@_) });
-    $self->helper('process_mf_assistant'         => sub { &process_mf_assistant(@_) });
-    $self->helper('process_redo_addr_mf_assistant'         => sub { &process_redo_addr_mf_assistant(@_) });
+    $self->helper('ensure_questionnaires_loaded'   => sub { &ensure_questionnaires_loaded(@_) });
+    $self->helper('load_quiz_config'               => sub { &load_quiz_config(@_) });
+    $self->helper('user_get_quiz_session'          => sub { &user_get_quiz_session(@_) });
+    $self->helper('load_quiz_session'              => sub { &load_quiz_session(@_) });
+    $self->helper('process_quiz_session'           => sub { &process_quiz_session(@_) });
+    $self->helper('process_quiz_assistant'         => sub { &process_quiz_assistant(@_) });
+    $self->helper('process_cep_address_lookup'     => sub { &process_cep_address_lookup(@_) });
+    $self->helper('process_mf_assistant'           => sub { &process_mf_assistant(@_) });
+    $self->helper('process_redo_addr_mf_assistant' => sub { &process_redo_addr_mf_assistant(@_) });
 }
 
 sub ensure_questionnaires_loaded {
@@ -168,6 +168,7 @@ sub user_get_quiz_session {
     # tem algum quiz true, entao vamos remover os que o usuario ja completou
     my $rs = $c->schema2->resultset('ClientesQuizSession')->search(
         {
+            'cliente_id'       => $user->{id},
             'deleted_at' => undef,
         }
     );
