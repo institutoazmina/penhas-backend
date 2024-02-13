@@ -23,6 +23,8 @@ my $random_cpf   = random_cpf();
 my $random_email = 'email' . $random_cpf . '@something.com';
 goto AGAIN if cpf_already_exists($random_cpf);
 
+my $random_code = '_' . random_cpf();
+
 $ENV{FILTER_QUESTIONNAIRE_IDS} = '9999';
 $ENV{SKIP_END_NEWS}            = '1';
 
@@ -115,7 +117,7 @@ db_transaction {
             titulo         => 'titulo 1',
             descricao      => 'descricao 1',
             tipo           => 'checkbox',
-            codigo         => undef,
+            codigo         => $random_code,
             eh_customizada => 'false',
             agrupador      => 'nope'
         }
@@ -292,6 +294,68 @@ db_transaction {
       )->status_is(200, 'busca todas as tarefas')    #
       ->json_is('/tarefas/0/checkbox_feito', '1')                              #
       ->json_is('/tarefas/0/campo_livre',    ["abc", {why => JSON::false}]);
+
+
+    # refazendo o "quiz B5"
+    $ENV{MF_REDO_ADDR_QUESTIONNAIRE_ID} = 19;
+    $schema2->resultset('MfQuestionnaireRemoveTarefa')->search({questionnaire_id => 20})->delete();
+    $schema2->resultset('MfQuestionnaireRemoveTarefa')->create(
+        {
+            questionnaire_id => 20,
+            codigo_tarefa    => $tarefa_1_sistema->codigo
+        }
+    );
+    app->cliente_mf_add_tarefa_por_codigo(codigos => [$tarefa_1_sistema->codigo], user_obj => $cliente);
+
+    $json = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {session_id => $cliente->mf_redo_addr_session_id()},
+      )->status_is(200, 'chamada com sucesso')    #
+      ->tx->res->json;
+
+    my $first_msg  = $json->{quiz_session}{current_msgs}[0];
+    my $input_msg  = $json->{quiz_session}{current_msgs}[-1];
+    my $session_id = $json->{quiz_session}{session_id};
+    my $field_ref  = $json->{quiz_session}{current_msgs}[-1]{ref};
+
+    my $session_id = $json->{quiz_session}{session_id};
+
+    like $first_msg->{content}, "Você deseja refazer? (refazer)", "pergunta";
+
+    $json = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {
+            session_id => $session_id,
+            $field_ref => 'N'
+
+        }
+    )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+
+    $first_msg  = $json->{quiz_session}{current_msgs}[0];
+    $input_msg  = $json->{quiz_session}{current_msgs}[-1];
+    $session_id = $json->{quiz_session}{session_id};
+    $field_ref  = $json->{quiz_session}{current_msgs}[-1]{ref};
+
+    ok $session_id, 'has session';
+
+    use DDP;
+    p $json;
+
+
+    $json = $t->post_ok(
+        '/me/quiz',
+        {'x-api-key' => $session},
+        form => {session_id => $cliente->mf_redo_addr_session_id()},
+      )->status_is(200, 'chamada com sucesso')    #
+      ->tx->res->json;
+use DDP; p $json;
+    my $new_session_id = $json->{quiz_session}{session_id};
+    ok $new_session_id > $session_id, 'has newer session id';
+
+    use DDP;
+    p $json;
 
 };
 

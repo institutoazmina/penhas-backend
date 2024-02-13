@@ -168,7 +168,7 @@ sub user_get_quiz_session {
     # tem algum quiz true, entao vamos remover os que o usuario ja completou
     my $rs = $c->schema2->resultset('ClientesQuizSession')->search(
         {
-            'cliente_id'       => $user->{id},
+            'cliente_id' => $user->{id},
             'deleted_at' => undef,
         }
     );
@@ -199,6 +199,9 @@ sub user_get_quiz_session {
         $opts{disable_is_during_login} = 1;
         $skip_checks = 1;
     }
+    my $reuse_session = $opts{always_new_session} ? 'false' : 'true';
+
+    slog_info('$skip_checks %s', $skip_checks);
 
 
     # verifica se o usuário acabou de fazer um login,
@@ -268,6 +271,7 @@ sub user_get_quiz_session {
                 'cliente_id'       => $user->{id},
                 'questionnaire_id' => $q->{id},
                 'finished_at'      => undef,
+                '-and'             => \[$reuse_session]
             },
             {result_class => 'DBIx::Class::ResultClass::HashRefInflator'}
         )->next;
@@ -1720,9 +1724,10 @@ sub process_redo_addr_mf_assistant {
     # não coloca na stash o mf_control_id, já que não queremos mudar o status de nada
     # do progresso que ocorre em paralelo (potencialmente)
     my $quiz_session = $c->user_get_quiz_session(
-        user             => $user,
-        questionnaire_id => $questionnaire_id,
-        extra_stash      => {is_mf => 1, redo_addr => 1},
+        user               => $user,
+        questionnaire_id   => $questionnaire_id,
+        always_new_session => 1,
+        extra_stash        => {is_mf => 1, redo_addr => 1},
     );
 
     if ($quiz_session) {

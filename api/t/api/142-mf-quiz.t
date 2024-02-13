@@ -192,6 +192,7 @@ db_transaction {
                 $field_ref => 'foo bar',
             }
         )->status_is(200)->json_has('/quiz_session')->tx->res->json;
+use DDP; p $json;
 
         $mf_sc->discard_changes;
         is $mf_sc->completed_questionnaires_id, [7, 9, 10], 'completed b0, b1 and b2';
@@ -216,7 +217,6 @@ db_transaction {
         $first_msg = $json->{quiz_session}{current_msgs}[0];
         $input_msg = $json->{quiz_session}{current_msgs}[-1];
         $field_ref = $json->{quiz_session}{current_msgs}[-1]{ref};
-
         like $first_msg->{content}, qr/Até mais/, 'texto final';
         is $input_msg->{type},      'button',     'botao para finalizar';
 
