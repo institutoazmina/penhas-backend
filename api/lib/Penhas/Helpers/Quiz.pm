@@ -374,6 +374,7 @@ sub load_quiz_session {
 
   ADD_QUESTIONS:
     log_debug("loop_detection=$loop_detection add_more_questions=$add_more_questions");
+    slog_debug('vars=%s stash=%s', to_json($vars), to_json($stash));
 
     if (--$loop_detection < 0) {
         $c->stash(
