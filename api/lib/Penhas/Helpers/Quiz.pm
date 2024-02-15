@@ -374,7 +374,8 @@ sub load_quiz_session {
 
   ADD_QUESTIONS:
     log_debug("loop_detection=$loop_detection add_more_questions=$add_more_questions");
-    slog_debug('vars=%s stash=%s', to_json($vars), to_json($stash));
+    slog_debug('vars=%s', to_json($vars));
+    slog_debug('stash=%s', to_json($stash));
 
     if (--$loop_detection < 0) {
         $c->stash(
@@ -392,13 +393,12 @@ sub load_quiz_session {
 
     # nao tem nenhuma relevante pro usuario, pegar todas as pending ate um input
     if ($add_more_questions) {
-        log_info("add_more_questions");
+        log_info("entering add_more_questions");
         my $is_last_item = 0;
         do {
             my $item = shift $stash->{pending}->@*;
             if ($item) {
                 log_info("Maybe adding question " . to_json($item));
-
 
                 if (!defined $item->{_relevance}) {
                     slog_error('add_more_questions: question is missing relevance %s', to_json($item));
@@ -543,8 +543,8 @@ sub load_quiz_session {
                 push $current_msgs->@*, $item if $item;
 
             }
-
             else {
+                log_info("the list was empty (last item)");
                 $is_last_item = 1;
             }
 
