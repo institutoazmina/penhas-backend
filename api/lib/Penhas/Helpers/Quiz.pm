@@ -1200,7 +1200,7 @@ sub any_has_relevance {
 }
 
 sub _is_input {
-    return $_[0]->{type} ne 'displaytext';
+    return $_[0]->{type} ne 'displaytext' && $_[0]->{type} ne 'auto_change_questionnaire';
 }
 
 sub _init_questionnaire_stash {
