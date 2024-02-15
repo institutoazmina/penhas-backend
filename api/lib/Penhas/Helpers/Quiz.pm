@@ -391,6 +391,10 @@ sub load_quiz_session {
 
     my @frontend_msg;
 
+    # move as msgs sem relevancia do current pra ser reavaliado em pending
+    push @{$stash->{pending}}, grep { !$_->{_currently_has_relevance} } @{$stash->{current_msgs}};
+    @{$stash->{current_msgs}} = grep { $_->{_currently_has_relevance} } @{$stash->{current_msgs}};
+
     # nao tem nenhuma relevante pro usuario, pegar todas as pending ate um input
     if ($add_more_questions) {
         log_info("entering add_more_questions");
