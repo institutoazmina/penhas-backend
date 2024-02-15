@@ -227,6 +227,10 @@ const transformQuestion = (data: any): Question => {
                 const params = JSON.parse(returning.optionsPath);
                 returning.relevance = params.relevance || '';
 
+                if (params.type) {
+                    parsed.db_type = params.type;
+                }
+
                 if (params.tags && Array.isArray(params.tags)) {
                     for (const tag of params.tags) {
                         returning.tags.push({ codigo: tag });
