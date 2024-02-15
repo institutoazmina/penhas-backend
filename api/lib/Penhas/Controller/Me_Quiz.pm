@@ -33,9 +33,7 @@ sub process {
         );
     }
 
-    if ($session_id && $session_id eq $user_obj->mf_redo_addr_session_id()
-        || ($session_id eq $user_obj->mf_assistant_session_id() && $user_obj->id == 41997))
-    {
+    if ($session_id && $session_id eq $user_obj->mf_redo_addr_session_id()) {
         my $return = $c->process_redo_addr_mf_assistant(user_obj => $user_obj, params => $params);
 
         return $c->render(

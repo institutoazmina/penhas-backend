@@ -1205,7 +1205,6 @@ sub any_has_relevance {
 }
 
 sub _is_input {
-    return 1 if $_[0]->{type} eq 'auto_change_questionnaire';
     return $_[0]->{type} ne 'displaytext';
 }
 
