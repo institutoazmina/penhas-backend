@@ -231,6 +231,10 @@ const transformQuestion = (data: any): Question => {
                     parsed.db_type = params.type;
                 }
 
+                if (params.button_label) {
+                    parsed.button_label = params.button_label;
+                }
+
                 if (params.tags && Array.isArray(params.tags)) {
                     for (const tag of params.tags) {
                         returning.tags.push({ codigo: tag });
