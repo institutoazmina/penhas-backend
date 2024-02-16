@@ -37,7 +37,7 @@ const yesnoRegex = new RegExp(/(S|N|T)\s*[:,]\s*(.+)\s*/);
 const mcRegexp = new RegExp(/\"([^\"]+)"\s*[:,]\s*(.+)\s*/);
 const escapeString = (str: string) => (str ? str.replace(/\\/g, '\\\\').replace(/'/g, "\\'") : '');
 
-const bf_label = 'Ok!';
+const bf_label = 'Concluir';
 
 function linkify(text: string | undefined): string {
     if (!text) return text || '';

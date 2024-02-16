@@ -686,7 +686,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10021390, 'botao_fim', 'B5_btnOut', E'Obrigada por fornecer uma nova resposta. Vamos ajustar o bloco "Passos para a fuga" com base nas informações mais recentes. Sua persistência e coragem são notáveis! O PenhaS está aqui para te apoiar em cada passo do caminho.',
-                        17, E'[]', E'refazer==\'Y\' ', 'Ok!',
+                        17, E'[]', E'refazer==\'Y\' ', 'Concluir',
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10022390, 'next_mf_questionnaire', 'B5_P9out', E'',
@@ -695,5 +695,5 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
 DELETE FROM quiz_config WHERE questionnaire_id = 18;
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10045150, 'botao_fim', 'BF_P999', E'Você respondeu a todas as perguntas! Agora é possível ver sua lista de tarefas para colocar o plano em ação. Qualquer coisa estou disponível no Suporte PenhaS. Um abraço carinhoso!',
-                        18, E'[]', E'1', 'Ok!',
+                        18, E'[]', E'1', 'Concluir',
                         null, '[]', null, '[]');
