@@ -12,7 +12,7 @@ use Encode;
 our $NEW_TASK_TOKEN = $ENV{NEW_TASK_TOKEN} || '';
 
 my $descricao
-  = 'O Manual de Fuga vai ajudá-la a criar um plano de saída do ambiente doméstico. Por isso, dedique um tempo, e responda ao máximo de perguntas, para podermos personalizar uma lista de ações essenciais para o seu planejamento. Ele será mostrada somente depois que você concluir a interação.';
+  = 'O Manual de Fuga vai ajudá-la a criar um plano de saída do ambiente doméstico. Por isso, dedique um tempo, e responda ao máximo de perguntas, para podermos personalizar uma lista de ações essenciais para o seu planejamento. Ela será mostrada somente depois que você concluir a interação.';
 
 sub setup {
     my $self = shift;
