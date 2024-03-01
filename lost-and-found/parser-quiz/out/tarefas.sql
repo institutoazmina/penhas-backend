@@ -245,7 +245,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T23',
                       E'',
-                      E'Certifique horários do seu agressor e programe sua fuga no momento em que você tiver maior margem de tempo, para que possa se distanciar o máximo possível do seu endereço sem ser notada.',
+                      E'Certifique-se dos horários em que seu agressor estará fora de casa e programe sua fuga com larga margem de tempo até seu retorno.',
                       E'checkbox',
                       E'Passos para fuga'
                    )
@@ -916,7 +916,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                    VALUES (
                       E'T85',
                       E'',
-                      E'É importante ter uma conta, de preferência banco digital onde é mais fácil de abrir a conta, que o agressor desconheça para que você possa ter uma reserva para situações de emergência. Não se esqueça de optar por não receber correspondências em casa.',
+                      E'É importante ter uma conta que o agressor desconheça para manter uma reserva de emergência. A abertura de conta é mais fácil em bancos digitais. Opte por não receber correspondências em casa.',
                       E'checkbox',
                       E'Bens e renda'
                    )

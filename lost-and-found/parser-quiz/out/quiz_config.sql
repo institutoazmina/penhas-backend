@@ -33,7 +33,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         null, '[]', 16, '[]');
 DELETE FROM quiz_config WHERE questionnaire_id = 13;
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10007000, 'displaytext', 'B1_P1intro', E'Este bloco é essencial para pôr o seu plano de fuga em prática. As perguntas a seguir vão te ajudar a pensar em um local para se proteger e nas estratégias de deslocamento, priorizando sua proteção e bem-estar.',
+                        VALUES ('published', 10007000, 'displaytext', 'B1_P1intro', E'Este bloco é essencial para por o seu plano de fuga em prática. As perguntas a seguir vão te ajudar a pensar em um local para se proteger e nas estratégias de deslocamento, priorizando sua proteção e bem-estar.',
                         13, E'[]', E'1', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
