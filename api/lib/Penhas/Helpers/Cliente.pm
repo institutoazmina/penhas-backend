@@ -444,7 +444,7 @@ sub render_botao_endereco {
         descricao     => '',
         agrupador     => 'Transporte',
         data          => {
-            label => 'Revistar Transporte',
+            label => 'Revisar Transporte',
             route => '/quiz/start?session_id=' . $user->mf_redo_addr_session_id(),
         }
     };
