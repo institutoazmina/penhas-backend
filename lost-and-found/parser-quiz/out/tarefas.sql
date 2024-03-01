@@ -92,7 +92,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                       E'T9',
                       E'',
                       E'Digite aqui o telefone das pessoas de sua confiança e de quem vai te acolher, pois ao final você terá registrado no Plano de Segurança, juntamente com o checklist.',
-                      E'checkbox',
+                      E'checkbox_contato',
                       E'Passos para fuga'
                    )
                    ON CONFLICT (codigo) WHERE (codigo::text <> ''::text) DO UPDATE
@@ -103,7 +103,7 @@ INSERT INTO mf_tarefa(codigo, titulo, descricao, tipo, agrupador)
                       E'T10',
                       E'',
                       E'Salve esses contatos na sua agenda de celular com as letras AAA na frente do nome para que eles sejam os primeiros na sua lista de contatos. Exemplo: AAAJoana.',
-                      E'checkbox_contato',
+                      E'checkbox',
                       E'Passos para fuga'
                    )
                    ON CONFLICT (codigo) WHERE (codigo::text <> ''::text) DO UPDATE

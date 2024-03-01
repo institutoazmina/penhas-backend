@@ -400,7 +400,7 @@ const generateTarefasSql = (tasks: Task[], blocks: Block[]) => {
         const titulo = '';
         let tipo = 'checkbox';
 
-        if (/Salve esses contatos/.test(descricao)) {
+        if (/Digite aqui o telefone das pessoas de/.test(descricao)) {
             tipo = 'checkbox_contato';
         }
 
