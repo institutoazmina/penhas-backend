@@ -50,6 +50,8 @@ __PACKAGE__->add_columns(
     is_nullable   => 0,
     original      => { default_value => \"now()" },
   },
+  "campo_livre",
+  { data_type => "json", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
@@ -77,8 +79,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-04-06 00:11:08
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QCSRlN1YSpqPRtXCb5x9rw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2024-03-01 01:40:23
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YXtc84Pxq7SlVfLZffmEHA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

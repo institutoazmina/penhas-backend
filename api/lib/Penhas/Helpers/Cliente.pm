@@ -367,12 +367,13 @@ sub cliente_sync_lista_tarefas {
     $c->schema2->txn_do(
         sub {
             if ($row->mf_tarefa->eh_customizada) {
-                $row->mf_tarefa->update(
+
+                $row->update(
                     {
-                        campo_livre => $campo_livre,
+                        atualizado_em => \'now()',
+                        campo_livre   => $campo_livre,
                     }
                 );
-                $row->update({atualizado_em => \'now()'});
             }
             elsif (!$row->mf_tarefa->eh_customizada && $campo_livre) {
                 $c->app->log->debug(
@@ -424,12 +425,12 @@ sub render_tarefa {
         id             => $mf_cliente_tarefa->id(),
         checkbox_feito => $mf_cliente_tarefa->checkbox_feito(),
         atualizado_em  => $mf_cliente_tarefa->atualizado_em->epoch(),
+        campo_livre    => ($mf_cliente_tarefa->campo_livre() ? from_json($mf_cliente_tarefa->campo_livre()) : undef),
         tipo           => $mf_tarefa->tipo(),
         eh_customizada => $mf_tarefa->eh_customizada(),
         titulo         => $mf_tarefa->titulo(),
         descricao      => $mf_tarefa->descricao(),
         agrupador      => $mf_tarefa->agrupador(),
-        campo_livre    => ($mf_tarefa->campo_livre() ? from_json($mf_tarefa->campo_livre()) : undef),
     };
 }
 

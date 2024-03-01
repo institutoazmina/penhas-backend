@@ -58,8 +58,6 @@ __PACKAGE__->add_columns(
   },
   "eh_customizada",
   { data_type => "boolean", default_value => \"false", is_nullable => 0 },
-  "campo_livre",
-  { data_type => "json", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -70,8 +68,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-06-16 02:15:22
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:fzQMjYt4gonIcTljNyQ8ww
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2024-03-01 01:40:23
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kli3QHc/W5wxdawxwShjhg
 
 
 

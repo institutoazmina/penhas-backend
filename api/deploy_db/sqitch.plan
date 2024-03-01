@@ -32,3 +32,4 @@
 0029-cliente_offline [0028-mf-info] 2023-07-08T12:40:44Z renato,,, <renato@renato-MS-7A34> # cliente-offline
 0030-ja_completou_mf [0029-cliente_offline] 2023-09-15T13:05:31Z renato,,, <renato@renato-MS-7A34> # ja_completou_mf
 0031-mf_block_clear [0030-ja_completou_mf] 2024-02-01T12:16:07Z renato,,, <renato@renato-MS-7A34> # clear tasks when block start
+0032-fix-campo_livre [0031-mf_block_clear] 2024-03-01T01:37:39Z renato,,, <renato@renato-MS-7A34> # Fix campo_livre movendo da tarefa pro cliente-tarefa
