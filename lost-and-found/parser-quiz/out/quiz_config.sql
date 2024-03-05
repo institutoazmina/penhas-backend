@@ -206,7 +206,7 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         null, '[]', 17, '[]');
 DELETE FROM quiz_config WHERE questionnaire_id = 14;
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
-                        VALUES ('published', 10023390, 'displaytext', 'B2_P10intro', E'Agora é o momento de traçar as estratégias de deslocamento até que você se sinta em um ambiente seguro e confiável. Ao finalizar o preenchimento dos blocos de perguntas, apresentaremos uma lista de tarefas adequadas a sua situação.',
+                        VALUES ('published', 10023390, 'displaytext', 'B2_P10intro', E'Neste bloco, vamos tratar sobre crianças, adolescentes e outras pessoas que dependam de seus cuidados. O foco é garantir que essas pessoas estejam protegidas e possam lhe ajudar quando possível. Crianças e adolescentes não devem se sentir responsáveis por garantir sua proteção. As perguntas e orientações desse bloco são importantes para criar um ambiente seguro e garantir direitos.',
                         14, E'[]', E'1', null,
                         null, '[]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
