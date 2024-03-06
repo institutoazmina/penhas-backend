@@ -1,7 +1,7 @@
 package Penhas::Helpers::Quiz;
 use common::sense;
-use Carp          qw/croak confess/;
-use Digest::MD5   qw/md5_hex/;
+use Carp qw/croak confess/;
+use Digest::MD5 qw/md5_hex/;
 use Penhas::Utils qw/tt_test_condition tt_render is_test/;
 use JSON;
 use utf8;
@@ -30,6 +30,7 @@ sub _new_displaytext_error {
         _relevance => '1',
         _code      => $code,
 
+        _currently_has_relevance => 1,
     };
 }
 
@@ -43,6 +44,7 @@ sub _new_displaytext_normal {
         _relevance => '1',
         _code      => $code,
 
+        _currently_has_relevance => 1,
     };
 }
 
@@ -360,7 +362,7 @@ sub load_quiz_session {
     my @preprend_msg = $opts{preprend_msg} ? @{$opts{preprend_msg}} : ();
     my $responses    = $session->{responses};
     my $stash        = $session->{stash};
-
+use DDP; p @preprend_msg;
 
     # se chegar em 0, estamos em loop...
     my $loop_detection = 100;
@@ -378,7 +380,7 @@ sub load_quiz_session {
 
   ADD_QUESTIONS:
     log_debug("loop_detection=$loop_detection add_more_questions=$add_more_questions");
-    slog_debug('vars=%s', to_json($vars));
+    slog_debug('vars=%s',  to_json($vars));
     slog_debug('stash=%s', to_json($stash));
 
     if (--$loop_detection < 0) {
@@ -410,6 +412,7 @@ sub load_quiz_session {
                 }
 
                 my $has_relevance = &has_relevance($vars, $item);
+                $item->{_currently_has_relevance} = $has_relevance;
                 slog_info(
                     '  Testing question relevance %s "%s" %s',
                     $has_relevance ? '✔️ True ' : '❌ False',
@@ -543,6 +546,7 @@ sub load_quiz_session {
                     }
                 }
 
+use DDP; p $item;
                 # joga item pra lista de msg correntes
                 push $current_msgs->@*, $item if $item;
 
