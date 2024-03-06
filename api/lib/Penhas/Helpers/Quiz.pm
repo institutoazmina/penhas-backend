@@ -362,8 +362,6 @@ sub load_quiz_session {
     my @preprend_msg = $opts{preprend_msg} ? @{$opts{preprend_msg}} : ();
     my $responses    = $session->{responses};
     my $stash        = $session->{stash};
-    use DDP;
-    p @preprend_msg;
 
     # se chegar em 0, estamos em loop...
     my $loop_detection = 100;
@@ -491,7 +489,8 @@ sub load_quiz_session {
                         $session_rs->search({id => $session->{id}})->update({questionnaire_id => $q->{id}});
                         my $new_stash = &_init_questionnaire_stash($q, $c);
                         delete $stash->{current_msgs};
-                        $stash                       = {%$stash,     %$new_stash};
+                        my $current_prev_msg = $stash->{prev_msgs} || [];
+                        $stash                       = {%$stash,     %$new_stash, prev_msgs => $current_prev_msg};
                         $responses                   = {%$responses, start_time => time()};
                         $session->{questionnaire_id} = $q->{id};
 
@@ -548,9 +547,6 @@ sub load_quiz_session {
                         $item                 = undef; # pra não adicionar essa propria questão (já que tec. é um input)
                     }
                 }
-
-                use DDP;
-                p $item;
 
                 # joga item pra lista de msg correntes
                 push $current_msgs->@*, $item if $item;
