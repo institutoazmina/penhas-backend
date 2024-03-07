@@ -155,9 +155,9 @@ sub cliente_mf_add_tag_by_code {
 
                 $c->schema2->resultset('ClienteTag')->create(
                     {
-                        cliente_id    => $user->id,
-                        atualizado_em => \'now()',
-                        mf_tag_id     => $tarefa->{id},
+                        cliente_id => $user->id,
+                        created_on => \'now()',
+                        mf_tag_id  => $tarefa->{id},
                     }
                 );
             }
