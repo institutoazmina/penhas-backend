@@ -416,9 +416,11 @@ sub _build_access_modules {
         push @modules,
           qw/tweets chat_privado chat_suporte pontos_de_apoio modo_seguranca noticias/;
 
+        my $id = self->id();
         if ($ENV{ENABLE_MANUAL_FUGA}) {
             push @modules, 'mf';
-        }elsif ($ENV{ENABLE_MANUAL_FUGA_IDS} && $ENV{ENABLE_MANUAL_FUGA_IDS} =~ /,$self->id,/) {
+        }
+        elsif ($ENV{ENABLE_MANUAL_FUGA_IDS} && ("," . $ENV{ENABLE_MANUAL_FUGA_IDS} . ",") =~ /,$id,/) {
             push @modules, 'mf';
         }
 
