@@ -382,7 +382,7 @@ const generateTagSql = (tags: Tag[]) => {
     for (let tag of tags) {
         let escapedTagCode = escapeString(tag.tagCode);
         let escapedDescription = escapeString(tag.description);
-        sqlStr += `INSERT INTO tag(code, description) VALUES (E'${escapedTagCode}', E'${escapedDescription}')
+        sqlStr += `INSERT INTO mf_tag(code, description) VALUES (E'${escapedTagCode}', E'${escapedDescription}')
                    ON CONFLICT (code) DO UPDATE
                    SET description = EXCLUDED.description;\n`;
     }
