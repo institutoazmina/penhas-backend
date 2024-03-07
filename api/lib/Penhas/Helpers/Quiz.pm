@@ -481,7 +481,8 @@ sub load_quiz_session {
                             my $mf_sc
                               = $c->schema2->resultset('ClienteMfSessionControl')->find($stash->{mf_control_id});
 
-                            $mf_sc->register_completed_questionnaire(questionnaire_id => $session->{questionnaire_id});
+                            $mf_sc->register_completed_questionnaire(questionnaire_id => $session->{questionnaire_id})
+                              unless $stash->{redo_addr};
 
                             $mf_sc->prepare_for_questionnaire(questionnaire_id => $q->{id});
                         }
@@ -498,7 +499,12 @@ sub load_quiz_session {
                         goto RESTART_QUIZ;
                     }
                 }
-                elsif ($has_relevance && $item->{_next_mf_questionnaire} && $stash->{is_mf} && $stash->{mf_control_id})
+                elsif ($has_relevance
+                    && $item->{_next_mf_questionnaire}
+                    && $stash->{is_mf}
+                    && $stash->{mf_control_id}
+                    && !$stash->{redo_addr}
+                  )    # não é para entrar nesse bloco de auto avançar para o proximo MF se está refazendo o endereço
                 {
 
                     my $mf_sc = $c->schema2->resultset('ClienteMfSessionControl')->find($stash->{mf_control_id});
@@ -1063,7 +1069,8 @@ sub process_quiz_session {
                             my $mf_sc
                               = $c->schema2->resultset('ClienteMfSessionControl')->find($stash->{mf_control_id});
 
-                            $mf_sc->register_completed_questionnaire(questionnaire_id => $session->{questionnaire_id});
+                            $mf_sc->register_completed_questionnaire(questionnaire_id => $session->{questionnaire_id})
+                              unless $stash->{redo_addr};
                             $mf_sc->set_status_completed();
                         }
                     }
@@ -1738,7 +1745,7 @@ sub process_redo_addr_mf_assistant {
         user               => $user,
         questionnaire_id   => $questionnaire_id,
         always_new_session => 1,
-        extra_stash        => {is_mf => 1, redo_addr => 1},
+        extra_stash        => {is_mf => 1, redo_addr => 1, mf_control_id => $mf_sc->id()},
     );
 
     if ($quiz_session) {

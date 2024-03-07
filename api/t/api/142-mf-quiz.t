@@ -159,7 +159,7 @@ db_transaction {
 
         $input_msg = $me_tarefas_v2->{mf_assistant}{quiz_session}{current_msgs}[-1];
         like $input_msg->{content}, qr/Você tem para onde ir?/, 'pergunta yesnomaybe';
-
+use DDP; p $session_id;
         $mf_sc->discard_changes;
         is $mf_sc->status, 'inProgress', 'status is inProgress';
         is $mf_sc->completed_questionnaires_id, [7], 'completed b0';
@@ -172,7 +172,7 @@ db_transaction {
                 $field_ref => 'Y',
             }
         )->status_is(200)->json_has('/quiz_session')->tx->res->json;
-
+use DDP; p $session_id;
         $mf_sc->discard_changes;
         is $mf_sc->status, 'inProgress', 'status is inProgress';
         is $mf_sc->completed_questionnaires_id, [7, 9], 'completed b0 and b1';
