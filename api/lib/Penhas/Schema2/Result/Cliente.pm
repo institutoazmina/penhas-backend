@@ -418,7 +418,10 @@ sub _build_access_modules {
 
         if ($ENV{ENABLE_MANUAL_FUGA}) {
             push @modules, 'mf';
+        }elsif ($ENV{ENABLE_MANUAL_FUGA_IDS} && $ENV{ENABLE_MANUAL_FUGA_IDS} =~ /,$self->id,/) {
+            push @modules, 'mf';
         }
+
     }
     else {
         push @modules, qw/chat_suporte pontos_de_apoio noticias/;
