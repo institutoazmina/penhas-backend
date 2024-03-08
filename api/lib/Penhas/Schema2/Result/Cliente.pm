@@ -668,6 +668,8 @@ sub ensure_cliente_mf_session_control_exists {
 
     die 'failed to fulfill ensure_cliente_mf_session_control_exists' unless $row;
 
+    # garante que os valores padrões no caso do create estão presentes
+    $row->discard_changes;
     return $row;
 }
 
