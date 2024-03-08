@@ -46,6 +46,8 @@ sub cliente_mf_assistant {
         'inProgress' => {t => 'Continuar preenchendo o meu Manual', d => $descricao},
         'completed'  => {t => 'Refazer o meu Manual de Fuga',       d => $descricao},
     };
+    slog_info('returned $mf_sc->status() = ' . $mf_sc->status());
+
     my $title    = $config->{$mf_sc->status()}{t};
     my $subtitle = $config->{$mf_sc->status()}{d};
 
