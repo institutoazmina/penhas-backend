@@ -649,9 +649,9 @@ sub list_tweets {
     #log_info('$category . ' . $$category);
     #log_info('tweets . ' . dumper(\@tweets));
 
-    if ($is_first_page && $is_legacy) {
-        unshift @tweets, _add_legacy_tweet()
-    }
+    #if ($is_first_page && $is_legacy) {
+        #unshift @tweets, _add_legacy_tweet()
+    #}
 
     return {
         tweets   => \@tweets,
