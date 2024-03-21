@@ -649,14 +649,12 @@ sub list_tweets {
     #log_info('$category . ' . $$category);
     #log_info('tweets . ' . dumper(\@tweets));
 
-    my @fixed_tweets = ();
-
     if ($is_first_page && $is_legacy) {
-        push @fixed_tweets, _add_legacy_tweet();
+        unshift @tweets, _add_legacy_tweet()
     }
 
     return {
-        tweets   => @fixed_tweets, \@tweets,
+        tweets   => \@tweets,
         has_more => $has_more,
         order_by => $sort_direction eq '-desc' ? 'latest_first' : 'oldest_first',
         category => $category,
