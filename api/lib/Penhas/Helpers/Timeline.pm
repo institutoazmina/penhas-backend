@@ -682,7 +682,7 @@ sub _add_legacy_tweet {
             can_reply => 0,
             parent_id => undef,
         },
-        id      => -1,
+        id      => "1",
         content => q|Olá, queridas.
 
 Recentemente lançamos uma nova ferramenta aqui no PenhaS chamada Manual de Fuga. Além disso, também melhoramos a navegação em nossas páginas. Para ter acesso às melhorias é importante que você atualize o app diretamente na sua loja - Play Store ou Apple Store.
@@ -693,7 +693,7 @@ Um forte abraço!|,
         media            => [],
         icon             => $avatar_penhas,
 
-        created_at => pg_timestamp2iso_8601_second(time()),
+        created_at => '2024-03-21T11:06:22',
 
         cliente_id => 0,
         anonimo    => 1,
