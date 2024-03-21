@@ -177,7 +177,10 @@ do {
     # busca timeline principal como autor
     $t->get_ok(
         ('/timeline'),
-        {'x-api-key' => $session}
+        {
+            'x-api-key'  => $session,
+            'user-agent' => 'Android 14/samsung SM-A546E/3.6.0'
+        }
     )->status_is(200)->json_is('/has_more', '0')->json_is('/tweets/0/content', 'ijime dame zettai')
       ->json_is('/tweets/0/id', $tweet_id)->json_is('/tweets/0/meta/liked', 0)->json_is('/tweets/0/meta/owner', 1)
       ->json_is('/tweets/0/last_reply/id', $comment1->{id})->json_is('/tweets/0/last_reply/meta/liked', 0);

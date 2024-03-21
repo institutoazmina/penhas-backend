@@ -96,6 +96,9 @@ state $text_xslate = Text::Xslate->new(
   nl2br
   check_email_mx
   remove_pi
+
+  get_semver_numeric
+  is_legacy_app
 );
 
 
@@ -432,6 +435,35 @@ sub remove_pi {
     $content =~ s/[\w]{8}(-[\w]{4}){3}-[\w]{12}/*******-****-****-****-************/g;
 
     return $content;
+}
+
+sub get_semver_numeric {
+    my $user_agent = shift();
+    my (undef, $os, $version) = $user_agent =~ /((Android|iOS)\s[^\/]+\/[^\/\"]+\/([^\/\"]+))/;
+
+    if ($os) {
+        my ($major, $minor, $patch) = split /\./, $version;
+        my $super_number = ($major * 1_000_000_000) + ($minor * 1_000_000) + $patch;
+
+
+        return ($os, $super_number);
+    }
+    return;
+}
+
+
+sub is_legacy_app {
+    my ($os, $numeric_version) = @_;
+
+    return 0 unless $os;
+    return 0 unless $numeric_version;
+
+    ## Android e iOS estão atualmente na mesma, 3.6.0 => 3006000000
+    if ($os eq 'Android' || $os eq 'iOS') {
+        return $numeric_version < 3006000000 ? 1 : 0;
+    }
+
+    return 0;
 }
 
 1;

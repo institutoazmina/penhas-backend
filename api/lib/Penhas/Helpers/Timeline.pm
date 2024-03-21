@@ -385,8 +385,9 @@ sub list_tweets {
     my $rows = $opts{rows} || 10;
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
-    my $user     = $opts{user} or confess 'missing user';
-    my $user_obj = $opts{skip_comments} ? undef : ($opts{user_obj} or confess 'missing user_obj');
+    my $user      = $opts{user} or confess 'missing user';
+    my $user_obj  = $opts{skip_comments} ? undef : ($opts{user_obj} or confess 'missing user_obj');
+    my $is_legacy = $opts{is_legacy};
 
     my $blocked_users = [];
 
@@ -411,7 +412,12 @@ sub list_tweets {
 
     $opts{$_} ||= '' for qw/after before parent_id id tags/;
 
+    # nao pode ter nenhuma busca por algo especifico
+    my $is_first_page = !$opts{parent_id} & !$opts{after} & !$opts{before} & !$opts{id};
+
     if ($opts{next_page}) {
+        $is_first_page = 0;
+
         slog_info('list_tweets applying next_page=%s', to_json($opts{next_page}));
 
         $c->reply_invalid_param('uso do parent_id com next_page é vedado') if $opts{parent_id};
@@ -643,8 +649,14 @@ sub list_tweets {
     #log_info('$category . ' . $$category);
     #log_info('tweets . ' . dumper(\@tweets));
 
+    my @fixed_tweets = ();
+
+    if ($is_first_page && $is_legacy) {
+        push @fixed_tweets, _add_legacy_tweet();
+    }
+
     return {
-        tweets   => \@tweets,
+        tweets   => @fixed_tweets, \@tweets,
         has_more => $has_more,
         order_by => $sort_direction eq '-desc' ? 'latest_first' : 'oldest_first',
         category => $category,
@@ -659,6 +671,37 @@ sub list_tweets {
         ),
     };
 }
+
+
+sub _add_legacy_tweet {
+    my $avatar_penhas = $ENV{AVATAR_PENHAS_URL};
+
+    return {
+        meta => {
+            owner     => 0,
+            can_reply => 0,
+            parent_id => undef,
+        },
+        id      => -1,
+        content => q|Olá, queridas.
+
+Recentemente lançamos uma nova ferramenta aqui no PenhaS chamada Manual de Fuga. Além disso, também melhoramos a navegação em nossas páginas. Para ter acesso às melhorias é importante que você atualize o app diretamente na sua loja - Play Store ou Apple Store.
+
+Um forte abraço!|,
+        qtde_likes       => 0,
+        qtde_comentarios => 0,
+        media            => [],
+        icon             => $avatar_penhas,
+
+        created_at => pg_timestamp2iso_8601_second(time()),
+
+        cliente_id => 0,
+        anonimo    => 1,
+        name       => 'Admin PenhaS',
+
+    };
+}
+
 
 sub _format_tweet {
     my ($user, $me, $remote_addr) = @_;
