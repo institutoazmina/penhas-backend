@@ -388,6 +388,7 @@ sub list_tweets {
     my $user      = $opts{user} or confess 'missing user';
     my $user_obj  = $opts{skip_comments} ? undef : ($opts{user_obj} or confess 'missing user_obj');
     my $is_legacy = $opts{is_legacy};
+    my $os        = $opts{os};
 
     my $blocked_users = [];
 
@@ -650,7 +651,7 @@ sub list_tweets {
     #log_info('tweets . ' . dumper(\@tweets));
 
     if ($is_first_page && $is_legacy && $tweets[0] && $tweets[0]{type} eq 'tweet') {
-        unshift @tweets, _add_legacy_tweet($user_obj, $tweets[0]{id});
+        unshift @tweets, _add_legacy_tweet($user_obj, $tweets[0]{id}, $os);
     }
 
 
@@ -673,10 +674,20 @@ sub list_tweets {
 
 
 sub _add_legacy_tweet {
-    my ($user_obj, $tweet_id) = @_;
+    my ($user_obj, $tweet_id, $os) = @_;
     my $avatar_penhas = $ENV{AVATAR_PENHAS_URL};
 
     my $apelido = $user_obj->apelido;
+    my $logos = {
+        Android => 'https://azmina.com.br/wp-content/uploads/2019/02/Logo_Google.png',
+        iOS => 'https://azmina.com.br/wp-content/uploads/2019/02/Logo_Apple.png'
+    };
+    my $links = {
+        Android => 'https://play.google.com/store/apps/details?id=penhas.com.br',
+        iOS => 'https://apps.apple.com/br/app/penhas/id1441569466'
+    };
+    my $img = $logos->{$os};
+    my $link = $links->{$os};
 
     return {
         type       => 'tweet',
@@ -693,7 +704,14 @@ sub _add_legacy_tweet {
 <br>
 Recentemente lançamos uma nova ferramenta aqui no PenhaS chamada Manual de Fuga. Além disso, também melhoramos a navegação em nossas páginas. Para ter acesso às melhorias é importante que você atualize o app diretamente na sua loja - Play Store ou Apple Store.<br>
 <br>
-Um forte abraço!|,
+Um forte abraço!<br>
+<br>
+<div style="text-align:center">
+<a href="$link">
+    <img width="300" height="93" src="$img">
+</a>
+</div>
+|,
         qtde_likes       => 0,
         qtde_comentarios => 0,
         media            => [],
