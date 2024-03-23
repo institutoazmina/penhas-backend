@@ -5,7 +5,7 @@ use utf8;
 use Penhas::KeyValueStorage;
 use Scope::OnExit;
 use Digest::MD5 qw/md5_hex/;
-use Mojo::Util qw/trim xml_escape url_escape dumper/;
+use Mojo::Util  qw/trim xml_escape url_escape dumper/;
 use List::Util;
 
 use JSON;
@@ -649,9 +649,10 @@ sub list_tweets {
     #log_info('$category . ' . $$category);
     #log_info('tweets . ' . dumper(\@tweets));
 
-    #if ($is_first_page && $is_legacy) {
-        #unshift @tweets, _add_legacy_tweet()
-    #}
+    if ($is_first_page && $is_legacy && $tweets[0] && $tweets[0]{type} eq 'tweet') {
+        unshift @tweets, _add_legacy_tweet($user_obj, $tweets[0]{id});
+    }
+
 
     return {
         tweets   => \@tweets,
@@ -672,30 +673,34 @@ sub list_tweets {
 
 
 sub _add_legacy_tweet {
+    my ($user_obj, $tweet_id) = @_;
     my $avatar_penhas = $ENV{AVATAR_PENHAS_URL};
 
+    my $apelido = $user_obj->apelido;
+
     return {
-        meta => {
+        type       => 'tweet',
+        id         => $tweet_id,
+        created_at => '2099-01-01T01:01:01',
+        meta       => {
+            liked     => 0,
             owner     => 0,
             can_reply => 0,
             parent_id => undef,
         },
-        id      => "1",
-        content => q|Olá, queridas.
 
-Recentemente lançamos uma nova ferramenta aqui no PenhaS chamada Manual de Fuga. Além disso, também melhoramos a navegação em nossas páginas. Para ter acesso às melhorias é importante que você atualize o app diretamente na sua loja - Play Store ou Apple Store.
-
+        content => qq|Olá, $apelido.<br>
+<br>
+Recentemente lançamos uma nova ferramenta aqui no PenhaS chamada Manual de Fuga. Além disso, também melhoramos a navegação em nossas páginas. Para ter acesso às melhorias é importante que você atualize o app diretamente na sua loja - Play Store ou Apple Store.<br>
+<br>
 Um forte abraço!|,
         qtde_likes       => 0,
         qtde_comentarios => 0,
         media            => [],
         icon             => $avatar_penhas,
-
-        created_at => '2024-03-21T11:06:22',
-
-        cliente_id => 0,
-        anonimo    => 1,
-        name       => 'Admin PenhaS',
+        cliente_id       => 0,
+        anonimo          => 1,
+        name             => 'Admin PenhaS',
 
     };
 }
@@ -876,7 +881,7 @@ sub add_tweets_highlights {
                 }
 
                 next unless $row->{noticias};
-                push @regexps,    $match;
+                push @regexps, $match;
                 push @highlights, {
                     regexp   => $match,
                     noticias => from_json($row->{noticias}),
@@ -1135,7 +1140,7 @@ sub add_tweets_news {
             next unless $item->{type} eq 'news_group';
 
             foreach my $new_id ($item->{news}->@*) {
-                push @group_news_ids, $new_id;
+                push @group_news_ids,              $new_id;
                 push @{$news_item_ref->{$new_id}}, $item;
             }
         }
