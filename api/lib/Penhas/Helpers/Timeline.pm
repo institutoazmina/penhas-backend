@@ -718,7 +718,7 @@ Um forte abraço!<br>
         icon             => $avatar_penhas,
         cliente_id       => 0,
         anonimo          => 1,
-        name             => 'Admin PenhaS',
+        name             => 'Atualização está disponível!',
 
     };
 }
