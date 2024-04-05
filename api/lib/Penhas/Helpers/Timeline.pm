@@ -5,7 +5,7 @@ use utf8;
 use Penhas::KeyValueStorage;
 use Scope::OnExit;
 use Digest::MD5 qw/md5_hex/;
-use Mojo::Util  qw/trim xml_escape url_escape dumper/;
+use Mojo::Util qw/trim xml_escape url_escape dumper/;
 use List::Util;
 
 use JSON;
@@ -678,15 +678,15 @@ sub _add_legacy_tweet {
     my $avatar_penhas = $ENV{AVATAR_PENHAS_URL};
 
     my $apelido = $user_obj->apelido;
-    my $logos = {
+    my $logos   = {
         Android => 'https://azmina.com.br/wp-content/uploads/2019/02/Logo_Google.png',
-        iOS => 'https://azmina.com.br/wp-content/uploads/2019/02/Logo_Apple.png'
+        iOS     => 'https://azmina.com.br/wp-content/uploads/2019/02/Logo_Apple.png'
     };
     my $links = {
         Android => 'https://play.google.com/store/apps/details?id=penhas.com.br',
-        iOS => 'https://apps.apple.com/br/app/penhas/id1441569466'
+        iOS     => 'https://apps.apple.com/br/app/penhas/id1441569466'
     };
-    my $img = $logos->{$os};
+    my $img  = $logos->{$os};
     my $link = $links->{$os};
 
     return {
@@ -759,7 +759,9 @@ sub _format_tweet {
         id      => $me->{id},
         content => $me->{disable_escape}
         ? $me->{content}
-        : &linkfy(&nl2br(xml_escape($is_owner ? $me->{content} : &remove_pi($me->{content})))),
+        : &maybe_linkfy(
+            &nl2br(xml_escape($is_owner ? $me->{content} : &remove_pi($me->{content}))), $eh_admin, $is_owner
+        ),
         anonimo => $anonimo && !$eh_admin ? 1 : 0,
 
 
@@ -786,6 +788,12 @@ sub _format_tweet {
             : ()
         ),
     };
+}
+
+sub maybe_linkfy {
+    my ($html, $eh_admin, $eh_dono) = @_;
+    return &linkfy($html) if $eh_admin || $eh_dono;
+    return $html;
 }
 
 sub _gen_uniq_media_url {
@@ -899,7 +907,7 @@ sub add_tweets_highlights {
                 }
 
                 next unless $row->{noticias};
-                push @regexps, $match;
+                push @regexps,    $match;
                 push @highlights, {
                     regexp   => $match,
                     noticias => from_json($row->{noticias}),
@@ -1158,7 +1166,7 @@ sub add_tweets_news {
             next unless $item->{type} eq 'news_group';
 
             foreach my $new_id ($item->{news}->@*) {
-                push @group_news_ids,              $new_id;
+                push @group_news_ids, $new_id;
                 push @{$news_item_ref->{$new_id}}, $item;
             }
         }
