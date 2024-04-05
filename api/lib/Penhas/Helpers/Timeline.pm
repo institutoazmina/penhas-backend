@@ -759,11 +759,8 @@ sub _format_tweet {
         id      => $me->{id},
         content => $me->{disable_escape}
         ? $me->{content}
-        : &maybe_linkfy(
-            &nl2br(xml_escape($is_owner ? $me->{content} : &remove_pi($me->{content}))), $eh_admin, $is_owner
-        ),
+        : &maybe_linkfy(&nl2br(xml_escape($is_owner ? $me->{content} : &remove_pi($me->{content}))), $penhas_avatar),
         anonimo => $anonimo && !$eh_admin ? 1 : 0,
-
 
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
@@ -791,8 +788,8 @@ sub _format_tweet {
 }
 
 sub maybe_linkfy {
-    my ($html, $eh_admin, $eh_dono) = @_;
-    return &linkfy($html) if $eh_admin || $eh_dono;
+    my ($html, $penhas_avatar) = @_;
+    return &linkfy($html) if $penhas_avatar;
     return $html;
 }
 
