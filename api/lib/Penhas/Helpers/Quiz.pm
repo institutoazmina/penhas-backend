@@ -431,6 +431,7 @@ sub load_quiz_session {
                     $is_last_item = 0;
                 }
                 elsif ($has_relevance && $item->{type} eq 'tag_user') {
+                    log_info("type=tag_user, será adicionado no loop se tiver user_obj...");
                     $is_last_item = 0;        # manter no loop, já que não é um input de fato
                     $item         = undef;    # pra não adicionar essa propria questão
                 }
@@ -455,7 +456,11 @@ sub load_quiz_session {
                 if (
                        $user_obj
                     && $has_relevance
-                    && !$is_last_item    # manter isso, pq input só ganha as tag se responder!
+                    && (
+                        !$is_last_item    # manter isso, pq input só ganha as tag se responder (quando questões com tag)
+                                          # fluxo com input type de tag_user
+                        || $item->{type} eq 'tag_user'
+                    )
                     && $item->{_tags}
                     && @{$item->{_tags}} > 0
                   )
@@ -556,6 +561,7 @@ sub load_quiz_session {
 
                 # joga item pra lista de msg correntes
                 push $current_msgs->@*, $item if $item;
+                log_info("end loop item");
 
             }
             else {
