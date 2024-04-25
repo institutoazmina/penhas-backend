@@ -404,6 +404,7 @@ sub load_quiz_session {
             my $item = shift $stash->{pending}->@*;
             if ($item) {
                 log_info("Maybe adding question " . to_json($item));
+                my $tags = $item->{_tags};
 
                 if (!defined $item->{_relevance}) {
                     slog_error('add_more_questions: question is missing relevance %s', to_json($item));
@@ -461,12 +462,12 @@ sub load_quiz_session {
                                           # fluxo com input type de tag_user
                         || $item->{type} eq 'tag_user'
                     )
-                    && $item->{_tags}
-                    && @{$item->{_tags}} > 0
+                    && $tags
+                    && @{$tags} > 0
                   )
                 {
                     # só da pra taggear se for um user!
-                    my @codigos = map { $_->{codigo} } @{$item->{_tags}};
+                    my @codigos = map { $_->{codigo} } @{$tags};
                     log_info("Adicioando tags para o usuário: " . join ', ', @codigos);
 
                     $c->cliente_mf_add_tag_by_code(codigos => \@codigos, user_obj => $user_obj);
