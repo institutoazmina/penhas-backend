@@ -33,7 +33,7 @@ RUN apt-get update && apt-get install -y \
 
 USER app
 
-ADD Makefile_local.PL /tmp/Makefile.PL
+ADD ./Makefile.PL /tmp/Makefile.PL
 ADD install-cpan-extra-modules.sh /tmp/install-cpan-extra-modules.sh
 RUN /tmp/install-cpan-extra-modules.sh
 
