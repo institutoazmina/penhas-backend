@@ -46,3 +46,4 @@ COPY docker/penhas-minion-worker.sh /etc/service/penhas-minion-worker/run
 
 COPY . /src
 
+RUN chown 1000:1000 /src/ -R
