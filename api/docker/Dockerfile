@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 RUN useradd -ms /bin/bash app;
 
 USER app
-ADD install-perlbrew.sh /tmp/install-perlbrew.sh
+ADD docker/install-perlbrew.sh /tmp/install-perlbrew.sh
 RUN /tmp/install-perlbrew.sh
 
 USER root
@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
 
 USER app
 
-ADD install-cpan-modules.sh /tmp/install-cpan-modules.sh
+ADD docker/install-cpan-modules.sh /tmp/install-cpan-modules.sh
 RUN /tmp/install-cpan-modules.sh
 
 USER root
@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y \
 USER app
 
 ADD ./Makefile.PL /tmp/Makefile.PL
-ADD install-cpan-extra-modules.sh /tmp/install-cpan-extra-modules.sh
+ADD docker/install-cpan-extra-modules.sh /tmp/install-cpan-extra-modules.sh
 RUN /tmp/install-cpan-extra-modules.sh
 
 USER root
