@@ -1,6 +1,5 @@
 # Penhas
 
-
 # Configuração de infraestrutura
 Abaixo instruções para uma sugestão para o deploy em Produção/Homologação:
 
@@ -23,6 +22,8 @@ Abaixo instruções para uma sugestão para o deploy em Produção/Homologação
 <img src="https://svgshare.com/i/gTe.svg" alt="Deps">
 
 + um "serviço", validação do CEP utiliza a api do Postmon (https://postmon.com.br/) e se não encontrar ou estiver offline, acessa um crawler do Correios (https://metacpan.org/pod/WWW::Correios::CEP) que eu mantenho desde 2011 e as vezes para de funcionar
+
+Para mais detalhes das integrações: [api/integracoes.md](api/integracoes.md)
 
 ## Here.com / Google
 
