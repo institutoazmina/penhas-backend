@@ -53,6 +53,9 @@ sub register {
     # GET /web/faq/_botao_contato_
     $faq->get('_botao_contato_')->to(action => 'webfaq_botao_contato');
 
+    # GET /web/faq/conta-exclusao
+    $faq->get('conta-exclusao')->to(action => 'webfaq_conta_exclusao');
+
     # GET /web/termos-de-uso
     $web->get('termos-de-uso')->to(action => 'web_termos_de_uso');
 
