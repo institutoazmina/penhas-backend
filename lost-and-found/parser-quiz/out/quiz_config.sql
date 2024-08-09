@@ -270,6 +270,10 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         14, E'[]', E'B2_P13 == \'Y\' ', null,
                         null, '[{"codigo":"T63"},{"codigo":"T64"},{"codigo":"T65"},{"codigo":"T66"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10027485, 'tag_user', 'B2_P13_tags', E'',
+                        14, E'[]', E'B2_P13 == \'Y\' ', null,
+                        null, '[]', null, '[{"codigo":"T3"}]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10027490, 'displaytext', 'B2_P13_R39', E'É preciso muita cautela. Sair do ambiente violento e se fortalecer pode ser o primeiro passo para, mais tarde, também proporcionar segurança a quem depende de você. Siga com seu plano.',
                         14, E'[]', E'B2_P13 == \'N\' ', null,
                         null, '[]', null, '[]');
@@ -277,6 +281,10 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         VALUES ('published', 10027500, 'displaytext', 'B2_P13_R40', E'Não se sinta culpada em deixar a criança e/ou adolescente. Você está fazendo o possível e isso é proteção. Você tem sido muito forte!',
                         14, E'[]', E'B2_P13 == \'N\' ', null,
                         null, '[{"codigo":"T63"},{"codigo":"T67"},{"codigo":"T68"},{"codigo":"T69"},{"codigo":"T70"}]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10027505, 'tag_user', 'B2_P13_tags', E'',
+                        14, E'[]', E'B2_P13 == \'N\' ', null,
+                        null, '[]', null, '[{"codigo":"T4"}]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10027510, 'displaytext', 'B2_P13_R41', E'Tudo bem, esse é um momento delicado. Continue com seu plano. Estamos à disposição para conversar sobre esse assunto a qualquer momento por meio do nosso suporte. Retorne quando se sentir mais segura.',
                         14, E'[]', E'B2_P13 == \'M\' ', null,
@@ -411,9 +419,17 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         15, E'[]', E'B3_P19 == \'nao-trabalho-mas-recebo-beneficio-ou--pensao\' ', null,
                         null, '[{"codigo":"T4"},{"codigo":"T6"},{"codigo":"T7"},{"codigo":"T8"},{"codigo":"T29"},{"codigo":"T30"},{"codigo":"T81"},{"codigo":"T89"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10034725, 'tag_user', 'B3_P19_tags', E'',
+                        15, E'[]', E'B3_P19 == \'nao-trabalho-mas-recebo-beneficio-ou--pensao\' ', null,
+                        null, '[]', null, '[{"codigo":"T5"}]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10034730, 'displaytext', 'B3_P19_R62', E'Tudo bem, respire fundo! Há chance de inclusão em programas de transferência de renda, benefícios socioassistenciais, entre outros. Vamos juntas buscar mecanismos para isso.',
                         15, E'[]', E'B3_P19 == \'dependo-financeiramente-ou--ele-controla-meu-dinheiro\' ', null,
                         null, '[{"codigo":"T7"},{"codigo":"T8"},{"codigo":"T29"},{"codigo":"T30"},{"codigo":"T81"},{"codigo":"T82"},{"codigo":"T83"},{"codigo":"T86"},{"codigo":"T90"},{"codigo":"T91"}]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10034735, 'tag_user', 'B3_P19_tags', E'',
+                        15, E'[]', E'B3_P19 == \'dependo-financeiramente-ou--ele-controla-meu-dinheiro\' ', null,
+                        null, '[]', null, '[{"codigo":"T6"}]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10035730, 'onlychoice', 'B3_P20', E'O imóvel que você mora é próprio ou alugado?',
                         15, E'[]', E'B3_P19 == \'trabalho-e-tenho-liberdade-com-o-meu-dinheiro\' || B3_P19 == \'nao-trabalho-mas-recebo-beneficio-ou--pensao\' || B3_P19 == \'dependo-financeiramente-ou--ele-controla-meu-dinheiro\'', null,
@@ -616,6 +632,10 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         16, E'[]', E'B4_P26 == \'Y\' ', null,
                         null, '[{"codigo":"T23"},{"codigo":"T73"},{"codigo":"T74"},{"codigo":"T127"},{"codigo":"T128"}]', null, '[]');
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10043105, 'tag_user', 'B4_P26_tags', E'',
+                        16, E'[]', E'B4_P26 == \'Y\' ', null,
+                        null, '[]', null, '[{"codigo":"T7"}]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10044100, 'yesno', 'B4_P27', E'Você está grávida?',
                         16, E'[]', E'B4_P26 == \'Y\' || B4_P26 == \'N\'', null,
                         null, '[]', null, '[]');
@@ -643,6 +663,10 @@ INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, in
                         VALUES ('published', 10044141, 'next_mf_questionnaire', 'B4_P27_PQ_N', E' ',
                         16, E'[]', E'B4_P27 == \'N\' ', null,
                         null, '[]', null, '[]');
+INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
+                        VALUES ('published', 10044145, 'tag_user', 'B4_P27_tags', E'',
+                        16, E'[]', E'B4_P27 == \'N\' ', null,
+                        null, '[]', null, '[{"codigo":"T8"}]');
 DELETE FROM quiz_config WHERE questionnaire_id = 17;
 INSERT INTO quiz_config(status, sort, type, code, question, questionnaire_id, intro, relevance, button_label, options, tarefas, change_to_questionnaire_id, tag)
                         VALUES ('published', 10018310, 'displaytext', 'B5_P9intro', E'Agora é o momento de traçar as estratégias de deslocamento até que você se sinta em um ambiente seguro e confiável. Ao finalizar o preenchimento dos blocos de perguntas, apresentaremos uma lista de tarefas adequadas a sua situação.',
