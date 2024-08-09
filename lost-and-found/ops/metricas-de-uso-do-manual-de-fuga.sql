@@ -192,14 +192,20 @@ CREATE OR REPLACE VIEW view_clientes_mf_tag AS
 SELECT
     ct.cliente_id,
     t.code,
-    case
-        when t.code='T1' then 'Interesse em saber mais sobre os serviços de apoio'
-        when t.code='T2' then 'Incluíram crianças ou adolescentes no plano de fuga'
-    END as tag
-
+    CASE
+        WHEN t.code = 'T1' THEN 'Interesse em saber mais sobre os serviços de apoio'
+        WHEN t.code = 'T2' THEN 'Talvez pretende incluir uma criança e/ou adolescente no plano de fuga'
+        WHEN t.code = 'T3' THEN 'Sim, pretende incluir uma criança e/ou adolescente no plano de fuga'
+        WHEN t.code = 'T4' THEN 'Não pretende incluir uma criança e/ou adolescente no plano de fuga'
+        WHEN t.code = 'T5' THEN 'Sim, possuí renda (trabalho ou benefício)'
+        WHEN t.code = 'T6' THEN 'Depende financeiramente do agressor/tem seu dinheiro controlado por ele'
+        WHEN t.code = 'T7' THEN 'Tem deficiência física ou intelectual'
+        WHEN t.code = 'T8' THEN 'Está grávida'
+    END AS tag
 FROM mf_tag t
 JOIN cliente_tag ct ON t.id = ct.mf_tag_id
-WHERE t.code in ('T1', 'T2');
+WHERE t.code IN ('T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8');
+
 
 
 
