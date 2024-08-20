@@ -24,6 +24,8 @@ services:
       DB_DATABASE: "${DIRECTUS_DATABASE_NAME}"
       DB_USER: "${DIRECTUS_DATABASE_USERNAME}"
       DB_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
+      # set CA file to avoid SSL error in case of self-signed certificate
+      DB_SSL__REJECT_UNAUTHORIZED: "false"
       EMAIL_FROM: "${SMTP_FROM}"
       EMAIL_TRANSPORT: 'smtp'
       EMAIL_SMTP_HOST: "${SMTP_HOST}"
