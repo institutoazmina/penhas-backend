@@ -64,7 +64,7 @@ services:
   redis:
     container_name: penhas_redis
     restart: unless-stopped
-    image: docker.io/bitnami/redis:6.2
+    image: docker.io/bitnami/redis:7.4
     deploy:
       resources:
         limits:
