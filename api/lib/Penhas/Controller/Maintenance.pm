@@ -233,7 +233,7 @@ sub _tick_notifications {
         $ENV{LAST_CHAT_JOB_ID} = $job_id;
     }
 
-    return $c->render(json => {});
+    return 1;
 }
 
 sub fix_tweets_parent_id {
