@@ -71,4 +71,26 @@ create table cliente_tag (
 alter table quiz_config add column tag json not null default '[]';
 alter table quiz_config alter tag set not null;
 
+CREATE OR REPLACE FUNCTION prevent_duplicate_cliente_tag()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Se já existe uma tag igual para o cliente, não permitir a inserção
+    IF EXISTS (SELECT 1 FROM cliente_tag WHERE cliente_id = NEW.cliente_id AND mf_tag_id = NEW.mf_tag_id) THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER prevent_duplicate_cliente_tag_trigger
+BEFORE INSERT ON cliente_tag
+FOR EACH ROW
+EXECUTE FUNCTION prevent_duplicate_cliente_tag();
+
+ALTER TABLE cliente_tag
+ADD CONSTRAINT unique_cliente_tag UNIQUE (cliente_id, mf_tag_id);
+
+
+
 COMMIT;
