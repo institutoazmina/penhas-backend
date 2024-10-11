@@ -2,16 +2,6 @@
 -- requires: 0018-preferences-post-as-penhas
 BEGIN;
 
-alter table ponto_apoio add column abrangencia  varchar not null;
-alter table ponto_apoio add column eh_whatsapp  boolean not null  default false;
-alter table ponto_apoio add column ramal1  bigint;
-alter table ponto_apoio add column ramal2  bigint;
-alter table ponto_apoio add column cod_ibge  bigint;
-alter table ponto_apoio add column fonte  character varying;
-
-
-delete from public.ponto_apoio_categoria;
-
 INSERT INTO public.ponto_apoio_categoria (id, status, created_on, label, color, owner) VALUES (8, 'prod', '2020-07-31 11:48:36+00', 'Casa da Mulher Brasileira', '#5D82FA', NULL);
 INSERT INTO public.ponto_apoio_categoria (id, status, created_on, label, color, owner) VALUES (9, 'prod', '2020-07-31 11:48:45+00', 'Posto de Atendimento em delegacia comum', '#CB8BD9', NULL);
 INSERT INTO public.ponto_apoio_categoria (id, status, created_on, label, color, owner) VALUES (568, 'prod', '2020-09-22 04:49:02+00', 'Delegacia Comum', '#607D8B', NULL);
@@ -27,36 +17,6 @@ INSERT INTO public.ponto_apoio_categoria (id, status, created_on, label, color, 
 INSERT INTO public.ponto_apoio_categoria (id, status, created_on, label, color, owner) VALUES (584, 'prod', NULL, 'Direitos Humanos', '#80D1F9', NULL);
 
 SELECT pg_catalog.setval('public.ponto_apoio_categoria_id_seq', 584, true);
-
-/* -- ja existia em prod
-ALTER TABLE ONLY public.ponto_apoio_categoria
-    ADD CONSTRAINT idx_26416_primary PRIMARY KEY (id);
-*/
-
-CREATE TABLE public.ponto_apoio2projetos (
-    ponto_apoio_id integer NOT NULL,
-    ponto_apoio_projeto_id integer NOT NULL
-);
-ALTER TABLE ONLY public.ponto_apoio2projetos
-    ADD CONSTRAINT ponto_apoio2projetos_pkey PRIMARY KEY (ponto_apoio_id, ponto_apoio_projeto_id);
-
-alter table ponto_apoio2projetos add constraint ponto_apoio2projetos_ponto_apoio_projeto_id_fkey foreign key (ponto_apoio_projeto_id) references ponto_apoio_projeto(id) on delete cascade;
-
-alter table ponto_apoio2projetos add constraint ponto_apoio2projetos_ponto_apoio_id_fkey FOREIGN KEY (ponto_apoio_id) REFERENCES ponto_apoio(id) on delete cascade;
-
-drop table ponto_apoio_categoria2projetos;
-
-CREATE TABLE public.municipalities (
-    ogc_fid serial NOT NULL PRIMARY KEY,
-    id character varying,
-    cd_mun character varying,
-    nm_mun character varying,
-    sigla_uf character varying,
-    area_km2 double precision,
-    wkb_geometry geometry
-);
-
-CREATE INDEX geog_municipalities ON public.municipalities USING gist (((wkb_geometry)::geography));
 
 insert into municipalities (
 cd_mun,
