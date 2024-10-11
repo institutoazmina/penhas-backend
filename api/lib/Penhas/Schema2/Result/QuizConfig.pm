@@ -30,12 +30,7 @@ __PACKAGE__->add_columns(
   "modified_on",
   { data_type => "timestamp with time zone", is_nullable => 1 },
   "type",
-  {
-    data_type => "varchar",
-    default_value => \"null",
-    is_nullable => 1,
-    size => 100,
-  },
+  { data_type => "varchar", is_nullable => 0, size => 100 },
   "code",
   {
     data_type   => "text",
@@ -63,10 +58,10 @@ __PACKAGE__->add_columns(
   { data_type => "uuid", is_nullable => 1, size => 16 },
   "options",
   { data_type => "json", is_nullable => 1 },
-  "tarefas",
-  { data_type => "json", default_value => "[]", is_nullable => 1 },
   "change_to_questionnaire_id",
   { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
+  "tarefas",
+  { data_type => "json", default_value => "[]", is_nullable => 0 },
   "tag",
   { data_type => "json", default_value => "[]", is_nullable => 0 },
 );
@@ -90,8 +85,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-07-04 21:38:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:a5hMz47CwHfRH4thyFLE0A
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2024-10-11 11:03:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yjiSY3AL3yG1qu7XMVAlZA
 
 # ALTER TABLE quiz_config ADD FOREIGN KEY (questionnaire_id) REFERENCES questionnaires(id) ON DELETE CASCADE ON UPDATE cascade;
 =pod

@@ -47,14 +47,15 @@ __PACKAGE__->add_columns(
   {
     data_type => "varchar",
     default_value => "Outros",
-    is_nullable => 1,
+    is_nullable => 0,
     size => 120,
   },
   "criado_em",
   {
     data_type     => "timestamp",
     default_value => \"current_timestamp",
-    is_nullable   => 1,
+    is_nullable   => 0,
+    original      => { default_value => \"now()" },
   },
   "eh_customizada",
   { data_type => "boolean", default_value => \"false", is_nullable => 0 },
@@ -68,8 +69,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2024-03-01 01:40:23
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kli3QHc/W5wxdawxwShjhg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2024-10-11 11:03:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zUxaAjLAUXqswT08Bn7TCg
 
 
 

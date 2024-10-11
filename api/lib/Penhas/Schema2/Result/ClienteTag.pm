@@ -31,6 +31,7 @@ __PACKAGE__->add_columns(
   },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->add_unique_constraint("unique_cliente_tag", ["cliente_id", "mf_tag_id"]);
 __PACKAGE__->belongs_to(
   "cliente",
   "Penhas::Schema2::Result::Cliente",
@@ -45,8 +46,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-07-04 21:38:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:HsBW8S+Fr7d8XjmfB4mwkg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2024-10-11 11:03:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:rWi3XgJORP+WZzicv8nO2w
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
