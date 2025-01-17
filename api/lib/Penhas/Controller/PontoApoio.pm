@@ -238,8 +238,10 @@ sub pa_aux_data {
 sub user_pa_suggest {
     my $c = shift;
 
-    $c->reply_invalid_param('Por favor, atualize o aplicativo para enviar sugestões de ponto de apoio',
-        'endereco_ou_cep');
+    $c->reply_invalid_param(
+        'Por favor, atualize o aplicativo para enviar sugestões de ponto de apoio',
+        'endereco_ou_cep'
+    ) unless $ENV{ENABLE_OLD_PA_SUGG};
 
     die 'missing user' unless $c->stash('user_obj');
 

@@ -20,10 +20,8 @@ sub apply_rps {
 }
 
 sub webfaq_index {
-    my $c    = shift;
-    $c->stash(
-        texto_faq_index => $c->schema2->resultset('Configuraco')->get_column('texto_faq_index')->next()
-    );
+    my $c = shift;
+    $c->stash(texto_faq_index => $c->schema2->resultset('Configuraco')->get_column('texto_faq_index')->next());
 
     my @faqs = $c->schema2->resultset('FaqTelaSobre')->search(
         {
@@ -89,20 +87,26 @@ sub webfaq_detail {
 sub webfaq_botao_contato {
     my $c = shift;
 
-    $c->stash(
-        texto_faq_contato => $c->schema2->resultset('Configuraco')->get_column('texto_faq_contato')->next()
-    );
-    $c->stash(template => 'webfaq/botao_contato');
+    $c->stash(texto_faq_contato => $c->schema2->resultset('Configuraco')->get_column('texto_faq_contato')->next());
+    $c->stash(template          => 'webfaq/botao_contato');
 
     return $c->render(html => {});
 }
 
+sub webfaq_conta_exclusao {
+    my $c = shift;
+
+    $c->stash(texto_faq_exclusao => $c->schema2->resultset('Configuraco')->get_column('texto_conta_exclusao')->next());
+    $c->stash(template           => 'webfaq/conta_exclusao');
+
+    return $c->render(html => {});
+}
+
+
 sub web_politica_privacidade {
     my $c = shift;
 
-    $c->stash(
-        texto => $c->schema2->resultset('Configuraco')->get_column('privacidade')->next()
-    );
+    $c->stash(texto => $c->schema2->resultset('Configuraco')->get_column('privacidade')->next());
 
     $c->stash(template => 'webfaq/texto');
 
@@ -112,9 +116,7 @@ sub web_politica_privacidade {
 sub web_termos_de_uso {
     my $c = shift;
 
-    $c->stash(
-        texto => $c->schema2->resultset('Configuraco')->get_column('termos_de_uso')->next()
-    );
+    $c->stash(texto => $c->schema2->resultset('Configuraco')->get_column('termos_de_uso')->next());
 
     $c->stash(template => 'webfaq/texto');
 
