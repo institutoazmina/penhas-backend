@@ -3,6 +3,7 @@ use Mojo::Base 'Penhas::Controller';
 use Penhas::Controller::Me;
 use DateTime;
 use Penhas::Types qw/TweetID IntList TimelineCategory/;
+use Penhas::Utils;
 
 sub assert_user_perms {
     my $c = shift;
@@ -105,10 +106,15 @@ sub list {
         delete $params->{next_page};
     }
 
-    my $tweets = $c->list_tweets(
+    my ($os, $version) = get_semver_numeric($c->req->headers->user_agent || '');
+
+    my $is_legacy = is_legacy_app($os, $version);
+    my $tweets    = $c->list_tweets(
         %$params,
-        user     => $c->stash('user'),
-        user_obj => $c->stash('user_obj'),
+        is_legacy => $is_legacy,
+        os        => $os,
+        user      => $c->stash('user'),
+        user_obj  => $c->stash('user_obj'),
     );
 
     return $c->render(
