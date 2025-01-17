@@ -1,29 +1,7 @@
 %syntax-version=1.0.0
 %project=penhas
 
-0001-db-init 2020-04-07T11:19:59Z renato,,, <renato.santosr@appcivico> # reset init
-0002-emaildb [0001-db-init] 2020-04-11T19:26:08Z renato,,, <renato@renato-MS-7A34> # emaildb
-0003-cpf2 [0002-emaildb] 2020-05-07T19:52:29Z renato,,, <renato@renato-MS-7A34> # cpf2
-0004-AVATAR_ANONIMO_URL [0003-cpf2] 2020-05-13T19:39:24Z renato,,, <renato@renato-MS-7A34> # AVATAR_ANONIMO_URL
-0005-chat [0004-AVATAR_ANONIMO_URL] 2020-08-17T11:45:43Z renato,,, <renato@renato-Inspiron-7580> # chat
-0006-has_message [0005-chat] 2021-04-01T20:02:37Z renato,,, <renato@renato-MS-7A34> # has_message
-0007-view_user_preferences [0006-has_message] 2021-05-24T20:16:18Z renato,,, <renato@renato-MS-7A34> # add view_user_preferences to sqitch
-0008-postgis [0007-view_user_preferences] 2021-05-25T06:23:18Z renato,,, <renato@renato-MS-7A34> # postgis
-0009-trigger-ponto-apoio-reindex [0008-postgis] 2021-05-25T07:13:15Z renato,,, <renato@renato-MS-7A34> # triggers
-0010-fix-chat_support_message [0009-trigger-ponto-apoio-reindex] 2021-05-25T07:32:35Z renato,,, <renato@renato-MS-7A34> # chat_support_message
-0011-field-options [0010-fix-chat_support_message] 2021-05-31T14:51:31Z renato,,, <renato@renato-Inspiron-7580> # field-options
-0012-anon_quiz [0011-field-options] 2021-05-31T17:53:34Z renato,,, <renato@renato-Inspiron-7580> # anon-quiz
-0013-clientes_activity [0012-anon_quiz] 2021-08-26T11:16:10Z renato,,, <renato@renato-MS-7A34> # clientes_activity
-0014-ponto_apoio_sug [0013-clientes_activity] 2021-09-02T17:27:56Z renato,,, <renato@renato-MS-7A34> # sug
-0015-cliente_eh_admin [0014-ponto_apoio_sug] 2021-09-09T11:44:13Z renato,,, <renato@renato-Inspiron-7580> # eh_admin
-0016-tweet_depth [0015-cliente_eh_admin] 2021-09-09T13:08:30Z renato,,, <renato@renato-Inspiron-7580> # tweet_depth
-0017-add-tsvector [0016-tweet_depth] 2021-11-18T18:19:52Z renato,,, <renato@renato-Inspiron-7580> # add-tsvector
-0018-preferences-post-as-penhas [0017-add-tsvector] 2021-12-06T10:15:02Z renato,,, <renato@renato-MS-7A34> # post as penhas
-0020-relatorio_cliente_suporte [0018-preferences-post-as-penhas] 2022-03-24T15:29:28Z renato,,, <renato@renato-Inspiron-7580> # relatorio_cliente_suporte
-0019-municipalities [0018-preferences-post-as-penhas] 2022-02-24T11:46:02Z renato,,, <renato@renato-MS-7A34> # public.municipalities_ogc_fid_seq
-0021-PontoApoioSugestoe [0020-relatorio_cliente_suporte] 2022-04-06T22:38:47Z renato,,, <renato@renato-Inspiron-7580> # PontoApoioSugestoe
-0022-segment-actions [0021-PontoApoioSugestoe] 2022-06-28T19:49:55Z renato,,, <renato@renato-Inspiron-7580> # segment-actions
-0023-ponto_apoio_keywords_log [0022-segment-actions] 2022-07-03T19:01:19Z renato,,, <renato@renato-Inspiron-7580> # ponto apoio log
-0024-sugestao_ponto_apoio_2 [0023-ponto_apoio_keywords_log] 2022-07-16T03:38:26Z renato,,, <renato@renato-MS-7A34> # nova
-0025-pa-sug-form [0024-sugestao_ponto_apoio_2] 2022-08-04T17:03:02Z renato,,, <renato@renato-MS-7A34> # form
-0026-block-users [0025-pa-sug-form] 2023-03-04T15:05:16Z renato,,, <renato@renato-MS-7A34> # block users and report users
+0001-db-init 2020-04-07T11:19:59Z renato,,, <renato.santos@appcivico> # init do schema
+0002-configs [0001-db-init] 2020-04-11T19:26:08Z renato,,, <renato.santos@appcivico> # configs gerais e email
+0012-bot-twitter [0002-configs] 2021-05-31T17:53:34Z renato,,, <renato.santos@appcivico> # anon-quiz do twitter
+0019-municipality-sp [0012-bot-twitter] 2022-02-24T11:46:02Z renato,,, <renato.santos@appcivico> # cadastra sp para os testes
