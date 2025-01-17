@@ -264,7 +264,12 @@ do {
       ->json_is('/avaliacao_maxima',     5,          'avaliacao_maxima')             #
       ->json_is('/next_page',            undef,      'next_page is empty');
 
-    is trace_popall, 'user_cod_ibge,3550308', 'where cod_ibge=sao_paulo';
+    if ($ENV{MUNICIPALITIES_LOADED}) {
+        is trace_popall, 'user_cod_ibge,3550308', 'where cod_ibge=sao_paulo';
+    }
+    else {
+        is trace_popall, 'user_cod_ibge,-1', 'where cod_ibge=sao_paulo';
+    }
 
     $t->get_ok(
         '/pontos-de-apoio',
@@ -273,9 +278,9 @@ do {
             'longitude'    => '-46.633462',
             'max_distance' => 1,
         }
-      )->status_is(200)                                                              #
-      ->json_is('/rows/0/distancia', 1,     'mais proximo primeiro')                 #
-      ->json_is('/rows/1',           undef, 'fora do range de distancia')            #
+      )->status_is(200)    #
+      ->json_is('/rows/0/distancia', 1,     'mais proximo primeiro')         #
+      ->json_is('/rows/1',           undef, 'fora do range de distancia')    #
       ->json_is('/has_more',         0,     'has more is false');
 
     $t->get_ok(
@@ -285,8 +290,8 @@ do {
             'longitude'  => '-46.633462',
             'categorias' => $cat3,
         }
-      )->status_is(200)                                                              #
-      ->json_is('/rows/0',   undef, 'nao tem ninguem na categoria 3')                #
+      )->status_is(200)                                                      #
+      ->json_is('/rows/0',   undef, 'nao tem ninguem na categoria 3')        #
       ->json_is('/has_more', 0,     'has more is false');
 
     $t->get_ok(
@@ -296,9 +301,9 @@ do {
             'longitude'  => '-46.633462',
             'categorias' => $cat1,
         }
-      )->status_is(200)                                                              #
-      ->json_is('/rows/0/nome', 'trianon', 'trianon eh o registro')                  #
-      ->json_is('/rows/1',      undef,     'apenas 1 registro na cat1')              #
+      )->status_is(200)                                                      #
+      ->json_is('/rows/0/nome', 'trianon', 'trianon eh o registro')          #
+      ->json_is('/rows/1',      undef,     'apenas 1 registro na cat1')      #
       ->json_is('/has_more',    0,         'has more is false');
 
     $t->get_ok(
@@ -308,9 +313,9 @@ do {
             'longitude' => '-46.633462',
             'eh_24h'    => '1',
         }
-      )->status_is(200)                                                              #
-      ->json_is('/rows/0/id', $ponto_apoio3->id, 'filtro eh_24h')                    #
-      ->json_is('/rows/1',    undef,             'só tem 1 linha')                   #
+      )->status_is(200)                                                      #
+      ->json_is('/rows/0/id', $ponto_apoio3->id, 'filtro eh_24h')            #
+      ->json_is('/rows/1',    undef,             'só tem 1 linha')           #
       ->json_is('/has_more',  0,                 'has more is false');
 
     $t->get_ok(
@@ -320,8 +325,8 @@ do {
             'longitude' => '-46.633462',
             'eh_24h'    => '0',
         }
-      )->status_is(200)                                                              #
-      ->json_is('/rows/2',   undef, 'dois nao sao 24h')                              #
+      )->status_is(200)                                                      #
+      ->json_is('/rows/2',   undef, 'dois nao sao 24h')                      #
       ->json_is('/has_more', 0,     'has more is false');
 
     $t->get_ok(
@@ -332,9 +337,9 @@ do {
 
             'dias_funcionamento' => 'fds',
         }
-      )->status_is(200)                                                              #
-      ->json_is('/rows/0/id', $ponto_apoio1->id, 'apenas um eh FDS')                 #
-      ->json_is('/rows/1',    undef,             'só tem 1 linha')                   #
+      )->status_is(200)                                                      #
+      ->json_is('/rows/0/id', $ponto_apoio1->id, 'apenas um eh FDS')         #
+      ->json_is('/rows/1',    undef,             'só tem 1 linha')           #
       ->json_is('/has_more',  0,                 'has more is false');
 
     $t->get_ok(
@@ -345,7 +350,7 @@ do {
 
             'dias_funcionamento' => 'dias_uteis_fds_plantao',
         }
-      )->status_is(200)                                                              #
+      )->status_is(200)                                                      #
       ->json_is('/rows/0/id', $ponto_apoio2->id, 'apenas um eh dias_uteis_fds_plantao')    #
       ->json_is('/rows/1',    undef,             'só tem 1 linha')                         #
       ->json_is('/has_more',  0,                 'has more is false');
@@ -585,7 +590,13 @@ do {
         }
     )->status_is(200);
 
-    is trace_popall, 'cep_fallback,user_cod_ibge,3550308', 'where cod_ibge=-1 pq ta deslogado';
+
+    if ($ENV{MUNICIPALITIES_LOADED}) {
+        is trace_popall, 'cep_fallback,user_cod_ibge,3550308', 'where cod_ibge=-1 pq ta deslogado';
+    }
+    else {
+        is trace_popall, 'cep_fallback,user_cod_ibge,-1', 'where cod_ibge=-1 pq ta deslogado';
+    }
 
 };
 
@@ -603,6 +614,20 @@ sub reset_db {
 sub test_pa_sugg {
     my $rand_cat = shift;
 
+    $t->post_ok(
+        '/me/sugerir-pontos-de-apoio',
+        {'x-api-key' => $session},
+        form => {
+            'endereco_ou_cep' => 'rua cupa, 255',
+            nome              => 'foo',
+
+            'categoria'         => $rand_cat->id,
+            'descricao_servico' => 'aaa'
+        }
+    )->status_is(400)->json_like('/message', qr/atualize o aplicativo/, 'msg pra atualizar o app');
+
+    $ENV{ENABLE_OLD_PA_SUGG} = 1;
+
     my $first_sugg = $t->post_ok(
         '/me/sugerir-pontos-de-apoio',
         {'x-api-key' => $session},
@@ -615,11 +640,12 @@ sub test_pa_sugg {
         }
     )->status_is(200)->json_has('/message', 'tem mensagem de sucesso')->json_has('/id', 'tem id durante os testes')
       ->tx->res->json;
+
     ok my $first_sugg_row = $schema2->resultset('PontoApoioSugestoe')->find($first_sugg->{id}),
       'row PontoApoioSugestoe is added';
-    is $first_sugg_row->nome,       'foo', 'nome ok';
+    is $first_sugg_row->nome, 'foo', 'nome ok';
     is $first_sugg_row->cliente_id, $cliente_id, 'cliente_id ok';
-    is $first_sugg_row->categoria,  $rand_cat->id, 'cliente_id ok';
+    is $first_sugg_row->categoria->id, $rand_cat->id, 'cliente_id ok';
 
     my $sec_sugg = $t->post_ok(
         '/me/sugerir-pontos-de-apoio',

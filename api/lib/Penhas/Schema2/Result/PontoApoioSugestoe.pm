@@ -25,7 +25,7 @@ __PACKAGE__->add_columns(
   "nome",
   { data_type => "varchar", is_nullable => 0, size => 255 },
   "categoria",
-  { data_type => "bigint", is_nullable => 0 },
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 0 },
   "descricao_servico",
   { data_type => "text", is_nullable => 0 },
   "cliente_id",
@@ -66,6 +66,12 @@ __PACKAGE__->add_columns(
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->belongs_to(
+  "categoria",
+  "Penhas::Schema2::Result::PontoApoioCategoria",
+  { id => "categoria" },
+  { is_deferrable => 0, on_delete => "SET NULL", on_update => "NO ACTION" },
+);
+__PACKAGE__->belongs_to(
   "cliente",
   "Penhas::Schema2::Result::Cliente",
   { id => "cliente_id" },
@@ -73,8 +79,8 @@ __PACKAGE__->belongs_to(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-04-08 00:06:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:r63j+4Zp2dxui1k7MxybFQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-05-25 21:16:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2UQniKPmrSGjE+iUuWjpwA
 
 # ALTER TABLE ponto_apoio_sugestoes ADD FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE ON UPDATE cascade;
 

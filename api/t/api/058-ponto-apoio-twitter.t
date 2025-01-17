@@ -64,7 +64,6 @@ sub insert_ponto_apoio {
             status => 'test',
         }
     );
-    $cat1o->ponto_apoio_categoria2projetos->create({ponto_apoio_projeto_id => $proj->id});
 
     my $fields = {
         'sigla'                 => 'UPPER',
@@ -88,6 +87,7 @@ sub insert_ponto_apoio {
         'eh_24h'                => 0,
         'dias_funcionamento'    => 'fds',
         'observacao_pandemia'   => 'nao sei',
+        'abrangencia'           => 'Local',
         cliente_id              => undef,
         test_status             => 'test',
         ja_passou_por_moderacao => '1',

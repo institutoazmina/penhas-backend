@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # HARNESS-CONFLICTS CHAT
-
 use Mojo::Base -strict;
+
 use FindBin qw($RealBin);
 use lib "$RealBin/../lib";
 use DateTime;
@@ -12,6 +12,9 @@ use Business::BR::CPF qw/random_cpf/;
 use DateTime;
 use utf8;
 
+BEGIN {
+    plan skip_all => 'Faltando configurar TEST_DIRECTUS_PASSWORD' unless $ENV{TEST_DIRECTUS_PASSWORD};
+};
 my $schema2 = $t->app->schema2;
 
 my $now_datetime = DateTime->now()->datetime(' ');
@@ -22,7 +25,7 @@ my $random_email = 'email' . $random_cpf . '@something.com';
 goto AGAIN if cpf_already_exists($random_cpf);
 
 my $admin_email = 'tests.automatic@example.com';
-my $password    = 'k8Mw9(wj3H';
+my $password    = $ENV{TEST_DIRECTUS_PASSWORD} || 'k8Mw9(wj3H';
 do {
     # ID do role de test
     my $role_id = '8bad4430-dd52-440a-864d-f31bc8654f2d';
