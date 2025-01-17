@@ -41,6 +41,12 @@ __PACKAGE__->add_columns(
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
+  "ponto_apoio_sugestoes",
+  "Penhas::Schema2::Result::PontoApoioSugestoe",
+  { "foreign.categoria" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "ponto_apoio_sugestoes_v2s",
   "Penhas::Schema2::Result::PontoApoioSugestoesV2",
   { "foreign.categoria" => "self.id" },
@@ -54,8 +60,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-07-16 03:50:48
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3gwPO4waaORvbKd3VBKlnA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2023-05-25 21:16:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RK2DVPnTeJWR6lz6WZcuKg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

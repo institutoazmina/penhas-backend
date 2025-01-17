@@ -65,8 +65,8 @@ subtest_buffered 'Testar envio de campo boolean com valor invalido + interpolati
     is $first_msg->{style},     'error',                         'type is error';
 
 
-    is $second_msg->{content}, 'intro1',                                     'question intro is working';
-    is $third_msg->{content},  'HELLOQuiz User Name!',                       'question intro interpolation is working';
+    is $second_msg->{content}, 'intro1',                 'question intro is working';
+    is $third_msg->{content},  'HELLOQuiz User Name!',   'question intro interpolation is working';
     is $input_msg->{content},  'yesno question☺️⚠️👍👭🤗🤳', 'yesno question question is present';
 };
 
@@ -324,6 +324,14 @@ $cadastro = $t->get_ok(
 )->status_is(200)->json_is('/quiz_session', undef)->tx->res->json;
 
 subtest_buffered 'reiniciando o quiz' => sub {
+
+    my $cliente = app->schema2->resultset('Cliente')->search(
+        {
+            'id' => $user_id,
+        }
+    )->first;
+
+    is $cliente->quiz_detectou_violencia, 1, 'quiz_detectou_violencia=1';
     my $json = $t->get_ok(
         '/me/chats',
         {'x-api-key' => $session},
@@ -333,8 +341,8 @@ subtest_buffered 'reiniciando o quiz' => sub {
         'quiz_session/session_id match expected'
       )                                     #
       ->json_like(
-        '/assistant/quiz_session/current_msgs/0/content', qr/não estava/,
-        'nao estava em situacao de risco'
+        '/assistant/quiz_session/current_msgs/0/content', qr/identifiquei que você estava em situação de risco./,
+        'realmente passou pelo fluxo de risco'
       )                                     #
       ->json_is('/assistant/quiz_session/current_msgs/1/type', 'yesno', 'sim/nao')->tx->res->json;
     $json = $json->{assistant};
@@ -354,7 +362,7 @@ subtest_buffered 'reiniciando o quiz' => sub {
     my $first_msg = $json->{quiz_session}{current_msgs}[0];
     my $input_msg = $json->{quiz_session}{current_msgs}[-1];
 
-    is $first_msg->{type},      'button',   'button';
+    is $first_msg->{type},      'button',  'button';
     like $first_msg->{content}, qr/única/, 'unica função';
 
     # apertando o botao "BT_RETURN" = 1
