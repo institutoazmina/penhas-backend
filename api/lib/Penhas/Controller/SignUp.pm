@@ -81,18 +81,16 @@ sub post {
         my $err;
         my $result;
         eval {
-            foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(ViaCep Correios)) {
+            foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(ViaCep)) {
                 my @_address_fields = qw(city state);
-                $result = eval{$backend->find($cep)};
-                $c->log->error("Error during cep find using $backend: $@") if ($@);
-
+                $result = $backend->find($cep);
                 if ($result) {
 
                     # para o teste dos backend se todos os campos estão preenchidos
                     last if (grep { length $result->{$_} } @_address_fields) == @_address_fields;
                 }
             }
-            if (!$result || !$result->{city}) {
+            if (!$result) {
                 $err = {
                     error   => 'cep_invalid',
                     message => "Não conseguimos localizar o endereço do CEP $cep!",
@@ -257,6 +255,30 @@ sub post {
         },
         status => 200,
     );
+
+    # só manda bem vindo pra quem é is_female
+    if ($ENV{MSG_BEM_VINDO} && $row->is_female()) {
+        $c->log->info("Buscando qualquer admin para enviar mensagem de boas vindas");
+        my $admin = $c->schema2->resultset('DirectusUser')->search(
+            {status => 'active'},
+        )->next;
+        if ($admin) {
+            $c->log->info(sprintf 'Logged as %s', $admin->id . ' ' . ($admin->first_name || '(nameless)'));
+            $c->stash(
+                logged_as_admin => 1,
+                admin_user      => $admin,
+            );
+
+            my $apelido     = $row->apelido;
+            my $msg_welcome = $ENV{MSG_BEM_VINDO} || '';
+            my $ret         = $c->support_send_message(
+                cliente_id => $row->id,
+                message    => qq|Olá, $apelido! $msg_welcome|,
+                chat_auth  => $row->support_chat_auth(),
+                user_obj   => $row,
+            );
+        }
+    }
 }
 
 sub _inc_cpf_invalid_count {

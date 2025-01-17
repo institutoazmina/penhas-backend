@@ -60,7 +60,7 @@ sub me_find {
             }
         ];
 
-        $c->load_quiz_session(session => $quiz_session, user => $user);
+        $c->load_quiz_session(session => $quiz_session, user_obj => $user_obj, user => $user);
 
         $extra{quiz_session} = $c->stash('quiz_session');
 
@@ -432,6 +432,23 @@ sub inc_call_police_counter {
         }
     );
     $user_obj->cliente_ativacoes_policias->create({created_at => \'NOW()'});
+
+    return $c->render(text => '', status => 204,);
+}
+
+sub inc_login_offline_counter {
+    my $c = shift;
+
+    my $valid = $c->validate_request_params(
+        inc_by => {required => 1, type => 'Int', max_length => 4},
+    );
+
+    my $user_obj = $c->stash('user_obj');
+    $user_obj->update(
+        {
+            qtde_login_offline => \['qtde_login_offline + ?', $valid->{inc_by}],
+        }
+    );
 
     return $c->render(text => '', status => 204,);
 }

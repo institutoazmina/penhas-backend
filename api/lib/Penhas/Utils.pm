@@ -20,8 +20,46 @@ use Business::BR::CPF qw(test_cpf);
 use DateTime::Format::Pg;
 
 state $text_xslate = Text::Xslate->new(
-    syntax => 'TTerse',
-    module => ['Text::Xslate::Bridge::TT2Like'],
+    syntax   => 'TTerse',
+    module   => ['Text::Xslate::Bridge::TT2Like'],
+    function => {
+        is_json_member => sub {
+            my ($member, $json) = @_;
+            return 0 unless $json;
+            return 0 unless $json =~ /^\[/;
+            my $array = from_json($json);
+            foreach (@$array) {
+                return 1 if $_ eq $member;
+            }
+            return 0;
+        },
+        json_array_to_string => sub {
+            my ($json, $extra_member, $skip_member) = @_;
+            return 'json_array_to_string: not an json'  unless $json;
+            return 'json_array_to_string: not an array' unless $json =~ /^\[/;
+            my $str;
+            my @items = @{from_json($json)};
+            if ($extra_member) {
+                push @items, $extra_member;
+            }
+            @items = grep {$_} @items;
+            if ($skip_member) {
+                @items = grep { $_ ne $skip_member } @items;
+            }
+            if (scalar @items == 1) {
+                $str = $items[0];
+            }
+            else {
+                my $last = pop @items;
+
+                $str = join ', ', @items;
+                $str .= ' e ' . $last;
+            }
+
+            return $str;
+        },
+
+    }
 );
 
 @ISA    = (qw(Exporter));
@@ -58,6 +96,9 @@ state $text_xslate = Text::Xslate->new(
   nl2br
   check_email_mx
   remove_pi
+
+  get_semver_numeric
+  is_legacy_app
 );
 
 
@@ -218,21 +259,17 @@ sub pg_timestamp2human {
 
     return '' unless $timestamp;
 
-    eval {
-        $timestamp =~ s/Z$//;
-        my $today   = DateTime->now->set_time_zone('America/Sao_Paulo')->dmy('/');
-        my $is_date = $timestamp !~ /:/;
-        $timestamp
-          = $is_date
-          ? DateTime::Format::Pg->parse_date($timestamp)
-          : DateTime::Format::Pg->parse_datetime($timestamp =~ /\+/ ? $timestamp : $timestamp . '+00')
-          ->set_time_zone('America/Sao_Paulo');
+    $timestamp =~ s/Z$//;
+    my $today   = DateTime->now->set_time_zone('America/Sao_Paulo')->dmy('/');
+    my $is_date = $timestamp !~ /:/;
+    $timestamp
+      = DateTime::Format::Pg->parse_datetime(
+        $is_date ? $timestamp : $timestamp =~ /\+/ ? $timestamp : $timestamp . '+00')
+      ->set_time_zone('America/Sao_Paulo');
 
-        $timestamp = $timestamp->dmy('/') . ($is_date ? '' : ' ' . $timestamp->hms(':'));
+    $timestamp = $timestamp->dmy('/') . ($is_date ? '' : ' ' . $timestamp->hms(':'));
 
-        $timestamp =~ s/$today/hoje/;
-    };
-    return $@ if $@;
+    $timestamp =~ s/$today/hoje/;
     return $timestamp;
 }
 
@@ -333,6 +370,7 @@ sub nl2br {
 
 sub check_email_mx {
     my $email = shift;
+
     # dominios comuns não precisa verificar o mx
     if (   is_test()
         || lc $email =~ /\@(gmail|hotmail|icloud|outlook|msn|live|globo)\.com$/
@@ -397,6 +435,35 @@ sub remove_pi {
     $content =~ s/[\w]{8}(-[\w]{4}){3}-[\w]{12}/*******-****-****-****-************/g;
 
     return $content;
+}
+
+sub get_semver_numeric {
+    my $user_agent = shift();
+    my (undef, $os, $version) = $user_agent =~ /((Android|iOS)\s[^\/]+\/[^\/\"]+\/([^\/\"]+))/;
+
+    if ($os) {
+        my ($major, $minor, $patch) = split /\./, $version;
+        my $super_number = ($major * 1_000_000_000) + ($minor * 1_000_000) + $patch;
+
+
+        return ($os, $super_number);
+    }
+    return;
+}
+
+
+sub is_legacy_app {
+    my ($os, $numeric_version) = @_;
+
+    return 0 unless $os;
+    return 0 unless $numeric_version;
+
+    ## Android e iOS estão atualmente na mesma, 3.6.0 => 3006000000
+    if ($os eq 'Android' || $os eq 'iOS') {
+        return $numeric_version < 3006000000 ? 1 : 0;
+    }
+
+    return 0;
 }
 
 1;
