@@ -26,12 +26,18 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 1 },
   "texto_faq_contato",
   { data_type => "text", is_nullable => 1 },
+  "texto_conta_exclusao",
+  {
+    data_type   => "text",
+    is_nullable => 1,
+    original    => { data_type => "varchar" },
+  },
 );
 __PACKAGE__->set_primary_key("id");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-05-24 16:42:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PzhpVFEHa6sK8SrZRvAGrw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2024-10-11 11:03:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CoIP3eS+xAq7vUL6V0hKiA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
