@@ -385,8 +385,10 @@ sub list_tweets {
     my $rows = $opts{rows} || 10;
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
-    my $user     = $opts{user} or confess 'missing user';
-    my $user_obj = $opts{skip_comments} ? undef : ($opts{user_obj} or confess 'missing user_obj');
+    my $user      = $opts{user} or confess 'missing user';
+    my $user_obj  = $opts{skip_comments} ? undef : ($opts{user_obj} or confess 'missing user_obj');
+    my $is_legacy = $opts{is_legacy};
+    my $os        = $opts{os};
 
     my $blocked_users = [];
 
@@ -411,7 +413,12 @@ sub list_tweets {
 
     $opts{$_} ||= '' for qw/after before parent_id id tags/;
 
+    # nao pode ter nenhuma busca por algo especifico
+    my $is_first_page = !$opts{parent_id} & !$opts{after} & !$opts{before} & !$opts{id};
+
     if ($opts{next_page}) {
+        $is_first_page = 0;
+
         slog_info('list_tweets applying next_page=%s', to_json($opts{next_page}));
 
         $c->reply_invalid_param('uso do parent_id com next_page é vedado') if $opts{parent_id};
@@ -643,6 +650,11 @@ sub list_tweets {
     #log_info('$category . ' . $$category);
     #log_info('tweets . ' . dumper(\@tweets));
 
+    if ($is_first_page && $is_legacy && $tweets[0] && $tweets[0]{type} eq 'tweet') {
+        unshift @tweets, _add_legacy_tweet($user_obj, $tweets[0]{id}, $os);
+    }
+
+
     return {
         tweets   => \@tweets,
         has_more => $has_more,
@@ -659,6 +671,58 @@ sub list_tweets {
         ),
     };
 }
+
+
+sub _add_legacy_tweet {
+    my ($user_obj, $tweet_id, $os) = @_;
+    my $avatar_penhas = $ENV{AVATAR_PENHAS_URL};
+
+    my $apelido = $user_obj->apelido;
+    my $logos   = {
+        Android => 'https://azmina.com.br/wp-content/uploads/2019/02/Logo_Google.png',
+        iOS     => 'https://azmina.com.br/wp-content/uploads/2019/02/Logo_Apple.png'
+    };
+    my $links = {
+        Android => 'https://play.google.com/store/apps/details?id=penhas.com.br',
+        iOS     => 'https://apps.apple.com/br/app/penhas/id1441569466'
+    };
+    my $img  = $logos->{$os};
+    my $link = $links->{$os};
+
+    return {
+        type       => 'tweet',
+        id         => $tweet_id,
+        created_at => '2099-01-01T01:01:01',
+        meta       => {
+            liked     => 0,
+            owner     => 0,
+            can_reply => 0,
+            parent_id => undef,
+        },
+
+        content => qq|Olá, $apelido.<br>
+<br>
+Recentemente lançamos uma nova ferramenta aqui no PenhaS chamada Manual de Fuga. Além disso, também melhoramos a navegação em nossas páginas. Para ter acesso às melhorias é importante que você atualize o app diretamente na sua loja - Play Store ou Apple Store.<br>
+<br>
+Um forte abraço!<br>
+<br>
+<div style="text-align:center">
+<a href="$link">
+    <img width="300" height="93" src="$img">
+</a>
+</div>
+|,
+        qtde_likes       => 0,
+        qtde_comentarios => 0,
+        media            => [],
+        icon             => $avatar_penhas,
+        cliente_id       => 0,
+        anonimo          => 1,
+        name             => 'Atualização está disponível!',
+
+    };
+}
+
 
 sub _format_tweet {
     my ($user, $me, $remote_addr) = @_;
@@ -695,9 +759,8 @@ sub _format_tweet {
         id      => $me->{id},
         content => $me->{disable_escape}
         ? $me->{content}
-        : &linkfy(&nl2br(xml_escape($is_owner ? $me->{content} : &remove_pi($me->{content})))),
+        : &maybe_linkfy(&nl2br(xml_escape($is_owner ? $me->{content} : &remove_pi($me->{content}))), $penhas_avatar),
         anonimo => $anonimo && !$eh_admin ? 1 : 0,
-
 
         qtde_likes       => $me->{qtde_likes},
         qtde_comentarios => $me->{qtde_comentarios},
@@ -722,6 +785,12 @@ sub _format_tweet {
             : ()
         ),
     };
+}
+
+sub maybe_linkfy {
+    my ($html, $penhas_avatar) = @_;
+    return &linkfy($html) if $penhas_avatar;
+    return $html;
 }
 
 sub _gen_uniq_media_url {
