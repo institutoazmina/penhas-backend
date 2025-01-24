@@ -712,7 +712,7 @@ sub ponto_apoio_suggest {
         my $err;
         my $result;
         eval {
-            foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(Postmon Correios)) {
+            foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(ViaCep)) {
                 my @_address_fields = qw(city state);
                 $result = $backend->find($cep);
                 if ($result) {
