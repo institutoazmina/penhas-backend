@@ -150,6 +150,10 @@ __PACKAGE__->add_columns(
     default_value => \"'{}'::integer[]",
     is_nullable   => 0,
   },
+  "qtde_login_offline",
+  { data_type => "integer", default_value => 0, is_nullable => 0 },
+  "ja_completou_mf",
+  { data_type => "boolean", default_value => \"false", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("idx_25909_cpf_hash", ["cpf_hash"]);
@@ -191,6 +195,18 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "cliente_bloqueios_blocked_clientes",
+  "Penhas::Schema2::Result::ClienteBloqueio",
+  { "foreign.blocked_cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->might_have(
+  "cliente_mf_session_control",
+  "Penhas::Schema2::Result::ClienteMfSessionControl",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "cliente_ponto_apoio_avaliacaos",
   "Penhas::Schema2::Result::ClientePontoApoioAvaliacao",
   { "foreign.cliente_id" => "self.id" },
@@ -199,6 +215,12 @@ __PACKAGE__->has_many(
 __PACKAGE__->has_many(
   "cliente_skills",
   "Penhas::Schema2::Result::ClienteSkill",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "cliente_tags",
+  "Penhas::Schema2::Result::ClienteTag",
   { "foreign.cliente_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -293,6 +315,18 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 __PACKAGE__->has_many(
+  "mf_cliente_tarefas",
+  "Penhas::Schema2::Result::MfClienteTarefa",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
+  "noticias_aberturas",
+  "Penhas::Schema2::Result::NoticiasAbertura",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "notification_logs",
   "Penhas::Schema2::Result::NotificationLog",
   { "foreign.cliente_id" => "self.id" },
@@ -342,8 +376,9 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-03-04 15:27:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SFYw5TSge34QDWnp+WSsDA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-09-15 13:06:40
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:d5LkW5yErl1nJlT+caYrsw
+
 
 use Carp qw/confess/;
 
@@ -380,10 +415,20 @@ sub _build_access_modules {
     if ($self->is_female) {
         push @modules,
           qw/tweets chat_privado chat_suporte pontos_de_apoio modo_seguranca noticias/;
+
+        my $id = $self->id();
+        if ($ENV{ENABLE_MANUAL_FUGA}) {
+            push @modules, 'mf';
+        }
+        elsif ($ENV{ENABLE_MANUAL_FUGA_IDS} && ("," . $ENV{ENABLE_MANUAL_FUGA_IDS} . ",") =~ /,$id,/) {
+            push @modules, 'mf';
+        }
+
     }
     else {
         push @modules, qw/chat_suporte pontos_de_apoio noticias/;
     }
+
 
     return {map { ($_ => {}) } @modules};
 }
@@ -407,7 +452,12 @@ sub access_modules_as_config {
         tweets => {
             max_length => 2200,
         },
+
+        mf => {
+            max_checkbox_contato => 3,
+        },
     };
+
     return [map { +{code => $_, meta => $meta->{$_} || {}} } keys $_[0]->access_modules->%*];
 }
 
@@ -477,10 +527,14 @@ sub quiz_detectou_violencia_toggle {
 sub recalc_quiz_detectou_violencia_toggle {
     my ($self) = @_;
 
-    $self->update({
-        primeiro_quiz_detectou_violencia => \['coalesce(primeiro_quiz_detectou_violencia, ?)', $self->quiz_detectou_violencia ? '1' : '0'],
-        primeiro_quiz_detectou_violencia_atualizado_em => \'coalesce(primeiro_quiz_detectou_violencia_atualizado_em, now())',
-    });
+    $self->update(
+        {
+            primeiro_quiz_detectou_violencia =>
+              \['coalesce(primeiro_quiz_detectou_violencia, ?)', $self->quiz_detectou_violencia ? '1' : '0'],
+            primeiro_quiz_detectou_violencia_atualizado_em => \
+              'coalesce(primeiro_quiz_detectou_violencia_atualizado_em, now())',
+        }
+    );
 }
 
 # retorna o string para ser usada em FK composta
@@ -575,12 +629,56 @@ sub reset_all_questionnaires {
             quiz_assistant_yes_count => \'quiz_assistant_yes_count+1',
         }
     );
-    $self->clientes_quiz_sessions->search({deleted_at => undef})->update(
+
+    # o botão de reset do assistente só pode reiniciar as que começam sozinhas
+    # na vdd só deveria apagar uma especifica (mas não tem esse id salvo no banco)
+    $self->clientes_quiz_sessions->search(
+        {
+            'me.deleted_at'                            => undef,
+            'questionnaire.penhas_start_automatically' => 1,
+        },
+        {'join' => 'questionnaire'}
+    )->update(
         {
             deleted    => 1,
             deleted_at => \'NOW()',
         }
     );
+}
+
+sub remove_cliente_mf_session_control {
+    my ($self) = @_;
+    my $cliente_mf_session_control = $self->cliente_mf_session_control;
+    if ($cliente_mf_session_control) {
+        $cliente_mf_session_control->delete;
+    }
+}
+
+sub ensure_cliente_mf_session_control_exists {
+    my ($self) = @_;
+
+    my $row = eval { $self->find_or_create_related('cliente_mf_session_control', {}); };
+    my $err = $@;
+    if ($err && $err =~ /duplicate/) {
+        $row = $self->cliente_mf_session_control;
+    }
+    elsif ($err) {
+        die $err;
+    }
+
+    die 'failed to fulfill ensure_cliente_mf_session_control_exists' unless $row;
+
+    # garante que os valores padrões no caso do create estão presentes
+    $row->discard_changes;
+    return $row;
+}
+
+sub mf_assistant_session_id {
+    return 'MF' . substr($_[0]->cpf_hash, 0, 4);
+}
+
+sub mf_redo_addr_session_id {
+    return 'MF:Address' . substr($_[0]->cpf_hash, 0, 4);
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

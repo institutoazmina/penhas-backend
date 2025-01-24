@@ -119,6 +119,17 @@ sub housekeeping {
 "
     );
 
+    $dbh->do(
+        "UPDATE cliente_mf_session_control SET
+        status = 'onboarding',
+        current_clientes_quiz_session = null,
+        completed_questionnaires_id = '{}'
+        WHERE now() - started_at > '30 days'::interval
+        AND status='inProgress';
+"
+    );
+
+
     my $err = '';
     $err .= 'failed redis' unless Penhas::KeyValueStorage->instance->redis->ping() eq 'PONG';
 
@@ -222,7 +233,7 @@ sub _tick_notifications {
         $ENV{LAST_CHAT_JOB_ID} = $job_id;
     }
 
-    return $c->render(json => {});
+    return 1;
 }
 
 sub fix_tweets_parent_id {
