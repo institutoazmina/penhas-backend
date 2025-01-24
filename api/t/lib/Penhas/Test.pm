@@ -277,6 +277,7 @@ sub user_cleanup {
         TweetsReport
         MediaUpload
         PontoApoioSugestoesV2
+        MfClienteTarefa
         /
       )
     {

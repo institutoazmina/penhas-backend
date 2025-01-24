@@ -50,18 +50,6 @@ SQL_QUERY
 
 use DateTime::Format::DateParse;
 
-sub now {
-    my $self = shift;
-
-    my $now = $self->storage->dbh_do(
-        sub {
-            DateTime::Format::DateParse->parse_datetime($_[1]->selectrow_array('SELECT replaceable_now()'));
-        }
-    );
-
-    return $now;
-}
-
 sub unaccent {
     my $self = shift;
     my $text = shift;

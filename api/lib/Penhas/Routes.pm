@@ -53,6 +53,9 @@ sub register {
     # GET /web/faq/_botao_contato_
     $faq->get('_botao_contato_')->to(action => 'webfaq_botao_contato');
 
+    # GET /web/faq/conta-exclusao
+    $faq->get('conta-exclusao')->to(action => 'webfaq_conta_exclusao');
+
     # GET /web/termos-de-uso
     $web->get('termos-de-uso')->to(action => 'web_termos_de_uso');
 
@@ -147,6 +150,7 @@ sub register {
     $me->put()->to(action => 'me_update');
     $me->delete()->to(action => 'me_delete');
 
+
     # GET /me/delete-text
     $me->get('delete-text')->to(controller => 'Me', action => 'me_delete_text');
 
@@ -158,6 +162,9 @@ sub register {
 
     # POST /me/call-police-pressed
     $me->post('call-police-pressed')->to(action => 'inc_call_police_counter');
+
+    # POST /me/inc-login-offline
+    $me->post('inc-login-offline')->to(action => 'inc_login_offline_counter');
 
     # POST /me/modo-anonimo-toggle
     $me->post('modo-anonimo-toggle')->to(action => 'route_cliente_modo_anonimo_toggle');
@@ -182,6 +189,15 @@ sub register {
     # /me/media
     my $me_media = $me->under('media')->to(controller => 'Me_Media', action => 'assert_user_perms');
     $me_media->post()->to(action => 'upload');
+
+    # /me/tarefas
+    my $me_tarefas = $me->under('tarefas')->to(controller => 'Me_Tarefas', action => 'assert_user_perms');
+
+    $me_tarefas->get()->to(action => 'me_t_list');
+    $me_tarefas->post('sync')->to(action => 'me_t_sync');
+    $me_tarefas->post('nova')->to(action => 'me_t_nova');
+    $me_tarefas->post('batch')->to(action => 'me_t_batch_sync');
+
 
     # /me/tweets
     my $me_tweets = $me->under('tweets')->to(controller => 'Me_Tweets', action => 'assert_user_perms');
