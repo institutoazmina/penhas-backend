@@ -1,4 +1,4 @@
-FROM phusion/baseimage:focal-1.0.0
+FROM phusion/baseimage:focal-1.2.0
 CMD ["/sbin/my_init"]
 
 RUN apt-get update && apt-get install -y \
@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 RUN useradd -ms /bin/bash app;
 
 USER app
-ADD install-perlbrew.sh /tmp/install-perlbrew.sh
+ADD docker/install-perlbrew.sh /tmp/install-perlbrew.sh
 RUN /tmp/install-perlbrew.sh
 
 USER root
@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
 
 USER app
 
-ADD install-cpan-modules.sh /tmp/install-cpan-modules.sh
+ADD docker/install-cpan-modules.sh /tmp/install-cpan-modules.sh
 RUN /tmp/install-cpan-modules.sh
 
 USER root
@@ -33,13 +33,17 @@ RUN apt-get update && apt-get install -y \
 
 USER app
 
-ADD Makefile_local.PL /tmp/Makefile.PL
-ADD install-cpan-extra-modules.sh /tmp/install-cpan-extra-modules.sh
+ADD ./Makefile.PL /tmp/Makefile.PL
+ADD docker/install-cpan-extra-modules.sh /tmp/install-cpan-extra-modules.sh
 RUN /tmp/install-cpan-extra-modules.sh
 
 USER root
 RUN mkdir /etc/service/api
-COPY api.sh /etc/service/api/run
+COPY docker/api.sh /etc/service/api/run
 
 RUN mkdir /etc/service/penhas-minion-worker
-COPY penhas-minion-worker.sh /etc/service/penhas-minion-worker/run
+COPY docker/penhas-minion-worker.sh /etc/service/penhas-minion-worker/run
+
+COPY . /src
+
+RUN chown 1000:1000 /src/ -R
