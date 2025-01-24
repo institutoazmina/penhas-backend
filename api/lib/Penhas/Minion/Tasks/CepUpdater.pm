@@ -33,9 +33,8 @@ sub cliente_update_cep {
 
     $cep =~ s/[^0-9]//go;
     my $result;
-    foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(ViaCep Correios)) {
-        $result = eval{$backend->find($cep)};
-        $logger->error("Error during cep find using $backend: $@") if $@;
+    foreach my $backend (map { Penhas::CEP->new_with_traits(traits => $_) } qw(ViaCep)) {
+        $result = $backend->find($cep);
         if ($result) {
 
             # pula proximo backend se todos os campos estão preenchidos
