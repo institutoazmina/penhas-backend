@@ -508,7 +508,7 @@ sub cliente_list_guardioes {
             %defaults,
             header      => 'Convites recusados',
             description =>
-              'Os convites recusados ainda podem serem aceitos usando o mesmo link. Use o botão 🗑️ para cancelar o convite.',
+              'Os convites recusados ainda podem serem aceitos usando o mesmo link. Use o botão 🗑 para cancelar o convite.',
             delete_warning =>
               'Após apagar um convite recusado, você não poderá convidar o mesmo número por até 7 dias.',
         },
