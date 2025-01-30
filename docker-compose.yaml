@@ -1,89 +1,92 @@
-version: "3.5"
+version: '3.5'
 services:
-
-  directus:
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 100M
-    image: directus/directus:v9.0.0-rc.69
-    restart: unless-stopped
-    networks:
-      - db_network
-      - external_network
-    ports:
-      - "172.17.0.1:${DIRECTUS_API_LISTEN}:8055"
-    environment:
-      PUBLIC_URL: "${DIRECTUS_PUBLIC_URL}"
-      KEY: "${DIRECTUS_KEY}"
-      SECRET: "${DIRECTUS_SECRET}"
-      DB_CLIENT: 'pg'
-      DB_HOST: "${DIRECTUS_DATABASE_HOST}"
-      DB_PORT: "${DIRECTUS_DATABASE_PORT}"
-      DB_DATABASE: "${DIRECTUS_DATABASE_NAME}"
-      DB_USER: "${DIRECTUS_DATABASE_USERNAME}"
-      DB_PASSWORD: "${DIRECTUS_DATABASE_PASSWORD}"
-      EMAIL_FROM: "${SMTP_FROM}"
-      EMAIL_TRANSPORT: 'smtp'
-      EMAIL_SMTP_HOST: "${SMTP_HOST}"
-      EMAIL_SMTP_PORT: '465'
-      EMAIL_SMTP_USER: "${SMTP_USER}"
-      EMAIL_SMTP_PASSWORD: "${SMTP_PASSWORD}"
-      EMAIL_SMTP_SECURE: 'true'
-    logging:
-      driver: "json-file"
-      options:
-        max-file: "${LOG_MAX_FILE}"
-        max-size: "${LOG_MAX_SIZE}"
-  penhas_api:
-    image: azminas/penhas_api
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 800M
-    ports:
-      - "172.17.0.1:${PENHAS_API_LISTEN}:8080"
-    environment:
-      REDIS_SERVER: "redis:6379"
-      REDIS_NS: ""
-    volumes:
-      - ../data/:/data/
-      - ./api/:/src/
-    networks:
-      - external_network
-      - db_network
-      - cache
-    logging:
-      driver: "json-file"
-      options:
-        max-file: "${LOG_MAX_FILE}"
-        max-size: "${LOG_MAX_SIZE}"
-  redis:
-    container_name: penhas_redis
-    restart: unless-stopped
-    image: docker.io/bitnami/redis:7.4
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 100M
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-      - REDIS_PASSWORD=""
-    networks:
-      - cache
-    volumes:
-      - ${REDIS_STORAGE}:/bitnami/redis/data
-    logging:
-      driver: "json-file"
-      options:
-        max-file: "${LOG_MAX_FILE}"
-        max-size: "${LOG_MAX_SIZE}"
+    directus:
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+        image: directus/directus:9.26.0
+        restart: unless-stopped
+        networks:
+            - db_network
+            - external_network
+        ports:
+            - '172.17.0.1:${DIRECTUS_API_LISTEN}:8055'
+        environment:
+            PUBLIC_URL: '${DIRECTUS_PUBLIC_URL}'
+            KEY: '${DIRECTUS_KEY}'
+            SECRET: '${DIRECTUS_SECRET}'
+            DB_CLIENT: 'pg'
+            DB_HOST: '${DIRECTUS_DATABASE_HOST}'
+            DB_PORT: '${DIRECTUS_DATABASE_PORT}'
+            DB_DATABASE: '${DIRECTUS_DATABASE_NAME}'
+            DB_USER: '${DIRECTUS_DATABASE_USERNAME}'
+            DB_PASSWORD: '${DIRECTUS_DATABASE_PASSWORD}'
+            # set CA file to avoid SSL error in case of self-signed certificate
+            DB_SSL__REJECT_UNAUTHORIZED: 'false'
+            EMAIL_FROM: '${SMTP_FROM}'
+            EMAIL_TRANSPORT: 'smtp'
+            EMAIL_SMTP_HOST: '${SMTP_HOST}'
+            EMAIL_SMTP_PORT: '465'
+            EMAIL_SMTP_USER: '${SMTP_USER}'
+            EMAIL_SMTP_PASSWORD: '${SMTP_PASSWORD}'
+            EMAIL_SMTP_SECURE: 'true'
+        logging:
+            driver: 'json-file'
+            options:
+                max-file: '${LOG_MAX_FILE}'
+                max-size: '${LOG_MAX_SIZE}'
+    penhas_api:
+        image: 'ghcr.io/institutoazmina/penhas-backend:5ad72c21ae05c873a7a29bbc7d5470cc70aa5348'
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 800M
+        ports:
+            - '172.17.0.1:${PENHAS_API_LISTEN}:8080'
+        environment:
+            REDIS_SERVER: 'redis:6379'
+            REDIS_NS: ''
+        volumes:
+            - ../data/:/data/
+            - ./api/:/src/
+        networks:
+            - external_network
+            - db_network
+            - cache
+        logging:
+            driver: 'json-file'
+            options:
+                max-file: '${LOG_MAX_FILE}'
+                max-size: '${LOG_MAX_SIZE}'
+    redis:
+        container_name: penhas_redis
+        restart: unless-stopped
+        image: docker.io/bitnami/redis:7.4
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+        environment:
+            - ALLOW_EMPTY_PASSWORD=yes
+            - REDIS_PASSWORD=""
+        networks:
+            - cache
+        volumes:
+            - ${REDIS_STORAGE}:/bitnami/redis/data
+        logging:
+            driver: 'json-file'
+            options:
+                max-file: '${LOG_MAX_FILE}'
+                max-size: '${LOG_MAX_SIZE}'
 networks:
-  external_network:
-  cache:
-  db_network:
-    name: penhas_db_pg_network
+    external_network:
+        name: proxy_host
+        driver: bridge
+    db_network:
+        driver: bridge
+    cache:
