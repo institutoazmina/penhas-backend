@@ -6,7 +6,7 @@ services:
                 limits:
                     cpus: '0.50'
                     memory: 100M
-        image: directus/directus:9.26.0
+        image: directus/directus:11.4.1
         restart: unless-stopped
         networks:
             - db_network
