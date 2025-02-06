@@ -138,6 +138,15 @@ sub _load_support_room {
         activity   => eval { $user_obj->clientes_app_activity->last_activity() } || '',
         apelido    => $user_obj->name_for_admin(),
         avatar_url => $ENV{AVATAR_SUPORTE_URL},
+
+        # admin ve todos os badges, mas sem o badges pq os admin não são Clientes (nao tem CEP)
+        badges => [
+            map { $_->badge->render() } $c->schema2->resultset('Cliente')->search_related(
+                'badges_ativos',
+                {cliente_id => $user_obj->id},
+                {prefetch   => 'badge'}
+            )->all
+        ],
       }
       : {
         blocked_me => 0,
@@ -145,6 +154,7 @@ sub _load_support_room {
         activity   => 'até 48hrs para resposta',
         apelido    => 'Suporte PenhaS',
         avatar_url => $ENV{AVATAR_SUPORTE_URL},
+        badges     => [],                          # suporte sem badges
       };
 
     my $meta = {

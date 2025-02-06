@@ -66,6 +66,19 @@ get_schema->resultset('CpfCache')->find_or_create(
     }
 );
 
+my ($badge) = get_schema2->resultset('Badge')->search({id => -1})->all;
+if (!$badge) {
+    $badge = get_schema2->resultset('Badge')->create(
+        {
+            id          => -1,
+            name        => 'test badge',
+            description => 'test badge description',
+            image_url   => 'test badge image',
+            code        => 'test-badge',
+        }
+    );
+}
+
 my ($cliente_id,  $session,  $cliente);
 my ($cliente_id2, $session2, $cliente2);
 my ($cliente_id3, $session3, $cliente3);
@@ -139,17 +152,25 @@ on_scope_exit { user_cleanup(user_id => [$cliente_id, $cliente_id2, $cliente_id3
 
 $t->get_ok('/filter-skills', {'x-api-key' => $session})->status_is(200);
 
-my $skill1 = $schema2->resultset('Skill')->next;
-my $skill2 = $schema2->resultset('Skill')->search({id => {'!='     => $skill1->id}})->next;
-my $skill3 = $schema2->resultset('Skill')->search({id => {'not in' => [$skill1->id, $skill2->id]}})->next;
-
-ok $skill1, 'skill1 is defined';
-ok $skill2, 'skill2 is defined';
-ok $skill3, 'skill3 is defined';
-
-my $skills_in_order = join ', ', sort { $a cmp $b } $skill1->skill, $skill2->skill;
-
 db_transaction {
+
+    my $skill1 = $schema2->resultset('Skill')->next;
+    if (!$skill1) {
+        $skill1 = $schema2->resultset('Skill')->create({skill => 'skill 1', status => 'published', sort => 1});
+    }
+    ok $skill1, 'skill 1 is defined';
+    my $skill2 = $schema2->resultset('Skill')->search({id => {'!=' => $skill1->id}})->next;
+    ok $skill2, 'skill 2 is defined';
+    if (!$skill2) {
+        $skill2 = $schema2->resultset('Skill')->create({skill => 'skill 2', status => 'published', sort => 2});
+    }
+    my $skill3 = $schema2->resultset('Skill')->search({id => {'not in' => [$skill1->id, $skill2->id]}})->next;
+    if (!$skill3) {
+        $skill3 = $schema2->resultset('Skill')->create({skill => 'skill 3', status => 'published', sort => 3});
+    }
+    ok $skill3, 'skill 3 is defined';
+
+    my $skills_in_order = join ', ', sort { $a cmp $b } $skill1->skill, $skill2->skill;
 
     is $cliente->clientes_app_activity, undef, 'no clientes_app_activities';
     $t->get_ok(
@@ -271,6 +292,7 @@ db_transaction {
         )->status_is(400, 'homen nao pode abrir profile');
     };
 
+    $badge->update({linked_cep_cidade => undef});
     $t->get_ok(
         '/profile',
         {'x-api-key' => $session},
@@ -279,7 +301,18 @@ db_transaction {
       ->json_is('/profile/apelido',    'cliente C',  'apelido ok')                       #
       ->json_is('/profile/cliente_id', $cliente_id3, 'id ok')                            #
       ->json_is('/profile/minibio',    '',           'minibio empty instead of null')    #
+      ->json_is('/profile/badges',     [],           'no badges')                        #
       ->json_is('/profile/skills',     '', 'sem skills')->json_is('/is_myself', '0', 'nao eh o mesmo usuario');
+
+
+    app->cliente_add_badge(user_obj => $cliente3, badge_id => $badge->id);
+
+    $t->get_ok(
+        '/profile',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id3},
+      )->status_is(200, 'abrir profile')                                                 #
+      ->json_is('/profile/badges/0/code', 'test-badge', 'badge code');
 
     $cliente->update({minibio => 'abc foo', avatar_url => 'avatar.url'});
     $t->get_ok(
@@ -360,6 +393,16 @@ db_transaction {
       )->status_is(200, 'mandando mensagem')    #
       ->json_has('/id', 'we got an id!');
 
+    $t->get_ok(
+        '/me/chats',
+        {'x-api-key' => $session},
+        form => {cliente_id => $cliente_id3},
+      )->status_is(200, 'listar os chats')      #
+      ->json_is('/rows/0/other_apelido',       'cliente C',  'apelido ok')    #
+      ->json_is('/rows/0/other_badges/0/name', 'test badge', 'badge name')    #
+      ->json_is('/support/other_badges',       []);
+
+
     &test_notifcations(other_id => $cliente_id3, cliente_id => $cliente_id);
 
     $t->post_ok(
@@ -379,10 +422,12 @@ db_transaction {
             chat_auth => $room2_same_room->{chat_auth},
         },
       )->status_is(200, 'listando mensagens')               #
-      ->json_is('/messages/0/message', '0',              'message is zero')    #
-      ->json_is('/messages/1/message', $hello_from_cli1, 'hello is there')     #
-      ->json_is('/messages/0/is_me',   '1',              'is myself')          #
-      ->json_is('/messages/1/is_me',   '1',              'is myself');
+      ->json_is('/messages/0/message',  '0',              'message is zero')    #
+      ->json_is('/messages/1/message',  $hello_from_cli1, 'hello is there')     #
+      ->json_is('/messages/0/is_me',    '1',              'is myself')          #
+      ->json_is('/messages/1/is_me',    '1',              'is myself')          #
+      ->json_is('/other/badges/0/name', 'test badge',     'badge name');
+
 
     $t->get_ok(
         '/me/chats-messages',
@@ -405,6 +450,7 @@ db_transaction {
       ->json_is('/messages/1/message', $hello_from_cli1, 'hello is there')        #
       ->json_is('/messages/0/is_me',   '0',              'is NOT myself')         #
       ->json_is('/messages/1/is_me',   '0',              'is NOT myself')         #
+      ->json_is('/other/badges',       [],               'no badges')             #
       ->json_is('/other/activity',     'online')                                  #
       ->json_is('/has_more',           '0', 'nao tem mais msg');
 

@@ -38,7 +38,7 @@ package Mojo::Transaction::Role::PrettyDebug {
 package Penhas::Test;
 use Mojo::Base -strict;
 use Test2::V0;
-use Test2::Plugin::BailOnFail;
+#use Test2::Plugin::BailOnFail;
 use Test2::Tools::Subtest qw(subtest_buffered subtest_streamed);
 use Test2::Mock;
 use Test::Mojo;
