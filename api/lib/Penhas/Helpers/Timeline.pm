@@ -540,7 +540,7 @@ sub list_tweets {
     my @rows     = $rs->all;
     my $has_more = scalar @rows > $rows ? 1 : 0;
 
-    log_info(dumper([@rows]));
+    #log_info(dumper([@rows]));
 
     pop @rows if $has_more;
 
@@ -615,8 +615,6 @@ sub list_tweets {
             $attr
         )->all;
         foreach my $me (@childs) {
-            use DDP;
-            p $me;
             $me->{badges} = $reverse_badge->{$me->{cliente_id}} || [];
 
             $last_reply{$me->{parent_id}} = &_format_tweet($user_obj, $me, $remote_addr);
@@ -658,7 +656,7 @@ sub list_tweets {
 
         if ($category =~ /^(all|only_news|all_but_news)$/) {
             $c->add_tweets_news(
-                user     => $user_obj,
+                user_obj => $user_obj,
                 tweets   => \@tweets,
                 category => $category,
                 tags     => $opts{tags},
