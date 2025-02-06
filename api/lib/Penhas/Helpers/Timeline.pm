@@ -34,9 +34,10 @@ sub setup {
 sub like_tweet {
     my ($c, %opts) = @_;
 
-    my $user   = $opts{user} or confess 'missing user';
-    my $id     = $opts{id}   or confess 'missing id';
-    my $remove = $opts{remove};
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+    my $user     = {$user_obj->get_columns()};
+    my $id       = $opts{id} or confess 'missing id';
+    my $remove   = $opts{remove};
 
     confess 'missing remove' unless defined $remove;
 
@@ -118,7 +119,7 @@ sub like_tweet {
         $ENV{LAST_NTF_LIKE_JOB_ID} = $job_id;
     }
 
-    return {tweet => &_get_tweet_by_id($c, $user, $reference->id)};
+    return {tweet => &_get_tweet_by_id($c, $user_obj, $reference->id)};
 }
 
 sub delete_tweet {
@@ -314,16 +315,16 @@ sub add_tweet {
         }
     }
 
-    return &_get_tweet_by_id($c, $user, $tweet->id);
+    return &_get_tweet_by_id($c, $user_obj, $tweet->id);
 }
 
 
 sub report_tweet {
     my ($c, %opts) = @_;
 
-    my $user        = $opts{user}   or confess 'missing user';
-    my $reason      = $opts{reason} or confess 'missing reason';
-    my $reported_id = $opts{id}     or confess 'missing id';
+    my $user_obj    = $opts{user_obj} or confess 'missing user_obj';
+    my $reason      = $opts{reason}   or confess 'missing reason';
+    my $reported_id = $opts{id}       or confess 'missing id';
 
     slog_info(
         'report_tweet reported_id=%s, reason=%s',
@@ -337,7 +338,7 @@ sub report_tweet {
     my $report = $c->schema2->resultset('TweetsReport')->create(
         {
             reason      => $reason,
-            cliente_id  => $user->{id},
+            cliente_id  => $user_obj->id,
             reported_id => $reported_id,
             created_at  => DateTime->now->datetime(' '),
         }
@@ -385,8 +386,9 @@ sub list_tweets {
     my $rows = $opts{rows} || 10;
     $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
 
-    my $user      = $opts{user} or confess 'missing user';
-    my $user_obj  = $opts{skip_comments} ? undef : ($opts{user_obj} or confess 'missing user_obj');
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+    use DDP;
+    p %opts;
     my $is_legacy = $opts{is_legacy};
     my $os        = $opts{os};
 
@@ -487,7 +489,7 @@ sub list_tweets {
 
     push $cond->{'-and'}->@*, {'me.cliente_id' => $ForceFilterClientes} if $ForceFilterClientes;
     if ($category eq 'all_myself') {
-        push $cond->{'-and'}->@*, {'me.cliente_id' => $user->{id}};
+        push $cond->{'-and'}->@*, {'me.cliente_id' => $user_obj->id};
     }
     elsif ($category eq 'only_news' || $category eq 'all_but_news') {
 
@@ -505,7 +507,8 @@ sub list_tweets {
         '+columns' => [
             {cliente_apelido            => 'cliente.apelido'},
             {cliente_modo_anonimo_ativo => 'cliente.modo_anonimo_ativo'},
-            {cliente_avatar_url         => 'cliente.avatar_url'}
+            {cliente_avatar_url         => 'cliente.avatar_url'},
+            {cliente_cep_cidade         => 'cliente.cep_cidade'}
         ],
         result_class => 'DBIx::Class::ResultClass::HashRefInflator'
     };
@@ -537,7 +540,7 @@ sub list_tweets {
     my @rows     = $rs->all;
     my $has_more = scalar @rows > $rows ? 1 : 0;
 
-#    log_info(dumper([@rows]));
+    log_info(dumper([@rows]));
 
     pop @rows if $has_more;
 
@@ -545,6 +548,29 @@ sub list_tweets {
     my @tweets;
     my @unique_ids;
     my @comments;
+
+
+    my @users_ids = map { $_->{cliente_id} } grep {
+
+        # filtra pelas condições q devem ser exibidas
+        !$_->{anonimo} || $is_admin || $_->{cliente_id} == $user_obj->id
+    } @rows;
+    my @client_badges = $c->schema2->resultset('Cliente')->search_related(
+        'badges_ativos',
+        {
+            cliente_id => {-in => \@users_ids},
+        },
+        {
+            prefetch     => 'badge',
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+        }
+    )->all;
+    my $reverse_badge = {};
+    foreach my $badge (@client_badges) {
+        $reverse_badge->{$badge->{cliente_id}} = [] if (!$reverse_badge->{$badge->{cliente_id}});
+        push $reverse_badge->{$badge->{cliente_id}}->@*, $badge->{badge};
+    }
+
     foreach my $tweet (@rows) {
 
         push @unique_ids, $tweet->{id};
@@ -552,9 +578,10 @@ sub list_tweets {
           and push @comments, $tweet->{ultimo_comentario_id}
           if $tweet->{ultimo_comentario_id}
           && !$opts{parent_id}
-          && !$opts{skip_comments};    # nao tem parent, faz 'prefetch' do ultmo comentarios
+          && !$opts{skip_comments};    # nao tem parent, faz 'prefetch' do ultimo comentários
 
-        my $item = &_format_tweet($user, $tweet, $remote_addr);
+        $tweet->{badges} = $reverse_badge->{$tweet->{cliente_id}} || [];
+        my $item = &_format_tweet($user_obj, $tweet, $remote_addr);
 
         push @tweets, $item;
     }
@@ -589,12 +616,16 @@ sub list_tweets {
             $attr
         )->all;
         foreach my $me (@childs) {
-            $last_reply{$me->{parent_id}} = &_format_tweet($user, $me, $remote_addr);
+            use DDP;
+            p $me;
+            $me->{badges} = $reverse_badge->{$me->{cliente_id}} || [];
+
+            $last_reply{$me->{parent_id}} = &_format_tweet($user_obj, $me, $remote_addr);
         }
     }
 
     my %already_liked = map { $_->{tweet_id} => 1 } $c->schema2->resultset('TweetLikes')->search(
-        {cliente_id => $user->{id}, tweet_id => {'in' => \@unique_ids}},
+        {cliente_id => $user_obj->id, tweet_id => {'in' => \@unique_ids}},
         {
             columns      => ['tweet_id'],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
@@ -611,7 +642,7 @@ sub list_tweets {
         }
     }
 
-    $c->add_tweets_highlights(user => $user, tweets => \@tweets);
+    $c->add_tweets_highlights(tweets => \@tweets, user_obj => $user_obj);
 
     my $next_page;
 
@@ -628,7 +659,7 @@ sub list_tweets {
 
         if ($category =~ /^(all|only_news|all_but_news)$/) {
             $c->add_tweets_news(
-                user     => $user,
+                user     => $user_obj,
                 tweets   => \@tweets,
                 category => $category,
                 tags     => $opts{tags},
@@ -665,7 +696,7 @@ sub list_tweets {
         (
             $opts{parent_id}
             ? (
-                parent => &_get_tweet_by_id($c, $user, $opts{parent_id}),
+                parent => &_get_tweet_by_id($c, $user_obj, $opts{parent_id}),
               )
             : ()
         ),
@@ -725,7 +756,7 @@ Um forte abraço!<br>
 
 
 sub _format_tweet {
-    my ($user, $me, $remote_addr) = @_;
+    my ($user_obj, $me, $remote_addr) = @_;
     my $avatar_anonimo = $ENV{AVATAR_ANONIMO_URL};
     my $avatar_default = $ENV{AVATAR_PADRAO_URL};
     my $avatar_penhas  = $ENV{AVATAR_PENHAS_URL};
@@ -733,21 +764,21 @@ sub _format_tweet {
     my $penhas_avatar = $me->{use_penhas_avatar};
     my $anonimo       = $me->{anonimo} || $me->{cliente_modo_anonimo_ativo};
 
-    my $eh_admin = defined $user && $user->{eh_admin};
+    my $eh_admin = defined $user_obj && $user_obj->eh_admin;
 
     my $media_ref = [];
 
     if ($me->{media_ids} && $me->{media_ids} =~ /^\[/) {
         foreach my $media_id (@{from_json($me->{media_ids}) || []}) {
             push @$media_ref, {
-                sd => &_gen_uniq_media_url($media_id, $user, 'sd', $remote_addr),
-                hd => &_gen_uniq_media_url($media_id, $user, 'hd', $remote_addr),
+                sd => &_gen_uniq_media_url($media_id, $user_obj, 'sd', $remote_addr),
+                hd => &_gen_uniq_media_url($media_id, $user_obj, 'hd', $remote_addr),
             };
         }
     }
 
-    my $is_owner = $user->{id} == $me->{cliente_id} ? 1 : 0;
-    return {
+    my $is_owner = $user_obj->id == $me->{cliente_id} ? 1 : 0;
+    my $row      = {
         meta => {
             owner     => $is_owner,
             can_reply => $me->{tweet_depth} < 3 && $me->{tweet_depth} > 0 ? 1 : 0,
@@ -755,6 +786,7 @@ sub _format_tweet {
             parent_id => $me->{parent_id},
             (is_test() ? (tweet_depth_test_only => $me->{tweet_depth}) : ())
         },
+        badges => $me->{badges} ? _format_db_badges($me->{badges}) : [],
 
         id      => $me->{id},
         content => $me->{disable_escape}
@@ -785,6 +817,42 @@ sub _format_tweet {
             : ()
         ),
     };
+
+    if ($user_obj) {    # aqui é o user que está logado, ele precisa ter o badge do evento, e então vai comparado com o
+                        # CEP da usuária que postou o tweet, se for igual, ele irá ver um badge extra no tweet dizendo
+                        # que o usuária está na mesma cidade que ele
+        my $badge_locations = $user_obj->linked_location_badges();
+        for my $badge (@$badge_locations) {
+
+            if ($badge->linked_cep_cidade() eq $me->{cliente_cep_cidade}) {
+                push $row->{badges}->@*, {
+                    description => 'Usuárias da cidade ' . $me->{cliente_cep_cidade},
+                    image_url   => '',
+                    name        => 'Usuária da sua região',
+                    code        => 'GEO:CITY',
+                    style       => 'inline',
+                };
+            }
+        }
+    }
+
+    return $row;
+}
+
+sub _format_db_badges {
+    my ($badges) = @_;
+    my @badges;
+    foreach my $badge (@$badges) {
+        push @badges, {
+            description => $badge->{description},
+            image_url   => $badge->{image_url},
+            name        => $badge->{name},
+            code        => $badge->{code},
+            style       => 'popup',
+        };
+    }
+
+    return \@badges;
 }
 
 sub maybe_linkfy {
@@ -794,25 +862,27 @@ sub maybe_linkfy {
 }
 
 sub _gen_uniq_media_url {
-    my ($media_id, $user, $quality, $ip) = @_;
+    my ($media_id, $user_obj, $quality, $ip) = @_;
 
-    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $user->{id} . $quality . $ip), 0, 12);
+    my $id = $user_obj->id;
+
+    my $hash = substr(md5_hex($ENV{MEDIA_HASH_SALT} . $id . $quality . $ip), 0, 12);
     return $ENV{PUBLIC_API_URL} . "media-download/?m=$media_id&q=$quality&h=$hash";
 }
 
 sub _get_tweet_by_id {
-    my ($c, $user, $tweet_id) = @_;
+    my ($c, $user_obj, $tweet_id) = @_;
 
-    my $list  = &list_tweets($c, id => $tweet_id, user => $user, skip_comments => 1,);
+    my $list  = &list_tweets($c, id => $tweet_id, user_obj => $user_obj, skip_comments => 1,);
     my $tweet = $list->{tweets}[0];
     $c->reply_item_not_found() unless $tweet;
     return $tweet;
 }
 
 sub _get_tracked_news_url {
-    my ($user, $news) = @_;
+    my ($user_obj, $news) = @_;
 
-    my $userid      = $user->{id}        or confess 'missing user.id';
+    my $userid      = $user_obj->id      or confess 'missing user.id';
     my $newsid      = $news->{id}        or confess 'missing news.id';
     my $url         = $news->{hyperlink} or confess 'missing news.hyperlink';
     my $valid_until = time() + 3600;
@@ -836,8 +906,8 @@ sub _get_proxy_image_url {
 sub add_tweets_highlights {
     my ($c, %opts) = @_;
 
-    my $user   = $opts{user}   or confess 'missing user';
-    my $tweets = $opts{tweets} or confess 'missing tweets';
+    my $user_obj = $opts{user_obj} or confess 'missing user_obj';
+    my $tweets   = $opts{tweets}   or confess 'missing tweets';
 
     my $config = &kv()->redis_get_cached_or_execute(
         'tags_highlight_regexp',
@@ -951,7 +1021,7 @@ sub add_tweets_highlights {
 
                 $seen_tags{$highlight->{tag_id}}++;
                 push @related_news, {
-                    href   => &_get_tracked_news_url($user, $news),
+                    href   => &_get_tracked_news_url($user_obj, $news),
                     title  => $news->{title},
                     source => $news->{source},
                 };
@@ -1215,12 +1285,12 @@ sub add_tweets_news {
 sub _format_noticia {
     my ($r, %opts) = @_;
 
-    $opts{user} or confess 'missing $opts{user}';
+    $opts{user_obj} or confess 'missing $opts{user_obj}';
 
     return {
         #type     => 'news',
         id       => $r->{id},
-        href     => &_get_tracked_news_url($opts{user}, $r),
+        href     => &_get_tracked_news_url($opts{user_obj}, $r),
         title    => $r->{title},
         source   => $r->{fonte},
         date_str => DateTime::Format::Pg->parse_datetime($r->{display_created_time})->dmy('/'),

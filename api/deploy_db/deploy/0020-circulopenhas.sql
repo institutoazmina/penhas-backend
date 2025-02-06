@@ -14,6 +14,7 @@ CREATE TABLE badges (
 );
 
 ALTER TABLE cliente_tag ADD COLUMN badge_id integer references badges(id);
+ALTER TABLE cliente_tag ALTER COLUMN mf_tag_id DROP NOT NULL;
 
 ALTER TABLE cliente_tag ADD COLUMN valid_until timestamp without time zone not null default 'infinity';
 

@@ -21,7 +21,7 @@ __PACKAGE__->add_columns(
   "cliente_id",
   { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
   "mf_tag_id",
-  { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 1 },
   "created_on",
   {
     data_type     => "timestamp",
@@ -57,12 +57,17 @@ __PACKAGE__->belongs_to(
   "mf_tag",
   "Penhas::Schema2::Result::MfTag",
   { id => "mf_tag_id" },
-  { is_deferrable => 0, on_delete => "CASCADE", on_update => "NO ACTION" },
+  {
+    is_deferrable => 0,
+    join_type     => "LEFT",
+    on_delete     => "CASCADE",
+    on_update     => "NO ACTION",
+  },
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-01-30 12:15:18
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CvoM4Rfae3lYNJAY6szobw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-02-06 01:37:32
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yTIzUhcjfcLUsK0Twtj9iQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

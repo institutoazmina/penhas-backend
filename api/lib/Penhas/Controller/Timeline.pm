@@ -43,9 +43,9 @@ sub add_like {
     );
 
     my $tweet = $c->like_tweet(
-        id     => $c->stash('tweet')->{id},
-        user   => $c->stash('user'),
-        remove => exists $params->{remove} && $params->{remove} eq '1' ? 1 : 0,
+        id       => $c->stash('tweet')->{id},
+        user_obj => $c->stash('user_obj'),
+        remove   => exists $params->{remove} && $params->{remove} eq '1' ? 1 : 0,
     );
 
     return $c->render(
@@ -70,9 +70,9 @@ sub add_report {
     );
 
     my $tweet = $c->report_tweet(
-        id     => $c->stash('tweet')->{id},
-        user   => $c->stash('user'),
-        reason => $params->{reason}
+        id       => $c->stash('tweet')->{id},
+        user_obj => $c->stash('user_obj'),
+        reason   => $params->{reason}
     );
 
     return $c->render(
@@ -113,7 +113,6 @@ sub list {
         %$params,
         is_legacy => $is_legacy,
         os        => $os,
-        user      => $c->stash('user'),
         user_obj  => $c->stash('user_obj'),
     );
 

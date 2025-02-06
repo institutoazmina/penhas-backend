@@ -70,7 +70,7 @@ subtest_buffered 'Cadastro com sucesso' => sub {
 };
 
 
-my ($cliente_id2, $session2);
+my ($cliente_id2, $session2, $cliente_id2_obj);
 subtest_buffered 'Cadastro2 com sucesso' => sub {
     my $res = $t->post_ok(
         '/signup',
@@ -87,9 +87,23 @@ subtest_buffered 'Cadastro2 com sucesso' => sub {
         },
     )->status_is(200)->tx->res->json;
 
-    $cliente_id2 = $res->{_test_only_id};
-    $session2    = $res->{session};
+    $cliente_id2     = $res->{_test_only_id};
+    $session2        = $res->{session};
+    $cliente_id2_obj = get_schema2->resultset('Cliente')->find($cliente_id2);
 };
+
+my ($badge) = get_schema2->resultset('Badge')->search({id => -1})->all;
+if (!$badge) {
+    $badge = get_schema2->resultset('Badge')->create(
+        {
+            id          => -1,
+            name        => 'test badge',
+            description => 'test badge description',
+            image_url   => 'test badge image',
+            code        => 'test-badge',
+        }
+    );
+}
 
 $Penhas::Helpers::Timeline::ForceFilterClientes = [$cliente_id, $cliente_id2];
 on_scope_exit { user_cleanup(user_id => $Penhas::Helpers::Timeline::ForceFilterClientes); };
@@ -358,6 +372,51 @@ do {
         }
     )->status_is(200)->json_is('/tweets/0/content', 'Kazoeru 1')->json_is('/has_more', '0')
       ->json_has('/next_page', 'has next page still');
+
+
+    # testa os badges
+
+    $badge->update({linked_cep_cidade => undef});
+    $cliente_id2_obj->update({cep_cidade => 'sao-paulinho'});
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session2},
+        form => {category => 'all_myself', rows => 1}
+      )->status_is(200)->json_is('/has_more', '0')    #
+      ->json_is('/tweets/0/content', 'Just me')       #
+      ->json_is('/tweets/0/badges',  []);
+
+    app->cliente_add_badge(user_obj => $cliente_id2_obj, badge_id => $badge->id);
+
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session2},
+        form => {category => 'all_myself', rows => 1}
+      )->status_is(200)->json_is('/has_more', '0')    #
+      ->json_is('/tweets/0/content',              'Just me')                       #
+      ->json_is('/tweets/0/badges/0/name',        'test badge')                    #
+      ->json_is('/tweets/0/badges/0/description', 'test badge description')        #
+      ->json_is('/tweets/0/badges/0/image_url',   'test badge image')              #
+      ->json_is('/tweets/0/badges/0/style',       'popup')                         #
+      ->json_is('/tweets/0/badges/1',             undef, 'no other badges yet')    #
+      ->json_is('/tweets/1/content',              undef);
+
+    $badge->update({linked_cep_cidade => 'sao-paulinho'});
+
+    $t->get_ok(
+        ('/timeline'),
+        {'x-api-key' => $session2},
+        form => {category => 'all_myself', rows => 1}
+      )->status_is(200)->json_is('/has_more', '0')                                 #
+      ->json_is('/tweets/0/content',              'Just me')                       #
+      ->json_is('/tweets/0/badges/0/name',        'test badge')                    #
+      ->json_is('/tweets/0/badges/0/description', 'test badge description')        #
+      ->json_is('/tweets/0/badges/0/image_url',   'test badge image')              #
+      ->json_is('/tweets/0/badges/0/style',       'popup')                         #
+      ->json_is('/tweets/0/badges/1/style',       'inline')                        #
+      ->json_is('/tweets/0/badges/1/code',        'GEO:CITY')                      #
+      ->json_is('/tweets/1/content',              undef);
+
 
 };
 
