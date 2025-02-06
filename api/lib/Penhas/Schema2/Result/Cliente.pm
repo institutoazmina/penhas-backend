@@ -490,6 +490,28 @@ sub linked_location_badges {
     return \@badges;
 }
 
+sub check_location_badge_for_cidade {
+    my ($self, $cep_cidade) = @_;
+    return () unless $cep_cidade;
+
+    my $badge_locations = $self->linked_location_badges();
+    my @badges;
+
+    for my $badge (@$badge_locations) {
+        if ($badge->linked_cep_cidade() eq $cep_cidade) {
+            push @badges, {
+                description => 'Usuárias da cidade ' . $cep_cidade,
+                image_url   => '',
+                name        => 'Usuária da sua região',
+                code        => 'GEO:CITY',
+                style       => 'inline',
+            };
+        }
+    }
+
+    return @badges;
+}
+
 sub has_module {
     my $self   = shift;
     my $module = shift || confess 'missing module name';

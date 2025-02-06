@@ -44,8 +44,9 @@ sub me_chat_sessions {
     my $user_obj = $c->stash('user_obj');
 
     my $valid = $c->validate_request_params(
-        rows => {required => 0, type => 'Int'},
-        next_page => {required => 0, type => 'Str', max_length => 9999},
+        rows       => {required => 0, type => 'Int'},
+        cliente_id => {required => 0, type => 'Int',},
+        next_page  => {required => 0, type => 'Str', max_length => 9999},
     );
 
     my $ret = $c->chat_list_sessions(

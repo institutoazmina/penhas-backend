@@ -561,14 +561,13 @@ sub list_tweets {
             cliente_id => {-in => \@users_ids},
         },
         {
-            prefetch     => 'badge',
-            result_class => 'DBIx::Class::ResultClass::HashRefInflator'
+            prefetch => 'badge',
         }
     )->all;
     my $reverse_badge = {};
     foreach my $badge (@client_badges) {
-        $reverse_badge->{$badge->{cliente_id}} = [] if (!$reverse_badge->{$badge->{cliente_id}});
-        push $reverse_badge->{$badge->{cliente_id}}->@*, $badge->{badge};
+        $reverse_badge->{$badge->cliente_id} = [] if (!$reverse_badge->{$badge->cliente_id});
+        push $reverse_badge->{$badge->cliente_id}->@*, $badge->badge;
     }
 
     foreach my $tweet (@rows) {
@@ -821,19 +820,7 @@ sub _format_tweet {
     if ($user_obj) {    # aqui é o user que está logado, ele precisa ter o badge do evento, e então vai comparado com o
                         # CEP da usuária que postou o tweet, se for igual, ele irá ver um badge extra no tweet dizendo
                         # que o usuária está na mesma cidade que ele
-        my $badge_locations = $user_obj->linked_location_badges();
-        for my $badge (@$badge_locations) {
-
-            if ($badge->linked_cep_cidade() eq $me->{cliente_cep_cidade}) {
-                push $row->{badges}->@*, {
-                    description => 'Usuárias da cidade ' . $me->{cliente_cep_cidade},
-                    image_url   => '',
-                    name        => 'Usuária da sua região',
-                    code        => 'GEO:CITY',
-                    style       => 'inline',
-                };
-            }
-        }
+        push $row->{badges}->@*, $user_obj->check_location_badge_for_cidade($me->{cliente_cep_cidade});
     }
 
     return $row;
@@ -841,18 +828,12 @@ sub _format_tweet {
 
 sub _format_db_badges {
     my ($badges) = @_;
-    my @badges;
+    my @out;
     foreach my $badge (@$badges) {
-        push @badges, {
-            description => $badge->{description},
-            image_url   => $badge->{image_url},
-            name        => $badge->{name},
-            code        => $badge->{code},
-            style       => 'popup',
-        };
+        push @out, $badge->render();
     }
 
-    return \@badges;
+    return \@out;
 }
 
 sub maybe_linkfy {

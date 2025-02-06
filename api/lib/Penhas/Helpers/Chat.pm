@@ -195,12 +195,24 @@ sub chat_profile_user {
                 {avatar_url => 'me.avatar_url'},
                 {minibio    => 'me.minibio'},
                 {skills     => \q|json_agg(skill.skill)|},
+
+                # usar _ para não incluir na resposta para o frontend
+                {_cep_cidade => 'me.cep_cidade'},
             ],
             group_by     => \'me.id',
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
         }
     )->next;
     $c->reply_item_not_found() unless $cliente;
+
+    my @badges = $c->schema2->resultset('Cliente')->search_related(
+        'badges_ativos',
+        {cliente_id => $cliente_id,},
+        {prefetch   => 'badge',}
+    )->all;
+    $cliente->{badges} = [map { $_->badge->render() } @badges];
+
+    push $cliente->{badges}->@*, $user_obj->check_location_badge_for_cidade(delete $cliente->{_cep_cidade});
 
     my $skills = $cliente->{skills} ? from_json($cliente->{skills}) : undef;
     $cliente->{skills} = join ', ', sort { $a cmp $b } grep {defined} $skills->@* if $skills;
@@ -244,6 +256,9 @@ sub chat_list_sessions {
                     ? (\[' ( ARRAY[' . $placeholders . ']::int[] && me.participants ) = FALSE', @$blocked_users])
                     : ()
                 ),
+
+                # filtra por um usuario em especifico, se for passado, apenas nos testes
+                ($opts{cliente_id} ? (\['me.participants @> ARRAY[?]::int[]', $opts{cliente_id}]) : ()),
             ],
             'me.has_message' => 1,
         },
@@ -279,14 +294,29 @@ sub chat_list_sessions {
         {
             join    => 'cliente',
             columns => [
-                {cliente_id => 'me.cliente_id'},
-                {apelido    => 'cliente.apelido'},
-                {avatar_url => 'cliente.avatar_url'},
-                {activity   => \"(extract( epoch from (now() - me.last_tm_activity)) / 60)::int"},
+                {cliente_id  => 'me.cliente_id'},
+                {apelido     => 'cliente.apelido'},
+                {avatar_url  => 'cliente.avatar_url'},
+                {activity    => \"(extract( epoch from (now() - me.last_tm_activity)) / 60)::int"},
+                {_cep_cidade => 'cliente.cep_cidade'},    # Add cep_cidade for location badge check
             ],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
         }
     );
+
+    # Load badges for all participants
+    my @client_badges = $c->schema2->resultset('Cliente')->search_related(
+        'badges_ativos',
+        {cliente_id => {'in' => [@load_participants]}},
+        {prefetch   => 'badge'}
+    )->all;
+    my $badges_by_client = {};
+    foreach my $badge (@client_badges) {
+        $badges_by_client->{$badge->cliente_id} = [] if !$badges_by_client->{$badge->cliente_id};
+        push $badges_by_client->{$badge->cliente_id}->@*, $badge->badge->render();
+    }
+
+
     while (my $r = $cliente_activity_rs->next) {
         $participants->{$r->{cliente_id}} = $r;
     }
@@ -297,6 +327,9 @@ sub chat_list_sessions {
         my $other = $participants->{$room->{other_id}};
         next unless $other;    # nao existe mais, banido, ou vc/ele bloqueou, etc...
 
+        my $badges = $badges_by_client->{$other->{cliente_id}} || [];
+        push @$badges, $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade});
+
         push @chats, {
             chat_auth          => &_sign_chat_auth($c, id => $room->{id}, uid => $user_obj->id),
             last_message_is_me => $room->{last_message_by} == $myself ? 1 : 0,
@@ -304,6 +337,7 @@ sub chat_list_sessions {
             other_activity     => &_activity_mins_to_label($other->{activity}),
             other_apelido      => $other->{apelido},
             other_avatar_url   => $other->{avatar_url} || $ENV{AVATAR_PADRAO_URL},
+            other_badges       => $badges,
         };
     }
 
@@ -447,6 +481,7 @@ sub _chat_support {
         other_activity   => '',
         other_apelido    => 'Suporte PenhaS',
         other_avatar_url => $ENV{AVATAR_SUPORTE_URL},
+        other_badges     => [],
     };
     if ($session) {
         $ret->{last_message_at}    = &pg_timestamp2iso_8601($session->get_column('last_msg_at'));
@@ -585,11 +620,12 @@ sub _load_chat_room {
             join    => ['cliente_bloqueios_custom', 'clientes_app_activity'],
             bind    => [$user_obj->id],
             columns => [
-                {cliente_id => 'me.id'},
-                {apelido    => 'me.apelido'},
-                {avatar_url => 'me.avatar_url'},
-                {blocked_me => 'cliente_bloqueios_custom.blocked_cliente_id'},
-                {activity   => \"(extract( epoch from (now() - clientes_app_activity.last_activity)) / 60)::int"},
+                {cliente_id  => 'me.id'},
+                {apelido     => 'me.apelido'},
+                {avatar_url  => 'me.avatar_url'},
+                {blocked_me  => 'cliente_bloqueios_custom.blocked_cliente_id'},
+                {activity    => \"(extract( epoch from (now() - clientes_app_activity.last_activity)) / 60)::int"},
+                {_cep_cidade => 'me.cep_cidade'},
             ],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator'
         }
@@ -605,10 +641,19 @@ sub _load_chat_room {
         };
     }
     else {
+        # Load badges
+        my @badges = $c->schema2->resultset('Cliente')->search_related(
+            'badges_ativos',
+            {cliente_id => $other->{cliente_id}},
+            {prefetch   => 'badge'}
+        )->all;
+
+        $other->{badges} = [map { $_->badge->render() } @badges];
+        push $other->{badges}->@*, $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade});
+
         $other->{blocked_me} = $other->{blocked_me} ? 1 : 0;
         $other->{avatar_url} ||= $ENV{AVATAR_PADRAO_URL};
         $other->{activity} = &_activity_mins_to_label($other->{activity});
-
     }
 
     my $did_blocked = $user_obj->cliente_bloqueios->search({blocked_cliente_id => $other->{cliente_id}})->count > 0;
