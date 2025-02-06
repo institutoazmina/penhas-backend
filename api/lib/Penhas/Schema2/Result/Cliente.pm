@@ -376,8 +376,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2023-09-15 13:06:40
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:d5LkW5yErl1nJlT+caYrsw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-02-06 01:37:32
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:h/Y54YmQgFGwIA9ojfNdyw
 
 
 use Carp qw/confess/;
@@ -396,6 +396,19 @@ __PACKAGE__->has_many(
         return {
             "$args->{foreign_alias}.cliente_id"         => {-ident => "$args->{self_alias}.id"},
             "$args->{foreign_alias}.blocked_cliente_id" => \' = ? '
+        };
+    }
+);
+
+__PACKAGE__->has_many(
+    badges_ativos => 'Penhas::Schema2::Result::ClienteTag',
+    sub {
+        my $args = shift;
+
+        return {
+            "$args->{foreign_alias}.cliente_id"  => {-ident => "$args->{self_alias}.id"},
+            "$args->{foreign_alias}.valid_until" => {'>'    => \'now()'},
+            "$args->{foreign_alias}.badge_id"    => {'!='   => undef},
         };
     }
 );
@@ -463,6 +476,18 @@ sub access_modules_as_config {
 
 sub access_modules_str {
     return ',' . join(',', keys $_[0]->access_modules->%*) . ',';
+}
+
+sub linked_location_badges {
+    my $self = shift;
+    return $self->{cache_linked_location_badges} if ($self->{cache_linked_location_badges});
+
+    my @badges
+      = $self->search_related('badges_ativos', {'linked_cep_cidade' => {'!=' => undef}}, {prefetch => 'badge'})->all;
+    @badges = map { $_->badge } @badges;
+
+    $self->{cache_linked_location_badges} = \@badges;
+    return \@badges;
 }
 
 sub has_module {
