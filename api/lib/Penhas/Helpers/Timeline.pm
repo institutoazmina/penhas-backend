@@ -831,6 +831,26 @@ sub _format_db_badges {
         push @out, $badge->render();
     }
 
+    if (!is_test() && $ENV{MODO_FUTURE_PROOF}) {
+        if (rand() < 0.5) {
+            push @out, {
+                code        => 'rnd:' . random_string(4),
+                name        => "I'm a random badge! " . random_string(4),
+                description => qq{{
+                    <p style="font-size: ${\ (rand() > 0.5 ? '120%' : '100%') }">Some more test text here ${\ random_string(3) } inside a paragraph</p>
+                    Segunda linha, esperado que fica quebrado se a pessoa usar p em algumas e nada em outras
+                    <p>${\ rand() > 0.5 ? '<strong>' : '' }Final line of text for testing${\ rand() > 0.5 ? '</strong>' : '' }</p>
+                }},
+                image_url => rand() > 0.5
+                ? $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                : $ENV{AVATAR_SUPORTE_URL},    # return .svg and .png 50% of the time
+                popup            => rand() > 0.5 ? 1 : 0,
+                show_description => 1,
+                style            => rand() ? 'inline' : 'inline-block',
+            };
+        }
+    }
+
     return \@out;
 }
 
