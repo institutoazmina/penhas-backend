@@ -397,7 +397,7 @@ do {
       ->json_is('/tweets/0/badges/0/name',        'test badge')                    #
       ->json_is('/tweets/0/badges/0/description', 'test badge description')        #
       ->json_is('/tweets/0/badges/0/image_url',   'test badge image')              #
-      ->json_is('/tweets/0/badges/0/style',       'popup')                         #
+      ->json_is('/tweets/0/badges/0/style',       'inline-block')                         #
       ->json_is('/tweets/0/badges/1',             undef, 'no other badges yet')    #
       ->json_is('/tweets/1/content',              undef);
 
@@ -412,7 +412,7 @@ do {
       ->json_is('/tweets/0/badges/0/name',        'test badge')                    #
       ->json_is('/tweets/0/badges/0/description', 'test badge description')        #
       ->json_is('/tweets/0/badges/0/image_url',   'test badge image')              #
-      ->json_is('/tweets/0/badges/0/style',       'popup')                         #
+      ->json_is('/tweets/0/badges/0/style',       'inline-block')                         #
       ->json_is('/tweets/0/badges/1/style',       'inline')                        #
       ->json_is('/tweets/0/badges/1/code',        'GEO:CITY')                      #
       ->json_is('/tweets/1/content',              undef);

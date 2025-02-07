@@ -501,10 +501,14 @@ sub check_location_badge_for_cidade {
         if ($badge->linked_cep_cidade() eq $cep_cidade) {
             push @badges, {
                 description => 'Usuárias da cidade ' . $cep_cidade,
-                image_url   => '',
-                name        => 'Usuária da sua região',
-                code        => 'GEO:CITY',
-                style       => 'inline',
+                image_url   => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL'}
+                  || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                  || '',
+                name             => 'Usuária da sua região',
+                code             => 'GEO:CITY',
+                popup            => 0,
+                show_description => 0,
+                style            => 'inline',
             };
         }
     }

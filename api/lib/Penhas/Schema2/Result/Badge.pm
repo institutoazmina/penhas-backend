@@ -56,13 +56,16 @@ __PACKAGE__->has_many(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4LroHT+lBR80v2oGND5gHQ
 
 sub render {
-    my ($self) = @_;
+    my ($self, $inline) = @_;
+
     return {
-        code        => $self->code,
-        name        => $self->name,
-        description => $self->description,
-        image_url   => $self->image_url,
-        style       => 'popup',
+        code             => $self->code,
+        name             => $self->name,
+        description      => $self->description,
+        image_url        => $self->image_url,
+        popup            => 1,
+        show_description => 1,
+        style            => $inline ? 'inline' : 'inline-block',
     };
 }
 
