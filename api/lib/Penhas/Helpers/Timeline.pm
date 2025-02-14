@@ -104,7 +104,9 @@ sub like_tweet {
         }
     )->next;
 
-    if ($liked && notifications_enabled()) {
+    my $post_as_admin = $user_obj->eh_admin && $c->user_preference_is_active($user_obj->id, 'POST_AS_PENHAS') ? 1 : 0;
+
+    if ($liked && notifications_enabled() && !$post_as_admin) {
         my $anonimo    = $user->{modo_anonimo_ativo} ? 1 : 0;
         my $subject_id = $anonimo                    ? 0 : $user->{id};
         my $job_id     = $c->minion->enqueue(
@@ -294,7 +296,7 @@ sub add_tweet {
             }
         );
 
-        if (notifications_enabled()) {
+        if (notifications_enabled() && !$post_as_admin) {
             my $subject_id = $anonimo ? 0 : $user->{id};
             my $job_id     = $c->minion->enqueue(
                 'new_notification',
