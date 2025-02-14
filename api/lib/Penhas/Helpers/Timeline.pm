@@ -302,7 +302,7 @@ sub add_tweet {
             }
         );
 
-        if (notifications_enabled() && !$post_as_admin) {
+        if (notifications_enabled()) {
             my $subject_id = $anonimo ? 0 : $user->{id};
             my $job_id     = $c->minion->enqueue(
                 'new_notification',
