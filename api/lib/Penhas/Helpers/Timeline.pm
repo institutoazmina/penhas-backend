@@ -641,6 +641,11 @@ sub list_tweets {
 
     $c->add_tweets_highlights(tweets => \@tweets, user_obj => $user_obj);
 
+    foreach my $tweet (@tweets) {
+        delete $tweet->{_tags_index};
+        delete $tweet->{last_reply}{_tags_index} if $tweet->{last_reply};
+    }
+
     my $next_page;
 
     # nao adicionar noticias nos detalhes
