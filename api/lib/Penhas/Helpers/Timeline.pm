@@ -549,12 +549,9 @@ sub list_tweets {
     my @unique_ids;
     my @comments;
 
-
-    my @users_ids = map { $_->{cliente_id} } grep {
-
-        # filtra pelas condições q devem ser exibidas
-        !$_->{anonimo} || $is_admin || $_->{cliente_id} == $user_obj->id
-    } @rows;
+    # In the list_tweets function, modify the badge loading:
+    # 1. Get ALL client IDs without filtering out anonymous users
+    my @users_ids     = map { $_->{cliente_id} } @rows;
     my @client_badges = $c->schema2->resultset('Cliente')->search_related(
         'badges_ativos',
         {
@@ -788,7 +785,7 @@ sub _format_tweet {
             parent_id => $me->{parent_id},
             (is_test() ? (tweet_depth_test_only => $me->{tweet_depth}) : ())
         },
-        badges => $me->{badges} ? _format_db_badges($me->{badges}) : [],
+        badges => _format_db_badges($me->{badges}, $user_obj, $me->{anonimo}),
 
         id      => $me->{id},
         content => $me->{disable_escape}
@@ -820,25 +817,66 @@ sub _format_tweet {
         ),
     };
 
-    if ($user_obj) {    # aqui é o user que está logado, ele precisa ter o badge do evento, e então vai comparado com o
-                        # CEP da usuária que postou o tweet, se for igual, ele irá ver um badge extra no tweet dizendo
-                        # que o usuária está na mesma cidade que ele
+    if ($user_obj && !$anonimo) {
+
+        # aqui é o user que está logado, ele precisa ter o badge do evento, e então vai comparado com o
+        # CEP da usuária que postou o tweet, se for igual, ele irá ver um badge extra no tweet dizendo
+        # que o usuária está na mesma cidade que ele
         push $row->{badges}->@*, $user_obj->check_location_badge_for_cidade($me->{cliente_cep_cidade});
     }
+
+    # dedup by badge code
+    my %seen;
+    $row->{badges} = [grep { !$seen{$_->{code}}++ } $row->{badges}->@*];
 
     return $row;
 }
 
 sub _format_db_badges {
-    my ($badges) = @_;
-    my @out;
-    foreach my $badge (@$badges) {
-        push @out, $badge->render();
+    my ($badges, $user_obj, $anonimo) = @_;
+
+    my @formatted_badges = ();
+    foreach my $badge (@{$badges || []}) {
+
+        # Add standard badge
+        push @formatted_badges, $badge->render(1);
+    }
+
+    # Now handle location badges with the inverted logic
+    if ($user_obj && $user_obj->modo_anonimo_ativo && !$anonimo) {
+
+        # User is viewing anonymously and the post is not anonymous
+        my $user_city = $user_obj->cep_cidade;
+
+        if ($user_city) {
+
+            # Check author's badges for location match
+            foreach my $badge (@{$badges || []}) {
+                if (defined $badge->linked_cep_cidade
+                    && $badge->linked_cep_cidade eq $user_city)
+                {
+                    push @formatted_badges, {
+                        description => 'Colaborada da cidade ' . $user_city,
+                        image_url   => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL'}
+                          || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                          || '',
+                        image_url_black => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL_BLACK'}
+                          || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                          || '',
+                        name             => 'Usuária da sua região',
+                        code             => 'GEO:CITY',
+                        popup            => 0,
+                        show_description => 0,
+                        style            => 'inline',
+                    };
+                }
+            }
+        }
     }
 
     if (!is_test() && $ENV{MODO_FUTURE_PROOF}) {
         if (rand() < 0.5) {
-            push @out, {
+            push @formatted_badges, {
                 code        => 'rnd:' . random_string(4),
                 name        => "I'm a random badge! " . random_string(4),
                 description => qq{{
@@ -856,7 +894,7 @@ sub _format_db_badges {
         }
     }
 
-    return \@out;
+    return \@formatted_badges;
 }
 
 sub maybe_linkfy {
