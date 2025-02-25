@@ -158,6 +158,7 @@ sub chat_find_users {
         my $badges = $badges_by_client->{$_->{cliente_id}} || [];
         push @$badges, $user_obj->check_location_badge_for_cidade(delete $_->{_cep_cidade});
 
+        $_->{badges} = $badges;
         my $user_skills = $_->{skills} ? $_->{skills} =~ /^\[/ ? from_json($_->{skills}) : [$_->{skills}] : undef;
         $_->{skills} = join ',', sort { $a cmp $b } grep {defined} $user_skills->@* if $user_skills;
         $_->{skills} =~ s/,/, /g;
