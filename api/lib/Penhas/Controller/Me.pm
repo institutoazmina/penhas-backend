@@ -67,6 +67,19 @@ sub me_find {
         $c->log->info(to_json($extra{quiz_session}));
     }
 
+
+    # Load badges for user
+    my @client_badges = $c->schema2->resultset('Cliente')->search_related(
+        'badges_ativos',
+        {cliente_id => $user_obj->id},
+        {prefetch   => 'badge'}
+    )->all;
+
+    my @badges = ();
+    foreach my $badge (@client_badges) {
+        push @badges, $badge->badge->render();
+    }
+
     return $c->render(
         json => {
             user_profile => {
@@ -81,6 +94,7 @@ sub me_find {
                 ),
 
                 skills => from_json($user->{skills_cached}),
+                badges => \@badges,
             },
 
             ($user->{modo_anonimo_ativo} ? (anonymous_avatar_url => $ENV{AVATAR_ANONIMO_URL}) : ()),
