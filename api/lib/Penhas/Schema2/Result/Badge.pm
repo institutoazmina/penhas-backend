@@ -42,6 +42,8 @@ __PACKAGE__->add_columns(
     is_nullable   => 0,
     original      => { default_value => \"now()" },
   },
+  "image_url_black",
+  { data_type => "varchar", is_nullable => 0, size => 1000 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -52,8 +54,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-01-30 12:15:18
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4LroHT+lBR80v2oGND5gHQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-02-25 09:55:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zTz9VCJZP/HCuVft8P+wsA
 
 sub render {
     my ($self, $inline) = @_;
@@ -63,6 +65,7 @@ sub render {
         name             => $self->name,
         description      => $self->description,
         image_url        => $self->image_url,
+        image_url_black  => $self->image_url_black,
         popup            => 1,
         show_description => 1,
         style            => $inline ? 'inline' : 'inline-block',

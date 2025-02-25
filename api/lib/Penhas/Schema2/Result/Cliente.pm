@@ -504,6 +504,9 @@ sub check_location_badge_for_cidade {
                 image_url   => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL'}
                   || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
                   || '',
+                image_url_black => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL_BLACK'}
+                  || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                  || '',
                 name             => 'Usuária da sua região',
                 code             => 'GEO:CITY',
                 popup            => 0,

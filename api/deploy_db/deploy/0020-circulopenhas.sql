@@ -18,5 +18,8 @@ ALTER TABLE cliente_tag ALTER COLUMN mf_tag_id DROP NOT NULL;
 
 ALTER TABLE cliente_tag ADD COLUMN valid_until timestamp without time zone not null default 'infinity';
 
+ALTER table badges add column image_url_black varchar(1000) ;
+update badges set image_url_black = image_url ;
+ALTER table badges alter column image_url_black set not null;
 
 COMMIT;
