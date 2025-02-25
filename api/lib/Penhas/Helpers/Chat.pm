@@ -155,10 +155,24 @@ sub chat_find_users {
 
     foreach (@rows) {
 
-        my $badges = $badges_by_client->{$_->{cliente_id}} || [];
+        # Get badges for this client
+        my $badge_objects = $badges_by_client->{$_->{cliente_id}} || [];
+
+        # Apply the new formatting function
+        my $badges = _format_chat_badges(
+            $badge_objects,
+            $user_obj,
+            0    # there is no anonymous mode in this context
+        );
+
+        # Add location badge separately using existing function
+        # This won't cause duplicates as we deduplicate by code
         push @$badges, $user_obj->check_location_badge_for_cidade(delete $_->{_cep_cidade});
 
-        $_->{badges} = $badges;
+        # Deduplicate again after adding location badge
+        my %seen;
+        $_->{badges} = [grep { !$seen{$_->{code}}++ } @$badges];
+
         my $user_skills = $_->{skills} ? $_->{skills} =~ /^\[/ ? from_json($_->{skills}) : [$_->{skills}] : undef;
         $_->{skills} = join ',', sort { $a cmp $b } grep {defined} $user_skills->@* if $user_skills;
         $_->{skills} =~ s/,/, /g;
@@ -219,6 +233,7 @@ sub chat_profile_user {
 
                 # usar _ para não incluir na resposta para o frontend
                 {_cep_cidade => 'me.cep_cidade'},
+                {_anonimo    => 'me.modo_anonimo_ativo'},
             ],
             group_by     => \'me.id',
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
@@ -231,9 +246,20 @@ sub chat_profile_user {
         {cliente_id => $cliente_id,},
         {prefetch   => 'badge',}
     )->all;
-    $cliente->{badges} = [map { $_->badge->render() } @badges];
 
-    push $cliente->{badges}->@*, $user_obj->check_location_badge_for_cidade(delete $cliente->{_cep_cidade});
+    my $anonimo = $cliente->{_anonimo};
+    $cliente->{badges} = _format_chat_badges(
+        \@badges,
+        $user_obj,
+        $anonimo
+    );
+
+    push $cliente->{badges}->@*, $user_obj->check_location_badge_for_cidade(delete $cliente->{_cep_cidade})
+      if !$anonimo;
+
+    # Deduplicate badges
+    my %seen;
+    $cliente->{badges} = [grep { !$seen{$_->{code}}++ } $cliente->{badges}->@*];
 
     my $skills = $cliente->{skills} ? from_json($cliente->{skills}) : undef;
     $cliente->{skills} = join ', ', sort { $a cmp $b } grep {defined} $skills->@* if $skills;
@@ -319,7 +345,8 @@ sub chat_list_sessions {
                 {apelido     => 'cliente.apelido'},
                 {avatar_url  => 'cliente.avatar_url'},
                 {activity    => \"(extract( epoch from (now() - me.last_tm_activity)) / 60)::int"},
-                {_cep_cidade => 'cliente.cep_cidade'},    # Add cep_cidade for location badge check
+                {_cep_cidade => 'cliente.cep_cidade'},           # Add cep_cidade for location badge check
+                {_anonimo    => 'cliente.modo_anonimo_ativo'},
             ],
             result_class => 'DBIx::Class::ResultClass::HashRefInflator',
         }
@@ -334,7 +361,7 @@ sub chat_list_sessions {
     my $badges_by_client = {};
     foreach my $badge (@client_badges) {
         $badges_by_client->{$badge->cliente_id} = [] if !$badges_by_client->{$badge->cliente_id};
-        push $badges_by_client->{$badge->cliente_id}->@*, $badge->badge->render();
+        push $badges_by_client->{$badge->cliente_id}->@*, $badge;    # Store badge objects, not rendered badges
     }
 
 
@@ -348,8 +375,17 @@ sub chat_list_sessions {
         my $other = $participants->{$room->{other_id}};
         next unless $other;    # nao existe mais, banido, ou vc/ele bloqueou, etc...
 
-        my $badges = $badges_by_client->{$other->{cliente_id}} || [];
-        push @$badges, $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade});
+        my $anonimo       = $other && $other->{_anonimo};
+        my $badge_objects = $badges_by_client->{$other->{cliente_id}} || [];
+        my $badges        = _format_chat_badges(
+            $badge_objects,
+            $user_obj,
+            $anonimo,
+        );
+        push @$badges, $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade}) if !$anonimo;
+
+        my %seen;
+        $badges = [grep { !$seen{$_->{code}}++ } @$badges];
 
         push @chats, {
             chat_auth          => &_sign_chat_auth($c, id => $room->{id}, uid => $user_obj->id),
@@ -1000,5 +1036,51 @@ sub chat_manage_block {
 
     return 1;
 }
+
+sub _format_chat_badges {
+    my ($badges, $user_obj, $other_is_anonymous) = @_;
+
+    my @formatted_badges = ();
+    foreach my $badge (@{$badges || []}) {
+
+        # Add standard badge
+        push @formatted_badges, $badge->render(1);
+    }
+
+    # Now handle location badges with the inverted logic
+    if ($user_obj && $user_obj->modo_anonimo_ativo && !$other_is_anonymous) {
+
+        # User is viewing anonymously and the other user is not anonymous
+        my $user_city = $user_obj->cep_cidade;
+
+        if ($user_city) {
+
+            # Check other user's badges for location match
+            foreach my $badge (@{$badges || []}) {
+                if (defined $badge->linked_cep_cidade
+                    && $badge->linked_cep_cidade eq $user_city)
+                {
+                    push @formatted_badges, {
+                        description => 'Colaborada da cidade ' . $user_city,
+                        image_url   => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL'}
+                          || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                          || '',
+                        image_url_black => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL_BLACK'}
+                          || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                          || '',
+                        name             => 'Usuária da sua região',
+                        code             => 'GEO:CITY',
+                        popup            => 0,
+                        show_description => 0,
+                        style            => 'inline',
+                    };
+                }
+            }
+        }
+    }
+
+    return \@formatted_badges;
+}
+
 
 1;
