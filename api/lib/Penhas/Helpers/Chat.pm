@@ -90,11 +90,12 @@ sub chat_find_users {
         {
             join    => [{'cliente' => {'cliente_skills' => 'skill'}}],
             columns => [
-                {cliente_id => 'me.cliente_id'},
-                {apelido    => 'cliente.apelido'},
-                {avatar_url => 'cliente.avatar_url'},
-                {activity   => \"(extract( epoch from (now() - me.last_tm_activity)) / 60)::int"},
-                {skills     => \q|json_agg(skill.skill)|},
+                {cliente_id  => 'me.cliente_id'},
+                {apelido     => 'cliente.apelido'},
+                {avatar_url  => 'cliente.avatar_url'},
+                {activity    => \"(extract( epoch from (now() - me.last_tm_activity)) / 60)::int"},
+                {skills      => \q|json_agg(skill.skill)|},
+                {_cep_cidade => 'cliente.cep_cidade'},            # Add cep_cidade for location badge check
             ],
             order_by     => \'me.last_tm_activity DESC',
             group_by     => ['me.id', 'cliente.id'],
@@ -137,7 +138,26 @@ sub chat_find_users {
     }
 
 
+    my @load_participants = map { $_->{cliente_id} } @rows;
+
+    # Load badges for all participants
+    my @client_badges = $c->schema2->resultset('Cliente')->search_related(
+        'badges_ativos',
+        {cliente_id => {'in' => [@load_participants]}},
+        {prefetch   => 'badge'}
+    )->all;
+    my $badges_by_client = {};
+    foreach my $badge (@client_badges) {
+        $badges_by_client->{$badge->cliente_id} = [] if !$badges_by_client->{$badge->cliente_id};
+        push $badges_by_client->{$badge->cliente_id}->@*, $badge->badge->render();
+    }
+
+
     foreach (@rows) {
+
+        my $badges = $badges_by_client->{$_->{cliente_id}} || [];
+        push @$badges, $user_obj->check_location_badge_for_cidade(delete $_->{_cep_cidade});
+
         my $user_skills = $_->{skills} ? $_->{skills} =~ /^\[/ ? from_json($_->{skills}) : [$_->{skills}] : undef;
         $_->{skills} = join ',', sort { $a cmp $b } grep {defined} $user_skills->@* if $user_skills;
         $_->{skills} =~ s/,/, /g;
