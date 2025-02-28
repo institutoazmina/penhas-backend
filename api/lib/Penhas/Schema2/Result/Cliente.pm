@@ -491,7 +491,7 @@ sub linked_location_badges {
 }
 
 sub check_location_badge_for_cidade {
-    my ($self, $cep_cidade) = @_;
+    my ($self, $cep_cidade, $block) = @_;
     return () unless $cep_cidade;
 
     my $badge_locations = $self->linked_location_badges();
@@ -511,7 +511,7 @@ sub check_location_badge_for_cidade {
                 code             => 'GEO:CITY',
                 popup            => 0,
                 show_description => 0,
-                style            => 'inline',
+                style            => $block ? 'inline-block' : 'inline',
             };
         }
     }

@@ -822,7 +822,7 @@ sub _format_tweet {
         # aqui é o user que está logado, ele precisa ter o badge do evento, e então vai comparado com o
         # CEP da usuária que postou o tweet, se for igual, ele irá ver um badge extra no tweet dizendo
         # que o usuária está na mesma cidade que ele
-        push $row->{badges}->@*, $user_obj->check_location_badge_for_cidade($me->{cliente_cep_cidade});
+        push $row->{badges}->@*, $user_obj->check_location_badge_for_cidade($me->{cliente_cep_cidade}, 1);
     }
 
     # dedup by badge code
@@ -867,7 +867,7 @@ sub _format_db_badges {
                         code             => 'GEO:CITY',
                         popup            => 0,
                         show_description => 0,
-                        style            => 'inline',
+                        style            => 'inline-block',
                     };
                 }
             }
