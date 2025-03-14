@@ -152,7 +152,6 @@ sub chat_find_users {
         push $badges_by_client->{$badge->cliente_id}->@*, $badge->badge->render();
     }
 
-
     foreach (@rows) {
 
         # Get badges for this client
@@ -249,7 +248,7 @@ sub chat_profile_user {
 
     my $anonimo = $cliente->{_anonimo};
     $cliente->{badges} = _format_chat_badges(
-        \@badges,
+        [map { $_->badge() } @badges],
         $user_obj,
         $anonimo
     );
@@ -359,11 +358,11 @@ sub chat_list_sessions {
         {prefetch   => 'badge'}
     )->all;
     my $badges_by_client = {};
-    foreach my $badge (@client_badges) {
-        $badges_by_client->{$badge->cliente_id} = [] if !$badges_by_client->{$badge->cliente_id};
-        push $badges_by_client->{$badge->cliente_id}->@*, $badge;    # Store badge objects, not rendered badges
+    foreach my $cliente_badge (@client_badges) {
+        $badges_by_client->{$$cliente_badge->cliente_id} = [] if !$badges_by_client->{$cliente_badge->cliente_id};
+        push $badges_by_client->{$$cliente_badge->cliente_id}->@*,
+          $$cliente_badge->badge;
     }
-
 
     while (my $r = $cliente_activity_rs->next) {
         $participants->{$r->{cliente_id}} = $r;
