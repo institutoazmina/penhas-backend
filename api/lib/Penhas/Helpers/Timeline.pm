@@ -5,7 +5,7 @@ use utf8;
 use Penhas::KeyValueStorage;
 use Scope::OnExit;
 use Digest::MD5 qw/md5_hex/;
-use Mojo::Util qw/trim xml_escape url_escape dumper/;
+use Mojo::Util  qw/trim xml_escape url_escape dumper/;
 use List::Util;
 
 use JSON;
@@ -106,14 +106,18 @@ sub like_tweet {
 
     my $post_as_admin = $user_obj->eh_admin && $c->user_preference_is_active($user_obj->id, 'POST_AS_PENHAS') ? 1 : 0;
 
-    if ($liked && notifications_enabled() && !$post_as_admin) {
+    if ($liked && notifications_enabled()) {
         my $anonimo    = $user->{modo_anonimo_ativo} ? 1 : 0;
         my $subject_id = $anonimo                    ? 0 : $user->{id};
         my $job_id     = $c->minion->enqueue(
             'new_notification',
             [
                 'new_like',
-                {tweet_id => $reference->id, subject_id => $subject_id}
+                {
+                    tweet_id   => $reference->id,
+                    subject_id => $subject_id,
+                    admin_mode => $post_as_admin ? 1 : 0,
+                }
             ] => {
                 attempts => 5,
             }
@@ -296,7 +300,7 @@ sub add_tweet {
             }
         );
 
-        if (notifications_enabled() && !$post_as_admin) {
+        if (notifications_enabled() ) {
             my $subject_id = $anonimo ? 0 : $user->{id};
             my $job_id     = $c->minion->enqueue(
                 'new_notification',
@@ -308,6 +312,7 @@ sub add_tweet {
                         subject_id    => $subject_id,
                         comment       => $content,
                         root_tweet_id => $root_tweet_id,
+                        admin_mode    => $post_as_admin ? 1 : 0,
                     }
                 ] => {
                     attempts => 5,
@@ -957,7 +962,7 @@ sub add_tweets_highlights {
                 }
 
                 next unless $row->{noticias};
-                push @regexps,    $match;
+                push @regexps, $match;
                 push @highlights, {
                     regexp   => $match,
                     noticias => from_json($row->{noticias}),
@@ -1216,7 +1221,7 @@ sub add_tweets_news {
             next unless $item->{type} eq 'news_group';
 
             foreach my $new_id ($item->{news}->@*) {
-                push @group_news_ids, $new_id;
+                push @group_news_ids,              $new_id;
                 push @{$news_item_ref->{$new_id}}, $item;
             }
         }
