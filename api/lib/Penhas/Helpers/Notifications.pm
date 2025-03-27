@@ -146,9 +146,12 @@ sub user_notifications {
     foreach my $r (@output_rows) {
         my $subject_id = $r->{_subject_id};
         my $subject    = $subjects{$subject_id};
+        my $meta       = $r->{_meta};
 
-        # nao tem, eh anonimo ou postado
-        if (!defined $subject_id) {
+        if ($meta->{admin_mode}) {
+            $r->{name} = 'Admin PenhaS';
+        }
+        elsif (!defined $subject_id) {
             $r->{name} = 'PenhaS';
         }
         elsif ($subject_id == -1) {
@@ -178,6 +181,9 @@ sub user_notifications {
     )->all;
 
     foreach my $r (@output_rows) {
+        # Pula se tem admin_mode pois já lidou com o nome
+        next if $r->{_meta}{admin_mode};
+
         next unless $r->{_meta}{chat};
         next if $r->{name} && $r->{name} ne 'Anônimo';
 
