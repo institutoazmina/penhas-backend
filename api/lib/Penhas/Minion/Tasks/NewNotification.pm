@@ -99,19 +99,19 @@ sub new_notification_like {
     my $tweet      = $schema2->resultset('Tweet')->find($opts->{tweet_id}) or return;
     my $has_parent = $tweet->parent_id ? 1 : 0;
 
-    if ($tweet->cliente_id == $opts->{subject_id}){
+    if ($tweet->cliente_id == $opts->{subject_id}) {
         $logger->info("skipping... tweet.cliente_id is same as subject_id...");
         return;
     }
 
     my $titles = {
-        new_like    => $has_parent ? 'curtiu seu comentário'   : 'curtiu sua publicação',
+        new_like => $has_parent ? 'curtiu seu comentário' : 'curtiu sua publicação',
     };
     my $prefs = {
-        new_like    => $has_parent ? 'NOTIFY_LIKES_POSTS_COMMENTED'    : 'NOTIFY_LIKES_POSTS_CREATED',
+        new_like => $has_parent ? 'NOTIFY_LIKES_POSTS_COMMENTED' : 'NOTIFY_LIKES_POSTS_CREATED',
     };
     my $icons = {
-        new_like    => 3,
+        new_like => 3,
     };
     my $preference_name = $prefs->{$type};
     my $icon            = $icons->{$type};
@@ -130,10 +130,15 @@ sub new_notification_like {
     }
 
     my $message = {
-        is_test    => is_test() ? 1 : 0,
-        title      => $titles->{$type},
-        content    => $content,
-        meta       => to_json({tweet_id => $tweet->id}),
+        is_test => is_test() ? 1 : 0,
+        title   => $titles->{$type},
+        content => $content,
+        meta    => to_json(
+            {
+                tweet_id   => $tweet->id,
+                admin_mode => $opts->{admin_mode} // 0,
+            }
+        ),
         subject_id => $opts->{subject_id},
         created_at => \'now()',
         icon       => $icon,
@@ -273,10 +278,16 @@ sub new_notification_comment {
                 my $message_row = $message_cache->{$is_creator};
                 if (!$message_row) {
                     my $message = {
-                        is_test    => is_test() ? 1 : 0,
-                        title      => $title,
-                        content    => $content,
-                        meta       => to_json({tweet_id => $reply_to_tweet->id, comment_id => $opts->{comment_id}}),
+                        is_test => is_test() ? 1 : 0,
+                        title   => $title,
+                        content => $content,
+                        meta    => to_json(
+                            {
+                                tweet_id   => $reply_to_tweet->id,
+                                comment_id => $opts->{comment_id},
+                                admin_mode => $opts->{admin_mode} // 0,
+                            }
+                        ),
                         subject_id => $opts->{subject_id},
                         created_at => \'now()',
                         icon       => $icon,
