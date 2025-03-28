@@ -38,10 +38,41 @@ sub list_preferences {
     # filtra as que são para admin caso não seja admin
     $rs = $rs->search({admin_only => 0}) unless $user_obj->eh_admin;
 
+    my @all_badges = $c->schema2->resultset('Badge')->search(
+        {
+            'me.linked_cep_cidade' => {'!=' => undef},
+        },
+        {
+            select       => ['me.linked_cep_cidade'],
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+        }
+    )->all;
+    my @badge_cities = map { $_->{linked_cep_cidade} } @all_badges;
+
+    my $my_city = $user_obj->cep_cidade;
+
     my @prefs;
     while (my $pref = $rs->next) {
         my $name  = $pref->{name};
         my $value = exists $prefs{$name} ? $prefs{$name} : $pref->{initial_value};
+
+        if ($name eq 'NOTIFY_POST_FROM_BADGE_HOLDER_FOR_LINKED_CITY') {
+
+            my $has_badge = $user_obj->cliente_tags->search(
+                {
+                    'badge.linked_cep_cidade' => {'!=' => undef},
+                },
+                {
+                    join => 'badge',
+                }
+            )->count;
+            next unless $has_badge;
+        }
+
+        if ($name eq 'NOTIFY_POST_FROM_BADGE_HOLDER_IN_MY_CITY') {
+            my $my_city_in_badge = grep { $_ eq $my_city } @badge_cities;
+            next unless $my_city_in_badge;
+        }
 
         push @prefs, {
             key   => $name,
