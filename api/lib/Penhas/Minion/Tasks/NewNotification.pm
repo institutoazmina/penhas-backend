@@ -522,17 +522,20 @@ sub new_notification_post_linked_city_badge_holder {
     };
 
     # Find users in the relevant cities who want this notification,
-    # excluding the poster AND excluding users in the poster's city (to avoid duplicates)
     my $search_cond = {
         'cliente.cep_cidade' => {-in  => $linked_cep_cidades},
         'me.cliente_id'      => {'!=' => $subject_id},
+
+        'badge.linked_cep_cidade' => {-in => $linked_cep_cidades},
     };
 
     my @clientes = $job->app->rs_user_by_preference($preference_name, '1')->search(
         $search_cond,
         {
             columns => ['me.cliente_id'],
-            join    => 'cliente',
+            join    => {
+                'cliente' => {cliente_tags => 'badge'},
+            }
         }
     )->all;
 

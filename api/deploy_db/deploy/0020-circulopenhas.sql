@@ -27,4 +27,9 @@ VALUES
 ('NOTIFY_POST_FROM_BADGE_HOLDER_IN_MY_CITY', 'Receber notificações quando alguém com um selo especial postar na minha cidade', TRUE, '1', 100, FALSE),
 ('NOTIFY_POST_FROM_BADGE_HOLDER_FOR_LINKED_CITY', 'Receber notificações quando alguém postar sobre uma cidade vinculada a um selo especial', TRUE, '1', 110, FALSE);
 
+
+UPDATE preferences
+SET label = 'Receber notificações quando alguém postar na minha região'
+WHERE name = 'NOTIFY_POST_FROM_BADGE_HOLDER_FOR_LINKED_CITY';
+
 COMMIT;
