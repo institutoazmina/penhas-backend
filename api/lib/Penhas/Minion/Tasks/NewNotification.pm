@@ -23,7 +23,10 @@ sub new_notification {
     my $known_types = {
         new_comment => 'new_notification_comment',
         new_like    => 'new_notification_like',
-        new_message => 'new_notification_chat'
+        new_message => 'new_notification_chat',
+
+        new_post_local_badge_holder       => 'new_notification_post_local_badge_holder',
+        new_post_linked_city_badge_holder => 'new_notification_post_linked_city_badge_holder',
     };
 
     my $subname = $known_types->{$type} || die "notification type $type is not known";
@@ -310,6 +313,262 @@ sub new_notification_comment {
 
 
     }
+
+    return (
+        clientes => \@clientes,
+    );
+}
+
+sub new_notification_post_local_badge_holder {
+    my (undef, $job, $type, $opts) = @_;
+
+    my $schema2 = $job->app->schema2;    # mysql
+    my $logger  = $job->app->log;
+
+    # Basic checks
+    return $job->fail("Missing poster_cep_cidade in opts") unless $opts->{poster_cep_cidade};
+    return $job->fail("Missing subject_id in opts")        unless $opts->{subject_id};
+    return $job->fail("Missing tweet_id in opts")          unless $opts->{tweet_id};
+
+    my $poster_cep_cidade = $opts->{poster_cep_cidade};
+    my $subject_id        = $opts->{subject_id};          # This is the poster's ID
+
+    # Get the tweet, ensure it's a valid target (published, top-level)
+    my $tweet = $schema2->resultset('Tweet')->find($opts->{tweet_id});
+    unless ($tweet) {
+        $logger->info("Badge Notification ($type): Tweet $opts->{tweet_id} not found. Skipping.");
+        return ();                                        # Return empty list, job will finish
+    }
+    if ($tweet->parent_id) {
+        $logger->info("Badge Notification ($type): Tweet $opts->{tweet_id} is a comment. Skipping.");
+        return ();
+    }
+    if ($tweet->status ne 'published') {
+        $logger->info(
+            "Badge Notification ($type): Tweet $opts->{tweet_id} status is not published ($tweet->status). Skipping.");
+        return ();
+    }
+    if ($tweet->anonimo) {
+        $logger->info(
+            "Badge Notification ($type): Tweet $opts->{tweet_id} is anonymous. Skipping (should have been caught earlier, but safety check)."
+        );
+        return ();
+    }
+
+
+    my $preference_name = 'NOTIFY_POST_FROM_BADGE_HOLDER_IN_MY_CITY';
+    my $icon            = 2;                                            # Choose an appropriate icon ID
+
+    # Prepare message content (similar to other handlers)
+    my $content = $tweet->content;
+    if ($tweet->disable_escape && $content =~ /\</) {
+        $content = Mojo::DOM->new($content)->all_text;
+    }
+    if (length($content) > 100) {
+        $content = substr($content, 0, 100) . '…';
+    }
+
+    # Maybe get poster's name? Requires another lookup. Let's keep it simple for now.
+    # my $poster = $schema2->resultset('Cliente')->find($subject_id);
+    # my $poster_name = $poster ? $poster->apelido : 'Alguém';
+
+    my $message = {
+        is_test => is_test() ? 1 : 0,
+        title   => 'Nova publicação na sua cidade!',    # Could be: "$poster_name postou na sua cidade!"
+        content => $content,
+        meta    => to_json(
+            {
+                tweet_id   => $tweet->id,
+                admin_mode => $opts->{admin_mode} // 0,
+            }
+        ),
+        subject_id => $subject_id,                      # The user who posted
+        created_at => \'now()',
+        icon       => $icon,
+    };
+
+    # Find users in the same city who want this notification, excluding the poster
+    my @clientes = $job->app->rs_user_by_preference($preference_name, '1')->search(
+        {
+            'me.cep_cidade' => $poster_cep_cidade,
+            'me.cliente_id' => {'!=' => $subject_id},
+        },
+        {columns => ['me.cliente_id']}
+    )->all;
+
+    log_trace("Found " . scalar(@clientes) . " users for $preference_name in city '$poster_cep_cidade'");
+
+    return unless @clientes;    # No users enabled, don't create message
+
+    # Create the notification message and logs
+    # NOTE: This creates ONE message shared by all recipients of this specific job run.
+    # If two different badge holders post in the same city close together, two messages will be created.
+    my $message_row;
+    eval {
+        $schema2->txn_do(
+            sub {
+                $message_row = $schema2->resultset('NotificationMessage')->create($message);
+                $logger->info("Created NotificationMessage ID: " . $message_row->id . " for $type");
+
+                $schema2->resultset('NotificationLog')->populate(
+                    [
+                        [qw/cliente_id notification_message_id created_at/],
+                        map {
+                            [
+                                $_->{cliente_id},
+                                $message_row->id,
+                                \'NOW()'
+                            ]
+                        } @clientes
+                    ]
+                );
+                $logger->info(
+                    "Populated NotificationLog for " . scalar(@clientes) . " users for message " . $message_row->id);
+            }
+        );
+    };
+    if ($@) {
+        $logger->error("Failed to create badge notification ($type) for tweet $opts->{tweet_id}: $@");
+
+        # Let Minion handle retry based on job settings
+        $job->fail("DB transaction failed: $@");
+        return ();    # Explicitly return nothing on failure
+    }
+
+
+    return (
+        clientes => \@clientes,    # Return list of users who received it for cache clearing
+    );
+}
+
+# <<< NEW HANDLER 2 - REVISED >>>
+sub new_notification_post_linked_city_badge_holder {
+    my (undef, $job, $type, $opts) = @_;
+
+    my $schema2 = $job->app->schema2;    # mysql
+    my $logger  = $job->app->log;
+
+    # Basic checks
+    return $job->fail("Missing linked_cep_cidades in opts")
+      unless $opts->{linked_cep_cidades} && ref $opts->{linked_cep_cidades} eq 'ARRAY';
+    return $job->fail("Missing subject_id in opts") unless $opts->{subject_id};
+    return $job->fail("Missing tweet_id in opts")   unless $opts->{tweet_id};
+
+    # double check, already done before enqueuing, não usamos mas podemos usar pra avisar no texto
+    # da notificação
+    my $poster_cep_cidade = $opts->{poster_cep_cidade};
+    return $job->fail("Missing poster_cep_cidade in opts") unless defined $poster_cep_cidade;
+
+    my $linked_cep_cidades = $opts->{linked_cep_cidades};
+    my $subject_id         = $opts->{subject_id};           # Poster's ID
+
+    # Check if there are actually cities to notify about
+    unless (@$linked_cep_cidades) {
+        $logger->info("Badge Notification ($type): No linked cities provided. Skipping.");
+        return ();
+    }
+
+    # Get the tweet, ensure it's a valid target (published, top-level)
+    my $tweet = $schema2->resultset('Tweet')->find($opts->{tweet_id});
+    unless ($tweet) {
+        $logger->info("Badge Notification ($type): Tweet $opts->{tweet_id} not found. Skipping.");
+        return ();
+    }
+    if ($tweet->parent_id) {
+        $logger->info("Badge Notification ($type): Tweet $opts->{tweet_id} is a comment. Skipping.");
+        return ();
+    }
+    if ($tweet->status ne 'published') {
+        $logger->info(
+            "Badge Notification ($type): Tweet $opts->{tweet_id} status is not published ($tweet->status). Skipping.");
+        return ();
+    }
+    if ($tweet->anonimo) {
+        $logger->info("Badge Notification ($type): Tweet $opts->{tweet_id} is anonymous. Skipping.");
+        return ();
+    }
+
+    my $preference_name = 'NOTIFY_POST_FROM_BADGE_HOLDER_FOR_LINKED_CITY';
+    my $icon            = 5;                                                 # Choose an appropriate icon ID
+
+    # Prepare message content
+    my $content = $tweet->content;
+    if ($tweet->disable_escape && $content =~ /\</) {
+        $content = Mojo::DOM->new($content)->all_text;
+    }
+    if (length($content) > 100) {
+        $content = substr($content, 0, 100) . '…';
+    }
+
+    # Title might need refinement. "Relevant" is vague.
+    # Maybe include the city name? That requires knowing *which* city matched *this* user.
+    # Keep it generic for now.
+    my $message = {
+        is_test => is_test() ? 1 : 0,
+        title   => 'Publicação relevante para sua região',
+        content => $content,
+        meta    => to_json(
+            {
+                tweet_id   => $tweet->id,
+                admin_mode => $opts->{admin_mode} // 0,
+            }
+        ),
+        subject_id => $subject_id,
+        created_at => \'now()',
+        icon       => $icon,
+    };
+
+    # Find users in the relevant cities who want this notification,
+    # excluding the poster AND excluding users in the poster's city (to avoid duplicates)
+    my $search_cond = {
+        'me.cep_cidade' => {-in  => $linked_cep_cidades},
+        'me.cliente_id' => {'!=' => $subject_id},
+    };
+
+    my @clientes = $job->app->rs_user_by_preference($preference_name, '1')->search(
+        $search_cond,
+        {columns => ['me.cliente_id']}
+    )->all;
+
+    log_trace("Found "
+          . scalar(@clientes)
+          . " users for $preference_name in linked cities ["
+          . (join ',', @$linked_cep_cidades)
+          . "] ");
+
+    return unless @clientes;
+
+    # Create the notification message and logs
+    my $message_row;
+    eval {
+        $schema2->txn_do(
+            sub {
+                $message_row = $schema2->resultset('NotificationMessage')->create($message);
+                $logger->info("Created NotificationMessage ID: " . $message_row->id . " for $type");
+
+                $schema2->resultset('NotificationLog')->populate(
+                    [
+                        [qw/cliente_id notification_message_id created_at/],
+                        map {
+                            [
+                                $_->{cliente_id},
+                                $message_row->id,
+                                \'NOW()'
+                            ]
+                        } @clientes
+                    ]
+                );
+                $logger->info(
+                    "Populated NotificationLog for " . scalar(@clientes) . " users for message " . $message_row->id);
+            }
+        );
+    };
+    if ($@) {
+        $logger->error("Failed to create badge notification ($type) for tweet $opts->{tweet_id}: $@");
+        $job->fail("DB transaction failed: $@");
+        return ();
+    }
+
 
     return (
         clientes => \@clientes,

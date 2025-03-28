@@ -22,4 +22,9 @@ ALTER table badges add column image_url_black varchar(1000) ;
 update badges set image_url_black = image_url ;
 ALTER table badges alter column image_url_black set not null;
 
+INSERT INTO preferences (name, label, active, initial_value, sort, admin_only)
+VALUES
+('NOTIFY_POST_FROM_BADGE_HOLDER_IN_MY_CITY', 'Receber notificações quando alguém com um selo especial postar na minha cidade', TRUE, '1', 100, FALSE),
+('NOTIFY_POST_FROM_BADGE_HOLDER_FOR_LINKED_CITY', 'Receber notificações quando alguém postar sobre uma cidade vinculada a um selo especial', TRUE, '1', 110, FALSE);
+
 COMMIT;
