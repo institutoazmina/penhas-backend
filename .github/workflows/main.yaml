@@ -3,7 +3,7 @@ name: Create and publish the Docker image
 
 on:
   push:
-    branches: ['homol']
+    branches: ['master']
 
 env:
   IMAGE_NAME: ghcr.io/institutoazmina/penhas-backend
