@@ -321,88 +321,89 @@ sub add_tweet {
             );
             $ENV{LAST_NTF_COMMENT_JOB_ID} = $job_id;
         }
-        elsif (!$anonimo && notifications_enabled() && $poster_cep_cidade) {
+    }
+    elsif (!$anonimo && notifications_enabled() && $poster_cep_cidade) {
+        # apenas posts globais
+        my $cities_already_notified = {};
 
-            # apenas posts globais
+        my @active_cliente_tags = $c->schema2->resultset('ClienteTag')->search(
+            {
+                cliente_id                => $user_obj->id,
+                valid_until               => {'>=' => \'NOW()'},
+                badge_id                  => {'!=' => undef},      # precisa ter a tag
+                'badge.linked_cep_cidade' => $poster_cep_cidade,
+            },
+            {join => 'badge', prefetch => 'badge',}
+        )->all;
 
-            my $cities_already_notified = {};
 
-            my @active_cliente_tags = $c->schema2->resultset('ClienteTag')->search(
-                {
-                    cliente_id                => $user_obj->id,
-                    valid_until               => {'>=' => \'NOW()'},
-                    badge_id                  => {'!=' => undef},      # precisa ter a tag
-                    'badge.linked_cep_cidade' => $poster_cep_cidade,
-                },
-                {join => 'badge', prefetch => 'badge',}
-            )->all;
+        if (@active_cliente_tags) {
+            slog_info(
+                'add_tweet notifying local badge holders for user %d',
+                $user->{id}
+            );
+            for my $cliente_tag (@active_cliente_tags) {
+                my $badge_id   = $cliente_tag->badge_id;
+                my $badge_obj  = $cliente_tag->badge;
+                my $cep_cidade = $badge_obj->linked_cep_cidade;
+                next unless $cep_cidade;
+                $cities_already_notified->{$cep_cidade} = 1;
 
-            if (@active_cliente_tags) {
-                for my $cliente_tag (@active_cliente_tags) {
-                    my $badge_id   = $cliente_tag->badge_id;
-                    my $badge_obj  = $cliente_tag->badge;
-                    my $cep_cidade = $badge_obj->linked_cep_cidade;
-                    next unless $cep_cidade;
-                    $cities_already_notified->{$cep_cidade} = 1;
-
-                    my $job_id_local = $c->minion->enqueue(
-                        'new_notification',
-                        [
-                            'new_post_local_badge_holder',
-                            {
-                                tweet_id          => $tweet->id,
-                                subject_id        => $user_obj->id,             # Poster's ID (not anonymous)
-                                poster_cep_cidade => $cep_cidade,
-                                admin_mode        => $post_as_admin ? 1 : 0,    # Pass admin mode if needed later
-                            }
-                        ] => {attempts => 3}
-                    );
-
-                    slog_info("Enqueued local badge notification job: %s", $job_id_local // 'undef');
-                }
-            }
-            else {
-                slog_info("Skipping badge notifications for user %d: no active badges", $user_obj->id);
-            }
-
-            # get badges with linked_cep_cidade = author's city
-            my @badges_with_cities = $c->schema2->resultset('Badge')->search(
-                {
-                    'me.linked_cep_cidade' => $poster_cep_cidade,
-                },
-                {
-                    select => 'me.linked_cep_cidade',
-                }
-            )->all;
-
-            my @linked_cities = grep { !$cities_already_notified->{$_} }
-              map { $_->linked_cep_cidade } @badges_with_cities;
-
-            if (@linked_cities) {
-                my $job_id_linked = $c->minion->enqueue(
+                my $job_id_local = $c->minion->enqueue(
                     'new_notification',
                     [
-                        'new_post_linked_city_badge_holder',
+                        'new_post_local_badge_holder',
                         {
-                            tweet_id           => $tweet->id,
-                            subject_id         => $user_obj->id,            # Poster's ID
-                            linked_cep_cidades => \@linked_cities,
-                            admin_mode         => $post_as_admin ? 1 : 0,
-
-                            poster_cep_cidade => $poster_cep_cidade,        # Pass poster's city for de-duplication
+                            tweet_id          => $tweet->id,
+                            subject_id        => $user_obj->id,             # Poster's ID (not anonymous)
+                            poster_cep_cidade => $cep_cidade,
+                            admin_mode        => $post_as_admin ? 1 : 0,    # Pass admin mode if needed later
                         }
                     ] => {attempts => 3}
                 );
-                slog_info("Enqueued linked city badge notification job: %s", $job_id_linked // 'undef');
-            }
-            else {
-                slog_info(
-                    "Skipping linked city badge notification for user %d: no badges with linked_cep_cidade",
-                    $user_obj->id
-                );
-            }
 
+                slog_info("Enqueued local badge notification job: %s", $job_id_local // 'undef');
+            }
+        }
+        else {
+            slog_info("Skipping badge notifications for user %d: no active badges", $user_obj->id);
+        }
 
+        # get badges with linked_cep_cidade = author's city
+        my @badges_with_cities = $c->schema2->resultset('Badge')->search(
+            {
+                'me.linked_cep_cidade' => $poster_cep_cidade,
+            },
+            {
+                select => 'me.linked_cep_cidade',
+            }
+        )->all;
+
+        my @linked_cities = grep { !$cities_already_notified->{$_} }
+          map { $_->linked_cep_cidade } @badges_with_cities;
+
+        if (@linked_cities) {
+            my $job_id_linked = $c->minion->enqueue(
+                'new_notification',
+                [
+                    'new_post_linked_city_badge_holder',
+                    {
+                        tweet_id           => $tweet->id,
+                        subject_id         => $user_obj->id,            # Poster's ID
+                        linked_cep_cidades => \@linked_cities,
+                        admin_mode         => $post_as_admin ? 1 : 0,
+
+                        poster_cep_cidade => $poster_cep_cidade,        # Pass poster's city for de-duplication
+                    }
+                ] => {attempts => 3}
+            );
+            slog_info("Enqueued linked city badge notification job: %s", $job_id_linked // 'undef');
+        }
+        else {
+            slog_info(
+                "Skipping linked city badge notification for user %d: no badges with linked_cep_cidade",
+                $user_obj->id
+            );
         }
     }
 
