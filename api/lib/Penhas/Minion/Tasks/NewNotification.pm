@@ -390,10 +390,13 @@ sub new_notification_post_local_badge_holder {
     # Find users in the same city who want this notification, excluding the poster
     my @clientes = $job->app->rs_user_by_preference($preference_name, '1')->search(
         {
-            'me.cep_cidade' => $poster_cep_cidade,
-            'me.cliente_id' => {'!=' => $subject_id},
+            'cliente.cep_cidade' => $poster_cep_cidade,
+            'me.cliente_id'      => {'!=' => $subject_id},
         },
-        {columns => ['me.cliente_id']}
+        {
+            columns => ['me.cliente_id'],
+            join    => 'cliente',
+        }
     )->all;
 
     log_trace("Found " . scalar(@clientes) . " users for $preference_name in city '$poster_cep_cidade'");
@@ -521,13 +524,16 @@ sub new_notification_post_linked_city_badge_holder {
     # Find users in the relevant cities who want this notification,
     # excluding the poster AND excluding users in the poster's city (to avoid duplicates)
     my $search_cond = {
-        'me.cep_cidade' => {-in  => $linked_cep_cidades},
-        'me.cliente_id' => {'!=' => $subject_id},
+        'cliente.cep_cidade' => {-in  => $linked_cep_cidades},
+        'me.cliente_id'      => {'!=' => $subject_id},
     };
 
     my @clientes = $job->app->rs_user_by_preference($preference_name, '1')->search(
         $search_cond,
-        {columns => ['me.cliente_id']}
+        {
+            columns => ['me.cliente_id'],
+            join    => 'cliente',
+        }
     )->all;
 
     log_trace("Found "
