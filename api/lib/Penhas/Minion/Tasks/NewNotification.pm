@@ -203,7 +203,7 @@ sub new_notification_comment {
         : $schema2->resultset('Tweet')->find($opts->{root_tweet_id})
     ) or return;
 
-    my $icon = 2;    # icones na pasta public/i/
+    my $icon = 5;
 
     my $content = $reply_to_tweet->content;
     if ($reply_to_tweet->disable_escape && $content =~ /\</) {
@@ -374,7 +374,7 @@ sub new_notification_post_local_badge_holder {
 
     my $message = {
         is_test => is_test() ? 1 : 0,
-        title   => 'Nova publicação na sua cidade!',    # Could be: "$poster_name postou na sua cidade!"
+        title   => 'Voluntária da sua região fez uma nova publicação',  # Could be: "$poster_name postou na sua cidade!"
         content => $content,
         meta    => to_json(
             {
@@ -382,7 +382,7 @@ sub new_notification_post_local_badge_holder {
                 admin_mode => $opts->{admin_mode} // 0,
             }
         ),
-        subject_id => $subject_id,                      # The user who posted
+        subject_id => $subject_id,                                      # The user who posted
         created_at => \'now()',
         icon       => $icon,
     };
@@ -492,7 +492,7 @@ sub new_notification_post_linked_city_badge_holder {
     }
 
     my $preference_name = 'NOTIFY_POST_FROM_BADGE_HOLDER_FOR_LINKED_CITY';
-    my $icon            = 5;                                                 # Choose an appropriate icon ID
+    my $icon            = 5;
 
     # Prepare message content
     my $content = $tweet->content;
@@ -508,7 +508,7 @@ sub new_notification_post_linked_city_badge_holder {
     # Keep it generic for now.
     my $message = {
         is_test => is_test() ? 1 : 0,
-        title   => 'Publicação relevante para sua região',
+        title   => 'Usuária da sua região fez uma nova publicação',
         content => $content,
         meta    => to_json(
             {
