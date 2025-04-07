@@ -77,7 +77,7 @@ sub me_find {
 
     my @badges = ();
     foreach my $badge (@client_badges) {
-        push @badges, $badge->badge->render();
+        push @badges, $badge->badge->render('inline');
     }
 
     return $c->render(
