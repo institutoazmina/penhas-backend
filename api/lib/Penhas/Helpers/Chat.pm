@@ -149,7 +149,7 @@ sub chat_find_users {
     my $badges_by_client = {};
     foreach my $badge (@client_badges) {
         $badges_by_client->{$badge->cliente_id} = [] if !$badges_by_client->{$badge->cliente_id};
-        push $badges_by_client->{$badge->cliente_id}->@*, $badge->badge->render('inline');
+        push $badges_by_client->{$badge->cliente_id}->@*, $badge->badge;
     }
 
     foreach (@rows) {
@@ -240,7 +240,7 @@ sub chat_profile_user {
     )->next;
     $c->reply_item_not_found() unless $cliente;
 
-    my @badges = $c->schema2->resultset('Cliente')->search_related(
+    my @cliente_badges = $c->schema2->resultset('Cliente')->search_related(
         'badges_ativos',
         {cliente_id => $cliente_id,},
         {prefetch   => 'badge',}
@@ -248,7 +248,7 @@ sub chat_profile_user {
 
     my $anonimo = $cliente->{_anonimo};
     $cliente->{badges} = _format_chat_badges(
-        [map { $_->badge() } @badges],
+        [map { $_->badge } @cliente_badges],
         $user_obj,
         $anonimo
     );
@@ -1043,7 +1043,7 @@ sub _format_chat_badges {
     foreach my $badge (@{$badges || []}) {
 
         # Add standard badge
-        push @formatted_badges, $badge->render(1);
+        push @formatted_badges, $badge->render('inline');
     }
 
     # Now handle location badges with the inverted logic
