@@ -149,7 +149,7 @@ sub chat_find_users {
     my $badges_by_client = {};
     foreach my $badge (@client_badges) {
         $badges_by_client->{$badge->cliente_id} = [] if !$badges_by_client->{$badge->cliente_id};
-        push $badges_by_client->{$badge->cliente_id}->@*, $badge->badge->render();
+        push $badges_by_client->{$badge->cliente_id}->@*, $badge->badge->render('inline');
     }
 
     foreach (@rows) {
