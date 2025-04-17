@@ -704,7 +704,7 @@ sub _load_chat_room {
             {prefetch   => 'badge'}
         )->all;
 
-        $other->{badges} = [map { $_->badge->render() } @badges];
+        $other->{badges} = [map { $_->badge->render('inline') } @badges];
         push $other->{badges}->@*, $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade});
 
         $other->{blocked_me} = $other->{blocked_me} ? 1 : 0;
