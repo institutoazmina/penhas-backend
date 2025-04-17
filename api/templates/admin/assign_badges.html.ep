@@ -1,0 +1,32 @@
+% my $error = $c->stash('error');
+% my $params = $c->stash('params');
+% my $notification_message = $c->stash('notification_message');
+
+<div class="border-bottom mb-3">
+    <h1 class="h2">Atribuir Badge em Lote</h1>
+</div>
+
+<p>Cole uma lista de IDs ou E-mails de clientes (um por linha, ou separados por vírgula/espaço). Selecione o badge desejado e clique em "Verificar".</p>
+
+<form method="POST" action="/admin/badges/assign">
+    <div class="form-group">
+        <label for="identifiers">IDs ou E-mails dos Clientes</label>
+        <textarea class="form-control" id="identifiers" name="identifiers" rows="10" required placeholder="123
+exemplo@email.com
+456, outro@email.com 789"></textarea>
+        <small class="form-text text-muted">Insira um identificador por linha, ou use vírgulas/espaços como separadores.</small>
+    </div>
+
+    <div class="form-group">
+        <label for="badge_id">Selecione o Badge</label>
+        <select class="form-control" id="badge_id" name="badge_id" required>
+            <option value="">-- Selecione um Badge --</option>
+            % my $badges = stash('badges') || [];
+            % foreach my $badge (@$badges) {
+                <option value="<%= $badge->{id} %>">[<%= $badge->{id} %>] <%= $badge->{name} %> (<%= $badge->{code} %>)</option>
+            % }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Verificar Usuários e Badges</button>
+</form>

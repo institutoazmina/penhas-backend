@@ -159,6 +159,12 @@ __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("idx_25909_cpf_hash", ["cpf_hash"]);
 __PACKAGE__->add_unique_constraint("idx_25909_email", ["email"]);
 __PACKAGE__->has_many(
+  "badges_invite",
+  "Penhas::Schema2::Result::BadgeInvite",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "chat_clientes_notifications",
   "Penhas::Schema2::Result::ChatClientesNotification",
   { "foreign.cliente_id" => "self.id" },
@@ -376,8 +382,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-02-06 01:37:32
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:h/Y54YmQgFGwIA9ojfNdyw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-04-17 11:38:33
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:c95ev9xNR8SVGrW13Y+8eQ
 
 
 use Carp qw/confess/;

@@ -31,7 +31,8 @@ sub register {
     $r->get('pontos-de-apoio/:ponto_apoio_id')->to(controller => 'PontoApoio', action => 'public_pa_detail');
 
     # quiz anônimo
-    my $anon_quiz = $r->under('anon-questionnaires')->to(controller => 'AnonQuestionnaire', action => 'verify_anon_token');
+    my $anon_quiz
+      = $r->under('anon-questionnaires')->to(controller => 'AnonQuestionnaire', action => 'verify_anon_token');
     $anon_quiz->get('config')->to(action => 'aq_config_get');
     $anon_quiz->get()->to(action => 'aq_list_get');
     $anon_quiz->post('new')->to(action => 'aq_list_post');
@@ -44,6 +45,11 @@ sub register {
     my $guardioes = $r->under('web/guardiao')->to(controller => 'Guardiao', action => 'apply_rps');
     $guardioes->get()->to(action => 'get');
     $guardioes->post()->to(action => 'post');
+
+    # Circulo penhas
+    my $accept_badge = $r->under('badge/accept')->to(controller => 'BadgeAcceptance', action => 'apply_rps');
+    $accept_badge->get()->to(action => 'accept_invite');
+    $accept_badge->post()->to(action => 'accept_invite');
 
     # GET /web/faq
     my $web = $r->under('web')->to(controller => 'WebFAQ', action => 'apply_rps');
@@ -99,6 +105,13 @@ sub register {
     $admin->get('analisar-sugestao-ponto-apoio')->to(controller => 'Admin::PontoApoio', action => 'apa_review');
     $admin->post('analisar-sugestao-ponto-apoio')->to(controller => 'Admin::PontoApoio', action => 'apa_review_post');
 
+    $admin->get('badges')->to(controller => 'Admin::Badges', action => 'show_assign_form');
+    $admin->post('badges/assign')->to(controller => 'Admin::Badges', action => 'process_assign_list');
+    $admin->get('badges/assign')->to(controller => 'Admin::Badges', action => 'process_assign_list');
+    $admin->post('badges/confirm')->to(controller => 'Admin::Badges', action => 'confirm_assign_changes');
+    $admin->get('badges/confirm')->to(controller => 'Admin::Badges', action => 'confirm_assign_changes');
+    $admin->get('badges/success')->to(controller => 'Admin::Badges', action => 'show_success');
+
     # INTERNAL ENDPOINTS
     # GET /maintenance/tick-rss
     my $maintenance = $r->under('maintenance')->to(controller => 'Maintenance', action => 'check_authorization');
@@ -145,7 +158,7 @@ sub register {
     $user_loaded->post('block-profile')->to(controller => 'Me', action => 'me_add_block_profile');
 
     # base do /me
-    my $me          = $user_loaded->any('me');
+    my $me = $user_loaded->any('me');
     $me->get()->to(action => 'me_find');
     $me->put()->to(action => 'me_update');
     $me->delete()->to(action => 'me_delete');
@@ -231,7 +244,8 @@ sub register {
 
     # POST /me/sugerir-pontos-de-apoio
     $me->under('sugerir-pontos-de-apoio')->post()->to(controller => 'PontoApoio', action => 'user_pa_suggest');
-    $me->under('sugerir-pontos-de-apoio-completo')->post()->to(controller => 'PontoApoio', action => 'user_pa_suggest_full');
+    $me->under('sugerir-pontos-de-apoio-completo')->post()
+      ->to(controller => 'PontoApoio', action => 'user_pa_suggest_full');
 
     my $me_pa = $me->under('pontos-de-apoio');
 
