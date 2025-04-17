@@ -40,10 +40,15 @@ sub cliente_add_badge {
     if (!$badge_cliente) {
         $c->schema2->resultset('ClienteTag')->search(
             {
-                badge_id   => $badge_id,
-                cliente_id => $user->id,
+                badge_id    => $badge_id,
+                cliente_id  => $user->id,
+                valid_until => {'>' => \'now()'},
             }
-        )->delete;
+        )->update(
+            {
+                valid_until => \'now()',
+            }
+        );
 
         # Set validity to 1 year from now instead of infinity
         my $valid_until = DateTime->now->add(years => 1)->strftime('%Y-%m-%d %H:%M:%S');
@@ -120,7 +125,8 @@ sub schedule_add_badge {
         );
         die "Failed to create BadgeInvite" unless $invite && $invite->id;
         log_info("Created BadgeInvite ID: " . $invite->id);
-        use DDP; p $invite;
+        use DDP;
+        p $invite;
 
         my $expires_in_seconds = 400 * 24 * 60 * 60;
         my $token              = $c->encode_jwt(
