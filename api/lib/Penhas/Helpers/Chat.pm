@@ -166,7 +166,7 @@ sub chat_find_users {
 
         # Add location badge separately using existing function
         # This won't cause duplicates as we deduplicate by code
-        push @$badges, $user_obj->check_location_badge_for_cidade(delete $_->{_cep_cidade});
+        push @$badges, $user_obj->check_location_badge_for_cidade(delete $_->{_cep_cidade}, 'block');
 
         # Deduplicate again after adding location badge
         my %seen;
@@ -381,7 +381,7 @@ sub chat_list_sessions {
             $user_obj,
             $anonimo,
         );
-        push @$badges, $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade}) if !$anonimo;
+        push @$badges, $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade}, 'block') if !$anonimo;
 
         my %seen;
         $badges = [grep { !$seen{$_->{code}}++ } @$badges];
@@ -705,7 +705,7 @@ sub _load_chat_room {
         )->all;
 
         $other->{badges} = [map { $_->badge->render('inline') } @badges];
-        push $other->{badges}->@*, $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade});
+        push $other->{badges}->@*, $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade}); # aqui dentro da sala não é block
 
         $other->{blocked_me} = $other->{blocked_me} ? 1 : 0;
         $other->{avatar_url} ||= $ENV{AVATAR_PADRAO_URL};
