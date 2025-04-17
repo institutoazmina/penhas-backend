@@ -359,9 +359,9 @@ sub chat_list_sessions {
     )->all;
     my $badges_by_client = {};
     foreach my $cliente_badge (@client_badges) {
-        $badges_by_client->{$$cliente_badge->cliente_id} = [] if !$badges_by_client->{$cliente_badge->cliente_id};
-        push $badges_by_client->{$$cliente_badge->cliente_id}->@*,
-          $$cliente_badge->badge;
+        $badges_by_client->{$cliente_badge->cliente_id} = [] if !$badges_by_client->{$cliente_badge->cliente_id};
+        push $badges_by_client->{$cliente_badge->cliente_id}->@*,
+          $cliente_badge->badge;
     }
 
     while (my $r = $cliente_activity_rs->next) {
@@ -705,7 +705,8 @@ sub _load_chat_room {
         )->all;
 
         $other->{badges} = [map { $_->badge->render('inline') } @badges];
-        push $other->{badges}->@*, $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade}); # aqui dentro da sala não é block
+        push $other->{badges}->@*,
+          $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade});    # aqui dentro da sala não é block
 
         $other->{blocked_me} = $other->{blocked_me} ? 1 : 0;
         $other->{avatar_url} ||= $ENV{AVATAR_PADRAO_URL};
