@@ -1069,7 +1069,7 @@ sub _format_chat_badges {
                           || '',
                         name             => 'Usuária da sua região',
                         code             => 'GEO:CITY',
-                        popup            => 0,
+                        popup            => 1,
                         show_description => 0,
                         style            => 'inline',
                     };

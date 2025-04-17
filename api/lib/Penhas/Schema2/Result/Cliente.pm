@@ -500,7 +500,7 @@ sub check_location_badge_for_cidade {
     for my $badge (@$badge_locations) {
         if ($badge->linked_cep_cidade() eq $cep_cidade) {
             push @badges, {
-                description => 'Usuárias da cidade ' . $cep_cidade,
+                description => 'Usuária da sua região',
                 image_url   => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL'}
                   || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
                   || '',
@@ -509,7 +509,7 @@ sub check_location_badge_for_cidade {
                   || '',
                 name             => 'Usuária da sua região',
                 code             => 'GEO:CITY',
-                popup            => 0,
+                popup            => $block ? 0 : 1,
                 show_description => 0,
                 style            => $block ? 'inline-block' : 'inline',
             };
