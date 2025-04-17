@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="/web-assets/padrao.css?v=<%=$version%>" />
     <link rel="stylesheet" href="/web-assets/faq.css?v=<%=$version%>" />
 
-    <title><%= (stash 'title') || 'Padrão' %></title>
+    <title><%= (stash 'title') || 'PenhaS' %></title>
   </head>
   <body class="text-center">
     <%= content %>

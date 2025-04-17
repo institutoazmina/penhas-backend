@@ -82,9 +82,8 @@
 
     % if (@$confirmation_list) {
         <button type="submit" class="btn btn-success">Confirmar Alterações</button>
-        <a href="/admin/badges/assign" class="btn btn-secondary">Cancelar</a>
     % } else {
-        <a href="/admin/badges/assign" class="btn btn-secondary">Voltar</a>
+        <a href="/admin/badges" class="btn btn-secondary">Voltar</a>
     % }
 
 </form>
