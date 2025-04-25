@@ -13,7 +13,9 @@ sub show_assign_form {
 
     # Fetch badges for the dropdown
     my @badges = $c->schema2->resultset('Badge')->search(
-        undef,
+        {
+            id => {'>' => 0},    # Exclude test badges
+        },
         {
             order_by     => 'name',
             columns      => [qw/id name code/],

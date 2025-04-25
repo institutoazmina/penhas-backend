@@ -258,7 +258,7 @@ sub new_notification_comment {
 
         my $is_creator = $user_id == $root_tweet->cliente_id ? 1 : 0;
 
-        my $title = $is_creator ? 'comentou sua publicação'       : 'comentou seu comentário';
+        my $title = 'comentou na sua publicação';
         my $pref  = $is_creator ? 'NOTIFY_COMMENTS_POSTS_CREATED' : 'NOTIFY_COMMENTS_POSTS_COMMENTED';
 
         $logger->info("testing $pref for user $user_id");
@@ -357,7 +357,7 @@ sub new_notification_post_local_badge_holder {
 
 
     my $preference_name = 'NOTIFY_POST_FROM_BADGE_HOLDER_IN_MY_CITY';
-    my $icon            = 2;                                            # Choose an appropriate icon ID
+    my $icon            = 5;
 
     # Prepare message content (similar to other handlers)
     my $content = $tweet->content;
@@ -374,7 +374,7 @@ sub new_notification_post_local_badge_holder {
 
     my $message = {
         is_test => is_test() ? 1 : 0,
-        title   => 'Voluntária da sua região fez uma nova publicação',  # Could be: "$poster_name postou na sua cidade!"
+        title   => 'Voluntária de sua região fez uma nova publicação',  # Could be: "$poster_name postou na sua cidade!"
         content => $content,
         meta    => to_json(
             {
@@ -508,7 +508,7 @@ sub new_notification_post_linked_city_badge_holder {
     # Keep it generic for now.
     my $message = {
         is_test => is_test() ? 1 : 0,
-        title   => 'Usuária da sua região fez uma nova publicação',
+        title   => 'Usuária de sua região fez uma nova publicação',
         content => $content,
         meta    => to_json(
             {
