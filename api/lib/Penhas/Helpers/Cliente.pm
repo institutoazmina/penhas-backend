@@ -3,7 +3,7 @@ use common::sense;
 use Carp qw/confess /;
 use utf8;
 
-use JSON qw/from_json to_json/;
+use JSON qw/from_json to_json encode_json/;
 use Penhas::Logger;
 use Penhas::Utils;
 use DateTime::Format::Pg;
@@ -584,7 +584,7 @@ sub add_report_profile {
                 template  => 'cliente_reportado.html',
                 to        => $ENV{EMAIL_TWEET_REPORTADO},
                 subject   => 'PenhaS - Usuária reportada',
-                variables => to_json(
+                variables => encode_json(
                     {
                         cliente => {
                             id            => $cliente->id,
