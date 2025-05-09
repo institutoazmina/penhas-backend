@@ -323,6 +323,7 @@ sub add_tweet {
         }
     }
     elsif (!$anonimo && notifications_enabled() && $poster_cep_cidade) {
+
         # apenas posts globais
         my $cities_already_notified = {};
 
@@ -877,7 +878,7 @@ sub _format_tweet {
             parent_id => $me->{parent_id},
             (is_test() ? (tweet_depth_test_only => $me->{tweet_depth}) : ())
         },
-        badges => _format_db_badges($me->{badges}, $user_obj, $me->{anonimo}),
+        badges => _format_db_badges($me->{badges}, $user_obj, $me->{anonimo}, $is_owner),
 
         id      => $me->{id},
         content => $me->{disable_escape}
@@ -925,7 +926,7 @@ sub _format_tweet {
 }
 
 sub _format_db_badges {
-    my ($badges, $user_obj, $anonimo) = @_;
+    my ($badges, $user_obj, $anonimo, $is_owner) = @_;
 
     my @formatted_badges = ();
     foreach my $badge (@{$badges || []}) {
@@ -935,7 +936,8 @@ sub _format_db_badges {
     }
 
     # Now handle location badges with the inverted logic
-    if ($user_obj && $user_obj->modo_anonimo_ativo && !$anonimo) {
+    # Should not be shown if the user is itself
+    if ($user_obj && $user_obj->modo_anonimo_ativo && !$anonimo && !$is_owner) {
 
         # User is viewing anonymously and the post is not anonymous
         my $user_city = $user_obj->cep_cidade;
