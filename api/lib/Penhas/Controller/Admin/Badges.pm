@@ -240,8 +240,11 @@ sub confirm_assign_changes {
     $c->stash(template => 'admin/badge_success');
 
     # Retrieve array parameters
-    my $cliente_ids = $c->req->param('cliente_id');    # Might be single value or array ref
-    my $actions     = $c->req->param('action');        # Might be single value or array ref
+    my $cliente_ids = [$c->req->every_param('cliente_id')];
+    my $actions     = [$c->req->every_param('action')];
+
+    log_info("Actions: ", to_json( $actions));
+    log_info("Cliente IDs: ", to_json( $cliente_ids));
     my $badge_id    = $c->req->param('badge_id');
 
     # Ensure they are arrays for consistent processing
