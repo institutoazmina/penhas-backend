@@ -42,8 +42,16 @@ __PACKAGE__->add_columns(
     is_nullable   => 0,
     original      => { default_value => \"now()" },
   },
+  "image_url_black",
+  { data_type => "varchar", is_nullable => 0, size => 1000 },
 );
 __PACKAGE__->set_primary_key("id");
+__PACKAGE__->has_many(
+  "badges_invite",
+  "Penhas::Schema2::Result::BadgeInvite",
+  { "foreign.badge_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 __PACKAGE__->has_many(
   "cliente_tags",
   "Penhas::Schema2::Result::ClienteTag",
@@ -52,17 +60,21 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-01-30 12:15:18
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4LroHT+lBR80v2oGND5gHQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-04-17 11:38:33
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:glNuW3+FxtEEGRMk7KmNoA
 
 sub render {
-    my ($self) = @_;
+    my ($self, $inline) = @_;
+
     return {
-        code        => $self->code,
-        name        => $self->name,
-        description => $self->description,
-        image_url   => $self->image_url,
-        style       => 'popup',
+        code             => $self->code,
+        name             => $self->name,
+        description      => $self->description,
+        image_url        => $self->image_url,
+        image_url_black  => $self->image_url_black,
+        popup            => 1,
+        show_description => 1,
+        style            => $inline ? 'inline' : 'inline-block',
     };
 }
 

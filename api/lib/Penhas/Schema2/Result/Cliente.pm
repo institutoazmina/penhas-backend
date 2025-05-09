@@ -159,6 +159,12 @@ __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("idx_25909_cpf_hash", ["cpf_hash"]);
 __PACKAGE__->add_unique_constraint("idx_25909_email", ["email"]);
 __PACKAGE__->has_many(
+  "badges_invite",
+  "Penhas::Schema2::Result::BadgeInvite",
+  { "foreign.cliente_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+__PACKAGE__->has_many(
   "chat_clientes_notifications",
   "Penhas::Schema2::Result::ChatClientesNotification",
   { "foreign.cliente_id" => "self.id" },
@@ -376,8 +382,8 @@ __PACKAGE__->has_many(
 );
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-02-06 01:37:32
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:h/Y54YmQgFGwIA9ojfNdyw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-04-17 11:38:33
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:c95ev9xNR8SVGrW13Y+8eQ
 
 
 use Carp qw/confess/;
@@ -400,15 +406,17 @@ __PACKAGE__->has_many(
     }
 );
 
+# só retorna os badges que estão ativos se o usuário não estiver no modo camuflado
 __PACKAGE__->has_many(
     badges_ativos => 'Penhas::Schema2::Result::ClienteTag',
     sub {
         my $args = shift;
 
         return {
-            "$args->{foreign_alias}.cliente_id"  => {-ident => "$args->{self_alias}.id"},
-            "$args->{foreign_alias}.valid_until" => {'>'    => \'now()'},
-            "$args->{foreign_alias}.badge_id"    => {'!='   => undef},
+            "$args->{self_alias}.modo_anonimo_ativo" => \' = false',
+            "$args->{foreign_alias}.cliente_id"        => {-ident => "$args->{self_alias}.id"},
+            "$args->{foreign_alias}.valid_until"       => {'>'    => \'now()'},
+            "$args->{foreign_alias}.badge_id"          => {'!='   => undef},
         };
     }
 );
@@ -491,7 +499,7 @@ sub linked_location_badges {
 }
 
 sub check_location_badge_for_cidade {
-    my ($self, $cep_cidade) = @_;
+    my ($self, $cep_cidade, $block) = @_;
     return () unless $cep_cidade;
 
     my $badge_locations = $self->linked_location_badges();
@@ -500,11 +508,18 @@ sub check_location_badge_for_cidade {
     for my $badge (@$badge_locations) {
         if ($badge->linked_cep_cidade() eq $cep_cidade) {
             push @badges, {
-                description => 'Usuárias da cidade ' . $cep_cidade,
-                image_url   => '',
-                name        => 'Usuária da sua região',
-                code        => 'GEO:CITY',
-                style       => 'inline',
+                description => 'Usuária da sua região',
+                image_url   => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL'}
+                  || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                  || '',
+                image_url_black => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL_BLACK'}
+                  || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                  || '',
+                name             => 'Usuária da sua região',
+                code             => 'GEO:CITY',
+                popup            => $block ? 0 : 1,
+                show_description => 0,
+                style            => $block ? 'inline-block' : 'inline',
             };
         }
     }

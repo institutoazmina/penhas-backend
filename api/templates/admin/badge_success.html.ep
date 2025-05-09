@@ -1,0 +1,20 @@
+% my $success_message = flash('success_message');
+% my $message = flash('message');
+
+<div class="border-bottom mb-3">
+    <h1 class="h2">Atribuição de Badge - Resultado</h1>
+</div>
+
+% if ($success_message) {
+<div class="alert alert-success">
+    <%= $success_message %>
+</div>
+% }
+
+% if ($message) {
+<div class="alert alert-warning">
+    <%= $message %>
+</div>
+% }
+
+<a href="/admin/badges" class="btn btn-primary">Voltar para Atribuição de Badges</a>

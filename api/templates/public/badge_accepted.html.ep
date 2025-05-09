@@ -1,0 +1,62 @@
+% my $status = stash('msg_status');
+% my $message = stash('message');
+% my $user = stash('user');
+% my $badge = stash('badge');
+% my $token = stash('token');
+
+<main role="main">
+   <div class="divgradient" style="padding-top: 2rem;">
+       <img src="/web-assets/penhas-logo.svg" alt="Logo PenhaS" class="penhas_logo" style="margin-bottom: 1rem;">
+
+       % if ($status eq 'ok') {
+           <h1 class="h3 mb-3 font-weight-normal">Confirmação - Círculo PenhaS</h1>
+           <p class="lead">Olá, <%= $user->nome_completo || 'Usuária' %>!</p>
+           <p>É uma alegria contar com você na construção de um Brasil livre de violência contra meninas e mulheres.</p>
+           <p>O Círculo PenhaS nasceu para aproximar mulheres, unindo forças, aprendizados e experiências. Nossa missão é simples e urgente: nenhuma de nós para trás!</p>
+           <p>Você está participando dos encontros formativos com nossa equipe no Nordeste de Amaralina (Salvador), concluiu o cadastro no aplicativo PenhaS e agora está pronta para receber o <strong>selo <%= $badge->name %></strong>. Com ele, seu perfil será identificado no aplicativo e você poderá apoiar outras mulheres da sua região, ajudando a reconhecer sinais de violência e, quando possível, a romper com esses ciclos.</p>
+           <div class="alert alert-light" role="alert">
+            <h4 class="alert-heading">Importante:</h4>
+            O selo tem validade de 1 ano.<br>
+            A atuação voluntária não é remunerada.
+           </div>
+
+           <p>Para confirmar a ativação do selo <strong><%= $badge->name %></strong> no seu perfil, clique no botão abaixo:</p>
+
+           <form method="POST" action="/badge/accept?% = $token %" class="mt-4 mb-4 text-center">
+               <input type="hidden" name="token" value="<%= $token %>">
+               <button type="submit" class="btn btn-lg btn-primary">Confirmar Ativação do Selo</button>
+           </form>
+
+           <p><br>Um abraço carinhoso,<br><strong>Equipe PenhaS</strong></p>
+
+           <p class="alert alert-light">Se tiver dúvidas, escreva para <a href="mailto:contato@penhas.com.br"><strong>contato@penhas.com.br</strong></a>.</p>
+
+       % } elsif ($status eq 'confirmed_success' || $status eq 'invite_already_accepted') {
+            <h1 class="h3 mb-3 font-weight-normal">Confirmação Recebida!</h1>
+             % if ($user && $badge) {
+               <p class="lead">Olá, <%= $user->nome_completo || 'Usuária' %>!</p>
+               <p>A partir de agora você tem o selo <strong><%= $badge->name %></strong> ativo no seu perfil.</p>
+               <p>Te esperamos no aplicativo!</p>
+             % } else {
+                <p class="lead">Seu selo está ativo!</p>
+                <p>Te esperamos no aplicativo!</p>
+             % }
+
+             <p><br>Um abraço carinhoso,<br><strong>Equipe PenhaS</strong></p>
+
+       % } else {
+           <h1 class="h3 mb-3 font-weight-normal text-danger">Erro na Confirmação</h1>
+           <div class="alert alert-danger" role="alert">
+               <%= $message || 'Ocorreu um erro inesperado ou o link é inválido/expirado.' %>
+           </div>
+
+
+           <p class="alert alert-light">Para entender sua situação, entre em contato com <a href="mailto:contato@penhas.com.br"><strong>contato@penhas.com.br</strong></a>.</p>
+
+           <p><br>Um abraço carinhoso,<br><strong>Equipe PenhaS</strong></p>
+
+       % }
+
+
+   </div> <!-- divgradient -->
+</main>

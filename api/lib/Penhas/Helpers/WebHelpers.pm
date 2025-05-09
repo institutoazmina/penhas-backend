@@ -13,6 +13,10 @@ sub setup {
     $c->helper(respond_to_if_web => \&respond_to_if_web);
     $c->helper(flash_to_redis    => \&flash_to_redis);
     $c->helper(use_redis_flash   => \&use_redis_flash);
+    $c->helper(pg_timestamp2human => \&pg_timestamp2human);
+    $c->helper(store_form_data   => \&store_form_data);
+    $c->helper(get_form_data      => \&get_form_data);
+    $c->helper(delete_form_data   => \&delete_form_data);
 }
 
 sub respond_to_if_web {
@@ -74,6 +78,35 @@ sub flash_to_redis {
     my $redis_key = 'flash' . random_string(10);
     $c->kv->redis->setex($redis_key, 15, to_json($content));
     $c->flash(flashredis => $redis_key);
+}
+
+
+sub store_form_data {
+    my ($c, $data) = @_;
+
+    # Generate a unique key for this form submission
+    my $form_key = 'form_data_' . Penhas::Utils::random_string(16);
+
+    # Store the data in Redis with a longer TTL (24 hours = 86400 seconds)
+    $c->kv->redis->setex($form_key, 86400, to_json($data));
+
+    return $form_key;
+}
+
+sub get_form_data {
+    my ($c, $key) = @_;
+
+    # Get the data from Redis (don't delete it yet)
+    my $data = $c->kv->redis->get($key);
+
+    return $data ? from_json($data) : undef;
+}
+
+sub delete_form_data {
+    my ($c, $key) = @_;
+
+    # Delete the data from Redis when no longer needed
+    $c->kv->redis->del($key);
 }
 
 1;

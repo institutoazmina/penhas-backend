@@ -1,0 +1,91 @@
+% my $error = $c->stash('error');
+% my $params = $c->stash('params');
+% my $notification_message = $c->stash('notification_message');
+% my $confirmation_list = stash('confirmation_list') || [];
+% my $badge = stash('badge');
+
+% if (!$badge) {
+
+    <h1>Erro - Volte para a página anterior</h1>
+
+% } else {
+
+<div class="border-bottom mb-3">
+    <h1 class="h2">Confirmar Atribuição - Badge: <%= $badge->name %> (<%= $badge->code %>)</h1>
+</div>
+
+<p>Verifique a lista abaixo. Para cada usuário encontrado, selecione a ação desejada (Manter, Adicionar ou Remover). Usuários não encontrados serão ignorados. Clique em "Confirmar Alterações" para aplicar.</p>
+
+<form method="POST" action="/admin/badges/confirm">
+    <input type="hidden" name="badge_id" value="<%= $badge->id %>">
+    <input type="hidden" name="form_key" value="<%= $form_key %>">
+
+    <div class="table-responsive">
+        <table class="table table-striped table-sm table-hover">
+            <thead>
+                <tr>
+                    <th>Entrada Original</th>
+                    <th>Usuário Encontrado</th>
+                    <th>Email</th>
+                    <th>Status Atual do Badge</th>
+                    <th>Ação Proposta</th>
+                </tr>
+            </thead>
+            <tbody>
+                % if (@$confirmation_list) {
+                    % foreach my $item (@$confirmation_list) {
+                    <tr>
+                        <td><%= $item->{input} %></td>
+                        <td>
+                            % if (my $user = $item->{user}) {
+                                <a href="/admin/users?cliente_id=<%= $user->{id} %>" target="_blank"><%= $user->{apelido} || $user->{nome_completo} %></a> (ID: <%= $user->{id} %>)
+                            % } else {
+                                <span class="text-danger">Não encontrado</span>
+                            % }
+                        </td>
+                        <td><%= $item->{user} ? $item->{user}{email} : '-' %></td>
+                        <td>
+                            % if ($item->{current_status} eq 'active') {
+                                <span class="badge badge-success">Ativo</span>
+                            % } elsif ($item->{current_status} eq 'pending_invite') {
+                                <span class="badge badge-info">Convite Pendente</span>
+                            % } elsif ($item->{current_status} eq 'inactive') {
+                                <span class="badge badge-secondary">Inativo</span>
+                            % } else {
+                                <span class="badge badge-dark">N/A</span>
+                            % }
+                        </td>
+                        <td>
+                            % if ($item->{user}) {
+                                <input type="hidden" name="cliente_id" value="<%= $item->{cliente_id} %>">
+                                <select name="action" class="form-control form-control-sm">
+                                    <option value="keep" <%= $item->{proposed_action} eq 'keep' ? 'selected' : '' %>>Manter</option>
+                                    <option value="add"  <%= $item->{proposed_action} eq 'add' ? 'selected' : '' %>>Adicionar</option>
+                                    <option value="remove" <%= $item->{proposed_action} eq 'remove' ? 'selected' : '' %>>Remover</option>
+                                </select>
+                            % } else {
+                                <input type="hidden" name="cliente_id" value="-1"> <!-- Placeholder -->
+                                <input type="hidden" name="action" value="keep"> <!-- Always keep if not found -->
+                                <span>Ignorar</span>
+                            % }
+                        </td>
+                    </tr>
+                    % }
+                % } else {
+                    <tr>
+                        <td colspan="5" class="text-center">Nenhum identificador válido foi processado.</td>
+                    </tr>
+                % }
+            </tbody>
+        </table>
+    </div>
+
+    % if (@$confirmation_list) {
+        <button type="submit" class="btn btn-success">Confirmar Alterações</button>
+    % } else {
+        <a href="/admin/badges" class="btn btn-secondary">Voltar</a>
+    % }
+
+</form>
+
+% }

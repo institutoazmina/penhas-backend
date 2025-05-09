@@ -114,9 +114,11 @@ sub like_tweet {
             [
                 'new_like',
                 {
-                    tweet_id   => $reference->id,
-                    subject_id => $subject_id,
-                    admin_mode => $post_as_admin ? 1 : 0,
+
+                    tweet_id          => $reference->id,
+                    subject_id        => $subject_id,
+                    admin_mode        => $post_as_admin ? 1 : 0,
+                    exclude_poster_id => $user->{id},
                 }
             ] => {
                 attempts => 5,
@@ -288,6 +290,7 @@ sub add_tweet {
         }
     );
 
+    my $poster_cep_cidade = $user_obj->cep_cidade;
     if ($reply_to) {
 
         $rs->search({id => $reply_to})->update(
@@ -307,18 +310,106 @@ sub add_tweet {
                 [
                     'new_comment',
                     {
-                        tweet_id      => $original_parent_id,
-                        comment_id    => $tweet->id,
-                        subject_id    => $subject_id,
-                        comment       => $content,
-                        root_tweet_id => $root_tweet_id,
-                        admin_mode    => $post_as_admin ? 1 : 0,
+                        tweet_id          => $original_parent_id,
+                        comment_id        => $tweet->id,
+                        subject_id        => $subject_id,
+                        comment           => $content,
+                        root_tweet_id     => $root_tweet_id,
+                        admin_mode        => $post_as_admin ? 1 : 0,
+                        exclude_poster_id => $user->{id},
                     }
                 ] => {
                     attempts => 5,
                 }
             );
             $ENV{LAST_NTF_COMMENT_JOB_ID} = $job_id;
+        }
+    }
+    elsif (!$anonimo && notifications_enabled() && $poster_cep_cidade) {
+
+        # apenas posts globais
+        my $cities_already_notified = {};
+
+        my @active_cliente_tags = $c->schema2->resultset('ClienteTag')->search(
+            {
+                cliente_id                => $user_obj->id,
+                valid_until               => {'>=' => \'NOW()'},
+                badge_id                  => {'!=' => undef},      # precisa ter a tag
+                'badge.linked_cep_cidade' => $poster_cep_cidade,
+            },
+            {join => 'badge', prefetch => 'badge',}
+        )->all;
+
+
+        if (@active_cliente_tags) {
+            slog_info(
+                'add_tweet notifying local badge holders for user %d',
+                $user->{id}
+            );
+            for my $cliente_tag (@active_cliente_tags) {
+                my $badge_id   = $cliente_tag->badge_id;
+                my $badge_obj  = $cliente_tag->badge;
+                my $cep_cidade = $badge_obj->linked_cep_cidade;
+                next unless $cep_cidade;
+                $cities_already_notified->{$cep_cidade} = 1;
+
+                my $job_id_local = $c->minion->enqueue(
+                    'new_notification',
+                    [
+                        'new_post_local_badge_holder',
+                        {
+                            tweet_id          => $tweet->id,
+                            subject_id        => $user_obj->id,             # Poster's ID (not anonymous)
+                            poster_cep_cidade => $cep_cidade,
+                            admin_mode        => $post_as_admin ? 1 : 0,    # Pass admin mode if needed later
+                            exclude_poster_id => $user->{id},
+                        }
+                    ] => {attempts => 3}
+                );
+
+                slog_info("Enqueued local badge notification job: %s", $job_id_local // 'undef');
+            }
+        }
+        else {
+            slog_info("Skipping badge notifications for user %d: no active badges", $user_obj->id);
+        }
+
+        # get badges with linked_cep_cidade = author's city
+        my @badges_with_cities = $c->schema2->resultset('Badge')->search(
+            {
+                'me.linked_cep_cidade' => $poster_cep_cidade,
+            },
+            {
+                select => 'me.linked_cep_cidade',
+            }
+        )->all;
+
+        my @linked_cities = grep { !$cities_already_notified->{$_} }
+          map { $_->linked_cep_cidade } @badges_with_cities;
+
+        if (@linked_cities) {
+            my $job_id_linked = $c->minion->enqueue(
+                'new_notification',
+                [
+                    'new_post_linked_city_badge_holder',
+                    {
+                        tweet_id           => $tweet->id,
+                        subject_id         => $user_obj->id,            # Poster's ID
+                        linked_cep_cidades => \@linked_cities,
+                        admin_mode         => $post_as_admin ? 1 : 0,
+
+                        exclude_poster_id => $user->{id},
+                        poster_cep_cidade => $poster_cep_cidade,        # Pass poster's city for de-duplication
+                    }
+                ] => {attempts => 3}
+            );
+            slog_info("Enqueued linked city badge notification job: %s", $job_id_linked // 'undef');
+        }
+        else {
+            slog_info(
+                "Skipping linked city badge notification for user %d: no badges with linked_cep_cidade",
+                $user_obj->id
+            );
         }
     }
 
@@ -547,7 +638,7 @@ sub list_tweets {
     my @rows     = $rs->all;
     my $has_more = scalar @rows > $rows ? 1 : 0;
 
-    log_info(dumper([@rows]));
+    #log_info(dumper([@rows]));
 
     pop @rows if $has_more;
 
@@ -556,12 +647,9 @@ sub list_tweets {
     my @unique_ids;
     my @comments;
 
-
-    my @users_ids = map { $_->{cliente_id} } grep {
-
-        # filtra pelas condições q devem ser exibidas
-        !$_->{anonimo} || $is_admin || $_->{cliente_id} == $user_obj->id
-    } @rows;
+    # In the list_tweets function, modify the badge loading:
+    # 1. Get ALL client IDs without filtering out anonymous users
+    my @users_ids     = map { $_->{cliente_id} } @rows;
     my @client_badges = $c->schema2->resultset('Cliente')->search_related(
         'badges_ativos',
         {
@@ -622,8 +710,6 @@ sub list_tweets {
             $attr
         )->all;
         foreach my $me (@childs) {
-            use DDP;
-            p $me;
             $me->{badges} = $reverse_badge->{$me->{cliente_id}} || [];
 
             $last_reply{$me->{parent_id}} = &_format_tweet($user_obj, $me, $remote_addr);
@@ -650,6 +736,11 @@ sub list_tweets {
 
     $c->add_tweets_highlights(tweets => \@tweets, user_obj => $user_obj);
 
+    foreach my $tweet (@tweets) {
+        delete $tweet->{_tags_index};
+        delete $tweet->{last_reply}{_tags_index} if $tweet->{last_reply};
+    }
+
     my $next_page;
 
     # nao adicionar noticias nos detalhes
@@ -665,7 +756,7 @@ sub list_tweets {
 
         if ($category =~ /^(all|only_news|all_but_news)$/) {
             $c->add_tweets_news(
-                user     => $user_obj,
+                user_obj => $user_obj,
                 tweets   => \@tweets,
                 category => $category,
                 tags     => $opts{tags},
@@ -792,7 +883,7 @@ sub _format_tweet {
             parent_id => $me->{parent_id},
             (is_test() ? (tweet_depth_test_only => $me->{tweet_depth}) : ())
         },
-        badges => $me->{badges} ? _format_db_badges($me->{badges}) : [],
+        badges => _format_db_badges($me->{badges}, $user_obj, $me->{anonimo}, $is_owner),
 
         id      => $me->{id},
         content => $me->{disable_escape}
@@ -824,23 +915,85 @@ sub _format_tweet {
         ),
     };
 
-    if ($user_obj) {    # aqui é o user que está logado, ele precisa ter o badge do evento, e então vai comparado com o
-                        # CEP da usuária que postou o tweet, se for igual, ele irá ver um badge extra no tweet dizendo
-                        # que o usuária está na mesma cidade que ele
-        push $row->{badges}->@*, $user_obj->check_location_badge_for_cidade($me->{cliente_cep_cidade});
+    if ($user_obj && !$anonimo && !$is_owner) {
+
+        # aqui é o user que está logado, ele precisa ter o badge do evento, e então vai comparado com o
+        # CEP da usuária que postou o tweet, se for igual, ele irá ver um badge extra no tweet dizendo
+        # que o usuária está na mesma cidade que ele
+        push $row->{badges}->@*, $user_obj->check_location_badge_for_cidade($me->{cliente_cep_cidade}, 1);
     }
+
+    # dedup by badge code
+    my %seen;
+    $row->{badges} = [grep { !$seen{$_->{code}}++ } $row->{badges}->@*];
 
     return $row;
 }
 
 sub _format_db_badges {
-    my ($badges) = @_;
-    my @out;
-    foreach my $badge (@$badges) {
-        push @out, $badge->render();
+    my ($badges, $user_obj, $anonimo, $is_owner) = @_;
+
+    my @formatted_badges = ();
+    foreach my $badge (@{$badges || []}) {
+
+        # Add standard badge
+        push @formatted_badges, $badge->render(1);
     }
 
-    return \@out;
+    # Now handle location badges with the inverted logic
+    # Should not be shown if the user is itself
+    if ($user_obj && $user_obj->modo_anonimo_ativo && !$anonimo && !$is_owner) {
+
+        # User is viewing anonymously and the post is not anonymous
+        my $user_city = $user_obj->cep_cidade;
+
+        if ($user_city) {
+
+            # Check author's badges for location match
+            foreach my $badge (@{$badges || []}) {
+                if (defined $badge->linked_cep_cidade
+                    && $badge->linked_cep_cidade eq $user_city)
+                {
+                    push @formatted_badges, {
+                        description => 'Colaborada da cidade ' . $user_city,
+                        image_url   => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL'}
+                          || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                          || '',
+                        image_url_black => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL_BLACK'}
+                          || $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                          || '',
+                        name             => 'Usuária da sua região',
+                        code             => 'GEO:CITY',
+                        popup            => 0,
+                        show_description => 0,
+                        style            => 'inline-block',
+                    };
+                }
+            }
+        }
+    }
+
+    if (!is_test() && $ENV{MODO_FUTURE_PROOF}) {
+        if (rand() < 0.5) {
+            push @formatted_badges, {
+                code        => 'rnd:' . random_string(4),
+                name        => "I'm a random badge! " . random_string(4),
+                description => qq{{
+                    <p style="font-size: ${\ (rand() > 0.5 ? '120%' : '100%') }">Some more test text here ${\ random_string(3) } inside a paragraph</p>
+                    Segunda linha, esperado que fica quebrado se a pessoa usar p em algumas e nada em outras
+                    <p>${\ rand() > 0.5 ? '<strong>' : '' }Final line of text for testing${\ rand() > 0.5 ? '</strong>' : '' }</p>
+                }},
+                image_url => rand() > 0.5
+                ? $ENV{PENHAS_DEFAULT_BADGE_ICON_URL}
+                : $ENV{AVATAR_SUPORTE_URL},    # return .svg and .png 50% of the time
+                popup            => rand() > 0.5 ? 1 : 0,
+                show_description => 1,
+                style            => rand() ? 'inline' : 'inline-block',
+            };
+        }
+    }
+
+    return \@formatted_badges;
 }
 
 sub maybe_linkfy {
