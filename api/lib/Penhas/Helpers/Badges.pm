@@ -2,7 +2,7 @@ package Penhas::Helpers::Badges;
 use common::sense;
 use Carp qw/confess/;
 use utf8;
-use JSON qw(to_json encode_json);
+use JSON qw(to_json);
 use Penhas::Logger;
 use Penhas::Utils;
 use DateTime;
@@ -155,7 +155,7 @@ sub schedule_add_badge {
                 template  => 'circulo_penhas_invite.html',
                 to        => $user->email,
                 subject   => 'Confirmação de inscrição - Voluntária PenhaS/Círculo PenhaS',
-                variables => encode_json($email_vars),
+                variables => to_json($email_vars),
             }
         );
         die 'Failed to enqueue email' unless $email_db && $email_db->id;
