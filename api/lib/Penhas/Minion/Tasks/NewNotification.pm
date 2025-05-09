@@ -102,7 +102,11 @@ sub new_notification_like {
     my $tweet      = $schema2->resultset('Tweet')->find($opts->{tweet_id}) or return;
     my $has_parent = $tweet->parent_id ? 1 : 0;
 
-    if ($tweet->cliente_id == $opts->{subject_id}) {
+    if (
+        $tweet->cliente_id == $opts->{subject_id}
+        || $tweet->cliente_id == $opts->{exclude_poster_id}
+      )
+    {
         $logger->info("skipping... tweet.cliente_id is same as subject_id...");
         return;
     }
@@ -247,18 +251,21 @@ sub new_notification_comment {
         }
     )->all;
 
+    my $poster_id     = $opts->{exclude_poster_id} || $subject_id;
     my $message_cache = {};
     foreach my $user_id (@ntf_clientes_ids) {
-        if ($user_id == $subject_id) {
+        if (   $user_id == $subject_id
+            || $user_id == $poster_id)
+        {
             $logger->info("skipping cliente_id: $user_id - same as subject_id");
-            next;    # pula o proprio sujeito (se for anonimo, vai enviar mesmo assim)
+            next; # pula o proprio sujeito (se for anonimo, não vai mais enviar, acho que isso estava causando confusao)
         }
 
         $logger->info("notify cliente_id: $user_id");
 
         my $is_creator = $user_id == $root_tweet->cliente_id ? 1 : 0;
 
-        my $title = $is_creator ?  'comentou na sua publicação' : 'comentou na publicação que você participou';
+        my $title = $is_creator ? 'comentou na sua publicação'    : 'comentou na publicação que você participou';
         my $pref  = $is_creator ? 'NOTIFY_COMMENTS_POSTS_CREATED' : 'NOTIFY_COMMENTS_POSTS_COMMENTED';
 
         $logger->info("testing $pref for user $user_id");
@@ -387,11 +394,18 @@ sub new_notification_post_local_badge_holder {
         icon       => $icon,
     };
 
+    my $poster_id = $opts->{exclude_poster_id} || $subject_id;
+
     # Find users in the same city who want this notification, excluding the poster
     my @clientes = $job->app->rs_user_by_preference($preference_name, '1')->search(
         {
             'cliente.cep_cidade' => $poster_cep_cidade,
-            'me.cliente_id'      => {'!=' => $subject_id},
+            'me.cliente_id'      => {
+                -not_in => [
+                    $subject_id,    # maybe 0 if anon
+                    $poster_id,     # Exclude the poster
+                ]
+            },
         },
         {
             columns => ['me.cliente_id'],
@@ -521,10 +535,18 @@ sub new_notification_post_linked_city_badge_holder {
         icon       => $icon,
     };
 
+    my $poster_id = $opts->{exclude_poster_id} || $subject_id;
+
     # Find users in the relevant cities who want this notification,
     my $search_cond = {
-        'cliente.cep_cidade' => {-in  => $linked_cep_cidades},
-        'me.cliente_id'      => {'!=' => $subject_id},
+        'cliente.cep_cidade' => {-in => $linked_cep_cidades},
+        'me.cliente_id'      => {
+            -not_in => [
+                $subject_id,    # maybe 0 if anon
+                $poster_id,     # Exclude the poster
+            ]
+        },
+
 
         'badge.linked_cep_cidade' => {-in => $linked_cep_cidades},
     };

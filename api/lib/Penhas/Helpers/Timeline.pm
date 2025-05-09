@@ -114,9 +114,10 @@ sub like_tweet {
             [
                 'new_like',
                 {
-                    tweet_id   => $reference->id,
-                    subject_id => $subject_id,
-                    admin_mode => $post_as_admin ? 1 : 0,
+                    tweet_id          => $reference->id,
+                    subject_id        => $subject_id,
+                    admin_mode        => $post_as_admin ? 1 : 0,
+                    exclude_poster_id => $user->{id},
                 }
             ] => {
                 attempts => 5,
@@ -308,12 +309,13 @@ sub add_tweet {
                 [
                     'new_comment',
                     {
-                        tweet_id      => $original_parent_id,
-                        comment_id    => $tweet->id,
-                        subject_id    => $subject_id,
-                        comment       => $content,
-                        root_tweet_id => $root_tweet_id,
-                        admin_mode    => $post_as_admin ? 1 : 0,
+                        tweet_id          => $original_parent_id,
+                        comment_id        => $tweet->id,
+                        subject_id        => $subject_id,
+                        comment           => $content,
+                        root_tweet_id     => $root_tweet_id,
+                        admin_mode        => $post_as_admin ? 1 : 0,
+                        exclude_poster_id => $user->{id},
                     }
                 ] => {
                     attempts => 5,
@@ -359,6 +361,7 @@ sub add_tweet {
                             subject_id        => $user_obj->id,             # Poster's ID (not anonymous)
                             poster_cep_cidade => $cep_cidade,
                             admin_mode        => $post_as_admin ? 1 : 0,    # Pass admin mode if needed later
+                            exclude_poster_id => $user->{id},
                         }
                     ] => {attempts => 3}
                 );
@@ -394,6 +397,7 @@ sub add_tweet {
                         linked_cep_cidades => \@linked_cities,
                         admin_mode         => $post_as_admin ? 1 : 0,
 
+                        exclude_poster_id => $user->{id},
                         poster_cep_cidade => $poster_cep_cidade,        # Pass poster's city for de-duplication
                     }
                 ] => {attempts => 3}
