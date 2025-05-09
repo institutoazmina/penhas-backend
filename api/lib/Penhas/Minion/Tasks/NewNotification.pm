@@ -258,7 +258,7 @@ sub new_notification_comment {
 
         my $is_creator = $user_id == $root_tweet->cliente_id ? 1 : 0;
 
-        my $title = 'comentou na sua publicação';
+        my $title = $is_creator ?  'comentou na sua publicação' : 'comentou na publicação que você participou';
         my $pref  = $is_creator ? 'NOTIFY_COMMENTS_POSTS_CREATED' : 'NOTIFY_COMMENTS_POSTS_COMMENTED';
 
         $logger->info("testing $pref for user $user_id");
