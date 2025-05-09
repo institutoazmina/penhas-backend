@@ -240,12 +240,12 @@ sub confirm_assign_changes {
     $c->stash(template => 'admin/badge_success');
 
     # Retrieve array parameters
-    my $cliente_ids = [$c->req->every_param('cliente_id')];
-    my $actions     = [$c->req->every_param('action')];
+    my $cliente_ids = $c->req->every_param('cliente_id');
+    my $actions     = $c->req->every_param('action');
 
-    log_info("Actions: ", to_json( $actions));
-    log_info("Cliente IDs: ", to_json( $cliente_ids));
-    my $badge_id    = $c->req->param('badge_id');
+    log_info("Actions: ",     to_json($actions));
+    log_info("Cliente IDs: ", to_json($cliente_ids));
+    my $badge_id = $c->req->param('badge_id');
 
     # Ensure they are arrays for consistent processing
     $cliente_ids = [$cliente_ids] if $cliente_ids && ref $cliente_ids ne 'ARRAY';
@@ -273,9 +273,12 @@ sub confirm_assign_changes {
                     my $cliente_id = $cliente_ids->[$i];
                     my $action     = $actions->[$i];
 
+                    log_info("Processing user ID: $cliente_id, action: $action");
+
                     # Skip invalid/keep actions
                     unless ($cliente_id =~ /^\d+$/ && $action =~ /^(add|remove)$/) {
                         $kept++;
+                        log_info("Skipping invalid action for user ID: $cliente_id");
                         next;
                     }
 
@@ -283,6 +286,7 @@ sub confirm_assign_changes {
                     unless ($user_obj) {
                         $c->app->log->warn("User ID $cliente_id not found during confirmation - skipping.");
                         $skipped_notfound++;
+                        log_info("Skipping user ID $cliente_id, not found in database.");
                         next;
                     }
 
@@ -293,13 +297,17 @@ sub confirm_assign_changes {
                             admin_user_id => $admin_user_id
                         );
                         if ($status eq 'email_sent') {
+                            log_info("Badge invite email sent to user $cliente_id.");
                             $emailed++;
                         }
                         elsif ($status eq 'added_directly') {
+                            log_info("Badge added directly to user $cliente_id.");
                             $added_direct++;
                         }
                         elsif ($status eq 'already_active' || $status eq 'invite_pending') {
                             $c->app->log->debug("Skipped adding badge for user $cliente_id, status: $status");
+
+                            log_info("Badge already active or invite pending for user $cliente_id.");
 
                             # Optionally count these as 'kept' or a separate category
                             $kept++;
@@ -308,6 +316,7 @@ sub confirm_assign_changes {
                             # Handle unexpected status or error from helper
                             $errors++;
                             $error_details .= "Erro ao adicionar badge para user $cliente_id.\n";
+                            log_error("Error adding badge for user $cliente_id, status: $status");
                             $c->app->log->error("Error adding badge for user $cliente_id, status: $status");
 
                             # NOTE: txn_do will likely rollback on die, so errors need careful handling
@@ -321,9 +330,11 @@ sub confirm_assign_changes {
                             admin_user_id => $admin_user_id
                         );
                         if ($status eq 'removed') {
+                            log_info("Badge removed from user $cliente_id.");
                             $removed++;
                         }
                         elsif ($status eq 'no_action_needed') {
+                            log_info("No action needed for user $cliente_id.");
                             $c->app->log->debug("Skipped removing badge for user $cliente_id, status: $status");
                             $kept++;
                         }
@@ -331,6 +342,7 @@ sub confirm_assign_changes {
                             $errors++;
                             $error_details .= "Erro ao remover badge para user $cliente_id.\n";
                             $c->app->log->error("Error removing badge for user $cliente_id, status: $status");
+                            log_error("Error removing badge for user $cliente_id, status: $status");
                         }
                     }
                 }    # end for loop
@@ -339,6 +351,7 @@ sub confirm_assign_changes {
                 # the transaction might roll back. If we just counted errors, it commits.
                 if ($errors > 0) {
 
+                    log_error("Errors occurred during badge assignment: $error_details");
                     # Decide if errors should prevent commit. For now, let's commit successes.
                     $c->app->log->warn("Finished badge assignment with $errors errors.");
                 }
