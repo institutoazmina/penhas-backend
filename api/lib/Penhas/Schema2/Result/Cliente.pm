@@ -406,12 +406,14 @@ __PACKAGE__->has_many(
     }
 );
 
+# só retorna os badges que estão ativos se o usuário não estiver no modo camuflado
 __PACKAGE__->has_many(
     badges_ativos => 'Penhas::Schema2::Result::ClienteTag',
     sub {
         my $args = shift;
 
         return {
+            "me.modo_camuflado_ativo"            => \0,
             "$args->{foreign_alias}.cliente_id"  => {-ident => "$args->{self_alias}.id"},
             "$args->{foreign_alias}.valid_until" => {'>'    => \'now()'},
             "$args->{foreign_alias}.badge_id"    => {'!='   => undef},
