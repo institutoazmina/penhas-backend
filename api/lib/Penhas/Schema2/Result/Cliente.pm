@@ -413,10 +413,10 @@ __PACKAGE__->has_many(
         my $args = shift;
 
         return {
-            "$args->{self_alias}.modo_camuflado_ativo"            => \'false',
-            "$args->{foreign_alias}.cliente_id"  => {-ident => "$args->{self_alias}.id"},
-            "$args->{foreign_alias}.valid_until" => {'>'    => \'now()'},
-            "$args->{foreign_alias}.badge_id"    => {'!='   => undef},
+            "$args->{self_alias}.modo_camuflado_ativo" => \' = false',
+            "$args->{foreign_alias}.cliente_id"        => {-ident => "$args->{self_alias}.id"},
+            "$args->{foreign_alias}.valid_until"       => {'>'    => \'now()'},
+            "$args->{foreign_alias}.badge_id"          => {'!='   => undef},
         };
     }
 );
