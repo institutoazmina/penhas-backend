@@ -910,7 +910,7 @@ sub _format_tweet {
         ),
     };
 
-    if ($user_obj && !$anonimo) {
+    if ($user_obj && !$anonimo && !$is_owner) {
 
         # aqui é o user que está logado, ele precisa ter o badge do evento, e então vai comparado com o
         # CEP da usuária que postou o tweet, se for igual, ele irá ver um badge extra no tweet dizendo
