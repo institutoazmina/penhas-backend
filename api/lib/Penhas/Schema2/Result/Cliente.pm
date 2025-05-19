@@ -414,9 +414,9 @@ __PACKAGE__->has_many(
 
         return {
             "$args->{self_alias}.modo_anonimo_ativo" => \' = false',
-            "$args->{foreign_alias}.cliente_id"        => {-ident => "$args->{self_alias}.id"},
-            "$args->{foreign_alias}.valid_until"       => {'>'    => \'now()'},
-            "$args->{foreign_alias}.badge_id"          => {'!='   => undef},
+            "$args->{foreign_alias}.cliente_id"      => {-ident => "$args->{self_alias}.id"},
+            "$args->{foreign_alias}.valid_until"     => {'>'    => \'now()'},
+            "$args->{foreign_alias}.badge_id"        => {'!='   => undef},
         };
     }
 );
@@ -502,11 +502,16 @@ sub check_location_badge_for_cidade {
     my ($self, $cep_cidade, $block) = @_;
     return () unless $cep_cidade;
 
+    my $self_cidade = $self->cep_cidade();
+
+    # pula se o cliente não tem cidade cadastrada ou se a cidade do cliente é diferente da cidade do cep do tweets
+    return () if $self_cidade && $self_cidade ne $cep_cidade;
+
     my $badge_locations = $self->linked_location_badges();
     my @badges;
 
     for my $badge (@$badge_locations) {
-        if ($badge->linked_cep_cidade() eq $cep_cidade) {
+        if ($badge->linked_cep_cidade() eq $cep_cidade) {    # testa a cidade do badge
             push @badges, {
                 description => 'Usuária da sua região',
                 image_url   => $ENV{'PENHAS_DEFAULT_BADGE_' . uc($badge->code()) . '_ICON_URL'}

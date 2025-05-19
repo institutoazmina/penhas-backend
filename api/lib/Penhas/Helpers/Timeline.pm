@@ -303,7 +303,7 @@ sub add_tweet {
             }
         );
 
-        if (notifications_enabled() ) {
+        if (notifications_enabled()) {
             my $subject_id = $anonimo ? 0 : $user->{id};
             my $job_id     = $c->minion->enqueue(
                 'new_notification',
@@ -482,7 +482,7 @@ sub list_tweets {
     my ($c, %opts) = @_;
 
     my $rows = $opts{rows} || 10;
-    $rows = 10 if !is_test() && ($rows > 100 || $rows < 10);
+    $rows = 10 if !is_test() && ($rows > 100 || $rows < 1);
 
     my $user_obj = $opts{user_obj} or confess 'missing user_obj';
     use DDP;
@@ -883,7 +883,9 @@ sub _format_tweet {
             parent_id => $me->{parent_id},
             (is_test() ? (tweet_depth_test_only => $me->{tweet_depth}) : ())
         },
-        badges => _format_db_badges($me->{badges}, $user_obj, $me->{anonimo}, $is_owner),
+        badges => $penhas_avatar
+        ? []
+        : _format_db_badges($me->{badges}, $user_obj, $anonimo, $is_owner, $me->{cliente_cep_cidade}),
 
         id      => $me->{id},
         content => $me->{disable_escape}
@@ -915,7 +917,7 @@ sub _format_tweet {
         ),
     };
 
-    if ($user_obj && !$anonimo && !$is_owner) {
+    if ($user_obj && !$anonimo && !$is_owner && !$penhas_avatar) {
 
         # aqui é o user que está logado, ele precisa ter o badge do evento, e então vai comparado com o
         # CEP da usuária que postou o tweet, se for igual, ele irá ver um badge extra no tweet dizendo
@@ -931,10 +933,11 @@ sub _format_tweet {
 }
 
 sub _format_db_badges {
-    my ($badges, $user_obj, $anonimo, $is_owner) = @_;
+    my ($badges, $user_obj, $anonimo, $is_owner, $cliente_cep_cidade) = @_;
 
     my @formatted_badges = ();
     foreach my $badge (@{$badges || []}) {
+        next if $anonimo;
 
         # Add standard badge
         push @formatted_badges, $badge->render(1);
@@ -942,7 +945,7 @@ sub _format_db_badges {
 
     # Now handle location badges with the inverted logic
     # Should not be shown if the user is itself
-    if ($user_obj && $user_obj->modo_anonimo_ativo && !$anonimo && !$is_owner) {
+    if ($user_obj && !$anonimo && !$is_owner) {
 
         # User is viewing anonymously and the post is not anonymous
         my $user_city = $user_obj->cep_cidade;
@@ -951,8 +954,14 @@ sub _format_db_badges {
 
             # Check author's badges for location match
             foreach my $badge (@{$badges || []}) {
-                if (defined $badge->linked_cep_cidade
-                    && $badge->linked_cep_cidade eq $user_city)
+                if (
+                    defined $badge->linked_cep_cidade()
+                    && $badge->linked_cep_cidade() eq $user_city
+
+                    # se convidar alguém duma cidade diferente, ela mudar de cidade,
+                    # porém não tem como fazer isso pela API, só via suporte
+                    && $user_city eq $cliente_cep_cidade
+                  )
                 {
                     push @formatted_badges, {
                         description => 'Colaborada da cidade ' . $user_city,
