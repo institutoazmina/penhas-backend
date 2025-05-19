@@ -161,7 +161,8 @@ sub chat_find_users {
         my $badges = _format_chat_badges(
             $badge_objects,
             $user_obj,
-            0    # there is no anonymous mode in this context
+            0,    # there is no anonymous mode in this context
+            $_->{_cep_cidade}
         );
 
         # Add location badge separately using existing function
@@ -250,7 +251,8 @@ sub chat_profile_user {
     $cliente->{badges} = _format_chat_badges(
         [map { $_->badge } @cliente_badges],
         $user_obj,
-        $anonimo
+        $anonimo,
+        $cliente->{_cep_cidade}
     );
 
     push $cliente->{badges}->@*, $user_obj->check_location_badge_for_cidade(delete $cliente->{_cep_cidade})
@@ -380,6 +382,7 @@ sub chat_list_sessions {
             $badge_objects,
             $user_obj,
             $anonimo,
+            $other->{_cep_cidade}
         );
         push @$badges, $user_obj->check_location_badge_for_cidade(delete $other->{_cep_cidade}, 'block') if !$anonimo;
 
@@ -455,9 +458,9 @@ sub chat_open_session {
             '-and' => [
                 \['me.participants = ARRAY[?, ?]::int[]', @participants_in_order]
 
-                  # sempre abrir a sala com o ID menor primeiro,
-                  # assim da pra usar o operador de igualdade,
-                  # mas tambem poderiamos usar o >@ (overlap)
+                # sempre abrir a sala com o ID menor primeiro,
+                # assim da pra usar o operador de igualdade,
+                # mas tambem poderiamos usar o >@ (overlap)
             ],
         },
         {
@@ -1038,7 +1041,7 @@ sub chat_manage_block {
 }
 
 sub _format_chat_badges {
-    my ($badges, $user_obj, $other_is_anonymous) = @_;
+    my ($badges, $user_obj, $other_is_anonymous, $other_cep_cidade) = @_;
 
     my @formatted_badges = ();
     foreach my $badge (@{$badges || []}) {
@@ -1048,7 +1051,7 @@ sub _format_chat_badges {
     }
 
     # Now handle location badges with the inverted logic
-    if ($user_obj && $user_obj->modo_anonimo_ativo && !$other_is_anonymous) {
+    if ($user_obj && !$other_is_anonymous) {
 
         # User is viewing anonymously and the other user is not anonymous
         my $user_city = $user_obj->cep_cidade;
@@ -1057,8 +1060,12 @@ sub _format_chat_badges {
 
             # Check other user's badges for location match
             foreach my $badge (@{$badges || []}) {
-                if (defined $badge->linked_cep_cidade
-                    && $badge->linked_cep_cidade eq $user_city)
+                if (
+                       defined $badge->linked_cep_cidade
+                    && $badge->linked_cep_cidade eq $user_city
+                    && $other_cep_cidade
+                    && $other_cep_cidade eq $user_city    # não se mudou
+                  )
                 {
                     push @formatted_badges, {
                         description => 'Colaborada da cidade ' . $user_city,
