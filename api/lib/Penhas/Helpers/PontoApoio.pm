@@ -1057,8 +1057,19 @@ sub tick_ponto_apoio_index {
     while (my $ponto = $rs->next) {
         my $index    = '';
         my @projetos = map { $_->ponto_apoio_projeto_id() } $ponto->ponto_apoio2projetos->all;
+
+        my @auto_inserir
+          = $c->schema2->resultset('PontoApoioProjeto')->search({auto_inserir => 1}, {columns => ['id']});
+
+        for my $proj (@auto_inserir) {
+            $index .= '`p' . $proj->id . ']] ';
+        }
+
         foreach my $projeto_id (@projetos) {
-            $index .= '`p' . $projeto_id . ']]';
+            my $code = '`p' . $projeto_id . ']] ';
+
+            # test if not exists already
+            $index .= $code unless $index =~ /\Q$code\E/;
         }
         $index .= ' ' . $ponto->categoria->label;
 
