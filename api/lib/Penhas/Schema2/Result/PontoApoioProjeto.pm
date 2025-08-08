@@ -31,6 +31,8 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 0, size => 200 },
   "owner",
   { data_type => "uuid", is_nullable => 1, size => 16 },
+  "auto_inserir",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
 );
 __PACKAGE__->set_primary_key("id");
 __PACKAGE__->has_many(
@@ -42,8 +44,8 @@ __PACKAGE__->has_many(
 __PACKAGE__->many_to_many("ponto_apoios", "ponto_apoio2projetos", "ponto_apoio");
 #>>>
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-02-24 11:58:10
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gmXKoqd1VT73Fnr8N/u9Vw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2025-08-08 14:04:51
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OX9+IBVFSfJnIvluHN4VtA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

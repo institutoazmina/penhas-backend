@@ -252,7 +252,8 @@ sub apa_review {
     }
 
 
-use DDP; p $fake_pa;
+    use DDP;
+    p $fake_pa;
 
     return $c->respond_to_if_web(
         json => {
@@ -408,17 +409,17 @@ sub try_publish_pa {
         complemento            => {required => 0, type => 'Str', empty_is_valid => 1},
         bairro                 => {required => 1, type => 'Str'},
         email                  => {required => 0, type => EmailAddress, empty_is_valid => 1},
-        horario_inicio         => {required => 0, type => 'Str', empty_is_valid => 1, max_lenght => 5},
-        horario_fim            => {required => 0, type => 'Str', empty_is_valid => 1, max_lenght => 5},
-        dias_funcionamento     => {required => 0, type => 'Str', empty_is_valid => 1},
-        ddd                    => {required => 0, type => 'Int', empty_is_valid => 1},
-        telefone1              => {required => 0, type => 'Int', empty_is_valid => 1},
-        telefone2              => {required => 0, type => 'Int', empty_is_valid => 1},
-        ramal1                 => {required => 0, type => 'Int', empty_is_valid => 1},
-        ramal2                 => {required => 0, type => 'Int', empty_is_valid => 1},
+        horario_inicio         => {required => 0, type => 'Str',        empty_is_valid => 1, max_lenght => 5},
+        horario_fim            => {required => 0, type => 'Str',        empty_is_valid => 1, max_lenght => 5},
+        dias_funcionamento     => {required => 0, type => 'Str',        empty_is_valid => 1},
+        ddd                    => {required => 0, type => 'Int',        empty_is_valid => 1},
+        telefone1              => {required => 0, type => 'Int',        empty_is_valid => 1},
+        telefone2              => {required => 0, type => 'Int',        empty_is_valid => 1},
+        ramal1                 => {required => 0, type => 'Int',        empty_is_valid => 1},
+        ramal2                 => {required => 0, type => 'Int',        empty_is_valid => 1},
         eh_24h                 => {required => 0, type => 'Bool'},
         eh_whatsapp            => {required => 0, type => 'Bool'},
-        observacao             => {required => 0, type => 'Str', empty_is_valid => 1},
+        observacao             => {required => 0, type => 'Str',  empty_is_valid => 1},
         funcionamento_pandemia => {required => 0, type => 'Bool', empty_is_valid => 1},
         observacao_pandemia    => {required => 0, type => 'Str',  empty_is_valid => 1},
         descricao              => {required => 0, type => 'Str',  empty_is_valid => 1},
@@ -443,12 +444,25 @@ sub try_publish_pa {
         sub {
             $valid->{ja_passou_por_moderacao} = 1;
 
-            $valid->{status} = 'active';
+            $valid->{status}     = 'active';
             $valid->{created_on} = \'now()';
             $valid->{updated_at} = \'now()';
             $valid->{cliente_id} = $row->get_column('cliente_id');
 
             my $pa = $c->schema2->resultset('PontoApoio')->create($valid);
+
+            my @auto_inserir
+              = $c->schema2->resultset('PontoApoioProjeto')->search({auto_inserir => 1}, {columns => ['id']});
+
+            for my $proj (@auto_inserir) {
+                $c->schema2->resultset('PontoApoio2projeto')->create(
+                    {
+                        ponto_apoio_id         => $pa->id,
+                        ponto_apoio_projeto_id => $proj->id,
+                    }
+                );
+            }
+
             $c->tick_ponto_apoio_index();
 
             $row->update(
@@ -457,7 +471,7 @@ sub try_publish_pa {
                         {
                             %{from_json($row->metainfo())},
                             ponto_apoio_id => $pa->id,
-                            approved_by => $c->stash('admin_user')->id,
+                            approved_by    => $c->stash('admin_user')->id,
                         }
                     ),
                     status => 'approved',
