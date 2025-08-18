@@ -1,0 +1,1422 @@
+openapi: 3.0.3
+info:
+  title: PenhaS API
+  description: |
+    API RESTful para o aplicativo PenhaS - uma plataforma de apoio e proteção para mulheres em situação de violência.
+    
+    ## Autenticação
+    A maioria dos endpoints requer autenticação via token JWT incluído no header `x-api-key`.
+    
+    ## Formatos de Resposta
+    - Respostas de sucesso seguem o padrão: `{"data": {...}, "status": "success"}`
+    - Respostas de erro seguem o padrão: `{"error": "codigo_erro", "message": "Mensagem", "status": 400}`
+  version: 1.0.0
+  contact:
+    name: PenhaS Team
+    url: https://penhas.com.br
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.penhas.com.br
+    description: Produção
+  - url: http://localhost:3000
+    description: Desenvolvimento
+
+security:
+  - {}
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Token JWT para autenticação
+
+  schemas:
+    # Common Schemas
+    SuccessResponse:
+      type: object
+      properties:
+        data:
+          type: object
+        status:
+          type: string
+          example: success
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Código do erro
+        message:
+          type: string
+          description: Mensagem de erro legível
+        field:
+          type: string
+          description: Campo específico que causou o erro (opcional)
+        status:
+          type: integer
+          description: Código de status HTTP
+      required:
+        - error
+        - message
+        - status
+
+    ValidField:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Operação realizada com sucesso"
+
+    # Authentication Schemas
+    SignupRequest:
+      type: object
+      properties:
+        nome_completo:
+          type: string
+          minLength: 5
+          maxLength: 200
+          description: Nome completo do usuário
+        cpf:
+          type: string
+          pattern: '^\d{11}$'
+          description: CPF sem formatação
+        email:
+          type: string
+          format: email
+          maxLength: 200
+          description: Email válido
+        senha:
+          type: string
+          maxLength: 200
+          minLength: 8
+          description: Senha segura
+        cep:
+          type: string
+          pattern: '^\d{8}$'
+          description: CEP sem formatação
+        dt_nasc:
+          type: string
+          format: date
+          description: Data de nascimento (YYYY-MM-DD)
+        nome_social:
+          type: string
+          maxLength: 200
+          description: Nome social (obrigatório para gêneros trans/outro)
+        genero:
+          type: string
+          enum: [feminino, masculino, trans, outro]
+          description: Gênero
+        raca:
+          type: string
+          enum: [branca, preta, parda, amarela, indigena, nao_declarado]
+          description: Raça/etnia
+        apelido:
+          type: string
+          minLength: 2
+          maxLength: 40
+          description: Apelido/nickname
+        app_version:
+          type: string
+          minLength: 1
+          maxLength: 800
+          description: Versão do aplicativo
+        dry:
+          type: integer
+          enum: [0, 1]
+          description: Modo de validação (1 = apenas validar, 0 = criar conta)
+      required:
+        - nome_completo
+        - cpf
+        - email
+        - senha
+        - cep
+        - dt_nasc
+        - genero
+        - raca
+        - apelido
+        - app_version
+        - dry
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 200
+        senha:
+          type: string
+          maxLength: 200
+          minLength: 8
+        app_version:
+          type: string
+          minLength: 1
+          maxLength: 800
+      required:
+        - email
+        - senha
+        - app_version
+
+    SessionResponse:
+      type: object
+      properties:
+        session:
+          type: string
+          description: Token JWT de autenticação
+        deleted_scheduled:
+          type: boolean
+          description: Indica se a conta está agendada para exclusão
+        _test_only_id:
+          type: integer
+          description: ID do usuário (apenas em ambiente de teste)
+
+    ResetPasswordRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 200
+      required:
+        - email
+
+    ResetPasswordNewRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 200
+        token:
+          type: string
+          description: Token recebido por email
+        senha:
+          type: string
+          maxLength: 200
+          minLength: 8
+      required:
+        - email
+        - token
+        - senha
+
+    # User Profile Schemas
+    UserProfile:
+      type: object
+      properties:
+        avatar_url:
+          type: string
+          format: uri
+          description: URL do avatar
+        ja_foi_vitima_de_violencia:
+          type: boolean
+          description: Se já foi vítima de violência
+        modo_camuflado_ativo:
+          type: boolean
+          description: Se o modo camuflado está ativo
+        modo_anonimo_ativo:
+          type: boolean
+          description: Se o modo anônimo está ativo
+        email:
+          type: string
+          format: email
+        apelido:
+          type: string
+          description: Apelido/nickname
+        cep:
+          type: string
+        dt_nasc:
+          type: string
+          format: date
+        nome_completo:
+          type: string
+        genero:
+          type: string
+        minibio:
+          type: string
+          description: Mini biografia
+        raca:
+          type: string
+        cpf_prefix:
+          type: string
+          description: Prefixo do CPF para identificação
+        nome_social:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+          description: Habilidades/competências
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/Badge'
+
+    Badge:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        image_url:
+          type: string
+          format: uri
+        style:
+          type: string
+        show_description:
+          type: boolean
+        popup:
+          type: boolean
+
+    UserProfileResponse:
+      type: object
+      properties:
+        user_profile:
+          $ref: '#/components/schemas/UserProfile'
+        anonymous_avatar_url:
+          type: string
+          format: uri
+          description: URL do avatar anônimo (se modo anônimo ativo)
+        qtde_guardioes_ativos:
+          type: integer
+          description: Quantidade de guardiões ativos
+        modules:
+          type: object
+          description: Módulos disponíveis para o usuário
+
+    # Support Points Schemas
+    SupportPoint:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+          description: Nome do ponto de apoio
+        categoria:
+          type: string
+          description: Categoria do serviço
+        endereco:
+          type: string
+          description: Endereço completo
+        telefone:
+          type: string
+        telefone2:
+          type: string
+        email:
+          type: string
+          format: email
+        distance:
+          type: number
+          format: float
+          description: Distância em metros
+        eh_24h:
+          type: boolean
+          description: Se funciona 24 horas
+        has_whatsapp:
+          type: boolean
+          description: Se tem WhatsApp
+        latitude:
+          type: number
+          format: float
+        longitude:
+          type: number
+          format: float
+        horario_funcionamento:
+          type: string
+        dias_funcionamento:
+          type: string
+        descricao:
+          type: string
+        cep:
+          type: string
+
+    SupportPointsList:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupportPoint'
+        has_more:
+          type: boolean
+        next_page:
+          type: string
+          nullable: true
+
+    # Chat Schemas
+    ChatUser:
+      type: object
+      properties:
+        cliente_id:
+          type: string
+        apelido:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+        activity:
+          type: string
+        blocked_me:
+          type: boolean
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/Badge'
+
+    ChatChannel:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Token da sessão de chat
+        can_send_message:
+          type: boolean
+        other_user:
+          $ref: '#/components/schemas/ChatUser'
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        is_me:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/ChatUser'
+
+    # Timeline/Tweet Schemas
+    Tweet:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          description: Nome do usuário
+        cliente_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        qtde_comentarios:
+          type: integer
+        qtde_likes:
+          type: integer
+        anonimo:
+          type: boolean
+        content:
+          type: string
+        icon:
+          type: string
+          format: uri
+          description: Avatar do usuário
+        meta:
+          type: object
+          properties:
+            liked:
+              type: boolean
+            owner:
+              type: boolean
+            can_reply:
+              type: boolean
+            parent_id:
+              type: string
+              nullable: true
+        last_reply:
+          $ref: '#/components/schemas/Tweet'
+          nullable: true
+        badges:
+          type: array
+          items:
+            $ref: '#/components/schemas/Badge'
+
+    TweetSession:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tweet'
+        has_more:
+          type: boolean
+        next_page:
+          type: string
+          nullable: true
+
+    # Audio/Help Center Schemas
+    AudioEntity:
+      type: object
+      properties:
+        event_id:
+          type: string
+        audio_duration:
+          type: string
+        last_cliente_created_at:
+          type: string
+          format: date-time
+        meta:
+          type: object
+          properties:
+            download_granted:
+              type: boolean
+            requested_by_user:
+              type: boolean
+            request_granted:
+              type: boolean
+
+    AudioList:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/AudioEntity'
+        message:
+          type: string
+
+    # Guardian Schemas
+    Guardian:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+        telefone:
+          type: string
+        email:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+
+    # Geocoding Schema
+    GeocodeResponse:
+      type: object
+      properties:
+        location_token:
+          type: string
+          description: Token JWT com coordenadas codificadas
+        label:
+          type: string
+          description: Descrição legível do local
+
+  responses:
+    UnauthorizedError:
+      description: Token JWT ausente ou inválido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "missing_jwt"
+            message: "Not Authenticated"
+            status: 401
+
+    ForbiddenError:
+      description: Acesso negado ou sessão expirada
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "jwt_logout"
+            message: "Está sessão não está mais válida (Usuário saiu)"
+            status: 403
+
+    BadRequestError:
+      description: Parâmetros inválidos ou dados malformados
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "invalid_field"
+            message: "Campo obrigatório não informado"
+            field: "email"
+            status: 400
+
+    NotFoundError:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "not_found"
+            message: "Recurso não encontrado"
+            status: 404
+
+    InternalServerError:
+      description: Erro interno do servidor
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "internal_error"
+            message: "Erro interno do servidor"
+            status: 500
+
+paths:
+  # Authentication Endpoints
+  /signup:
+    post:
+      tags:
+        - Authentication
+      summary: Criar nova conta de usuário
+      description: Registra um novo usuário na plataforma
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '200':
+          description: Conta criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: Autenticar usuário
+      description: Realiza login e retorna token JWT
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /reset-password/request-new:
+    post:
+      tags:
+        - Authentication
+      summary: Solicitar reset de senha
+      description: Envia email com token para reset de senha
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Email enviado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "E-mail enviado com sucesso"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+  /reset-password/write-new:
+    post:
+      tags:
+        - Authentication
+      summary: Definir nova senha
+      description: Define nova senha usando token de reset
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordNewRequest'
+      responses:
+        '200':
+          description: Senha alterada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Senha alterada com sucesso"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+  /logout:
+    post:
+      tags:
+        - Authentication
+      summary: Fazer logout
+      description: Invalida a sessão atual
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Logout realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidField'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # User Profile Endpoints
+  /me:
+    get:
+      tags:
+        - User Profile
+      summary: Obter perfil do usuário
+      description: Retorna informações do perfil do usuário autenticado
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Perfil do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    put:
+      tags:
+        - User Profile
+      summary: Atualizar perfil do usuário
+      description: Atualiza informações do perfil do usuário
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                apelido:
+                  type: string
+                  maxLength: 40
+                minibio:
+                  type: string
+                  maxLength: 280
+                nome_social:
+                  type: string
+                  maxLength: 200
+                skills:
+                  type: string
+                  description: Skills separadas por vírgula
+      responses:
+        '200':
+          description: Perfil atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    delete:
+      tags:
+        - User Profile
+      summary: Excluir conta
+      description: Agenda a exclusão da conta do usuário
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                senha_atual:
+                  type: string
+                  description: Senha atual para confirmação
+                app_version:
+                  type: string
+              required:
+                - senha_atual
+                - app_version
+      responses:
+        '200':
+          description: Conta agendada para exclusão
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidField'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /me/modo-camuflado-toggle:
+    post:
+      tags:
+        - User Profile
+      summary: Alternar modo camuflado
+      description: Ativa/desativa o modo camuflado
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: string
+                  enum: ['0', '1']
+              required:
+                - active
+      responses:
+        '200':
+          description: Modo camuflado alterado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidField'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /me/modo-anonimo-toggle:
+    post:
+      tags:
+        - User Profile
+      summary: Alternar modo anônimo
+      description: Ativa/desativa o modo anônimo
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: string
+                  enum: ['0', '1']
+              required:
+                - active
+      responses:
+        '200':
+          description: Modo anônimo alterado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidField'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # Support Points Endpoints
+  /pontos-de-apoio:
+    get:
+      tags:
+        - Support Points
+      summary: Listar pontos de apoio
+      description: Lista pontos de apoio próximos a uma localização
+      parameters:
+        - name: latitude
+          in: query
+          schema:
+            type: number
+            format: float
+          description: Latitude (obrigatório se não houver location_token)
+        - name: longitude
+          in: query
+          schema:
+            type: number
+            format: float
+          description: Longitude (obrigatório se não houver location_token)
+        - name: location_token
+          in: query
+          schema:
+            type: string
+          description: Token JWT com localização codificada
+        - name: categorias
+          in: query
+          schema:
+            type: string
+          description: IDs de categorias separados por vírgula
+        - name: keywords
+          in: query
+          schema:
+            type: string
+          description: Palavras-chave de busca
+        - name: rows
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: Número de resultados
+        - name: max_distance
+          in: query
+          schema:
+            type: integer
+            default: 10000
+          description: Distância máxima em metros
+        - name: eh_24h
+          in: query
+          schema:
+            type: boolean
+          description: Filtrar centros 24 horas
+        - name: dias_funcionamento
+          in: query
+          schema:
+            type: string
+          description: Filtro de dias de funcionamento
+      responses:
+        '200':
+          description: Lista de pontos de apoio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportPointsList'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+  /pontos-de-apoio/{ponto_apoio_id}:
+    get:
+      tags:
+        - Support Points
+      summary: Obter detalhes de um ponto de apoio
+      description: Retorna informações detalhadas de um ponto de apoio específico
+      parameters:
+        - name: ponto_apoio_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID do ponto de apoio
+      responses:
+        '200':
+          description: Detalhes do ponto de apoio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportPoint'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /geocode:
+    get:
+      tags:
+        - Support Points
+      summary: Geocodificar endereço
+      description: Converte endereço em coordenadas
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Endereço para geocodificar
+      responses:
+        '200':
+          description: Coordenadas do endereço
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeocodeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+  # Timeline Endpoints
+  /timeline:
+    get:
+      tags:
+        - Timeline
+      summary: Listar posts do timeline
+      description: Retorna posts do timeline/feed
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+          description: ID de um tweet específico
+        - name: next_page
+          in: query
+          schema:
+            type: string
+          description: Token para próxima página
+      responses:
+        '200':
+          description: Posts do timeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TweetSession'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /timeline/{tweet_id}/comment:
+    post:
+      tags:
+        - Timeline
+      summary: Comentar em um post
+      description: Adiciona comentário a um post
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: tweet_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID do tweet
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: Conteúdo do comentário
+              required:
+                - content
+      responses:
+        '200':
+          description: Comentário adicionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tweet'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /timeline/{tweet_id}/like:
+    post:
+      tags:
+        - Timeline
+      summary: Curtir/descurtir post
+      description: Adiciona ou remove curtida de um post
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: tweet_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID do tweet
+      responses:
+        '200':
+          description: Like processado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidField'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # Chat Endpoints
+  /me/chats:
+    get:
+      tags:
+        - Chat
+      summary: Listar conversas
+      description: Lista conversas disponíveis do usuário
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Lista de conversas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rows:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatChannel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /me/chats-session:
+    post:
+      tags:
+        - Chat
+      summary: Abrir conversa
+      description: Abre uma nova sessão de chat com outro usuário
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                cliente_id:
+                  type: string
+                  description: ID do usuário para conversar
+                prefetch:
+                  type: string
+                  enum: ['0', '1']
+                  default: '1'
+              required:
+                - cliente_id
+      responses:
+        '200':
+          description: Sessão de chat aberta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatChannel'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    delete:
+      tags:
+        - Chat
+      summary: Fechar conversa
+      description: Fecha a sessão de chat atual
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Conversa fechada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidField'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /me/chats-messages:
+    get:
+      tags:
+        - Chat
+      summary: Listar mensagens
+      description: Lista mensagens de uma conversa
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: chat_auth
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Token da sessão de chat
+        - name: pagination
+          in: query
+          schema:
+            type: string
+          description: Token de paginação
+        - name: rows
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: Número de mensagens
+      responses:
+        '200':
+          description: Lista de mensagens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rows:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatMessage'
+                  has_more:
+                    type: boolean
+                  next_page:
+                    type: string
+                    nullable: true
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Chat
+      summary: Enviar mensagem
+      description: Envia uma mensagem na conversa
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                chat_auth:
+                  type: string
+                  description: Token da sessão de chat
+                message:
+                  type: string
+                  description: Conteúdo da mensagem
+              required:
+                - chat_auth
+                - message
+      responses:
+        '200':
+          description: Mensagem enviada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message_id:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # User Search
+  /search-users:
+    get:
+      tags:
+        - Users
+      summary: Buscar usuários
+      description: Busca usuários por nome ou habilidades
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: Nome do usuário
+        - name: skills
+          in: query
+          schema:
+            type: string
+          description: Habilidades separadas por vírgula
+        - name: rows
+          in: query
+          schema:
+            type: integer
+            default: 100
+          description: Número de resultados
+        - name: next_page
+          in: query
+          schema:
+            type: string
+          description: Token para próxima página
+      responses:
+        '200':
+          description: Lista de usuários encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rows:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatUser'
+                  has_more:
+                    type: boolean
+                  next_page:
+                    type: string
+                    nullable: true
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /profile:
+    get:
+      tags:
+        - Users
+      summary: Obter perfil de usuário
+      description: Obtém perfil detalhado de outro usuário
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: cliente_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID do usuário
+      responses:
+        '200':
+          description: Perfil do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatUser'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  # Audio/Help Center
+  /me/audios:
+    get:
+      tags:
+        - Audio
+      summary: Listar gravações de áudio
+      description: Lista gravações de áudio do usuário
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Lista de gravações
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudioList'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Audio
+      summary: Upload de áudio
+      description: Faz upload de uma gravação de áudio
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                audio_file:
+                  type: string
+                  format: binary
+                  description: Arquivo de áudio
+                latitude:
+                  type: number
+                  format: float
+                longitude:
+                  type: number
+                  format: float
+              required:
+                - audio_file
+      responses:
+        '200':
+          description: Áudio enviado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id:
+                    type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # Tweets/Posts
+  /me/tweets:
+    post:
+      tags:
+        - Timeline
+      summary: Criar post
+      description: Cria um novo post no timeline
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: Conteúdo do post
+              required:
+                - content
+      responses:
+        '200':
+          description: Post criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tweet'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    delete:
+      tags:
+        - Timeline
+      summary: Excluir post
+      description: Exclui um post do usuário
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: tweet_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID do tweet para excluir
+      responses:
+        '200':
+          description: Post excluído
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidField'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+tags:
+  - name: Authentication
+    description: Endpoints de autenticação e gerenciamento de sessão
+  - name: User Profile
+    description: Gerenciamento do perfil do usuário
+  - name: Support Points
+    description: Pontos de apoio e centros de atendimento
+  - name: Timeline
+    description: Timeline/feed de posts e interações
+  - name: Chat
+    description: Sistema de mensagens entre usuários
+  - name: Users
+    description: Busca e perfis de outros usuários
+  - name: Audio
+    description: Gravações de áudio para evidências
