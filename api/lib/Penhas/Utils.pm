@@ -358,10 +358,38 @@ sub check_password_or_die {
 sub linkfy {
     my ($text) = @_;
 
-    # se nao encontrar o http, mas encontarr www, entao troca por https
-    $text
-      =~ s/(https?:\/\/(?:www\.|(?!www))[^\s.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})/my $href =$1; $href = "https:\/\/$href" unless $href =~ \/^http\/; "<a href=\"$href\">$href<\/a>"/ge;
+    $text =~ s{
+        (https?:\/\/(?:www\.|(?!www))[^\s.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})
+    }{
+        my $raw_href = $1;
+        my $href = _sanitize_link_href($raw_href);
+        defined $href ? qq{<a href="$href">$raw_href</a>} : $raw_href;
+    }gex;
+
     return $text;
+}
+
+sub _sanitize_link_href {
+    my ($href) = @_;
+
+    return undef unless defined $href;
+
+    # remove html tags or delimiters that could break the attribute.
+    $href =~ s/<[^>]*>//g;
+    $href =~ s/[<>]//g;
+    $href =~ s/^\s+//;
+    $href =~ s/\s+$//;
+
+    $href = "https://$href" unless $href =~ m{^https?://}i;
+
+    my $url = Mojo::URL->new($href);
+    return undef unless $url->is_abs;
+
+    my $scheme = lc($url->scheme // '');
+    return undef unless $scheme eq 'http' || $scheme eq 'https';
+    return undef if $href =~ /[<>]/;
+
+    return $url->to_string;
 }
 
 sub nl2br {
