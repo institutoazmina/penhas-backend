@@ -40,6 +40,9 @@ jobs:
                   cache-to: type=inline
 
             - name: Deploy
+              env:
+                  DEPLOY_WEBHOOK: ${{ secrets.deploy_webhook }}
+                  DEPLOY_TOKEN: ${{ secrets.deploy_token }}
               run: |
-                  curl --request GET "${{ secrets.deploy_webhook }}" \
-                    --header "Authorization: Bearer ${{ secrets.deploy_token }}"
+                  curl --request GET "$DEPLOY_WEBHOOK" \
+                    --header "Authorization: Bearer $DEPLOY_TOKEN"
