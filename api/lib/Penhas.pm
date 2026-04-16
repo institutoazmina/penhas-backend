@@ -83,6 +83,33 @@ sub startup {
         }
     );
 
+    # Security headers - adicionados em todas as respostas HTTP.
+    # Ref: OWASP Secure Headers Project
+    # Ticket: security/add-response-security-headers
+    $self->hook(
+        after_dispatch => sub {
+            my $c       = shift;
+            my $headers = $c->res->headers;
+
+            $headers->header('X-Frame-Options'       => 'DENY');
+            $headers->header('X-Content-Type-Options' => 'nosniff');
+            $headers->header('X-XSS-Protection'       => '0');
+            $headers->header('Content-Security-Policy' => "default-src 'self'; frame-ancestors 'none'");
+            $headers->header('Referrer-Policy'         => 'strict-origin-when-cross-origin');
+            $headers->header('Permissions-Policy'      => 'geolocation=(), camera=(), microphone=()');
+
+            # HSTS apenas quando a conexão é (ou foi proxied como) HTTPS
+            my $proto = $c->req->headers->header('X-Forwarded-Proto') || '';
+            if ($c->req->is_secure || $proto eq 'https') {
+                $headers->header('Strict-Transport-Security' => 'max-age=31536000; includeSubDomains');
+            }
+
+            # Cache-Control para respostas API - não sobrescreve valores já definidos por controllers
+            if (!$headers->cache_control) {
+                $headers->cache_control('no-store');
+            }
+        }
+    );
 
 }
 
