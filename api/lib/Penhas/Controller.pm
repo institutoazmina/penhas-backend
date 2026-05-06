@@ -146,10 +146,61 @@ sub _reply_exception {
         {
             $c->app->log->info('Exception treated: ' . $an_error->{msg});
 
+            my ($constraint) = $an_error->{msg} =~ /unique constraint "([^"]+)"/;
+            my ($field, $value) = $an_error->{msg} =~ /Key \(([^)]+)\)=\(([^)]*)\) already exists/;
+            my ($table) = $an_error->{msg} =~ /(?:INSERT INTO|UPDATE)\s+"?([a-zA-Z0-9_.]+)"?/;
+
+            if (!$field && $constraint) {
+                eval {
+                    my $schema = $c->can('schema2') ? $c->schema2 : ($c->can('schema') ? $c->schema : undef);
+                    if ($schema) {
+                        my $cols = $schema->storage->dbh_do(
+                            sub {
+                                my ($storage, $dbh) = @_;
+                                return $dbh->selectcol_arrayref(
+                                    q{
+                                        SELECT a.attname
+                                          FROM pg_constraint c
+                                          JOIN pg_attribute a
+                                            ON a.attrelid = c.conrelid
+                                           AND a.attnum   = ANY(c.conkey)
+                                         WHERE c.conname = ?
+                                         ORDER BY array_position(c.conkey, a.attnum)
+                                    },
+                                    undef, $constraint
+                                );
+                            }
+                        );
+                        $field = join(', ', @$cols) if $cols && @$cols;
+                    }
+                    1;
+                } or do {
+                    $c->app->log->warn('duplicate_key_violation: failed to resolve constraint columns: ' . $@);
+                };
+            }
+
+            my $message = 'You violated an unique constraint! Please verify your input fields and try again.';
+            if ($field && defined $value) {
+                $message = sprintf(
+                    'Duplicate value for field "%s" (value: "%s"). This record already exists.',
+                    $field, $value
+                );
+            }
+            elsif ($field) {
+                $message = sprintf('Duplicate value for field "%s". This record already exists.', $field);
+            }
+            elsif ($constraint) {
+                $message = sprintf('Duplicate value violates constraint "%s". This record already exists.', $constraint);
+            }
+
             return $c->render(
                 json => {
-                    error   => 'duplicate_key_violation',
-                    message => 'You violated an unique constraint! Please verify your input fields and try again.'
+                    error      => 'duplicate_key_violation',
+                    message    => $message,
+                    field      => $field,
+                    value      => $value,
+                    constraint => $constraint,
+                    table      => $table,
                 },
                 status => 400,
             );

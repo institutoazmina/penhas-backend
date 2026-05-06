@@ -440,45 +440,89 @@ sub try_publish_pa {
           if $valid->{$field} && $valid->{$field} !~ /^\d{2}\:\d{2}$/a;
     }
 
-    $c->schema->txn_do(
-        sub {
-            $valid->{ja_passou_por_moderacao} = 1;
+    my $do_approve = sub {
+        $c->schema->txn_do(
+            sub {
+                $valid->{ja_passou_por_moderacao} = 1;
 
-            $valid->{status}     = 'active';
-            $valid->{created_on} = \'now()';
-            $valid->{updated_at} = \'now()';
-            $valid->{cliente_id} = $row->get_column('cliente_id');
+                $valid->{status}     = 'active';
+                $valid->{created_on} = \'now()';
+                $valid->{updated_at} = \'now()';
+                $valid->{cliente_id} = $row->get_column('cliente_id');
 
-            my $pa = $c->schema2->resultset('PontoApoio')->create($valid);
+                my $pa = $c->schema2->resultset('PontoApoio')->create($valid);
 
-            my @auto_inserir
-              = $c->schema2->resultset('PontoApoioProjeto')->search({auto_inserir => 1}, {columns => ['id']});
+                my @auto_inserir
+                  = $c->schema2->resultset('PontoApoioProjeto')->search({auto_inserir => 1}, {columns => ['id']});
 
-            for my $proj (@auto_inserir) {
-                $c->schema2->resultset('PontoApoio2projeto')->create(
+                for my $proj (@auto_inserir) {
+                    $c->schema2->resultset('PontoApoio2projeto')->create(
+                        {
+                            ponto_apoio_id         => $pa->id,
+                            ponto_apoio_projeto_id => $proj->id,
+                        }
+                    );
+                }
+
+                $c->tick_ponto_apoio_index();
+
+                $row->update(
                     {
-                        ponto_apoio_id         => $pa->id,
-                        ponto_apoio_projeto_id => $proj->id,
+                        metainfo => to_json(
+                            {
+                                %{from_json($row->metainfo())},
+                                ponto_apoio_id => $pa->id,
+                                approved_by    => $c->stash('admin_user')->id,
+                            }
+                        ),
+                        status => 'approved',
                     }
                 );
             }
+        );
+    };
 
-            $c->tick_ponto_apoio_index();
+    my $attempts = 0;
+    while (1) {
+        $attempts++;
+        my $ok = eval { $do_approve->(); 1 };
+        last if $ok;
+        my $err = $@;
 
-            $row->update(
-                {
-                    metainfo => to_json(
-                        {
-                            %{from_json($row->metainfo())},
-                            ponto_apoio_id => $pa->id,
-                            approved_by    => $c->stash('admin_user')->id,
+        my $is_dup_pk
+          = ref $err eq 'DBIx::Class::Exception'
+          && $err->{msg}
+          && $err->{msg} =~ /duplicate key value violates unique constraint/i
+          && $err->{msg} =~ /Key \(id\)=/;
+
+        if ($is_dup_pk && $attempts < 2) {
+            my ($table) = $err->{msg} =~ /(?:INSERT INTO|UPDATE)\s+"?([a-zA-Z0-9_.]+)"?/;
+            $table //= 'ponto_apoio';
+            $table =~ s/^public\.//;
+            if ($table =~ /^[a-zA-Z_][a-zA-Z0-9_]*$/) {
+                eval {
+                    $c->schema2->storage->dbh_do(
+                        sub {
+                            my ($storage, $dbh) = @_;
+                            my $tq = $dbh->quote_identifier($table);
+                            $dbh->do(
+                                "SELECT setval(pg_get_serial_sequence(?, 'id'),
+                                               GREATEST(COALESCE((SELECT MAX(id) FROM $tq), 1), 1))",
+                                undef, $table
+                            );
                         }
-                    ),
-                    status => 'approved',
-                }
-            );
+                    );
+                    $c->app->log->info("auto-resynced sequence for $table, retrying approve");
+                    1;
+                } or do {
+                    $c->app->log->warn("seq resync failed for $table: $@");
+                    die $err;
+                };
+                next;
+            }
         }
-    );
+        die $err;
+    }
 
     $c->flash_to_redis({success_message => 'Ponto de Apoio registrado!'});
     $c->redirect_to('/admin/');
