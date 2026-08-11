@@ -97,6 +97,9 @@ state $text_xslate = Text::Xslate->new(
   check_email_mx
   remove_pi
 
+  looks_like_html
+  tweet_content_is_html
+
   get_semver_numeric
   is_legacy_app
 );
@@ -494,6 +497,27 @@ sub is_legacy_app {
         return $numeric_version < 3006000000 ? 1 : 0;
     }
 
+    return 0;
+}
+
+sub looks_like_html {
+    my ($content) = @_;
+
+    return 0 unless defined $content;
+
+    # conservador: `<` seguido de espaço não é tag (HTML5 trata como texto)
+    return $content =~ m{</?[a-zA-Z][^>]*>} ? 1 : 0;
+}
+
+sub tweet_content_is_html {
+    my (%opts) = @_;
+
+    my $disable_escape    = $opts{disable_escape};
+    my $use_penhas_avatar = $opts{use_penhas_avatar};
+    my $content           = $opts{content};
+
+    return 1 if $disable_escape;
+    return 1 if $use_penhas_avatar && &looks_like_html($content);
     return 0;
 }
 

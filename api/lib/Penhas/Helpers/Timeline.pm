@@ -739,6 +739,8 @@ sub list_tweets {
     foreach my $tweet (@tweets) {
         delete $tweet->{_tags_index};
         delete $tweet->{last_reply}{_tags_index} if $tweet->{last_reply};
+        delete $tweet->{_is_html};
+        delete $tweet->{last_reply}{_is_html} if $tweet->{last_reply};
     }
 
     my $next_page;
@@ -875,6 +877,13 @@ sub _format_tweet {
     }
 
     my $is_owner = $user_obj->id == $me->{cliente_id} ? 1 : 0;
+
+    my $content_is_html = &tweet_content_is_html(
+        disable_escape    => $me->{disable_escape},
+        use_penhas_avatar => $penhas_avatar,
+        content           => $me->{content},
+    );
+
     my $row      = {
         meta => {
             owner     => $is_owner,
@@ -888,7 +897,7 @@ sub _format_tweet {
         : _format_db_badges($me->{badges}, $user_obj, $anonimo, $is_owner, $me->{cliente_cep_cidade}),
 
         id      => $me->{id},
-        content => $me->{disable_escape}
+        content => $content_is_html
         ? $me->{content}
         : &maybe_linkfy(&nl2br(xml_escape($is_owner ? $me->{content} : &remove_pi($me->{content}))), $penhas_avatar),
         anonimo => $anonimo && !$eh_admin ? 1 : 0,
@@ -904,6 +913,7 @@ sub _format_tweet {
         ),
         created_at  => pg_timestamp2iso_8601_second($me->{created_at}),
         _tags_index => $me->{tags_index},
+        ($content_is_html ? (_is_html => 1) : ()),
         ($anonimo && !$eh_admin ? (cliente_id => 0) : (cliente_id => $me->{cliente_id})),
         (
             $penhas_avatar
@@ -1152,6 +1162,9 @@ sub add_tweets_highlights {
     foreach my $tweet (@list) {
         push $tweets->@*, $tweet;
         my $current_tags = delete $tweet->{_tags_index};
+
+        # conteúdo HTML não recebe highlights: evita inserir <span> no meio de tags
+        next if $tweet->{_is_html};
 
         # se nao da match em nenhuma tag atualmente, e nao tem tag, nao precisa atualizar, nem passar no loop
         next if $tweet->{content} !~ m/$config->{test}/i && ($current_tags eq ',,' || !defined $current_tags);
